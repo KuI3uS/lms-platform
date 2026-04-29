@@ -6,7 +6,7 @@ export function getToken() {
 
 export function logout() {
     localStorage.removeItem("token");
-    window.location.reload();
+    window.location.href = "/";
 }
 
 export async function apiFetch(url, options = {}) {
@@ -30,5 +30,6 @@ export async function apiFetch(url, options = {}) {
         throw new Error(text || "Request failed");
     }
 
-    return res.json();
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
 }
