@@ -18,7 +18,13 @@ export default function AdminUsers() {
             console.error("LOAD ERROR:", e);
         }
     };
-    const deleteUser = async (id) => {
+    const deleteUser = async (id, email) => {
+        const confirmed = window.confirm(
+            `Na pewno usunąć użytkownika:\n${email}?`
+        );
+
+        if (!confirmed) return;
+
         try {
             await apiFetch(`/users/${id}`, { method: "DELETE" });
 
@@ -82,7 +88,7 @@ export default function AdminUsers() {
 
                             {/* DELETE */}
                             <button
-                                onClick={() => deleteUser(u.id)}
+                                onClick={() => deleteUser(u.id, u.email)}
                                 className="bg-red-600 px-3 py-1 rounded text-sm"
                             >
                                 Usuń

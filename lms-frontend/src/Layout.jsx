@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import Navbar from "./components/Navbar";
 
-export default function Layout({ children }) {
+export default function Layout() {
 
     const token = localStorage.getItem("token");
 
@@ -30,18 +30,9 @@ export default function Layout({ children }) {
                     </div>
                 )}
 
-
-                <Link to="/dashboard" className="hover:text-blue-400">
-                    🏠 Dashboard
-                </Link>
-
-                <Link to="/" className="hover:text-blue-400">
-                    📚 Kursy
-                </Link>
-
-                <Link to="/results" className="hover:text-blue-400">
-                    📊 Wyniki
-                </Link>
+                <Link to="/dashboard">🏠 Dashboard</Link>
+                <Link to="/">📚 Kursy</Link>
+                <Link to="/results">📊 Wyniki</Link>
 
             </div>
 
@@ -51,7 +42,7 @@ export default function Layout({ children }) {
                 <Navbar />
 
                 <div className="p-6 overflow-auto">
-                    {children}
+                    <Outlet />
                 </div>
 
             </div>

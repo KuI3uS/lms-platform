@@ -73,6 +73,13 @@ export default function Login() {
                     {loading ? "Logowanie..." : "Zaloguj się"}
                 </button>
 
+                <p className="text-sm text-gray-400">
+                    Nie masz konta?{" "}
+                    <a href="/register" className="text-blue-400">
+                        Zarejestruj się
+                    </a>
+                </p>
+
             </div>
         </div>
     );

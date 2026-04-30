@@ -27,7 +27,7 @@ export default function DashboardPage() {
 
             <h1 className="text-3xl font-bold">Dashboard</h1>
 
-            {/* 🔥 METRYKI */}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 <div className="bg-gray-800 p-6 rounded-xl">
@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
             </div>
 
-            {/* 🔥 NAJLEPSZY WYNIK */}
+
             <div className="bg-gray-800 p-6 rounded-xl">
                 <p className="text-gray-400 mb-2">Najlepszy wynik</p>
                 <h2 className="text-4xl font-bold text-green-400">
@@ -55,7 +55,7 @@ export default function DashboardPage() {
                 </h2>
             </div>
 
-            {/* 🔥 OSTATNIE WYNIKI */}
+
             <div className="bg-gray-800 p-6 rounded-xl">
                 <h2 className="text-xl font-semibold mb-4">
                     Ostatnie wyniki

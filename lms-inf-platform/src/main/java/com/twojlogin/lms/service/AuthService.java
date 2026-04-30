@@ -40,9 +40,13 @@ public class AuthService {
         user.setFirstName(request.firstName);
         user.setLastName(request.lastName);
 
-        SchoolClass schoolClass = schoolClassRepository.findById(request.classId)
-
-                .orElseThrow(() -> new RuntimeException("Class not found"));
+        SchoolClass schoolClass = schoolClassRepository
+                .findByName(request.className)
+                .orElseGet(() -> {
+                    SchoolClass sc = new SchoolClass();
+                    sc.setName(request.className);
+                    return schoolClassRepository.save(sc);
+                });
 
         user.setSchoolClass(schoolClass);
         user.setRole(Role.STUDENT);

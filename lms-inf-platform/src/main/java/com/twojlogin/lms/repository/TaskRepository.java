@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    List<Task> findByModuleId(Long moduleId);
+    List<Task> findByModuleIdOrderByOrderIndexAsc(Long moduleId);
 
 
 }

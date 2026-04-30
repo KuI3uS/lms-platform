@@ -18,7 +18,6 @@ public class AuthController {
     public void register(@RequestBody RegisterRequest request) {
         authService.register(request);
     }
-
     @PostMapping("/login")
     public java.util.Map<String, String> login(@RequestBody LoginRequest request) {
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 
 export default function CoursesPage() {
@@ -6,6 +7,8 @@ export default function CoursesPage() {
     const [courses, setCourses] = useState([]);
     const [editingId, setEditingId] = useState(null);
     const [newName, setNewName] = useState("");
+
+    const navigate = useNavigate();
 
     const token = localStorage.getItem("token");
     const role = token
@@ -40,7 +43,7 @@ export default function CoursesPage() {
             <h1 className="text-2xl font-bold">Kursy</h1>
 
             {courses.map(c => (
-                <div key={c.id} className="bg-gray-800 p-4 rounded flex justify-between">
+                <div key={c.id} className="bg-gray-800 p-4 rounded flex justify-between items-center">
 
                     {editingId === c.id ? (
                         <>
@@ -53,7 +56,13 @@ export default function CoursesPage() {
                         </>
                     ) : (
                         <>
-                            <span>{c.name}</span>
+                            {/* 🔥 TYLKO NAZWA KLIKALNA */}
+                            <span
+                                onClick={() => navigate(`/modules/${c.id}`)}
+                                className="cursor-pointer hover:text-blue-400"
+                            >
+                                {c.name}
+                            </span>
 
                             {role === "ADMIN" && (
                                 <div className="flex gap-2">

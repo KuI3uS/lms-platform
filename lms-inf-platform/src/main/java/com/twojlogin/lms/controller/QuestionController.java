@@ -53,4 +53,9 @@ public class QuestionController {
     public List<Question> getByModule(@PathVariable Long moduleId) {
         return questionRepository.findByModuleId(moduleId);
     }
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        questionRepository.deleteById(id);
+    }
 }
