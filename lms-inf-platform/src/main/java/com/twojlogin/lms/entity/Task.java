@@ -1,5 +1,6 @@
 package com.twojlogin.lms.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -9,60 +10,24 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
-
-    private String theory;
-
-    private String example;
-
-    @Column(name = "task_content")
-
+    @Column(length = 5000)
     private String taskContent;
-
-    @Column(name = "expected_answer")
 
     private String expectedAnswer;
 
-    private String taskType;
+    private Integer orderIndex;
 
-    private int orderIndex;
 
     @ManyToOne
-    @JoinColumn(name = "module_id")
-    private CourseModule module;
+    @JoinColumn(name = "lesson_id")
+    @JsonIgnore
+    private Lesson lesson;
 
-    // GETTERY / SETTERY
+
+    // ===== GETTERY / SETTERY =====
 
     public Long getId() {
         return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getTheory() {
-        return theory;
-    }
-
-    public void setTheory(String theory) {
-        this.theory = theory;
-    }
-
-    public String getExample() {
-        return example;
-    }
-
-    public void setExample(String example) {
-        this.example = example;
     }
 
     public String getTaskContent() {
@@ -81,28 +46,19 @@ public class Task {
         this.expectedAnswer = expectedAnswer;
     }
 
-    public String getTaskType() {
-        return taskType;
-    }
-
-    public void setTaskType(String taskType) {
-        this.taskType = taskType;
-    }
-
-    public int getOrderIndex() {
+    public Integer getOrderIndex() {
         return orderIndex;
     }
 
-    public void setOrderIndex(int orderIndex) {
+    public void setOrderIndex(Integer orderIndex) {
         this.orderIndex = orderIndex;
     }
 
-    public CourseModule getModule() {
-        return module;
+    public Lesson getLesson() {
+        return lesson;
     }
 
-    public void setModule(CourseModule module) {
-        this.module = module;
+    public void setLesson(Lesson lesson) {
+        this.lesson = lesson;
     }
-
 }

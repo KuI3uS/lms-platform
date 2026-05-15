@@ -40,6 +40,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/submit/**").authenticated()
                         .requestMatchers("/api/tasks/**").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/lessons/**").permitAll()
+                        .requestMatchers("/api/lesson-submit/**").permitAll()
+                        .requestMatchers("/api/admin/submissions/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

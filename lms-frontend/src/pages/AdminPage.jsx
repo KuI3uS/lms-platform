@@ -9,20 +9,6 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 <Link
-                    to="/admin/add-course"
-                    className="bg-gray-800 p-6 rounded-xl hover:bg-gray-700 transition"
-                >
-                    ➕ Dodaj kurs
-                </Link>
-
-                <Link
-                    to="/admin/add-question"
-                    className="bg-gray-800 p-6 rounded-xl hover:bg-gray-700 transition"
-                >
-                    ❓ Dodaj pytanie
-                </Link>
-
-                <Link
                     to="/admin/users"
                     className="bg-gray-800 p-6 rounded-xl hover:bg-gray-700 transition"
                 >

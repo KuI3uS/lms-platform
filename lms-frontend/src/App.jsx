@@ -1,47 +1,59 @@
 import { Routes, Route } from "react-router-dom";
 import Layout from "./Layout";
+
+/* ===== USER PAGES ===== */
+
 import CoursesPage from "./pages/CoursesPage";
 import ModulePage from "./pages/ModulePage";
+import LessonListPage from "./pages/LessonListPage";
+import LessonPage from "./pages/LessonPage";
 import TestPage from "./pages/TestPage";
 import ResultsPage from "./pages/ResultsPage";
+import DashboardPage from "./pages/DashboardPage";
+
+/* ===== AUTH ===== */
 import Login from "./Login";
 import Register from "./Register";
-import DashboardPage from "./pages/DashboardPage";
+
+/* ===== ADMIN ===== */
 import AdminPage from "./pages/AdminPage";
 import AddCoursePage from "./pages/AddCoursePage";
 import AddQuestionPage from "./pages/AddQuestionPage";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminLessonPage from "./pages/AdminLessonPage";
+
+
+/* ===== ROUTE GUARDS ===== */
 import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
-import TaskPage from "./pages/TaskPage";
-import TaskDetailPage from "./pages/TaskDetailPage";
-import LessonPage from "./pages/LessonPage";
-import AdminTaskPage from "./pages/AdminTaskPage";
 
 export default function App() {
-
     return (
         <Routes>
 
-            {/* PUBLIC */}
+            {/* ===== PUBLIC ===== */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* PRIVATE */}
+            {/* ===== PRIVATE ===== */}
             <Route element={<ProtectedRoute />}>
 
                 <Route element={<Layout />}>
 
+                    {/* ===== MAIN ===== */}
                     <Route path="/" element={<CoursesPage />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
+
+                    {/* ===== COURSE FLOW ===== */}
                     <Route path="/modules/:courseId" element={<ModulePage />} />
+                    <Route path="/lessons/:moduleId" element={<LessonListPage />} />
+                    <Route path="/lesson/:lessonId" element={<LessonPage />} />
+
+                    {/* ===== TEST ===== */}
                     <Route path="/test/:moduleId" element={<TestPage />} />
                     <Route path="/results" element={<ResultsPage />} />
-                    <Route path="/tasks/:moduleId" element={<TaskPage />} />
-                    <Route path="/task/:id" element={<TaskDetailPage />} />
-                    <Route path="/lesson/:taskId" element={<LessonPage />} />
-                    <Route path="/admin/tasks/:moduleId" element={<AdminTaskPage />} />
 
+                    {/* ===== ADMIN ===== */}
                     <Route path="/admin" element={
                         <AdminRoute><AdminPage /></AdminRoute>
                     } />
@@ -56,6 +68,18 @@ export default function App() {
 
                     <Route path="/admin/add-question" element={
                         <AdminRoute><AddQuestionPage /></AdminRoute>
+                    } />
+
+                    {/* ===== ADMIN LESSON SYSTEM ===== */}
+                    <Route path="/admin/lessons/:moduleId" element={
+                        <AdminRoute><AdminLessonPage /></AdminRoute>
+                    } />
+
+                    {/* ===== 404 ===== */}
+                    <Route path="*" element={
+                        <div className="text-white p-10">
+                            404 - Strona nie istnieje
+                        </div>
                     } />
 
                 </Route>
