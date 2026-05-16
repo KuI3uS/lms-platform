@@ -4,6 +4,7 @@ import com.twojlogin.lms.security.JwtFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -32,16 +33,48 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+
+                        // AUTH
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/courses/**").permitAll()
-                        .requestMatchers("/api/questions/**").permitAll()
-                        .requestMatchers("/api/modules/**").permitAll()
-                        .requestMatchers("/api/me").authenticated()
+
+                        // STUDENT / ADMIN READ
+                        .requestMatchers(HttpMethod.GET, "/api/courses/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/modules/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/lessons/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/tasks/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/questions/**").authenticated()
+
+                        // ADMIN WRITE
+                        .requestMatchers(HttpMethod.POST, "/api/courses/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/courses/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/modules/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/modules/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/modules/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/lessons/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/lessons/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/lessons/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/tasks/lesson/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/tasks/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/tasks/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/questions/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/questions/**").hasRole("ADMIN")
+
+                        // STUDENT ACTIONS
+                        .requestMatchers(HttpMethod.POST, "/api/tasks/*/check").authenticated()
+                        .requestMatchers("/api/lesson-submit/**").authenticated()
+                        .requestMatchers("/api/submissions/**").authenticated()
                         .requestMatchers("/api/submit/**").authenticated()
-                        .requestMatchers("/api/tasks/**").permitAll()
+                        .requestMatchers("/api/my-results").authenticated()
+                        .requestMatchers("/api/me").authenticated()
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // ADMIN ONLY
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/lessons/**").permitAll()
-                        .requestMatchers("/api/lesson-submit/**").permitAll()
                         .requestMatchers("/api/admin/submissions/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
@@ -52,6 +85,7 @@ public class SecurityConfig {
                         )
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

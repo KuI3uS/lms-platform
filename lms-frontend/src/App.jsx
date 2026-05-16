@@ -10,6 +10,7 @@ import LessonPage from "./pages/LessonPage";
 import TestPage from "./pages/TestPage";
 import ResultsPage from "./pages/ResultsPage";
 import DashboardPage from "./pages/DashboardPage";
+import AdminSubmissionsPage from "./pages/AdminSubmissionsPage";
 
 /* ===== AUTH ===== */
 import Login from "./Login";
@@ -26,6 +27,8 @@ import AdminLessonPage from "./pages/AdminLessonPage";
 /* ===== ROUTE GUARDS ===== */
 import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 
 export default function App() {
     return (
@@ -34,6 +37,9 @@ export default function App() {
             {/* ===== PUBLIC ===== */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
 
             {/* ===== PRIVATE ===== */}
             <Route element={<ProtectedRoute />}>
@@ -74,7 +80,9 @@ export default function App() {
                     <Route path="/admin/lessons/:moduleId" element={
                         <AdminRoute><AdminLessonPage /></AdminRoute>
                     } />
-
+                    <Route path="/admin/submissions" element={
+                        <AdminRoute><AdminSubmissionsPage /></AdminRoute>
+                    } />
                     {/* ===== 404 ===== */}
                     <Route path="*" element={
                         <div className="text-white p-10">

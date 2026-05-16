@@ -1,5 +1,14 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import {
+    BsGrid1X2,
+    BsBook,
+    BsBarChart,
+    BsShieldLock,
+    BsPeople,
+    BsPlusCircle,
+    BsInbox
+} from "react-icons/bs";
 
 export default function Layout() {
     const token = localStorage.getItem("token");
@@ -25,33 +34,30 @@ export default function Layout() {
         }`;
 
     return (
-
         <div className="flex h-screen bg-gray-950 text-white">
             <aside className="w-72 bg-gray-900 border-r border-gray-800 flex flex-col">
                 <div className="p-6 border-b border-gray-800">
                     <Link to="/">
                         <h1 className="text-2xl font-bold">LMS Panel</h1>
                         <p className="text-sm text-gray-400 mt-1">
-                            {role || "USER"}
+                            Rola: {role || "USER"}
                         </p>
                     </Link>
                 </div>
 
-                {/* NAV */}
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-
                     <NavLink to="/dashboard" className={linkClass}>
-                        <span>🏠</span>
+                        <BsGrid1X2 />
                         <span>Dashboard</span>
                     </NavLink>
 
                     <NavLink to="/" className={linkClass}>
-                        <span>📚</span>
+                        <BsBook />
                         <span>Kursy</span>
                     </NavLink>
 
                     <NavLink to="/results" className={linkClass}>
-                        <span>📊</span>
+                        <BsBarChart />
                         <span>Wyniki</span>
                     </NavLink>
 
@@ -62,57 +68,44 @@ export default function Layout() {
                             </div>
 
                             <NavLink to="/admin" className={linkClass}>
-                                <span>⚙️</span>
+                                <BsShieldLock />
                                 <span>Panel Admina</span>
                             </NavLink>
 
                             <NavLink to="/admin/users" className={linkClass}>
-                                <span>👥</span>
+                                <BsPeople />
                                 <span>Użytkownicy</span>
                             </NavLink>
 
                             <NavLink to="/admin/add-course" className={linkClass}>
-                                <span>➕</span>
+                                <BsPlusCircle />
                                 <span>Dodaj kurs</span>
                             </NavLink>
 
-                            <NavLink to="/admin/add-question" className={linkClass}>
-                                <span>❓</span>
-                                <span>Dodaj pytanie</span>
-                            </NavLink>
-
                             <NavLink to="/admin/submissions" className={linkClass}>
-                                <span>📩</span>
+                                <BsInbox />
                                 <span>Prace uczniów</span>
                             </NavLink>
                         </>
                     )}
-
                 </nav>
 
-                {/* USER INFO */}
                 <div className="p-4 border-t border-gray-800">
                     <div className="bg-gray-800 rounded-xl p-4">
-                        <p className="text-xs text-gray-400 mb-1">
-                            Zalogowano jako
-                        </p>
+                        <p className="text-xs text-gray-400 mb-1">Zalogowano jako</p>
                         <p className="text-sm font-semibold break-all">
                             {email || "Brak danych"}
                         </p>
                     </div>
                 </div>
-
             </aside>
 
-            {/* MAIN */}
             <div className="flex-1 flex flex-col min-w-0">
-
                 <Navbar />
 
                 <main className="flex-1 overflow-auto p-8 bg-gray-950">
                     <Outlet />
                 </main>
-
             </div>
         </div>
     );

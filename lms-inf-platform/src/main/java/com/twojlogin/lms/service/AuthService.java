@@ -8,6 +8,7 @@ import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.SchoolClassRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import com.twojlogin.lms.security.JwtService;
+import com.twojlogin.lms.util.ClassNameNormalizer;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -40,12 +41,13 @@ public class AuthService {
         user.setFirstName(request.firstName);
         user.setLastName(request.lastName);
 
+        String normalizedClassName = ClassNameNormalizer.normalize(request.className);
         SchoolClass schoolClass = schoolClassRepository
-                .findByName(request.className)
+                .findByName(normalizedClassName)
                 .orElseGet(() -> {
-                    SchoolClass sc = new SchoolClass();
-                    sc.setName(request.className);
-                    return schoolClassRepository.save(sc);
+                    SchoolClass newClass = new SchoolClass();
+                    newClass.setName(normalizedClassName);
+                    return schoolClassRepository.save(newClass);
                 });
 
         user.setSchoolClass(schoolClass);

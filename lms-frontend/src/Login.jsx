@@ -73,10 +73,16 @@ export default function Login() {
                     {loading ? "Logowanie..." : "Zaloguj się"}
                 </button>
 
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-gray-400 mt-3 text-center">
                     Nie masz konta?{" "}
                     <a href="/register" className="text-blue-400">
                         Zarejestruj się
+                    </a>
+                </p>
+                <p className="text-sm text-gray-400 mt-3 text-center">
+                    Nie pamiętasz hasła?{" "}
+                    <a href="/forgot-password" className="text-blue-400 hover:text-blue-300">
+                        Zresetuj hasło
                     </a>
                 </p>
 

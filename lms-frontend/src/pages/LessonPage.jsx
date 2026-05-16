@@ -70,8 +70,20 @@ export default function LessonPage() {
         }
     };
 
-    if (error) return <p className="text-red-400">Błąd: {error}</p>;
-    if (!lesson) return <p className="text-white">Loading...</p>;
+    if (error) {
+        return (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl">
+                Błąd: {error}
+            </div>
+        );
+    }
+    if (!lesson) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 text-white">
@@ -83,7 +95,7 @@ export default function LessonPage() {
             <div className="bg-gray-800 p-5 rounded space-y-4">
                 <div>
                     <h2 className="text-blue-400 font-semibold mb-2">
-                        📘 Wytłumaczenie
+                        Wytłumaczenie
                     </h2>
                     <p className="whitespace-pre-line text-gray-300">
                         {lesson.theory || "BRAK TEORII"}
@@ -92,7 +104,7 @@ export default function LessonPage() {
 
                 <div>
                     <h2 className="text-green-400 font-semibold mb-2">
-                        💡 Przykład
+                        Przykład
                     </h2>
                     <pre className="bg-gray-900 p-4 rounded text-green-400 whitespace-pre-wrap">
                         {lesson.example || "BRAK PRZYKŁADU"}
@@ -109,7 +121,7 @@ export default function LessonPage() {
                     <div key={task.id} className="bg-gray-800 p-5 rounded space-y-3">
 
                         <h3 className="text-yellow-400 font-semibold">
-                            🧠 Zadanie {index + 1}
+                            Zadanie {index + 1}
                         </h3>
 
                         <p className="text-gray-300 whitespace-pre-line">
@@ -150,7 +162,7 @@ export default function LessonPage() {
                         onClick={submitAll}
                         className="bg-purple-600 px-6 py-3 rounded font-semibold"
                     >
-                        📩 Wyślij wszystkie zadania do nauczyciela
+                        Wyślij wszystkie zadania do nauczyciela
                     </button>
                 )}
             </div>

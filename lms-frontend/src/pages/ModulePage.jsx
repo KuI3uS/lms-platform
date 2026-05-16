@@ -10,7 +10,6 @@ export default function ModulePage() {
     const [modules, setModules] = useState([]);
     const [newModule, setNewModule] = useState("");
 
-    // 🔥 BEZPIECZNE ODCZYTANIE ROLI
     const token = localStorage.getItem("token");
     let role = null;
 
@@ -22,7 +21,6 @@ export default function ModulePage() {
         role = null;
     }
 
-    // 🔥 LOAD MODULES
     useEffect(() => {
         loadModules();
     }, [courseId]);
@@ -36,7 +34,6 @@ export default function ModulePage() {
         }
     };
 
-    // 🔥 CREATE
     const createModule = async () => {
         if (!newModule.trim()) {
             alert("Podaj nazwę modułu");
@@ -57,8 +54,6 @@ export default function ModulePage() {
             alert("Błąd dodawania modułu");
         }
     };
-
-    // 🔥 DELETE
     const deleteModule = async (id) => {
         if (!window.confirm("Usunąć moduł?")) return;
 
@@ -74,14 +69,11 @@ export default function ModulePage() {
         }
     };
 
-    // ================= UI =================
-
     return (
         <div className="max-w-3xl mx-auto text-white space-y-6">
 
-            <h1 className="text-3xl font-bold">📦 Moduły</h1>
+            <h1 className="text-3xl font-bold">Moduły</h1>
 
-            {/* 🔥 DODAWANIE */}
             <div className="flex gap-2">
 
                 <input
@@ -100,14 +92,12 @@ export default function ModulePage() {
 
             </div>
 
-            {/* 🔥 LISTA */}
             {modules.map(m => (
                 <div
                     key={m.id}
                     className="bg-gray-800 p-4 rounded flex justify-between items-center"
                 >
 
-                    {/* 🔥 KLIK = USER VIEW */}
                     <div
                         onClick={() => navigate(`/lessons/${m.id}`)}
                         className="cursor-pointer flex-1"
@@ -115,11 +105,9 @@ export default function ModulePage() {
                         {m.name}
                     </div>
 
-                    {/* 🔥 ADMIN PANEL */}
                     {role === "ADMIN" && (
                         <div className="flex gap-2 ml-4">
 
-                            {/* ⚙️ LEKCJE */}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -130,7 +118,6 @@ export default function ModulePage() {
                                 ⚙️
                             </button>
 
-                            {/* 🗑 DELETE */}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
