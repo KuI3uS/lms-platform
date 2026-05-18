@@ -54,4 +54,20 @@ public class CourseModuleController {
                     .body("Nie możesz usunąć modułu — najpierw usuń zadania");
         }
     }
+
+    @GetMapping("/{id}")
+    public CourseModule getOne(@PathVariable Long id) {
+        return moduleRepository.findById(id).orElseThrow();
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CourseModule update(@PathVariable Long id, @RequestBody CourseModule updated) {
+        CourseModule module = moduleRepository.findById(id).orElseThrow();
+
+        module.setName(updated.getName());
+        module.setLessonsLocked(updated.isLessonsLocked());
+
+        return moduleRepository.save(module);
+    }
 }
