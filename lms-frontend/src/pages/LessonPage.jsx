@@ -44,12 +44,17 @@ export default function LessonPage() {
                 })
             });
 
-            alert("Wysłano zadania do nauczyciela");
+            await apiFetch(`/lessons/${lessonId}/complete`, {
+                method: "POST"
+            });
+
+            alert("Wysłano zadania i ukończono lekcję");
         } catch (e) {
             console.error(e);
             alert("Błąd wysyłania zadań");
         }
     };
+
 
     const check = async (taskId) => {
         try {
