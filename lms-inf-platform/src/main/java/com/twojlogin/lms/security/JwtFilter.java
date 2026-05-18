@@ -34,11 +34,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
 
+        System.out.println("JWT FILTER URL: " + request.getRequestURI());
+        System.out.println("JWT AUTH HEADER EXISTS: " + (authHeader != null));
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
             try {
                 String token = authHeader.substring(7);
                 String email = jwtService.extractEmail(token);
+
+                System.out.println("JWT EMAIL: " + email);
 
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
@@ -47,6 +52,8 @@ public class JwtFilter extends OncePerRequestFilter {
                     if (jwtService.isTokenValid(token, userDetails)) {
 
                         String role = jwtService.extractRole(token);
+
+                        System.out.println("JWT ROLE: " + role);
 
                         var authorities = java.util.List.of(
                                 new SimpleGrantedAuthority("ROLE_" + role)
@@ -64,10 +71,15 @@ public class JwtFilter extends OncePerRequestFilter {
                         );
 
                         SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                        System.out.println("JWT AUTH SET: true");
+                    } else {
+                        System.out.println("JWT VALID: false");
                     }
                 }
 
             } catch (Exception e) {
+                System.out.println("JWT ERROR: " + e.getMessage());
                 SecurityContextHolder.clearContext();
             }
         }
