@@ -17,11 +17,9 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(List.of(
-
                 "http://localhost:5173",
-
-                "https://lms-platform-psi-ten.vercel.app"
-
+                "https://lms-platform-psi-ten.vercel.app",
+                "https://edu-hub.com.pl"
         ));
 
         config.setAllowedMethods(List.of(
