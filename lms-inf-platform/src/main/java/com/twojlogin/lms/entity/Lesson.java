@@ -11,16 +11,17 @@ public class Lesson {
     private Long id;
 
     private String title;
-    @Column(length = 10000)
-    private String content;
     private Integer position;
     private boolean freePreview;
 
-
-    @Column(length = 5000)
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String content;
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String theory;
-
-    @Column(length = 5000)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String example;
 
     private Integer orderIndex;
