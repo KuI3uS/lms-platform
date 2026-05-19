@@ -29,11 +29,13 @@ import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./ForgotPassword";
 import ResetPassword from "./ResetPassword";
+import LandingPage from "./pages/LandingPage";
 
 export default function App() {
     return (
         <Routes>
 
+            <Route path="/" element={<LandingPage />} />
             {/* ===== PUBLIC ===== */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
