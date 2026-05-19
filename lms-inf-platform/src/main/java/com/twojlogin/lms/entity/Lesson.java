@@ -16,6 +16,12 @@ public class Lesson {
 
     @Lob
     @Column(columnDefinition = "TEXT")
+    private String imageUrl;
+
+    private boolean published;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String content;
     @Lob
     @Column(columnDefinition = "TEXT")
@@ -111,5 +117,21 @@ public class Lesson {
 
     public void setFreePreview(boolean freePreview) {
         this.freePreview = freePreview;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public boolean isPublished() {
+        return published;
+    }
+
+    public void setPublished(boolean published) {
+        this.published = published;
     }
 }

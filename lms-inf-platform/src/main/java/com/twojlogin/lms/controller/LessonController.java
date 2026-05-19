@@ -78,6 +78,10 @@ public class LessonController {
         lesson.setTheory(updated.getTheory());
         lesson.setExample(updated.getExample());
         lesson.setOrderIndex(updated.getOrderIndex());
+        lesson.setContent(updated.getContent());
+        lesson.setImageUrl(updated.getImageUrl());
+        lesson.setPublished(updated.isPublished());
+        lesson.setFreePreview(updated.isFreePreview());
 
         return lessonRepository.save(lesson);
     }
