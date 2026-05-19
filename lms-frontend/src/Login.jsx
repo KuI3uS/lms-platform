@@ -27,7 +27,7 @@ export default function Login() {
 
             localStorage.setItem("token", data.token);
 
-            window.location.href = "/courses";
+            window.location.href = "/";
         } catch (e) {
             setError(e.message);
         } finally {
