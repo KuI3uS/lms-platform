@@ -7,5 +7,6 @@ public enum TutoringStatus {
     CONFIRMED,
     REJECTED,
     CANCELLED,
-    COMPLETED
+    COMPLETED,
+    PENDING_PAYMENT,
 }

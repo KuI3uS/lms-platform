@@ -1,6 +1,7 @@
 package com.twojlogin.lms.repository;
 
 import com.twojlogin.lms.entity.TutoringBooking;
+import com.twojlogin.lms.entity.TutoringStatus;
 import com.twojlogin.lms.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,8 +14,11 @@ public interface TutoringBookingRepository extends JpaRepository<TutoringBooking
 
     List<TutoringBooking> findByStudentOrderByStartTimeDesc(User student);
 
-    boolean existsByStartTimeLessThanAndEndTimeGreaterThan(
+    boolean existsByStatusAndStartTimeLessThanAndEndTimeGreaterThan(
+
+            TutoringStatus status,
             LocalDateTime endTime,
             LocalDateTime startTime
+
     );
 }

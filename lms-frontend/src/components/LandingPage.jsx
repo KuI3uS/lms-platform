@@ -24,7 +24,7 @@ export default function LandingPage() {
                 <a href="#how">Jak działa</a>
                 <a href="https://kui3us.github.io/portfolio/">Portfolio</a>
                 <a href="#contact">Kontakt</a>
-                <a href="#tutoring">Korepetycje</a>
+                <a href="/tutoring-booking">Korepetycje</a>
                 <Link to="/login">Logowanie</Link>
                 <Link to="/register">Rejestracja</Link>
             </nav>
