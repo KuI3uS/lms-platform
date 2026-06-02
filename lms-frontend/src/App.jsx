@@ -32,6 +32,8 @@ import ResetPassword from "./ResetPassword";
 import LandingPage from "./components/LandingPage";
 import TutoringPage from "./pages/TutoringPage";
 
+import AdminTutoringPage from "./pages/AdminTutoringPage";
+
 export default function App() {
     return (
         <Routes>
@@ -79,6 +81,10 @@ export default function App() {
 
                     <Route path="/admin/add-question" element={
                         <AdminRoute><AddQuestionPage /></AdminRoute>
+                    } />
+
+                    <Route path="/admin/tutoring" element={
+                        <AdminRoute><AdminTutoringPage /></AdminRoute>
                     } />
 
                     {/* ===== ADMIN LESSON SYSTEM ===== */}
