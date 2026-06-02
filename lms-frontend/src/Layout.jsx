@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import { BsCalendarCheck } from "react-icons/bs";
 import {
     BsGrid1X2,
     BsBook,
@@ -54,6 +55,11 @@ export default function Layout() {
                     <NavLink to="/courses" className={linkClass}>
                         <BsBook />
                         <span>Kursy</span>
+                    </NavLink>
+
+                    <NavLink to="/tutoring" className={linkClass}>
+                        <BsCalendarCheck />
+                        <span>Korepetycje</span>
                     </NavLink>
 
                     <NavLink to="/results" className={linkClass}>
