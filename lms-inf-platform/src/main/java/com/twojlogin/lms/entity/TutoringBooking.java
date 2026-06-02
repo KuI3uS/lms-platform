@@ -10,6 +10,7 @@ public class TutoringBooking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     private String guestName;
     private String guestEmail;
     private String guestPhone;
@@ -40,6 +41,14 @@ public class TutoringBooking {
 
     public Long getId() {
         return id;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public void setId(Long id) {
