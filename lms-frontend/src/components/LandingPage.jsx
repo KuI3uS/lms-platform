@@ -10,6 +10,7 @@ import {
     BsRocketTakeoff,
     BsShieldCheck,
     BsTerminal,
+    BsCalendarCheck,
 } from "react-icons/bs";
 
 import "../styles/landing.css";
@@ -23,6 +24,7 @@ export default function LandingPage() {
                 <a href="#how">Jak działa</a>
                 <a href="https://kui3us.github.io/portfolio/">Portfolio</a>
                 <a href="#contact">Kontakt</a>
+                <a href="#tutoring">Korepetycje</a>
                 <Link to="/login">Logowanie</Link>
                 <Link to="/register">Rejestracja</Link>
             </nav>
@@ -92,6 +94,8 @@ export default function LandingPage() {
                     </div>
                 </section>
 
+
+
                 <section id="how" className="section">
                     <div className="container">
                         <h2 className="section-title">Jak działa EduHub?</h2>
@@ -131,6 +135,58 @@ export default function LandingPage() {
                                     System zapisuje ukończone lekcje, prace ucznia,
                                     wyniki i komentarze nauczyciela.
                                 </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tutoring" className="section">
+                    <div className="container card card--featured">
+                        <span className="featured-label">KOREPETYCJE ONLINE</span>
+
+                        <h2>Zarezerwuj korepetycje z informatyki</h2>
+
+                        <p className="featured-intro">
+                            Możesz umówić się na indywidualne zajęcia z INF.02, INF.03,
+                            INF.04, Javy, SQL, Spring Boot lub przygotowania do egzaminu.
+                        </p>
+
+                        <div className="featured-grid">
+                            <div className="featured-text">
+                                <h3>Jak to działa?</h3>
+                                <ul>
+                                    <li>wybierasz dostępny termin z kalendarza,</li>
+                                    <li>podajesz temat zajęć,</li>
+                                    <li>rezerwujesz termin,</li>
+                                    <li>po akceptacji otrzymujesz link do spotkania.</li>
+                                </ul>
+
+                                <h3>Tematy zajęć</h3>
+                                <ul>
+                                    <li>INF.02 — systemy, sieci, Linux, administracja,</li>
+                                    <li>INF.03 — programowanie, Java, SQL, backend,</li>
+                                    <li>INF.04 — web, JavaScript, aplikacje internetowe,</li>
+                                    <li>projekty szkolne i przygotowanie do egzaminu.</li>
+                                </ul>
+
+                                <div className="featured-cta">
+                                    <Link to="/login" className="btn-outline">
+                                        Zarezerwuj termin
+                                    </Link>
+
+                                    <Link to="/register" className="btn-ghost">
+                                        Załóż konto
+                                    </Link>
+                                </div>
+                            </div>
+
+                            <div className="architecture-diagram card">
+                                <div>
+                                    <BsCalendarCheck size={52} className="accent" />
+                                    <p>
+                                        Kalendarz → Termin → Rezerwacja → Spotkanie online
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
