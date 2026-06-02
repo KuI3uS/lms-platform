@@ -37,6 +37,10 @@ public class SecurityConfig {
                         // AUTH
                         .requestMatchers("/api/auth/**").permitAll()
 
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/tutoring/available").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/tutoring/book").permitAll()
+
                         // STUDENT / ADMIN READ
                         .requestMatchers(HttpMethod.GET, "/api/courses/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/modules/**").authenticated()
@@ -79,9 +83,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/submissions/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/tutoring/**").hasRole("ADMIN")
-
-                        .requestMatchers(HttpMethod.GET, "/api/tutoring/available").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/tutoring/book").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/tutoring/my").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/tutoring/all").hasRole("ADMIN")
