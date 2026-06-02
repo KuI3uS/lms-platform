@@ -33,8 +33,10 @@ public class JwtFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String path = request.getServletPath();
+
         if (
-                path.equals("/api/tutoring/book") ||
+                request.getMethod().equals("OPTIONS") ||
+                        path.equals("/api/tutoring/book") ||
                         path.equals("/api/tutoring/available") ||
                         path.startsWith("/api/auth/")
         ) {
