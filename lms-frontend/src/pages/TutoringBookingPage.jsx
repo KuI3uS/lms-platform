@@ -211,7 +211,7 @@ export default function TutoringBookingPage() {
 
                         <div className="flex justify-center">
                             <img
-                                src="image/80zl.png"
+                                src="/images/80zl.png"
                                 alt="Kod QR płatności Revolut"
                                 className="max-w-xs rounded-2xl border border-gray-700"
                             />
