@@ -35,6 +35,19 @@ public interface TutoringBookingRepository extends JpaRepository<TutoringBooking
             @Param("now") LocalDateTime now
     );
 
+    @Query("""
+        SELECT b
+        FROM TutoringBooking b
+        WHERE b.status = com.twojlogin.lms.entity.TutoringStatus.PAID
+           OR (
+                b.status = com.twojlogin.lms.entity.TutoringStatus.PENDING_PAYMENT
+                AND b.paymentDeadline > :now
+           )
+    """)
+    List<TutoringBooking> findActiveBlockedBookings(
+            @Param("now") LocalDateTime now
+    );
+
     List<TutoringBooking> findByStatusAndPaymentDeadlineBefore(
             TutoringStatus status,
             LocalDateTime now

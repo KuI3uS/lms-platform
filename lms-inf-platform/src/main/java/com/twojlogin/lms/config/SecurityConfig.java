@@ -40,6 +40,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tutoring/available").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/tutoring/blocked").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/tutoring/book").permitAll()
 
                         // STUDENT / ADMIN READ

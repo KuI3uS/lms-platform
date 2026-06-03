@@ -18,6 +18,7 @@ export default function TutoringBookingPage() {
     const [selectedAvailability, setSelectedAvailability] = useState(null);
     const [selectedStart, setSelectedStart] = useState("");
     const [hours, setHours] = useState(1);
+    const [blockedBookings, setBlockedBookings] = useState([]);
 
     const [form, setForm] = useState({
         name: "",
@@ -41,14 +42,24 @@ export default function TutoringBookingPage() {
             setLoading(true);
             setError(null);
 
-            const res = await fetch(`${API_URL}/tutoring/available`);
+            const [availabilityRes, blockedRes] = await Promise.all([
+                fetch(`${API_URL}/tutoring/available`),
+                fetch(`${API_URL}/tutoring/blocked`)
+            ]);
 
-            if (!res.ok) {
+            if (!availabilityRes.ok) {
                 throw new Error("Nie udało się pobrać dostępnych terminów");
             }
 
-            const data = await res.json();
-            setAvailability(data || []);
+            if (!blockedRes.ok) {
+                throw new Error("Nie udało się pobrać zajętych terminów");
+            }
+
+            const availabilityData = await availabilityRes.json();
+            const blockedData = await blockedRes.json();
+
+            setAvailability(availabilityData || []);
+            setBlockedBookings(blockedData || []);
         } catch (e) {
             console.error(e);
             setError(e.message);
@@ -123,12 +134,28 @@ export default function TutoringBookingPage() {
         let current = new Date(start);
 
         while (current < end) {
-            result.push(toLocalDateTimeValue(current));
+            const slotStart = new Date(current);
+            const slotEnd = new Date(current);
+            slotEnd.setHours(slotEnd.getHours() + Number(hours));
+
+            const fitsInAvailability = slotEnd <= end;
+
+            const isBlocked = blockedBookings.some(booking => {
+                const bookingStart = new Date(booking.startTime);
+                const bookingEnd = new Date(booking.endTime);
+
+                return slotStart < bookingEnd && slotEnd > bookingStart;
+            });
+
+            if (fitsInAvailability && !isBlocked) {
+                result.push(toLocalDateTimeValue(slotStart));
+            }
+
             current.setHours(current.getHours() + 1);
         }
 
         return result;
-    }, [selectedAvailability]);
+    }, [selectedAvailability, blockedBookings, hours]);
 
     const selectedEnd = selectedStart ? addHours(selectedStart, hours) : "";
 
