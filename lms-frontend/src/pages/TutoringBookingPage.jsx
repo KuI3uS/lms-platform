@@ -199,6 +199,34 @@ export default function TutoringBookingPage() {
                         </p>
                     </div>
 
+                    <div className="bg-gray-800 rounded-2xl p-6 space-y-5 text-center">
+                        <h2 className="text-2xl font-bold">
+                            Zapłać wygodnie
+                        </h2>
+
+                        <p className="text-gray-400">
+                            Zeskanuj kod QR telefonem albo kliknij przycisk poniżej,
+                            aby przejść do płatności Revolut.
+                        </p>
+
+                        <div className="flex justify-center">
+                            <img
+                                src="/image/80zl.png"
+                                alt="Kod QR płatności Revolut"
+                                className="max-w-xs rounded-2xl border border-gray-700"
+                            />
+                        </div>
+
+                        <a
+                            href="https://checkout.revolut.com/pay/334e96d4-687b-46d9-8f1b-b5452be7d555"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold inline-block"
+                        >
+                            Przejdź do płatności
+                        </a>
+                    </div>
+
                     <button
                         onClick={() => window.location.href = "/"}
                         className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
