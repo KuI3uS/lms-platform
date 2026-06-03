@@ -20,6 +20,8 @@ public class TutoringBooking {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
+    private LocalDateTime paymentDeadline;
+
     @Column(length = 1000)
     private String topic;
 
@@ -165,5 +167,13 @@ public class TutoringBooking {
 
     public void setStudent(User student) {
         this.student = student;
+    }
+
+    public LocalDateTime getPaymentDeadline() {
+        return paymentDeadline;
+    }
+
+    public void setPaymentDeadline(LocalDateTime paymentDeadline) {
+        this.paymentDeadline = paymentDeadline;
     }
 }
