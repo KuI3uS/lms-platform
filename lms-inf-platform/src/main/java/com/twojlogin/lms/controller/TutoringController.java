@@ -92,12 +92,11 @@ public class TutoringController {
             throw new RuntimeException("Wybrany termin nie mieści się w dostępnych godzinach");
         }
 
-        boolean conflict = bookingRepository
-                .existsByStatusInAndStartTimeLessThanAndEndTimeGreaterThan(
-                        List.of(TutoringStatus.PENDING_PAYMENT, TutoringStatus.PAID),
-                        request.getEndTime(),
-                        request.getStartTime()
-                );
+        boolean conflict = bookingRepository.existsActiveConflict(
+                request.getStartTime(),
+                request.getEndTime(),
+                LocalDateTime.now()
+        );
         if (conflict) {
             throw new RuntimeException("Ten termin jest aktualnie zajęty lub oczekuje na płatność");
         }

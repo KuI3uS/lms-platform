@@ -4,9 +4,10 @@ import com.twojlogin.lms.entity.TutoringBooking;
 import com.twojlogin.lms.entity.TutoringStatus;
 import com.twojlogin.lms.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
 public interface TutoringBookingRepository extends JpaRepository<TutoringBooking, Long> {
@@ -15,10 +16,23 @@ public interface TutoringBookingRepository extends JpaRepository<TutoringBooking
 
     List<TutoringBooking> findByStudentOrderByStartTimeDesc(User student);
 
-    boolean existsByStatusInAndStartTimeLessThanAndEndTimeGreaterThan(
-            Collection<TutoringStatus> statuses,
-            LocalDateTime endTime,
-            LocalDateTime startTime
+    @Query("""
+        SELECT COUNT(b) > 0
+        FROM TutoringBooking b
+        WHERE b.startTime < :endTime
+          AND b.endTime > :startTime
+          AND (
+                b.status = com.twojlogin.lms.entity.TutoringStatus.PAID
+                OR (
+                    b.status = com.twojlogin.lms.entity.TutoringStatus.PENDING_PAYMENT
+                    AND b.paymentDeadline > :now
+                )
+          )
+    """)
+    boolean existsActiveConflict(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime,
+            @Param("now") LocalDateTime now
     );
 
     List<TutoringBooking> findByStatusAndPaymentDeadlineBefore(
