@@ -57,11 +57,6 @@ export default function Layout() {
                         <span>Kursy</span>
                     </NavLink>
 
-                    <NavLink to="/tutoring" className={linkClass}>
-                        <BsCalendarCheck />
-                        <span>Korepetycje</span>
-                    </NavLink>
-
                     <NavLink to="/results" className={linkClass}>
                         <BsBarChart />
                         <span>Wyniki</span>
