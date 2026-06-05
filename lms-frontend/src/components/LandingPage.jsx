@@ -14,7 +14,7 @@
     } from "react-icons/bs";
 
     import "../styles/landing.css";
-    import TutoringFloatingButton from "../components/TutoringFloatingButton";
+    import TutoringFloatingButton from "./TutoringFloatingButton";
 
     export default function LandingPage() {
         return (
