@@ -358,7 +358,11 @@ export default function TutoringBookingPage() {
                             <div className="grid gap-4">
                                 <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
                                     <Calendar
-                                        onChange={setSelectedDate}
+                                        onChange={(date) => {
+                                            setSelectedDate(Array.isArray(date) ? date[0] : date);
+                                            setSelectedAvailability(null);
+                                            setSelectedStart("");
+                                        }}
                                         value={selectedDate}
                                         tileClassName={({ date }) => {
                                             const hasTerm = availability.some(term => sameDay(term.startTime, date));
