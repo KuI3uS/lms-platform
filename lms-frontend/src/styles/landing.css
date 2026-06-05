@@ -388,3 +388,31 @@ footer {
         padding: 30px;
     }
 }
+
+.react-calendar {
+    width: 100%;
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 16px;
+    padding: 16px;
+    color: white;
+}
+
+.react-calendar button {
+    color: white;
+    border-radius: 10px;
+}
+
+.react-calendar button:hover {
+    background: #2563eb;
+}
+
+.react-calendar__tile--active {
+    background: #2563eb !important;
+    color: white;
+}
+
+.has-availability {
+    background: rgba(37, 99, 235, 0.25) !important;
+    border: 1px solid rgba(59, 130, 246, 0.7) !important;
+}
