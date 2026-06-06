@@ -28,13 +28,13 @@
                 <header id="home" className="hero">
                     <div className="hero-content">
                         <h1>
-                            Nauka INF.02, INF.03 i INF.04<br />
+                            Kursy IT, programowanie i przygotowanie do egzaminów<br />
                             w nowoczesnej platformie <span className="accent">EduHub</span>
                         </h1>
 
                         <p className="hero-subtitle">
-                            Kursy programowania, backendu, baz danych, systemów operacyjnych
-                            i przygotowania do egzaminów zawodowych.
+                            Ucz się INF.02, INF.03, INF.04, Javy, Pythona, SQL, backendu,
+                            aplikacji webowych i ścieżki Junior Java Developer od podstaw do poziomu projektowego.
                         </p>
 
                         <div className="hero-badges">
@@ -42,8 +42,9 @@
                             <span className="badge">INF.03</span>
                             <span className="badge">INF.04</span>
                             <span className="badge">Java</span>
-                            <span className="badge">Spring Boot</span>
+                            <span className="badge">Python</span>
                             <span className="badge">SQL</span>
+                            <span className="badge">Spring Boot</span>
                         </div>
 
                         <div className="hero-platform-box">
