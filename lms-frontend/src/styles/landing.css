@@ -420,32 +420,90 @@ footer {
 .landing-page {
     position: relative;
 }
+.hero-platform-box {
+    margin: 48px auto 0;
+    max-width: 620px;
+    padding: 28px;
 
-.platform-access {
-    position: fixed;
-    top: 14px;
-    right: 30px;
-    z-index: 1100;
-}
+    background: linear-gradient(
+            135deg,
+            rgba(6,182,212,0.16),
+            rgba(255,255,255,0.04)
+    );
 
-.platform-access a {
-    display: inline-flex;
-    align-items: center;
-    padding: 12px 22px;
-
-    border-radius: 12px;
-
-    background: var(--accent);
-    color: #000;
-
-    font-weight: 700;
+    border: 1px solid rgba(6,182,212,0.35);
+    border-radius: 24px;
 
     box-shadow:
-            0 10px 30px rgba(6,182,212,0.3);
+            0 0 40px rgba(6,182,212,0.18),
+            inset 0 1px 0 rgba(255,255,255,0.08);
 
-    transition: .2s;
+    animation: platformFloat 4s ease-in-out infinite;
 }
 
-.platform-access a:hover {
-    transform: translateY(-2px);
+.hero-platform-label {
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.hero-platform-box h3 {
+    font-size: 26px;
+    margin: 0 0 12px;
+}
+
+.hero-platform-box p {
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.hero-actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.btn-primary-glow {
+    padding: 15px 24px;
+    border-radius: 14px;
+    background: var(--accent);
+    color: #020617;
+    font-weight: 900;
+
+    box-shadow: 0 0 30px rgba(6,182,212,0.45);
+    transition: 0.25s;
+}
+
+.btn-primary-glow:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 0 45px rgba(6,182,212,0.7);
+}
+
+.btn-secondary-glass {
+    padding: 15px 24px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: white;
+    font-weight: 800;
+    transition: 0.25s;
+}
+
+.btn-secondary-glass:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+}
+
+@keyframes platformFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
 }
