@@ -10,7 +10,18 @@ export default function LessonListPage() {
     const [lessons, setLessons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const completedCount = lessons.filter(l => l.completed).length;
+    const progress = lessons.length > 0
+        ? Math.round((completedCount / lessons.length) * 100)
+        : 0;
 
+    const goNextLesson = () => {
+        const currentIndex = moduleLessons.findIndex(l => l.id === Number(lessonId));
+        const next = moduleLessons[currentIndex + 1];
+        if (next) {
+            navigate(`/lesson/${next.id}`);
+        }
+    };
     useEffect(() => {
         const load = async () => {
             setLoading(true);
@@ -61,6 +72,19 @@ export default function LessonListPage() {
                 <p className="text-gray-400 mt-1">
                     Wybierz lekcję, aby przejść do materiału i zadań.
                 </p>
+            </div>
+
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                <p className="text-gray-400 mb-2">
+                    Postęp modułu: {progress}%
+                </p>
+
+                <div className="w-full bg-gray-700 rounded-full h-3">
+                    <div
+                        className="bg-blue-500 h-3 rounded-full"
+                        style={{ width: `${progress}%` }}
+                    />
+                </div>
             </div>
 
             {lessons.length === 0 ? (
