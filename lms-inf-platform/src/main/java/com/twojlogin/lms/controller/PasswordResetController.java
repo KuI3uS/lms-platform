@@ -6,6 +6,7 @@ import com.twojlogin.lms.entity.PasswordResetToken;
 import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.PasswordResetTokenRepository;
 import com.twojlogin.lms.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +34,8 @@ public class PasswordResetController {
         this.mailSender = mailSender;
     }
 
+    @Value("${frontend.url}")
+    private String frontendUrl;
     @PostMapping("/forgot-password")
     public void forgotPassword(@RequestBody ForgotPasswordRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -52,7 +55,7 @@ public class PasswordResetController {
 
         tokenRepository.save(resetToken);
 
-        String resetLink = "http://localhost:5173/reset-password?token=" + token;
+        String resetLink = frontendUrl + "/reset-password?token=" + token;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(user.getEmail());
