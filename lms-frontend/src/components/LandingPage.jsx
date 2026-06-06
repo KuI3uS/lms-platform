@@ -25,10 +25,18 @@
                     <a href="#home">Home</a>
                     <a href="#courses">Kursy</a>
                     <a href="#how">Jakdziała</a>
-                    <Link to="/login">Logowanie</Link>
-                    <Link to="/register">Rejestracja</Link>
                 </nav>
 
+
+                <div className="platform-entry">
+                    <div>
+                        <strong>Masz już konto?</strong>
+                        <p>Przejdź do kursów i kontynuuj naukę.</p>
+                    </div>
+                    <Link to="/login">
+                        Wejdź do platformy
+                    </Link>
+                </div>
                 <header id="home" className="hero">
                     <div className="hero-content">
                         <h1>
