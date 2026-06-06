@@ -1,6 +1,7 @@
 package com.twojlogin.lms.service;
 
 import com.twojlogin.lms.entity.TutoringBooking;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -63,5 +64,21 @@ public class EmailService {
         }
 
         return "https://checkout.revolut.com/pay/334e96d4-687b-46d9-8f1b-b5452be7d555";
+    }
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
+    public void sendVerificationEmail(String to, String token) {
+        String link = frontendUrl + "/verify-email?token=" + token;
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Potwierdź adres email - EduHub");
+        message.setText("""
+                Cześć!
+                Kliknij link, aby potwierdzić adres email:
+                %s
+                Link jest ważny 24 godziny.
+                """.formatted(link));
+        mailSender.send(message);
     }
 }
