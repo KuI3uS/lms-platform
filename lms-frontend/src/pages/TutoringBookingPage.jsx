@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import "../styles/tutoring-calendar.css";
 
 
 import {
@@ -356,7 +357,7 @@ export default function TutoringBookingPage() {
                             </div>
                         ) : (
                             <div className="grid gap-4">
-                                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+                                <div className="tutoring-calendar-card">
                                     <Calendar
                                         onChange={(date) => {
                                             setSelectedDate(Array.isArray(date) ? date[0] : date);
@@ -364,11 +365,23 @@ export default function TutoringBookingPage() {
                                             setSelectedStart("");
                                         }}
                                         value={selectedDate}
+                                        locale="pl-PL"
+                                        next2Label={null}
+                                        prev2Label={null}
                                         tileClassName={({ date }) => {
                                             const hasTerm = availability.some(term => sameDay(term.startTime, date));
                                             return hasTerm ? "has-availability" : "";
                                         }}
+                                        tileContent={({ date }) => {
+                                            const hasTerm = availability.some(term => sameDay(term.startTime, date));
+                                            return hasTerm ? <span className="calendar-dot" /> : null;
+                                        }}
                                     />
+
+                                    <div className="calendar-legend">
+                                        <span><span className="legend-dot"></span>Dostępne terminy</span>
+                                        <span>Brak kropki = brak terminu</span>
+                                    </div>
                                 </div>
 
                                 <h2 className="text-2xl font-bold mt-6">
@@ -447,7 +460,10 @@ export default function TutoringBookingPage() {
 
                                     <select
                                         value={hours}
-                                        onChange={(e) => setHours(Number(e.target.value))}
+                                        onChange={(e) => {
+                                            setHours(Number(e.target.value));
+                                            setSelectedStart("");
+                                        }}
                                         className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500"
                                     >
                                         <option value={1}>1 godzina</option>
