@@ -10,6 +10,10 @@ export default function AdminLessonPage() {
     const [tasks, setTasks] = useState({});
     const [expandedLessonId, setExpandedLessonId] = useState(null);
 
+    const [blocks, setBlocks] = useState({});
+    const [blockForms, setBlockForms] = useState({});
+    const [editingBlockId, setEditingBlockId] = useState({});
+
 
     const emptyLessonForm = {
         title: "",
@@ -41,6 +45,14 @@ export default function AdminLessonPage() {
         loadLessons();
     }, [moduleId]);
 
+    const loadBlocks = async (lessonId) => {
+        const data = await apiFetch(`/lesson-blocks/lesson/${lessonId}`);
+
+        setBlocks(prev => ({
+            ...prev,
+            [lessonId]: data.sort((a, b) => a.orderIndex - b.orderIndex)
+        }));
+    };
     const loadModule = async () => {
         const data = await apiFetch(`/modules/${moduleId}`);
         setModuleSettings({
@@ -78,6 +90,7 @@ export default function AdminLessonPage() {
         } else {
             setExpandedLessonId(lessonId);
             loadTasks(lessonId);
+            loadBlocks(lessonId);
         }
     };
 
@@ -144,8 +157,7 @@ export default function AdminLessonPage() {
             alert("Uzupełnij treść zadania");
             return;
         }
-
-        await apiFetch(`/tasks/lesson/${lessonId}`, {
+        const task = await apiFetch(`/tasks/lesson/${lessonId}`, {
             method: "POST",
             body: JSON.stringify({
                 taskContent: form.taskContent,
@@ -157,7 +169,18 @@ export default function AdminLessonPage() {
             })
         });
 
+        await apiFetch(`/lesson-blocks/lesson/${lessonId}`, {
+            method: "POST",
+            body: JSON.stringify({
+                title: form.taskContent.slice(0, 60),
+                type: "TASK",
+                content: "",
+                taskId: task.id
+            })
+        });
+
         await loadTasks(lessonId);
+        await loadBlocks(lessonId);
 
         setTaskForms(prev => ({
             ...prev,
