@@ -89,22 +89,29 @@ public class LessonController {
     }
 
     @GetMapping("/{id}")
-    public Map<String, Object> getOne(@PathVariable Long id) {
+    public java.util.Map<String, Object> getOne(@PathVariable Long id) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
 
-        return Map.of(
-                "id", lesson.getId(),
-                "title", lesson.getTitle(),
-                "theory", lesson.getTheory(),
-                "example", lesson.getExample(),
-                "content", lesson.getContent(),
-                "imageUrl", lesson.getImageUrl(),
-                "freePreview", lesson.isFreePreview(),
-                "published", lesson.isPublished(),
-                "orderIndex", lesson.getOrderIndex(),
-                "moduleId", lesson.getModule().getId()
-        );
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+
+        result.put("id", lesson.getId());
+        result.put("title", lesson.getTitle());
+        result.put("theory", lesson.getTheory());
+        result.put("example", lesson.getExample());
+        result.put("content", lesson.getContent());
+        result.put("imageUrl", lesson.getImageUrl());
+        result.put("freePreview", lesson.isFreePreview());
+        result.put("published", lesson.isPublished());
+        result.put("orderIndex", lesson.getOrderIndex());
+
+        if (lesson.getModule() != null) {
+            result.put("moduleId", lesson.getModule().getId());
+        } else {
+            result.put("moduleId", null);
+        }
+
+        return result;
     }
 
     @GetMapping("/{id}/access")
