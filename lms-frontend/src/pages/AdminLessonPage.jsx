@@ -3,17 +3,12 @@ import { useParams } from "react-router-dom";
 import { apiFetch } from "../api/api";
 
 export default function AdminLessonPage() {
-
     const { moduleId } = useParams();
 
     const [lessons, setLessons] = useState([]);
     const [tasks, setTasks] = useState({});
-    const [expandedLessonId, setExpandedLessonId] = useState(null);
-
     const [blocks, setBlocks] = useState({});
-    const [blockForms, setBlockForms] = useState({});
-    const [editingBlockId, setEditingBlockId] = useState({});
-
+    const [expandedLessonId, setExpandedLessonId] = useState(null);
 
     const emptyLessonForm = {
         title: "",
@@ -25,40 +20,70 @@ export default function AdminLessonPage() {
         freePreview: false
     };
 
-    const [form, setForm] = useState(emptyLessonForm);
+    const emptyTaskForm = {
+        taskContent: "",
+        expectedAnswer: "",
+        starterCode: "",
+        hint: "",
+        language: "java",
+        type: "TEXT"
+    };
 
+    const [form, setForm] = useState(emptyLessonForm);
     const [editingId, setEditingId] = useState(null);
     const [taskForms, setTaskForms] = useState({});
     const [editingTaskId, setEditingTaskId] = useState({});
-
 
     const [moduleSettings, setModuleSettings] = useState({
         name: "",
         lessonsLocked: false
     });
-    // =====================
-    // LOAD
-    // =====================
 
     useEffect(() => {
         loadModule();
         loadLessons();
     }, [moduleId]);
 
-    const loadBlocks = async (lessonId) => {
-        const data = await apiFetch(`/lesson-blocks/lesson/${lessonId}`);
-
-        setBlocks(prev => ({
-            ...prev,
-            [lessonId]: data.sort((a, b) => a.orderIndex - b.orderIndex)
-        }));
-    };
     const loadModule = async () => {
         const data = await apiFetch(`/modules/${moduleId}`);
         setModuleSettings({
             name: data.name || "",
             lessonsLocked: data.lessonsLocked || false
         });
+    };
+
+    const loadLessons = async () => {
+        const data = await apiFetch(`/lessons/module/${moduleId}`);
+        setLessons([...(data || [])].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
+    };
+
+    const loadTasks = async (lessonId) => {
+        const data = await apiFetch(`/tasks/lesson/${lessonId}`);
+
+        setTasks(prev => ({
+            ...prev,
+            [lessonId]: [...(data || [])].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+        }));
+    };
+
+    const loadBlocks = async (lessonId) => {
+        const data = await apiFetch(`/lesson-blocks/lesson/${lessonId}`);
+
+        setBlocks(prev => ({
+            ...prev,
+            [lessonId]: [...(data || [])].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+        }));
+    };
+
+    const toggleLesson = (lessonId) => {
+        if (expandedLessonId === lessonId) {
+            setExpandedLessonId(null);
+            return;
+        }
+
+        setExpandedLessonId(lessonId);
+        loadTasks(lessonId);
+        loadBlocks(lessonId);
     };
 
     const saveModuleSettings = async () => {
@@ -69,34 +94,6 @@ export default function AdminLessonPage() {
 
         alert("Zapisano ustawienia modułu");
     };
-
-    const loadLessons = async () => {
-        const data = await apiFetch(`/lessons/module/${moduleId}`);
-        setLessons([...data].sort((a,b) => a.orderIndex - b.orderIndex));
-    };
-
-    const loadTasks = async (lessonId) => {
-        const data = await apiFetch(`/tasks/lesson/${lessonId}`);
-
-        setTasks(prev => ({
-            ...prev,
-            [lessonId]: data.sort((a,b)=>a.orderIndex-b.orderIndex)
-        }));
-    };
-
-    const toggleLesson = (lessonId) => {
-        if (expandedLessonId === lessonId) {
-            setExpandedLessonId(null);
-        } else {
-            setExpandedLessonId(lessonId);
-            loadTasks(lessonId);
-            loadBlocks(lessonId);
-        }
-    };
-
-    // =====================
-    // LESSON CRUD
-    // =====================
 
     const create = async () => {
         if (!form.title.trim()) {
@@ -113,14 +110,12 @@ export default function AdminLessonPage() {
         });
 
         setLessons(prev => [...prev, lesson]);
-        resetLessonForm();
-
-
+        setForm(emptyLessonForm);
     };
 
-    const startEdit = (l) => {
-        setEditingId(l.id);
-        setForm(l);
+    const startEdit = (lesson) => {
+        setEditingId(lesson.id);
+        setForm(lesson);
     };
 
     const update = async () => {
@@ -130,49 +125,47 @@ export default function AdminLessonPage() {
         });
 
         setLessons(prev =>
-            prev.map(l => l.id === updated.id ? updated : l)
+            prev.map(lesson => lesson.id === updated.id ? updated : lesson)
         );
 
         setEditingId(null);
-        resetLessonForm();
-    };
-
-    const deleteLesson = async (id) => {
-        await apiFetch(`/lessons/${id}`, { method: "DELETE" });
-        setLessons(prev => prev.filter(l => l.id !== id));
-    };
-
-    const resetLessonForm = () => {
         setForm(emptyLessonForm);
     };
 
-    // =====================
-    // TASK CRUD
-    // =====================
+    const deleteLesson = async (id) => {
+        if (!window.confirm("Usunąć lekcję?")) return;
+
+        await apiFetch(`/lessons/${id}`, {
+            method: "DELETE"
+        });
+
+        setLessons(prev => prev.filter(lesson => lesson.id !== id));
+    };
 
     const addTask = async (lessonId) => {
-        const form = taskForms[lessonId];
+        const taskForm = taskForms[lessonId] || emptyTaskForm;
 
-        if (!form || !form.taskContent?.trim()) {
+        if (!taskForm.taskContent?.trim()) {
             alert("Uzupełnij treść zadania");
             return;
         }
+
         const task = await apiFetch(`/tasks/lesson/${lessonId}`, {
             method: "POST",
             body: JSON.stringify({
-                taskContent: form.taskContent,
-                expectedAnswer: form.expectedAnswer || "",
-                starterCode: form.starterCode || "",
-                hint: form.hint || "",
-                language: form.language || "java",
-                type: form.type || "TEXT"
+                taskContent: taskForm.taskContent,
+                expectedAnswer: taskForm.expectedAnswer || "",
+                starterCode: taskForm.starterCode || "",
+                hint: taskForm.hint || "",
+                language: taskForm.language || "java",
+                type: taskForm.type || "TEXT"
             })
         });
 
         await apiFetch(`/lesson-blocks/lesson/${lessonId}`, {
             method: "POST",
             body: JSON.stringify({
-                title: form.taskContent.slice(0, 60),
+                title: taskForm.taskContent.slice(0, 60),
                 type: "TASK",
                 content: "",
                 taskId: task.id
@@ -184,14 +177,7 @@ export default function AdminLessonPage() {
 
         setTaskForms(prev => ({
             ...prev,
-            [lessonId]: {
-                taskContent: "",
-                expectedAnswer: "",
-                starterCode: "",
-                hint: "",
-                language: "java",
-                type: "TEXT"
-            }
+            [lessonId]: emptyTaskForm
         }));
     };
 
@@ -208,17 +194,22 @@ export default function AdminLessonPage() {
     };
 
     const updateTask = async (lessonId) => {
-        const form = taskForms[lessonId];
+        const taskForm = taskForms[lessonId];
 
-        const updated = await apiFetch(`/tasks/${form.id}`, {
+        if (!taskForm?.id) {
+            alert("Nie wybrano zadania do edycji");
+            return;
+        }
+
+        const updated = await apiFetch(`/tasks/${taskForm.id}`, {
             method: "PUT",
-            body: JSON.stringify(form)
+            body: JSON.stringify(taskForm)
         });
 
         setTasks(prev => ({
             ...prev,
-            [lessonId]: prev[lessonId].map(t =>
-                t.id === updated.id ? updated : t
+            [lessonId]: (prev[lessonId] || []).map(task =>
+                task.id === updated.id ? updated : task
             )
         }));
 
@@ -229,108 +220,60 @@ export default function AdminLessonPage() {
 
         setTaskForms(prev => ({
             ...prev,
-            [lessonId]: {
-                taskContent: "",
-                expectedAnswer: "",
-                starterCode: "",
-                hint: "",
-                language: "java",
-                type: "TEXT"
-            }
+            [lessonId]: emptyTaskForm
         }));
+
+        await loadBlocks(lessonId);
     };
 
     const deleteTask = async (lessonId, taskId) => {
-        await apiFetch(`/tasks/${taskId}`, { method: "DELETE" });
-        await loadTasks(lessonId);
-    };
+        if (!window.confirm("Usunąć zadanie?")) return;
 
-    const moveUp = async (lessonId, id) => {
-        const list = tasks[lessonId] || [];
-        const index = list.findIndex(t => t.id === id);
-        if (index <= 0) return;
-
-        const current = list[index];
-        const prev = list[index - 1];
-
-        await apiFetch(`/tasks/${current.id}`, {
-            method: "PUT",
-            body: JSON.stringify({ ...current, orderIndex: prev.orderIndex })
-        });
-
-        await apiFetch(`/tasks/${prev.id}`, {
-            method: "PUT",
-            body: JSON.stringify({ ...prev, orderIndex: current.orderIndex })
+        await apiFetch(`/tasks/${taskId}`, {
+            method: "DELETE"
         });
 
         await loadTasks(lessonId);
+        await loadBlocks(lessonId);
     };
-
-    const moveDown = async (lessonId, id) => {
-        const list = tasks[lessonId] || [];
-        const index = list.findIndex(t => t.id === id);
-        if (index === list.length - 1) return;
-
-        const current = list[index];
-        const next = list[index + 1];
-
-        await apiFetch(`/tasks/${current.id}`, {
-            method: "PUT",
-            body: JSON.stringify({ ...current, orderIndex: next.orderIndex })
-        });
-
-        await apiFetch(`/tasks/${next.id}`, {
-            method: "PUT",
-            body: JSON.stringify({ ...next, orderIndex: current.orderIndex })
-        });
-
-        await loadTasks(lessonId);
-    };
-
-    // =====================
-    // UI
-    // =====================
 
     return (
         <div className="max-w-4xl mx-auto text-white space-y-6">
-
             <h1 className="text-3xl font-bold">Admin Lekcje + Zadania</h1>
 
-            {/* ===== FORM LEKCJI ===== */}
             <div className="bg-gray-800 p-6 rounded space-y-3">
-
                 <input
                     placeholder="Tytuł"
                     value={form.title}
-                    onChange={e => setForm({...form, title: e.target.value})}
+                    onChange={e => setForm({ ...form, title: e.target.value })}
                     className="w-full p-2 bg-gray-700 rounded"
                 />
 
                 <textarea
                     placeholder="Teoria"
                     value={form.theory}
-                    onChange={e => setForm({...form, theory: e.target.value})}
+                    onChange={e => setForm({ ...form, theory: e.target.value })}
                     className="w-full p-2 bg-gray-700 rounded"
                 />
 
                 <textarea
                     placeholder="Przykład"
                     value={form.example}
-                    onChange={e => setForm({...form, example: e.target.value})}
+                    onChange={e => setForm({ ...form, example: e.target.value })}
                     className="w-full p-2 bg-gray-700 rounded"
                 />
 
                 <textarea
                     placeholder="Dodatkowa treść / długi opis lekcji"
                     value={form.content || ""}
-                    onChange={e => setForm({...form, content: e.target.value})}
+                    onChange={e => setForm({ ...form, content: e.target.value })}
                     className="w-full p-2 bg-gray-700 rounded min-h-40"
                 />
 
                 <input
                     placeholder="URL obrazka lekcji"
                     value={form.imageUrl || ""}
-                    onChange={e => setForm({...form, imageUrl: e.target.value})}
+                    onChange={e => setForm({ ...form, imageUrl: e.target.value })}
                     className="w-full p-2 bg-gray-700 rounded"
                 />
 
@@ -338,7 +281,7 @@ export default function AdminLessonPage() {
                     <input
                         type="checkbox"
                         checked={form.published || false}
-                        onChange={e => setForm({...form, published: e.target.checked})}
+                        onChange={e => setForm({ ...form, published: e.target.checked })}
                     />
                     Opublikowana
                 </label>
@@ -347,7 +290,7 @@ export default function AdminLessonPage() {
                     <input
                         type="checkbox"
                         checked={form.freePreview || false}
-                        onChange={e => setForm({...form, freePreview: e.target.checked})}
+                        onChange={e => setForm({ ...form, freePreview: e.target.checked })}
                     />
                     Darmowy podgląd
                 </label>
@@ -365,71 +308,81 @@ export default function AdminLessonPage() {
                     />
                     Blokuj lekcje po kolei
                 </label>
-                <button
-                    onClick={saveModuleSettings}
-                    className="bg-blue-600 px-4 py-2 rounded"
-                >
-                    Zapisz ustawienia blokowania
-                </button>
-                <button
-                    onClick={editingId ? update : create}
-                    className="bg-green-600 px-4 py-2 rounded"
-                >
-                    {editingId ? "Zapisz" : "Dodaj lekcję"}
-                </button>
 
+                <div className="flex gap-2">
+                    <button
+                        onClick={saveModuleSettings}
+                        className="bg-blue-600 px-4 py-2 rounded"
+                    >
+                        Zapisz ustawienia blokowania
+                    </button>
+
+                    <button
+                        onClick={editingId ? update : create}
+                        className="bg-green-600 px-4 py-2 rounded"
+                    >
+                        {editingId ? "Zapisz lekcję" : "Dodaj lekcję"}
+                    </button>
+                </div>
             </div>
 
-            {/* ===== LISTA ===== */}
-            {lessons.map(l => (
-                <div key={l.id} className="bg-gray-800 p-4 rounded space-y-4">
-
+            {lessons.map(lesson => (
+                <div key={lesson.id} className="bg-gray-800 p-4 rounded space-y-4">
                     <div className="flex justify-between">
-
                         <div
-                            onClick={() => toggleLesson(l.id)}
+                            onClick={() => toggleLesson(lesson.id)}
                             className="cursor-pointer"
                         >
-                            {l.orderIndex}. {l.title}
+                            {lesson.orderIndex}. {lesson.title}
                         </div>
 
                         <div className="flex gap-2">
-                            <button onClick={() => startEdit(l)}>✏️</button>
-                            <button onClick={() => deleteLesson(l.id)}>🗑</button>
+                            <button onClick={() => startEdit(lesson)}>✏️</button>
+                            <button onClick={() => deleteLesson(lesson.id)}>🗑</button>
                         </div>
-
                     </div>
 
-                    {expandedLessonId === l.id && (
-                        <div className="bg-gray-900 p-4 rounded space-y-3">
+                    {expandedLessonId === lesson.id && (
+                        <div className="bg-gray-900 p-4 rounded space-y-4">
+                            <div className="bg-gray-950 p-3 rounded space-y-2">
+                                <h3 className="font-bold text-blue-400">Bloki lekcji</h3>
 
-                            {(tasks[l.id] || []).map(t => (
-                                <div key={t.id} className="flex justify-between">
+                                {(blocks[lesson.id] || []).length === 0 ? (
+                                    <p className="text-gray-500 text-sm">Brak bloków.</p>
+                                ) : (
+                                    (blocks[lesson.id] || []).map(block => (
+                                        <div key={block.id} className="text-sm text-gray-300">
+                                            {block.orderIndex}. {block.type} — {block.title}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
 
-                                    <div>
-                                        {t.orderIndex}. {t.taskContent}
+                            <div className="space-y-2">
+                                <h3 className="font-bold text-yellow-400">Zadania</h3>
+
+                                {(tasks[lesson.id] || []).map(task => (
+                                    <div key={task.id} className="flex justify-between gap-4 bg-gray-800 p-3 rounded">
+                                        <div>
+                                            {task.orderIndex}. {task.taskContent}
+                                        </div>
+
+                                        <div className="flex gap-2 shrink-0">
+                                            <button onClick={() => startEditTask(lesson.id, task)}>✏️</button>
+                                            <button onClick={() => deleteTask(lesson.id, task.id)}>🗑</button>
+                                        </div>
                                     </div>
-
-                                    <div className="flex gap-2">
-                                        <button onClick={() => moveUp(l.id, t.id)}>⬆️</button>
-                                        <button onClick={() => moveDown(l.id, t.id)}>⬇️</button>
-                                        <button onClick={() => startEditTask(l.id, t)}>✏️</button>
-                                        <button onClick={() => deleteTask(l.id, t.id)}>🗑</button>
-                                    </div>
-
-                                </div>
-                            ))}
-
+                                ))}
+                            </div>
 
                             <div className="bg-gray-800 p-4 rounded space-y-2">
-
                                 <textarea
                                     placeholder="Treść zadania"
-                                    value={taskForms[l.id]?.taskContent || ""}
+                                    value={taskForms[lesson.id]?.taskContent || ""}
                                     onChange={e => setTaskForms(prev => ({
                                         ...prev,
-                                        [l.id]: {
-                                            ...prev[l.id],
+                                        [lesson.id]: {
+                                            ...(prev[lesson.id] || emptyTaskForm),
                                             taskContent: e.target.value
                                         }
                                     }))}
@@ -438,22 +391,23 @@ export default function AdminLessonPage() {
 
                                 <input
                                     placeholder="Poprawna odpowiedź"
-                                    value={taskForms[l.id]?.expectedAnswer || ""}
+                                    value={taskForms[lesson.id]?.expectedAnswer || ""}
                                     onChange={e => setTaskForms(prev => ({
                                         ...prev,
-                                        [l.id]: {
-                                            ...prev[l.id],
+                                        [lesson.id]: {
+                                            ...(prev[lesson.id] || emptyTaskForm),
                                             expectedAnswer: e.target.value
                                         }
                                     }))}
                                     className="w-full p-2 bg-gray-700 rounded"
                                 />
+
                                 <select
-                                    value={taskForms[l.id]?.type || "TEXT"}
+                                    value={taskForms[lesson.id]?.type || "TEXT"}
                                     onChange={e => setTaskForms(prev => ({
                                         ...prev,
-                                        [l.id]: {
-                                            ...prev[l.id],
+                                        [lesson.id]: {
+                                            ...(prev[lesson.id] || emptyTaskForm),
                                             type: e.target.value
                                         }
                                     }))}
@@ -465,11 +419,11 @@ export default function AdminLessonPage() {
 
                                 <input
                                     placeholder="Język, np. java"
-                                    value={taskForms[l.id]?.language || "java"}
+                                    value={taskForms[lesson.id]?.language || "java"}
                                     onChange={e => setTaskForms(prev => ({
                                         ...prev,
-                                        [l.id]: {
-                                            ...prev[l.id],
+                                        [lesson.id]: {
+                                            ...(prev[lesson.id] || emptyTaskForm),
                                             language: e.target.value
                                         }
                                     }))}
@@ -478,11 +432,11 @@ export default function AdminLessonPage() {
 
                                 <textarea
                                     placeholder="Kod startowy dla ucznia"
-                                    value={taskForms[l.id]?.starterCode || ""}
+                                    value={taskForms[lesson.id]?.starterCode || ""}
                                     onChange={e => setTaskForms(prev => ({
                                         ...prev,
-                                        [l.id]: {
-                                            ...prev[l.id],
+                                        [lesson.id]: {
+                                            ...(prev[lesson.id] || emptyTaskForm),
                                             starterCode: e.target.value
                                         }
                                     }))}
@@ -491,11 +445,11 @@ export default function AdminLessonPage() {
 
                                 <textarea
                                     placeholder="Podpowiedź"
-                                    value={taskForms[l.id]?.hint || ""}
+                                    value={taskForms[lesson.id]?.hint || ""}
                                     onChange={e => setTaskForms(prev => ({
                                         ...prev,
-                                        [l.id]: {
-                                            ...prev[l.id],
+                                        [lesson.id]: {
+                                            ...(prev[lesson.id] || emptyTaskForm),
                                             hint: e.target.value
                                         }
                                     }))}
@@ -504,25 +458,19 @@ export default function AdminLessonPage() {
 
                                 <button
                                     onClick={() =>
-                                        editingTaskId[l.id]
-                                            ? updateTask(l.id)
-                                            : addTask(l.id)
+                                        editingTaskId[lesson.id]
+                                            ? updateTask(lesson.id)
+                                            : addTask(lesson.id)
                                     }
                                     className="bg-green-600 px-4 py-2 rounded"
                                 >
-                                    {editingTaskId[l.id]
-                                        ? "Zapisz zadanie"
-                                        : "Dodaj zadanie"}
+                                    {editingTaskId[lesson.id] ? "Zapisz zadanie" : "Dodaj zadanie"}
                                 </button>
-
                             </div>
-
                         </div>
                     )}
-
                 </div>
             ))}
-
         </div>
     );
 }
