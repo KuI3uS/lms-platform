@@ -18,4 +18,8 @@ public interface LessonSubmissionRepository extends JpaRepository<LessonSubmissi
     List<LessonSubmission> findByStatusOrderBySubmittedAtDesc(String status);
 
     List<LessonSubmission> findByUserEmailOrderBySubmittedAtDesc(String email);
+
+    List<LessonSubmission> findByLessonId(Long lessonId);
+
+    void deleteByLessonId(Long lessonId);
 }

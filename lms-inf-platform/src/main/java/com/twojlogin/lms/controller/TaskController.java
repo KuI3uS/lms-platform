@@ -11,7 +11,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.twojlogin.lms.repository.LessonBlockRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -86,18 +88,57 @@ public class TaskController {
 
     // 🔥 CHECK ANSWER
     @PostMapping("/{id}/check")
-    public boolean checkAnswer(@PathVariable Long id,
-                               @RequestBody AnswerRequest request) {
+    public Map<String, Object> checkAnswer(@PathVariable Long id,
+                                           @RequestBody AnswerRequest request) {
 
         Task task = taskRepository.findById(id)
                 .orElseThrow();
 
-        if (request.getAnswer() == null) return false;
+        if (request.getAnswer() == null) {
+            return Map.of(
+                    "correct", false,
+                    "message", "Nie przesłano odpowiedzi."
+            );
+        }
 
+        String studentCode = normalizeCode(request.getAnswer());
         String expected = task.getExpectedAnswer() == null ? "" : task.getExpectedAnswer();
 
-        return expected.trim()
-                .equalsIgnoreCase(request.getAnswer().trim());
+        String[] requiredParts = expected.split("\\n");
+
+        List<String> missing = new ArrayList<>();
+
+        for (String part : requiredParts) {
+            if (part == null || part.isBlank()) continue;
+
+            String normalizedPart = normalizeCode(part);
+
+            if (!studentCode.contains(normalizedPart)) {
+                missing.add(part.trim());
+            }
+        }
+
+        boolean correct = missing.isEmpty();
+
+        if (correct) {
+            return Map.of(
+                    "correct", true,
+                    "message", "Poprawna odpowiedź."
+            );
+        }
+
+        return Map.of(
+                "correct", false,
+                "message", "Kod nie zawiera wszystkich wymaganych elementów.",
+                "missing", missing
+        );
+    }
+
+    private String normalizeCode(String code) {
+        return code
+                .replaceAll("\\s+", "")
+                .replace("'", "\"")
+                .toLowerCase();
     }
 
 }
