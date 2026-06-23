@@ -24,6 +24,23 @@ export default function AdminSubmissionsPage() {
 
         setSubmissions(data || []);
     };
+    const deleteSubmission = async (id) => {
+        const confirmed = window.confirm("Czy na pewno chcesz usunąć tę pracę?");
+        if (!confirmed) return;
+
+        try {
+            await apiFetch(`/admin/submissions/${id}`, {
+                method: "DELETE"
+            });
+
+            setSubmissions(prev => prev.filter(s => s.id !== id));
+            setSelected(null);
+
+        } catch (e) {
+            console.error(e);
+            alert("Nie udało się usunąć pracy");
+        }
+    };
 
     const save = async () => {
         await apiFetch(`/admin/submissions/${selected.id}`, {
@@ -208,15 +225,9 @@ export default function AdminSubmissionsPage() {
                         >
                             Zapisz sprawdzenie
                         </button>
-                        <button
-                            onClick={() => openSubmission(submission.id)}
-                            className="bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-xl"
-                        >
-                            Otwórz
-                        </button>
 
                         <button
-                            onClick={() => deleteSubmission(submission.id)}
+                            onClick={() => deleteSubmission(selected.id)}
                             className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-xl"
                         >
                             Usuń
