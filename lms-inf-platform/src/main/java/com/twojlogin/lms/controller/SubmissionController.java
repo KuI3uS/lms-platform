@@ -3,6 +3,7 @@ package com.twojlogin.lms.controller;
 import com.twojlogin.lms.dto.*;
 import com.twojlogin.lms.entity.*;
 import com.twojlogin.lms.repository.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,12 @@ public class SubmissionController {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.moduleRepository = moduleRepository;
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
+        submissionRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/module/{moduleId}")
