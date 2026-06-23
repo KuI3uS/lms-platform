@@ -1,35 +1,59 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import Editor from "@monaco-editor/react";
+import { BsArrowRight, BsCheckCircle, BsXCircle } from "react-icons/bs";
 
 export default function LessonPage() {
     const { lessonId } = useParams();
+    const navigate = useNavigate();
 
     const [lesson, setLesson] = useState(null);
     const [tasks, setTasks] = useState([]);
+    const [blocks, setBlocks] = useState([]);
+    const [selectedBlock, setSelectedBlock] = useState(null);
+
+    const [moduleLessons, setModuleLessons] = useState([]);
     const [answers, setAnswers] = useState({});
     const [results, setResults] = useState({});
     const [error, setError] = useState(null);
 
-    const [blocks, setBlocks] = useState([]);
-    const [selectedBlock, setSelectedBlock] = useState(null);
-
     useEffect(() => {
         if (!lessonId) return;
 
-        const loadLesson = async () => {
+        const load = async () => {
             try {
                 setError(null);
                 setLesson(null);
                 setTasks([]);
-                setAnswers({});
-                setResults({});
                 setBlocks([]);
                 setSelectedBlock(null);
+                setAnswers({});
+                setResults({});
 
                 const lessonData = await apiFetch(`/lessons/${lessonId}`);
                 setLesson(lessonData);
+
+                if (lessonData?.moduleId) {
+                    const lessonsData = await apiFetch(`/lessons/module/${lessonData.moduleId}`);
+
+                    const lessonsWithAccess = await Promise.all(
+                        (lessonsData || []).map(async (l) => {
+                            try {
+                                const canAccess = await apiFetch(`/lessons/${l.id}/access`);
+                                return { ...l, canAccess };
+                            } catch {
+                                return { ...l, canAccess: false };
+                            }
+                        })
+                    );
+
+                    setModuleLessons(
+                        [...lessonsWithAccess].sort(
+                            (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
+                        )
+                    );
+                }
 
                 const blocksData = await apiFetch(`/lesson-blocks/lesson/${lessonId}`);
                 const sortedBlocks = [...(blocksData || [])].sort(
@@ -60,8 +84,14 @@ export default function LessonPage() {
             }
         };
 
-        loadLesson();
+        load();
     }, [lessonId]);
+
+    const taskBlocks = blocks.filter(b => b.type === "TASK");
+    const completedCount = moduleLessons.filter(l => l.completed).length;
+    const progress = moduleLessons.length > 0
+        ? Math.round((completedCount / moduleLessons.length) * 100)
+        : 0;
 
     const check = async (taskId) => {
         try {
@@ -127,52 +157,56 @@ export default function LessonPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-950 text-white p-8">
-            <div className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-8">
+        <div className="min-h-screen bg-gray-950 text-white p-6">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-[1fr_330px] gap-8">
 
-                <aside className="bg-gray-900 border border-gray-800 rounded-2xl p-4 h-fit xl:sticky xl:top-8">
-                    <h2 className="text-lg font-bold mb-4">Lekcja</h2>
+                <main className="space-y-6 min-w-0">
+                    <header className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                        <p className="text-sm text-blue-400 mb-2">
+                            Lekcja {lesson.orderIndex ?? ""}
+                        </p>
 
-                    <div className="space-y-2">
-                        {blocks.map((block, index) => (
-                            <button
-                                key={block.id}
-                                onClick={() => setSelectedBlock(block)}
-                                className={`w-full text-left p-3 rounded-xl border transition ${
-                                    selectedBlock?.id === block.id
-                                        ? "bg-blue-600/20 border-blue-500 text-blue-300"
-                                        : "bg-gray-800 border-gray-700 hover:border-blue-500"
-                                }`}
-                            >
-                                <div className="text-xs text-gray-400">
-                                    {block.type}
-                                </div>
-                                <div className="font-semibold">
-                                    {index + 1}. {block.title || block.type}
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                </aside>
-
-                <main className="space-y-8 min-w-0">
-                    <div>
-                        <h1 className="text-3xl font-bold">{lesson.title}</h1>
+                        <h1 className="text-3xl font-bold">
+                            {lesson.title}
+                        </h1>
 
                         {lesson.freePreview && (
-                            <p className="mt-2 text-sm text-blue-400">
+                            <p className="mt-2 text-sm text-green-400">
                                 Darmowy podgląd lekcji
                             </p>
                         )}
-                    </div>
+                    </header>
+
+                    {taskBlocks.length > 0 && (
+                        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+                            <p className="text-sm text-gray-400 mb-3">
+                                Zadania w tej lekcji
+                            </p>
+
+                            <div className="flex flex-wrap gap-2">
+                                {taskBlocks.map((block, index) => (
+                                    <button
+                                        key={block.id}
+                                        onClick={() => setSelectedBlock(block)}
+                                        className={`px-4 py-2 rounded-xl border font-semibold transition ${
+                                            selectedBlock?.id === block.id
+                                                ? "bg-blue-600 border-blue-500 text-white"
+                                                : "bg-gray-800 border-gray-700 text-gray-300 hover:border-blue-500"
+                                        }`}
+                                    >
+                                        Zadanie {index + 1}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {!selectedBlock ? (
-                        <div className="bg-gray-800 p-6 rounded-xl text-gray-400">
-                            Brak bloków w tej lekcji.
-                        </div>
+                        <EmptyBlock />
                     ) : selectedBlock.type === "TASK" ? (
                         <TaskBlock
                             block={selectedBlock}
+                            blocks={blocks}
                             tasks={tasks}
                             answers={answers}
                             setAnswers={setAnswers}
@@ -190,63 +224,139 @@ export default function LessonPage() {
                     {tasks.length > 0 && (
                         <button
                             onClick={submitAll}
-                            className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl font-semibold"
+                            className="w-full bg-purple-600 hover:bg-purple-700 px-6 py-4 rounded-2xl font-bold transition"
                         >
                             Wyślij wszystkie zadania do nauczyciela
                         </button>
                     )}
                 </main>
+
+                <aside className="bg-gray-900 border border-gray-800 rounded-2xl p-5 h-fit xl:sticky xl:top-6">
+                    <h2 className="text-xl font-bold mb-4">
+                        Plan modułu
+                    </h2>
+
+                    <div className="bg-gray-800 rounded-xl p-4 mb-5">
+                        <div className="flex justify-between text-sm mb-2">
+                            <span className="text-gray-400">Postęp</span>
+                            <span className="font-bold">{progress}%</span>
+                        </div>
+
+                        <div className="w-full bg-gray-700 rounded-full h-3">
+                            <div
+                                className="bg-blue-500 h-3 rounded-full"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        {moduleLessons.map((l, index) => {
+                            const active = Number(lessonId) === Number(l.id);
+
+                            return (
+                                <button
+                                    key={l.id}
+                                    disabled={!l.canAccess}
+                                    onClick={() => {
+                                        if (l.canAccess) {
+                                            navigate(`/lesson/${l.id}`);
+                                        }
+                                    }}
+                                    className={`w-full text-left p-4 rounded-xl border transition ${
+                                        active
+                                            ? "bg-blue-600/20 border-blue-500 text-blue-300"
+                                            : l.canAccess
+                                                ? "bg-gray-800 border-gray-700 hover:border-blue-500"
+                                                : "bg-gray-800/40 border-gray-800 opacity-50 cursor-not-allowed"
+                                    }`}
+                                >
+                                    <div className="flex justify-between items-center gap-3">
+                                        <div>
+                                            <p className="text-xs text-gray-400">
+                                                Lekcja {l.orderIndex ?? index + 1}
+                                            </p>
+
+                                            <p className="font-semibold">
+                                                {l.title}
+                                            </p>
+                                        </div>
+
+                                        {l.completed ? (
+                                            <BsCheckCircle className="text-green-400 shrink-0" />
+                                        ) : l.canAccess ? (
+                                            <BsArrowRight className="text-gray-400 shrink-0" />
+                                        ) : (
+                                            <BsXCircle className="text-red-400 shrink-0" />
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </aside>
             </div>
+        </div>
+    );
+}
+
+function EmptyBlock() {
+    return (
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-gray-400">
+            Brak treści w tej lekcji.
         </div>
     );
 }
 
 function TextBlock({ block }) {
     return (
-        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-            <h2 className="text-blue-400 text-xl font-bold mb-4">
-                {block.title || block.type}
+        <section className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
+            <h2 className="text-2xl font-bold text-blue-400 mb-5">
+                {block.title || "Teoria"}
             </h2>
 
-            <p className="whitespace-pre-line text-gray-300 leading-relaxed">
+            <p className="whitespace-pre-line text-gray-300 leading-relaxed text-lg">
                 {block.content}
             </p>
-        </div>
+        </section>
     );
 }
 
 function ExampleBlock({ block }) {
     return (
-        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-            <h2 className="text-green-400 text-xl font-bold mb-4">
+        <section className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
+            <h2 className="text-2xl font-bold text-green-400 mb-5">
                 {block.title || "Przykład"}
             </h2>
 
-            <pre className="bg-gray-950 p-4 rounded-xl text-green-400 whitespace-pre-wrap font-mono border border-gray-700 overflow-x-auto">
+            <pre className="bg-gray-950 p-5 rounded-xl text-green-400 whitespace-pre-wrap font-mono border border-gray-700 overflow-x-auto">
                 {block.content}
             </pre>
-        </div>
+        </section>
     );
 }
 
 function ImageBlock({ block }) {
     return (
-        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-            <h2 className="text-purple-400 text-xl font-bold mb-4">
+        <section className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
+            <h2 className="text-2xl font-bold text-purple-400 mb-5">
                 {block.title || "Grafika"}
             </h2>
 
             <img
                 src={block.content}
                 alt={block.title || "Grafika lekcji"}
-                className="rounded-xl border border-gray-700 bg-gray-900 max-w-full"
+                className="rounded-xl border border-gray-700 bg-gray-950 max-w-full"
             />
-        </div>
+        </section>
     );
 }
 
-function TaskBlock({ block, tasks, answers, setAnswers, results, check }) {
+function TaskBlock({ block, blocks, tasks, answers, setAnswers, results, check }) {
     const task = tasks.find(t => Number(t.id) === Number(block.taskId));
+    const taskNumber = blocks
+        .filter(b => b.type === "TASK")
+        .findIndex(b => Number(b.id) === Number(block.id)) + 1;
 
     if (!task) {
         return (
@@ -257,28 +367,30 @@ function TaskBlock({ block, tasks, answers, setAnswers, results, check }) {
     }
 
     return (
-        <div className="bg-gray-800 p-6 rounded-xl space-y-5 border border-gray-700">
-            <h2 className="text-yellow-400 text-xl font-bold">
-                {block.title || "Zadanie"}
-            </h2>
+        <section className="bg-gray-900 border border-gray-800 rounded-2xl p-8 space-y-6">
+            <div>
+                <p className="text-sm text-yellow-400 font-semibold mb-2">
+                    Zadanie {taskNumber}
+                </p>
 
-            <p className="text-gray-300 whitespace-pre-line leading-relaxed">
-                {task.taskContent}
-            </p>
+                <h2 className="text-2xl font-bold text-white">
+                    {task.taskContent}
+                </h2>
+            </div>
 
             {task.hint && (
-                <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 p-3 rounded-xl">
+                <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 p-4 rounded-xl">
                     <strong>Podpowiedź:</strong> {task.hint}
                 </div>
             )}
 
             {task.type === "CODE" ? (
-                <div className="border border-gray-700 rounded-xl overflow-hidden">
+                <div className="border border-gray-700 rounded-2xl overflow-hidden">
                     <Editor
-                        height="520px"
+                        height="560px"
                         language={task.language || "java"}
                         theme="vs-dark"
-                        value={answers[task.id] ?? ""}
+                        value={answers[task.id] ?? task.starterCode ?? ""}
                         onChange={(value) =>
                             setAnswers(prev => ({
                                 ...prev,
@@ -287,7 +399,7 @@ function TaskBlock({ block, tasks, answers, setAnswers, results, check }) {
                         }
                         options={{
                             minimap: { enabled: false },
-                            fontSize: 15,
+                            fontSize: 16,
                             automaticLayout: true,
                             scrollBeyondLastLine: false,
                             wordWrap: "on",
@@ -297,8 +409,8 @@ function TaskBlock({ block, tasks, answers, setAnswers, results, check }) {
                 </div>
             ) : (
                 <textarea
-                    className="w-full bg-gray-900 p-4 rounded-xl border border-gray-700 outline-none focus:border-blue-500"
-                    rows={8}
+                    className="w-full bg-gray-950 p-5 rounded-2xl border border-gray-700 outline-none focus:border-blue-500 min-h-72 text-gray-200"
+                    placeholder="Wpisz swoją odpowiedź..."
                     value={answers[task.id] || ""}
                     onChange={(e) =>
                         setAnswers(prev => ({
@@ -309,22 +421,38 @@ function TaskBlock({ block, tasks, answers, setAnswers, results, check }) {
                 />
             )}
 
-            <button
-                onClick={() => check(task.id)}
-                className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
-            >
-                Sprawdź
-            </button>
+            <div className="flex flex-wrap gap-3">
+                <button
+                    onClick={() => check(task.id)}
+                    className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-bold"
+                >
+                    Sprawdź
+                </button>
+
+                <button
+                    onClick={() =>
+                        setAnswers(prev => ({
+                            ...prev,
+                            [task.id]: task.type === "CODE" ? task.starterCode || "" : ""
+                        }))
+                    }
+                    className="bg-gray-800 hover:bg-gray-700 px-6 py-3 rounded-xl font-bold"
+                >
+                    Reset
+                </button>
+            </div>
 
             {results[task.id] !== undefined && (
-                <div className={`p-3 rounded-xl border ${
+                <div className={`p-4 rounded-xl border font-semibold ${
                     results[task.id]
                         ? "bg-green-500/10 border-green-500/30 text-green-400"
                         : "bg-red-500/10 border-red-500/30 text-red-400"
                 }`}>
-                    {results[task.id] ? "Poprawna odpowiedź" : "Błędna odpowiedź"}
+                    {results[task.id]
+                        ? "Poprawna odpowiedź"
+                        : "Odpowiedź wymaga poprawy"}
                 </div>
             )}
-        </div>
+        </section>
     );
 }
