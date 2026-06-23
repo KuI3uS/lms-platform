@@ -140,6 +140,14 @@ export default function LessonPage() {
         }
     };
 
+    const goBackToCourse = () => {
+        if (lesson?.moduleId) {
+            navigate(`/lessons/${lesson.moduleId}`);
+        } else {
+            navigate("/courses");
+        }
+    };
+
     if (error) {
         return (
             <div className="min-h-screen bg-gray-950 text-red-400 p-8">
@@ -162,19 +170,30 @@ export default function LessonPage() {
 
                 <main className="space-y-6 min-w-0">
                     <header className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                        <p className="text-sm text-blue-400 mb-2">
-                            Lekcja {lesson.orderIndex ?? ""}
-                        </p>
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                            <div>
+                                <p className="text-sm text-blue-400 mb-2">
+                                    Lekcja {lesson.orderIndex ?? ""}
+                                </p>
 
-                        <h1 className="text-3xl font-bold">
-                            {lesson.title}
-                        </h1>
+                                <h1 className="text-3xl font-bold">
+                                    {lesson.title}
+                                </h1>
 
-                        {lesson.freePreview && (
-                            <p className="mt-2 text-sm text-green-400">
-                                Darmowy podgląd lekcji
-                            </p>
-                        )}
+                                {lesson.freePreview && (
+                                    <p className="mt-2 text-sm text-green-400">
+                                        Darmowy podgląd lekcji
+                                    </p>
+                                )}
+                            </div>
+
+                            <button
+                                onClick={goBackToCourse}
+                                className="bg-gray-800 hover:bg-gray-700 border border-gray-700 px-5 py-3 rounded-xl font-semibold transition"
+                            >
+                                ← Wróć do kursu
+                            </button>
+                        </div>
                     </header>
 
                     {taskBlocks.length > 0 && (
