@@ -40,6 +40,11 @@ public class LessonSubmissionController {
         return submissionRepository.save(submission);
     }
 
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        submissionRepository.deleteById(id);
+    }
+
     @GetMapping
     public List<LessonSubmission> getAll(
             @RequestParam(required = false) String className,
