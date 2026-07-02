@@ -1,5 +1,13 @@
-import TaskManager from "./TaskManager";
+import {
+    BsChevronDown,
+    BsChevronUp,
+    BsPencilSquare,
+    BsTrash,
+    BsCollection
+} from "react-icons/bs";
+
 import BlockManager from "./BlockManager";
+import TaskManager from "./TaskManager";
 
 export default function LessonCard({
                                        lesson,
@@ -7,8 +15,14 @@ export default function LessonCard({
                                        toggle,
                                        onEdit,
                                        onDelete,
-                                       tasks,
-                                       blocks,
+
+                                       blocks = [],
+                                       tasks = [],
+
+                                       block,
+                                       setBlock,
+                                       saveBlock,
+
                                        taskForm,
                                        editingTaskId,
                                        setTaskForms,
@@ -19,27 +33,62 @@ export default function LessonCard({
                                        emptyTaskForm
                                    }) {
     return (
-        <div className="bg-gray-800 rounded-xl p-5 space-y-5">
+        <div className="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden">
 
-            <div className="flex justify-between items-center">
+            {/* HEADER */}
+
+            <div className="flex items-center justify-between px-6 py-5">
 
                 <div
                     onClick={() => toggle(lesson.id)}
-                    className="cursor-pointer"
+                    className="flex items-center gap-4 cursor-pointer flex-1"
                 >
-                    <h2 className="font-bold">
-                        {lesson.orderIndex}. {lesson.title}
-                    </h2>
+
+                    <div className="bg-blue-600 w-10 h-10 rounded-xl flex items-center justify-center">
+
+                        <BsCollection />
+
+                    </div>
+
+                    <div>
+
+                        <h2 className="text-lg font-bold text-white">
+                            Lekcja {lesson.orderIndex}
+                        </h2>
+
+                        <p className="text-gray-400">
+                            {lesson.title}
+                        </p>
+
+                    </div>
+
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
 
-                    <button onClick={() => onEdit(lesson)}>
-                        ✏️
+                    <button
+                        onClick={() => onEdit(lesson)}
+                        className="w-10 h-10 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center"
+                    >
+                        <BsPencilSquare />
                     </button>
 
-                    <button onClick={() => onDelete(lesson.id)}>
-                        🗑
+                    <button
+                        onClick={() => onDelete(lesson.id)}
+                        className="w-10 h-10 rounded-xl bg-red-600 hover:bg-red-700 flex items-center justify-center"
+                    >
+                        <BsTrash />
+                    </button>
+
+                    <button
+                        onClick={() => toggle(lesson.id)}
+                        className="w-10 h-10 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center"
+                    >
+                        {expanded ? (
+                            <BsChevronUp />
+                        ) : (
+                            <BsChevronDown />
+                        )}
                     </button>
 
                 </div>
@@ -47,10 +96,16 @@ export default function LessonCard({
             </div>
 
             {expanded && (
-                <>
+
+                <div className="border-t border-gray-800 p-6 space-y-8">
+
                     <BlockManager
                         lessonId={lesson.id}
                         blocks={blocks}
+                        block={block}
+                        setBlock={setBlock}
+                        saveBlock={saveBlock}
+                        tasks={tasks}
                     />
 
                     <TaskManager
@@ -65,7 +120,9 @@ export default function LessonCard({
                         startEditTask={startEditTask}
                         emptyTaskForm={emptyTaskForm}
                     />
-                </>
+
+                </div>
+
             )}
 
         </div>
