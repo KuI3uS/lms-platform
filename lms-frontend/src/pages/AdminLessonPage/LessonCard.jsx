@@ -24,6 +24,7 @@ export default function LessonCard({
                                        deleteBlock,
                                        taskForm,
                                        editingTaskId,
+                                       updateBlock,
                                        setTaskForms,
                                        addTask,
                                        updateTask,
@@ -104,6 +105,7 @@ export default function LessonCard({
                         block={block}
                         setBlock={setBlock}
                         saveBlock={saveBlock}
+                        updateBlock={updateBlock}
                         editBlock={editBlock}
                         deleteBlock={deleteBlock}
                         tasks={tasks}

@@ -12,6 +12,7 @@ export default function BlockManager({
                                          setBlock,
 
                                          saveBlock,
+                                         updateBlock,
 
                                          editBlock,
                                          deleteBlock,
@@ -54,12 +55,13 @@ export default function BlockManager({
 
             <BlockForm
                 lessonId={lessonId}
-
                 block={block}
                 setBlock={setBlock}
-
-                onSave={saveBlock}
-
+                onSave={() =>
+                    block.id
+                        ? updateBlock(lessonId, block.id)
+                        : saveBlock(lessonId)
+                }
                 tasks={tasks}
             />
 
