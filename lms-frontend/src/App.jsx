@@ -6,7 +6,7 @@ import Layout from "./Layout";
 import CoursesPage from "./pages/CoursesPage";
 import ModulePage from "./pages/ModulePage";
 import LessonListPage from "./pages/LessonListPage";
-import LessonPage from "./pages/LessonPage";
+import LessonPage from "./pages/LessonPage/LessonPage.jsx";
 import TestPage from "./pages/TestPage";
 import ResultsPage from "./pages/ResultsPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -21,7 +21,7 @@ import AdminPage from "./pages/AdminPage";
 import AddCoursePage from "./pages/AddCoursePage";
 import AddQuestionPage from "./pages/AddQuestionPage";
 import AdminUsers from "./pages/admin/AdminUsers";
-import AdminLessonPage from "./pages/AdminLessonPage";
+import AdminLessonPage from "./pages/AdminLessonPage/AdminLessonPage.jsx";
 
 
 /* ===== ROUTE GUARDS ===== */

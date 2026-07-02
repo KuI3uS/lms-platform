@@ -4,6 +4,7 @@ import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.LessonRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,9 +25,21 @@ public class LessonBlockController {
         this.lessonRepository = lessonRepository;
     }
 
+
+
     @GetMapping("/lesson/{lessonId}")
     public List<LessonBlock> getByLesson(@PathVariable Long lessonId) {
+
         return blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
+
+    }
+
+    @GetMapping("/{id}")
+    public LessonBlock getOne(@PathVariable Long id) {
+
+        return blockRepository.findById(id)
+                .orElseThrow();
+
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -35,15 +48,26 @@ public class LessonBlockController {
             @PathVariable Long lessonId,
             @RequestBody LessonBlock block
     ) {
+
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow();
 
-        int nextOrder = blockRepository.countByLessonId(lessonId);
+        Integer maxOrder =
+                blockRepository.findMaxOrderIndexByLessonId(lessonId);
 
         block.setLesson(lesson);
-        block.setOrderIndex(nextOrder);
+
+        block.setOrderIndex(maxOrder + 1);
+
+        if (block.getPublished() == null) {
+            block.setPublished(true);
+        }
+        if (block.getPoints() == null) {
+            block.setPoints(0);
+        }
 
         return blockRepository.save(block);
+
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -52,21 +76,84 @@ public class LessonBlockController {
             @PathVariable Long id,
             @RequestBody LessonBlock updated
     ) {
+
         LessonBlock block = blockRepository.findById(id)
                 .orElseThrow();
 
         block.setTitle(updated.getTitle());
+
         block.setType(updated.getType());
+
         block.setContent(updated.getContent());
-        block.setOrderIndex(updated.getOrderIndex());
+
+        block.setMediaUrl(updated.getMediaUrl());
+
+        block.setMediaType(updated.getMediaType());
+
+        block.setLanguage(updated.getLanguage());
+
         block.setTaskId(updated.getTaskId());
 
+        block.setOrderIndex(updated.getOrderIndex());
+
+        block.setPublished(updated.getPublished());
+
+        block.setPoints(updated.getPoints());
+
         return blockRepository.save(block);
+
     }
 
+    @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        blockRepository.deleteById(id);
+
+        LessonBlock block = blockRepository.findById(id)
+                .orElseThrow();
+
+        Long lessonId = block.getLesson().getId();
+
+        blockRepository.delete(block);
+
+        List<LessonBlock> blocks =
+                blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
+
+        for (int i = 0; i < blocks.size(); i++) {
+
+            blocks.get(i).setOrderIndex(i);
+
+        }
+
+        blockRepository.saveAll(blocks);
+
     }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/lesson/{lessonId}/reorder")
+    public void reorder(
+            @PathVariable Long lessonId,
+            @RequestBody List<Long> ids
+    ) {
+
+        List<LessonBlock> blocks =
+                blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
+
+        for (LessonBlock block : blocks) {
+
+            int index = ids.indexOf(block.getId());
+
+            if (index >= 0) {
+
+                block.setOrderIndex(index);
+
+            }
+
+        }
+
+        blockRepository.saveAll(blocks);
+
+    }
+
 }
