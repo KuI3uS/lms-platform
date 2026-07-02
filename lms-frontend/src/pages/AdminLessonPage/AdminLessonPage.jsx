@@ -607,6 +607,10 @@ export default function AdminLessonPage() {
 
                         toggle={toggleLesson}
 
+                        editBlock={editBlock}
+
+                        deleteBlock={deleteBlock}
+
                         onEdit={editLesson}
 
                         onDelete={deleteLesson}
