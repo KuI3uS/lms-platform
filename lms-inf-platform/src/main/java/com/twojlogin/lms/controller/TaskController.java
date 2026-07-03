@@ -74,7 +74,7 @@ public class TaskController {
         Task task = taskRepository.findById(id)
                 .orElseThrow();
 
-        task.setTaskContent(updated.getTaskContent());
+        task.setInstruction(updated.getInstruction());
         task.setExpectedAnswer(updated.getExpectedAnswer());
         task.setStarterCode(updated.getStarterCode());
         task.setHint(updated.getHint());
