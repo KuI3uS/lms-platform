@@ -25,6 +25,8 @@ export default function useLessonTasks() {
 
         const data = await apiFetch(`/tasks/lesson/${lessonId}`);
 
+        console.log("TASKS:", data);
+
         setTasksByLesson(prev => ({
             ...prev,
             [lessonId]: data || []
