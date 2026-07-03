@@ -6,8 +6,8 @@ import {
     BsCollection
 } from "react-icons/bs";
 
-import BlockManager from "./BlockManager";
-import TaskManager from "./TaskManager";
+import BlockManager from "../../components/BlockManager/BlockManager";
+import TaskManager from "../../components/BlockManager/TaskManager/TaskManager";
 
 export default function LessonCard({
 

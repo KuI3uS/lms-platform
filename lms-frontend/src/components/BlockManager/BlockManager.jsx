@@ -1,7 +1,7 @@
 import { BsCollection } from "react-icons/bs";
 
 import BlockList from "./BlockList";
-import BlockForm from "./BlockForm";
+import BlockForm from "./BlockForm/BlockForm";
 
 export default function BlockManager({
 
