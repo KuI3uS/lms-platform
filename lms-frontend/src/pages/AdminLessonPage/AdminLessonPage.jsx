@@ -1,3 +1,4 @@
+import { useParams } from "react-router-dom";
 import { useEffect } from "react";
 
 import LessonForm from "./LessonForm";
@@ -8,14 +9,17 @@ import useLessonBlocks from "./hooks/useLessonBlocks";
 import useLessonTasks from "./hooks/useLessonTasks";
 import useExpandedLesson from "./hooks/useExpandedLesson";
 
-export default function AdminLessonPage({ moduleId }) {
+export default function AdminLessonPage() {
 
+    const { moduleId } = useParams();
     const lessons = useLessons(moduleId);
 
     const lessonBlocks = useLessonBlocks();
     const lessonTasks = useLessonTasks();
 
     const expanded = useExpandedLesson();
+
+    console.log(moduleId);
 
     useEffect(() => {
 
