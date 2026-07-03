@@ -10,29 +10,22 @@ import BlockManager from "./BlockManager";
 import TaskManager from "./TaskManager";
 
 export default function LessonCard({
+
                                        lesson,
+
                                        expanded,
                                        toggle,
+
                                        onEdit,
                                        onDelete,
-                                       blocks = [],
-                                       tasks = [],
-                                       block,
-                                       setBlock,
-                                       saveBlock,
-                                       editBlock,
-                                       deleteBlock,
-                                       taskForm,
-                                       editingTaskId,
-                                       updateBlock,
-                                       setTaskForms,
-                                       addTask,
-                                       updateTask,
-                                       deleteTask,
-                                       startEditTask,
-                                       emptyTaskForm
+
+                                       lessonBlocks,
+                                       lessonTasks
+
                                    }) {
+
     return (
+
         <div className="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden">
 
             {/* HEADER */}
@@ -84,11 +77,10 @@ export default function LessonCard({
                         onClick={() => toggle(lesson.id)}
                         className="w-10 h-10 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center"
                     >
-                        {expanded ? (
-                            <BsChevronUp />
-                        ) : (
-                            <BsChevronDown />
-                        )}
+                        {expanded
+                            ? <BsChevronUp />
+                            : <BsChevronDown />
+                        }
                     </button>
 
                 </div>
@@ -100,28 +92,21 @@ export default function LessonCard({
                 <div className="border-t border-gray-800 p-6 space-y-8">
 
                     <BlockManager
+
                         lessonId={lesson.id}
-                        blocks={blocks}
-                        block={block}
-                        setBlock={setBlock}
-                        saveBlock={saveBlock}
-                        updateBlock={updateBlock}
-                        editBlock={editBlock}
-                        deleteBlock={deleteBlock}
-                        tasks={tasks}
+
+                        lessonBlocks={lessonBlocks}
+
+                        lessonTasks={lessonTasks}
+
                     />
 
                     <TaskManager
+
                         lessonId={lesson.id}
-                        tasks={tasks}
-                        form={taskForm}
-                        editingTaskId={editingTaskId}
-                        setTaskForms={setTaskForms}
-                        addTask={addTask}
-                        updateTask={updateTask}
-                        deleteTask={deleteTask}
-                        startEditTask={startEditTask}
-                        emptyTaskForm={emptyTaskForm}
+
+                        lessonTasks={lessonTasks}
+
                     />
 
                 </div>
@@ -129,5 +114,7 @@ export default function LessonCard({
             )}
 
         </div>
+
     );
+
 }

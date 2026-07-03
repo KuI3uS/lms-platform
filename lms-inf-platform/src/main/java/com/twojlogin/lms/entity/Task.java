@@ -10,12 +10,22 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /*
+    |--------------------------------------------------------------------------
+    | Podstawowe informacje
+    |--------------------------------------------------------------------------
+    */
+
+    private String title;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Column(length = 5000)
-    private String taskContent;
+    private String instruction;
 
     private String expectedAnswer;
-
-    private Integer orderIndex;
 
     @Lob
     @Column(columnDefinition = "TEXT")
@@ -24,44 +34,46 @@ public class Task {
     @Lob
     @Column(columnDefinition = "TEXT")
     private String hint;
+
     private String language;
+
     private String type;
 
+    /*
+    |--------------------------------------------------------------------------
+    | Konfiguracja
+    |--------------------------------------------------------------------------
+    */
+
+    private Integer points = 0;
+
+    private Integer orderIndex = 0;
+
+    private Boolean published = true;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relacje
+    |--------------------------------------------------------------------------
+    */
 
     @ManyToOne
     @JoinColumn(name = "lesson_id")
     @JsonIgnore
     private Lesson lesson;
 
-
-    // ===== GETTERY / SETTERY =====
+    /*
+    |--------------------------------------------------------------------------
+    | Gettery / Settery
+    |--------------------------------------------------------------------------
+    */
 
     public Long getId() {
         return id;
     }
 
-    public String getTaskContent() {
-        return taskContent;
-    }
-
-    public void setTaskContent(String taskContent) {
-        this.taskContent = taskContent;
-    }
-
-    public String getExpectedAnswer() {
-        return expectedAnswer;
-    }
-
-    public void setExpectedAnswer(String expectedAnswer) {
-        this.expectedAnswer = expectedAnswer;
-    }
-
-    public Integer getOrderIndex() {
-        return orderIndex;
-    }
-
-    public void setOrderIndex(Integer orderIndex) {
-        this.orderIndex = orderIndex;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Lesson getLesson() {
@@ -72,16 +84,44 @@ public class Task {
         this.lesson = lesson;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getInstruction() {
+        return instruction;
+    }
+
+    public void setInstruction(String instruction) {
+        this.instruction = instruction;
+    }
+
+    public String getExpectedAnswer() {
+        return expectedAnswer;
+    }
+
+    public void setExpectedAnswer(String expectedAnswer) {
+        this.expectedAnswer = expectedAnswer;
+    }
+
     public String getStarterCode() {
         return starterCode;
     }
 
     public void setStarterCode(String starterCode) {
         this.starterCode = starterCode;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getHint() {
@@ -106,5 +146,29 @@ public class Task {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public Integer getPoints() {
+        return points;
+    }
+
+    public void setPoints(Integer points) {
+        this.points = points;
+    }
+
+    public Integer getOrderIndex() {
+        return orderIndex;
+    }
+
+    public void setOrderIndex(Integer orderIndex) {
+        this.orderIndex = orderIndex;
+    }
+
+    public Boolean getPublished() {
+        return published;
+    }
+
+    public void setPublished(Boolean published) {
+        this.published = published;
     }
 }
