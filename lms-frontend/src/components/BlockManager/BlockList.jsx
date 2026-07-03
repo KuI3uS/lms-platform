@@ -7,7 +7,7 @@ import {
 import {
     getBlockIcon,
     getBlockLabel
-} from "./blockTypes";
+} from "./blockTypes.jsx";
 
 export default function BlockList({
                                       lessonId,

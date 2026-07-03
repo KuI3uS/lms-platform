@@ -1,4 +1,4 @@
-import { BLOCK_TYPES } from "../blockTypes";
+import { BLOCK_TYPES } from "../blockTypes.jsx";
 
 export default function BlockTypeSelector({
                                               value,
