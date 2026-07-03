@@ -13,7 +13,6 @@ export default function AdminLessonPage({ moduleId }) {
     const lessons = useLessons(moduleId);
 
     const lessonBlocks = useLessonBlocks();
-
     const lessonTasks = useLessonTasks();
 
     const expanded = useExpandedLesson();
@@ -21,12 +20,28 @@ export default function AdminLessonPage({ moduleId }) {
     useEffect(() => {
 
         if (moduleId) {
-
             lessons.loadLessons();
-
         }
 
     }, [moduleId]);
+
+    async function handleToggleLesson(lessonId) {
+
+        if (expanded.isExpanded(lessonId)) {
+
+            expanded.collapse();
+            return;
+
+        }
+
+        expanded.expand(lessonId);
+
+        await Promise.all([
+            lessonBlocks.loadBlocks(lessonId),
+            lessonTasks.loadTasks(lessonId)
+        ]);
+
+    }
 
     return (
 
@@ -36,7 +51,7 @@ export default function AdminLessonPage({ moduleId }) {
                 lesson={lessons.lesson}
                 setLesson={lessons.setLesson}
                 onSave={
-                    lessons.lesson.id
+                    lessons.editingLessonId
                         ? lessons.updateLesson
                         : lessons.createLesson
                 }
@@ -48,25 +63,15 @@ export default function AdminLessonPage({ moduleId }) {
 
                     <LessonCard
                         key={lesson.id}
-
                         lesson={lesson}
 
                         expanded={expanded.isExpanded(lesson.id)}
-
-                        toggle={(lessonId) =>
-                            expanded.toggle(
-                                lessonId,
-                                lessonBlocks,
-                                lessonTasks
-                            )
-                        }
+                        toggle={handleToggleLesson}
 
                         onEdit={lessons.editLesson}
-
                         onDelete={lessons.deleteLesson}
 
                         lessonBlocks={lessonBlocks}
-
                         lessonTasks={lessonTasks}
                     />
 
