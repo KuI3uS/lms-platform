@@ -48,15 +48,12 @@ export default function AdminLessonPage({ moduleId }) {
         <div className="space-y-8">
 
             <LessonForm
-                lesson={lessons.lesson}
-                setLesson={lessons.setLesson}
-                onSave={
-                    lessons.editingLessonId
-                        ? lessons.updateLesson
-                        : lessons.createLesson
-                }
+                form={lessons.lessonForm}
+                setForm={lessons.setLessonForm}
+                editingId={lessons.editingLessonId}
+                onCreate={lessons.createLesson}
+                onUpdate={lessons.updateLesson}
             />
-
             <div className="space-y-6">
 
                 {lessons.lessons.map((lesson) => (
