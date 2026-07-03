@@ -152,7 +152,7 @@ export default function useLessonBlocks() {
                 typeof callback === "function"
 
                     ? callback(
-                        prev[lessonId] || emptyBlock
+                        prev[lessonId] || { ...emptyBlock }
                     )
 
                     : callback
@@ -168,9 +168,7 @@ export default function useLessonBlocks() {
     }
 
     function getBlockForm(lessonId) {
-
-        return blockForms[lessonId] || emptyBlock;
-
+        return blockForms[lessonId] || { ...emptyBlock };
     }
 
     return {

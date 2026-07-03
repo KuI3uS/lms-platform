@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import LessonForm from "./LessonForm";
 import LessonCard from "./LessonCard";
 
-import useLessons from "./hooks/useLessons";
-import useLessonBlocks from "./hooks/useLessonBlocks";
-import useLessonTasks from "./hooks/useLessonTasks";
-import useExpandedLesson from "./hooks/useExpandedLesson";
+import useLessons from "./hooks/useLessons.jsx";
+import useLessonBlocks from "./hooks/useLessonBlocks.jsx";
+import useLessonTasks from "./hooks/useLessonTasks.jsx";
+import useExpandedLesson from "./hooks/useExpandedLesson.jsx";
 
 export default function AdminLessonPage() {
 
