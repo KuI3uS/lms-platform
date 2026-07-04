@@ -1,157 +1,311 @@
 import {
+    BsBook,
     BsCardText,
     BsCodeSlash,
     BsLightbulb,
     BsCheckCircle,
+    BsStars,
     BsGlobe,
-    BsStar
+    BsToggleOn
 } from "react-icons/bs";
+import MonacoEditorBox from "../../../../pages/LessonPage/MonacoEditor";
 
 export default function TaskBlockForm({
-                                          block,
-                                          setBlock
-                                      }) {
+                                     task,
+                                     setTask,
+                                     onSave
+                                 }) {
 
-    const update = (field, value) => {
+    function update(field, value) {
 
-        setBlock(prev => ({
+        setTask(prev => ({
             ...prev,
             [field]: value
         }));
 
-    };
+    }
 
     return (
 
-        <div className="space-y-6">
+        <section className="bg-gray-900 border border-gray-800 rounded-3xl p-6 space-y-8">
 
-            {/* Treść */}
+            <div>
 
-            <div className="space-y-2">
+                <h2 className="text-2xl font-bold">
 
-                <label className="flex items-center gap-2 text-gray-300">
+                    {task.id
+                        ? "Edytuj zadanie"
+                        : "Nowe zadanie"}
 
-                    <BsCardText />
+                </h2>
 
-                    Treść zadania
-
-                </label>
-
-                <textarea
-                    value={block.content || ""}
-                    placeholder="Opisz zadanie..."
-                    onChange={(e)=>update("content", e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-40"
-                />
+                <p className="text-gray-400 mt-1">
+                    Skonfiguruj zadanie praktyczne dla uczniów.
+                </p>
 
             </div>
 
-            {/* Kod */}
+            {/* ------------------------------------------------ */}
+            {/* PODSTAWOWE */}
+            {/* ------------------------------------------------ */}
 
-            <div className="space-y-2">
+            <div className="space-y-5">
 
-                <label className="flex items-center gap-2 text-gray-300">
+                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">
+                    Podstawowe informacje
+                </h3>
 
-                    <BsCodeSlash />
+                <div className="space-y-2">
 
-                    Kod startowy
+                    <label className="flex items-center gap-2 text-gray-300">
 
-                </label>
+                        <BsBook />
 
-                <textarea
-                    value={block.starterCode || ""}
-                    placeholder="public class Main..."
-                    onChange={(e)=>update("starterCode", e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-72 font-mono"
-                />
+                        Tytuł
 
-            </div>
+                    </label>
 
-            {/* Język */}
+                    <input
+                        value={task.title || ""}
+                        onChange={(e)=>update("title", e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
+                        placeholder="Np. Pierwsza zmienna"
+                    />
 
-            <div className="space-y-2">
+                </div>
 
-                <label className="flex items-center gap-2 text-gray-300">
+                <div className="space-y-2">
 
-                    <BsGlobe />
+                    <label className="flex items-center gap-2 text-gray-300">
 
-                    Język
+                        <BsCardText />
 
-                </label>
+                        Opis
 
-                <input
-                    value={block.language || "java"}
-                    onChange={(e)=>update("language", e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
-                />
+                    </label>
 
-            </div>
+                    <textarea
+                        value={task.description || ""}
+                        onChange={(e)=>update("description", e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-28"
+                        placeholder="Krótki opis zadania..."
+                    />
 
-            {/* Odpowiedź */}
+                </div>
 
-            <div className="space-y-2">
+                <div className="space-y-2">
 
-                <label className="flex items-center gap-2 text-gray-300">
+                    <label className="flex items-center gap-2 text-gray-300">
 
-                    <BsCheckCircle />
+                        <BsCardText />
 
-                    Oczekiwana odpowiedź
+                        Polecenie
 
-                </label>
+                    </label>
 
-                <textarea
-                    value={block.expectedAnswer || ""}
-                    placeholder="Poprawne rozwiązanie..."
-                    onChange={(e)=>update("expectedAnswer", e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-52 font-mono"
-                />
+                    <textarea
+                        value={task.instruction || ""}
+                        onChange={(e)=>update("instruction", e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-40"
+                        placeholder="Treść zadania..."
+                    />
 
-            </div>
-
-            {/* Hint */}
-
-            <div className="space-y-2">
-
-                <label className="flex items-center gap-2 text-gray-300">
-
-                    <BsLightbulb />
-
-                    Podpowiedź
-
-                </label>
-
-                <textarea
-                    value={block.hint || ""}
-                    placeholder="Podpowiedź dla ucznia..."
-                    onChange={(e)=>update("hint", e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-32"
-                />
+                </div>
 
             </div>
 
-            {/* XP */}
+            {/* ------------------------------------------------ */}
+            {/* KOD */}
+            {/* ------------------------------------------------ */}
 
-            <div className="space-y-2">
+            <div className="space-y-5">
 
-                <label className="flex items-center gap-2 text-gray-300">
+                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">
+                    Kod
+                </h3>
 
-                    <BsStar />
+                <div className="space-y-2">
 
-                    XP za ukończenie
+                    <label className="flex items-center gap-2 text-gray-300">
+                        <BsCodeSlash />
+                        Kod startowy
+                    </label>
 
-                </label>
+                    <MonacoEditorBox
+                        language={task.language}
+                        value={task.starterCode || ""}
+                        onChange={(value) => update("starterCode", value)}
+                    />
 
-                <input
-                    type="number"
-                    min={0}
-                    value={block.points ?? 25}
-                    onChange={(e)=>update("points", Number(e.target.value))}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
-                />
+                </div>
+
+                <div className="space-y-2">
+
+                    <label className="flex items-center gap-2 text-gray-300">
+
+                        <BsGlobe />
+
+                        Język
+
+                    </label>
+
+                    <select
+                        value={task.language || "java"}
+                        onChange={(e)=>update("language", e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
+                    >
+
+                        <option value="java">Java</option>
+
+                        <option value="javascript">JavaScript</option>
+
+                        <option value="python">Python</option>
+
+                        <option value="csharp">C#</option>
+
+                    </select>
+
+                </div>
 
             </div>
 
-        </div>
+            {/* ------------------------------------------------ */}
+            {/* SPRAWDZANIE */}
+            {/* ------------------------------------------------ */}
+
+            <div className="space-y-5">
+
+                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">
+                    Sprawdzanie
+                </h3>
+
+                <div className="space-y-2">
+
+                    <label className="flex items-center gap-2 text-gray-300">
+
+                        <BsCheckCircle />
+
+                        Poprawna odpowiedź
+
+                    </label>
+
+                    <MonacoEditorBox
+                        language={task.language}
+                        value={task.expectedAnswer || ""}
+                        onChange={(value) => update("expectedAnswer", value)}
+                    />
+
+                </div>
+
+                <div className="space-y-2">
+
+                    <label className="flex items-center gap-2 text-gray-300">
+
+                        <BsLightbulb />
+
+                        Podpowiedź
+
+                    </label>
+
+                    <textarea
+                        value={task.hint || ""}
+                        onChange={(e)=>update("hint", e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-32"
+                    />
+
+                </div>
+
+            </div>
+
+            {/* ------------------------------------------------ */}
+            {/* USTAWIENIA */}
+            {/* ------------------------------------------------ */}
+
+            <div className="space-y-5">
+
+                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">
+                    Ustawienia
+                </h3>
+
+                <div className="grid md:grid-cols-3 gap-4">
+
+                    <div className="space-y-2">
+
+                        <label className="flex items-center gap-2 text-gray-300">
+
+                            <BsStars />
+
+                            XP
+
+                        </label>
+
+                        <input
+                            type="number"
+                            value={task.points ?? 0}
+                            onChange={(e)=>update("points", Number(e.target.value))}
+                            className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
+                        />
+
+                    </div>
+
+                    <div className="space-y-2">
+
+                        <label className="text-gray-300">
+                            Typ
+                        </label>
+
+                        <select
+                            value={task.type || "CODE"}
+                            onChange={(e)=>update("type", e.target.value)}
+                            className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
+                        >
+
+                            <option value="CODE">
+                                CODE
+                            </option>
+
+                            <option value="TEXT">
+                                TEXT
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div className="flex items-end">
+
+                        <label className="flex items-center gap-3 bg-gray-800 rounded-xl p-4 w-full cursor-pointer">
+
+                            <input
+                                type="checkbox"
+                                checked={task.published ?? true}
+                                onChange={(e)=>update("published", e.target.checked)}
+                            />
+
+                            <BsToggleOn />
+
+                            Opublikowane
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button
+                onClick={onSave}
+                className="w-full bg-green-600 hover:bg-green-700 rounded-xl py-4 font-bold transition"
+            >
+
+                {task.id
+                    ? "Zapisz zmiany"
+                    : "Dodaj zadanie"}
+
+            </button>
+
+        </section>
 
     );
 
