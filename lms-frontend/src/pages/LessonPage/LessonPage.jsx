@@ -8,168 +8,281 @@ import LessonBlock from "./LessonBlock";
 import LessonFooter from "./LessonFooter";
 
 export default function LessonPage() {
+
     const { lessonId } = useParams();
     const navigate = useNavigate();
 
     const [lesson, setLesson] = useState(null);
     const [blocks, setBlocks] = useState([]);
-    const [tasks, setTasks] = useState([]);
     const [moduleLessons, setModuleLessons] = useState([]);
 
     const [selectedBlock, setSelectedBlock] = useState(null);
+
     const [answers, setAnswers] = useState({});
     const [results, setResults] = useState({});
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
+
         loadLesson();
+
     }, [lessonId]);
 
-    const loadLesson = async () => {
+    async function loadLesson() {
+
         try {
+
             setLoading(true);
-            setError(null);
+
             setLesson(null);
             setBlocks([]);
-            setTasks([]);
             setModuleLessons([]);
             setSelectedBlock(null);
+
             setAnswers({});
             setResults({});
 
-            const lessonData = await apiFetch(`/lessons/${lessonId}`);
+            const lessonData =
+                await apiFetch(`/lessons/${lessonId}`);
+
             setLesson(lessonData);
 
             if (lessonData?.moduleId) {
-                const lessonsData = await apiFetch(`/lessons/module/${lessonData.moduleId}`);
 
-                const lessonsWithAccess = await Promise.all(
-                    (lessonsData || []).map(async (l) => {
+                const lessons =
+                    await apiFetch(`/lessons/module/${lessonData.moduleId}`);
+
+                const mapped = await Promise.all(
+
+                    lessons.map(async lesson => {
+
                         try {
-                            const canAccess = await apiFetch(`/lessons/${l.id}/access`);
-                            return { ...l, canAccess };
+
+                            const canAccess =
+                                await apiFetch(`/lessons/${lesson.id}/access`);
+
+                            return {
+                                ...lesson,
+                                canAccess
+                            };
+
                         } catch {
-                            return { ...l, canAccess: false };
+
+                            return {
+                                ...lesson,
+                                canAccess: false
+                            };
+
                         }
+
                     })
+
                 );
 
                 setModuleLessons(
-                    lessonsWithAccess.sort(
-                        (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
+                    mapped.sort(
+                        (a, b) =>
+                            (a.orderIndex ?? 0) -
+                            (b.orderIndex ?? 0)
                     )
                 );
+
             }
 
-            const blocksData = await apiFetch(`/lesson-blocks/lesson/${lessonId}`);
-            const sortedBlocks = [...(blocksData || [])].sort(
-                (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
-            );
+            const lessonBlocks =
+                await apiFetch(`/lesson-blocks/lesson/${lessonId}`);
 
-            setBlocks(sortedBlocks);
-            setSelectedBlock(sortedBlocks[0] || null);
+            const sorted =
+                [...lessonBlocks].sort(
+                    (a, b) =>
+                        (a.orderIndex ?? 0) -
+                        (b.orderIndex ?? 0)
+                );
 
-            const tasksData = await apiFetch(`/tasks/lesson/${lessonId}`);
-            const sortedTasks = [...(tasksData || [])].sort(
-                (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
-            );
+            setBlocks(sorted);
 
-            setTasks(sortedTasks);
+            setSelectedBlock(sorted[0] || null);
 
             const initialAnswers = {};
-            sortedTasks.forEach(task => {
-                if (task.type === "CODE") {
-                    initialAnswers[task.id] = task.starterCode || "";
-                }
-            });
+
+            sorted
+                .filter(b => b.type === "TASK")
+                .forEach(block => {
+
+                    initialAnswers[block.id] =
+                        block.starterCode || "";
+
+                });
 
             setAnswers(initialAnswers);
-        } catch (e) {
-            console.error(e);
-            setError(e.message);
-        } finally {
-            setLoading(false);
+
         }
-    };
 
-    const checkTask = async (taskId) => {
+        catch (e) {
+
+            console.error(e);
+
+            setError(e.message);
+
+        }
+
+        finally {
+
+            setLoading(false);
+
+        }
+
+    }
+
+    async function checkTask(blockId) {
+
         try {
-            const res = await apiFetch(`/tasks/${taskId}/check`, {
-                method: "POST",
-                body: JSON.stringify({
-                    answer: answers[taskId] || ""
-                })
-            });
 
-            const correct = typeof res === "boolean" ? res : res.correct;
+            const result =
+                await apiFetch(`/lesson-blocks/${blockId}/check`, {
+
+                    method: "POST",
+
+                    body: JSON.stringify({
+
+                        answer: answers[blockId] || ""
+
+                    })
+
+                });
 
             setResults(prev => ({
+
                 ...prev,
-                [taskId]: correct
+
+                [blockId]:
+                    typeof result === "boolean"
+                        ? result
+                        : result.correct
+
             }));
-        } catch (e) {
-            console.error(e);
-            alert("Błąd sprawdzania odpowiedzi");
-        }
-    };
 
-    const submitLesson = async () => {
+        }
+
+        catch (e) {
+
+            console.error(e);
+
+            alert("Nie udało się sprawdzić zadania.");
+
+        }
+
+    }
+
+    async function submitLesson() {
+
         try {
+
+            const taskBlocks =
+                blocks.filter(
+                    b => b.type === "TASK"
+                );
+
             await apiFetch("/lesson-submit", {
+
                 method: "POST",
+
                 body: JSON.stringify({
+
                     lessonId: Number(lessonId),
+
                     lessonTitle: lesson.title,
-                    answers: tasks.map(task => ({
-                        taskId: task.id,
-                        taskContent: task.taskContent,
-                        studentAnswer: answers[task.id] || ""
+
+                    answers: taskBlocks.map(block => ({
+
+                        taskId: block.id,
+
+                        taskContent: block.instruction,
+
+                        studentAnswer:
+                            answers[block.id] || ""
+
                     }))
+
                 })
+
             });
 
-            await apiFetch(`/lessons/${lessonId}/complete`, {
-                method: "POST"
-            });
+            await apiFetch(
+                `/lessons/${lessonId}/complete`,
+                {
+                    method: "POST"
+                }
+            );
 
-            alert("Lekcja ukończona");
-            await loadLesson();
-        } catch (e) {
+            alert("Lekcja ukończona.");
+
+            loadLesson();
+
+        }
+
+        catch (e) {
+
             console.error(e);
-            alert("Błąd wysyłania lekcji");
-        }
-    };
 
-    const goBack = () => {
-        if (lesson?.moduleId) {
-            navigate(`/lessons/${lesson.moduleId}`);
-        } else {
-            navigate("/courses");
+            alert("Nie udało się wysłać lekcji.");
+
         }
-    };
+
+    }
+
+    function goBack() {
+
+        if (lesson?.moduleId) {
+
+            navigate(`/lessons/${lesson.moduleId}`);
+
+        }
+
+        else {
+
+            navigate("/courses");
+
+        }
+
+    }
 
     if (loading) {
+
         return (
+
             <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"/>
+
             </div>
+
         );
+
     }
 
     if (error) {
+
         return (
-            <div className="min-h-screen bg-gray-950 text-red-400 p-8">
-                Błąd: {error}
+
+            <div className="min-h-screen bg-gray-950 p-8 text-red-400">
+
+                {error}
+
             </div>
+
         );
+
     }
 
     if (!lesson) return null;
 
-    const currentIndex = moduleLessons.findIndex(
-        l => Number(l.id) === Number(lessonId)
-    );
+    const currentIndex =
+        moduleLessons.findIndex(
+            l => Number(l.id) === Number(lessonId)
+        );
 
     const previousLesson =
         currentIndex > 0
@@ -182,53 +295,89 @@ export default function LessonPage() {
             : null;
 
     return (
+
         <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(147,51,234,0.15),transparent_35%),#030712] text-white">
+
             <div className="max-w-7xl mx-auto p-6 space-y-6">
 
                 <LessonHero
+
                     lesson={lesson}
+
                     moduleLessons={moduleLessons}
+
                     onBack={goBack}
+
                 />
 
-                <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
+                <div className="grid xl:grid-cols-[320px_1fr] gap-6">
+
                     <LessonSidebar
+
                         blocks={blocks}
+
                         selectedBlock={selectedBlock}
+
                         setSelectedBlock={setSelectedBlock}
+
                         moduleLessons={moduleLessons}
+
                         currentLessonId={lessonId}
+
                     />
 
-                    <main className="min-w-0 space-y-6">
+                    <main className="space-y-6">
+
                         <LessonBlock
+
                             block={selectedBlock}
+
                             blocks={blocks}
-                            tasks={tasks}
+
                             answers={answers}
+
                             setAnswers={setAnswers}
+
                             results={results}
+
                             checkTask={checkTask}
+
                         />
 
                         <LessonFooter
-                            hasTasks={tasks.length > 0}
+
+                            hasTasks={
+                                blocks.some(
+                                    b => b.type === "TASK"
+                                )
+                            }
+
                             onSubmit={submitLesson}
+
                             previousLesson={previousLesson}
+
                             nextLesson={nextLesson}
+
                             onPrevious={() =>
                                 previousLesson &&
                                 navigate(`/lesson/${previousLesson.id}`)
                             }
+
                             onNext={() =>
                                 nextLesson &&
                                 navigate(`/lesson/${nextLesson.id}`)
                             }
+
                         />
+
                     </main>
+
                 </div>
 
             </div>
+
         </div>
+
     );
+
 }

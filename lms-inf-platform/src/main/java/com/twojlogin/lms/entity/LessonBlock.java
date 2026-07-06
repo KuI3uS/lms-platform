@@ -10,6 +10,10 @@ public class LessonBlock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /*
+     * Podstawowe informacje
+     */
+
     private String title;
 
     @Enumerated(EnumType.STRING)
@@ -19,43 +23,62 @@ public class LessonBlock {
     @Column(columnDefinition = "LONGTEXT")
     private String content;
 
-    // dla obrazów, filmów i PDF
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String description;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String instruction;
+
+    /*
+     * Kod
+     */
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String starterCode;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String expectedAnswer;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String hint;
+
+    private String language;
+
+    /*
+     * Multimedia
+     */
+
     private String mediaUrl;
 
-    // image/png, video/mp4, application/pdf, youtube...
     private String mediaType;
 
-    // java, cpp, python...
-    private String language;
+    /*
+     * Ustawienia
+     */
 
     private Boolean published = true;
 
     private Integer points = 0;
-    // tylko dla TASK
-    private Long taskId;
 
-    private Integer orderIndex;
+    private Integer orderIndex = 0;
+
+    /*
+     * Relacje
+     */
 
     @ManyToOne
     @JoinColumn(name = "lesson_id")
     @JsonIgnore
     private Lesson lesson;
 
-    public Boolean getPublished() {
-        return published;
-    }
-
-    public void setPublished(Boolean published) {
-        this.published = published;
-    }
-
-    public Integer getPoints() {
-        return points;
-    }
-
-    public void setPoints(Integer points) {
-        this.points = points;
-    }
+    /*
+     * Gettery / Settery
+     */
 
     public Long getId() {
         return id;
@@ -63,6 +86,14 @@ public class LessonBlock {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Lesson getLesson() {
+        return lesson;
+    }
+
+    public void setLesson(Lesson lesson) {
+        this.lesson = lesson;
     }
 
     public String getTitle() {
@@ -89,6 +120,54 @@ public class LessonBlock {
         this.content = content;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getInstruction() {
+        return instruction;
+    }
+
+    public void setInstruction(String instruction) {
+        this.instruction = instruction;
+    }
+
+    public String getStarterCode() {
+        return starterCode;
+    }
+
+    public void setStarterCode(String starterCode) {
+        this.starterCode = starterCode;
+    }
+
+    public String getExpectedAnswer() {
+        return expectedAnswer;
+    }
+
+    public void setExpectedAnswer(String expectedAnswer) {
+        this.expectedAnswer = expectedAnswer;
+    }
+
+    public String getHint() {
+        return hint;
+    }
+
+    public void setHint(String hint) {
+        this.hint = hint;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
     public String getMediaUrl() {
         return mediaUrl;
     }
@@ -105,20 +184,20 @@ public class LessonBlock {
         this.mediaType = mediaType;
     }
 
-    public String getLanguage() {
-        return language;
+    public Boolean getPublished() {
+        return published;
     }
 
-    public void setLanguage(String language) {
-        this.language = language;
+    public void setPublished(Boolean published) {
+        this.published = published;
     }
 
-    public Long getTaskId() {
-        return taskId;
+    public Integer getPoints() {
+        return points;
     }
 
-    public void setTaskId(Long taskId) {
-        this.taskId = taskId;
+    public void setPoints(Integer points) {
+        this.points = points;
     }
 
     public Integer getOrderIndex() {
@@ -127,13 +206,5 @@ public class LessonBlock {
 
     public void setOrderIndex(Integer orderIndex) {
         this.orderIndex = orderIndex;
-    }
-
-    public Lesson getLesson() {
-        return lesson;
-    }
-
-    public void setLesson(Lesson lesson) {
-        this.lesson = lesson;
     }
 }

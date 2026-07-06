@@ -114,25 +114,40 @@ export default function AdminTutoringPage() {
 
     return (
         <div className="max-w-7xl mx-auto space-y-10 text-white">
-            <div className="flex justify-between items-start gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold flex items-center gap-3">
-                        <BsCalendarPlus className="text-blue-400" />
-                        Admin korepetycje
-                    </h1>
-                    <p className="text-gray-400 mt-2">
-                        Zarządzaj dostępnością i sprawdzaj rezerwacje uczniów.
-                    </p>
+            <section className="relative overflow-hidden rounded-[36px] border border-cyan-500/20 bg-gradient-to-br from-cyan-600/20 via-gray-900 to-blue-600/20 p-10">
+
+                <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-cyan-500/20 blur-3xl" />
+
+                <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl" />
+
+                <div className="relative z-10 flex justify-between items-start">
+
+                    <div>
+
+                        <p className="uppercase tracking-[0.35em] text-cyan-300 font-black text-sm">
+                            EDUHUB ADMIN
+                        </p>
+
+                        <h1 className="text-5xl font-black mt-4">
+                            Korepetycje
+                        </h1>
+
+                        <p className="text-gray-400 mt-5 text-lg max-w-3xl leading-8">
+                            Zarządzaj dostępnością, kontroluj rezerwacje oraz monitoruj spotkania z uczniami.
+                        </p>
+
+                    </div>
+
+                    <button
+                        onClick={load}
+                        className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl px-6 py-4 hover:border-cyan-400 transition"
+                    >
+                        <BsArrowRepeat size={22}/>
+                    </button>
+
                 </div>
 
-                <button
-                    onClick={load}
-                    className="bg-gray-800 hover:bg-gray-700 px-4 py-3 rounded-xl flex items-center gap-2"
-                >
-                    <BsArrowRepeat />
-                    Odśwież
-                </button>
-            </div>
+            </section>
 
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
                 <h2 className="text-xl font-bold">Dodaj dostępność</h2>

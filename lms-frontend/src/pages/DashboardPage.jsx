@@ -1,21 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
+
 import {
-    BsBook,
-    BsClipboardCheck,
-    BsClockHistory,
-    BsExclamationCircle,
-    BsChatLeftText,
-    BsPlayFill,
-    BsLightningChargeFill,
-    BsTrophyFill,
-    BsFire,
     BsArrowRight,
-    BsStars
+    BsBookHalf,
+    BsFire,
+    BsLightningChargeFill,
+    BsPlayFill,
+    BsStars,
+    BsTrophyFill
 } from "react-icons/bs";
 
 export default function DashboardPage() {
+
     const navigate = useNavigate();
 
     const [courses, setCourses] = useState([]);
@@ -28,275 +26,1064 @@ export default function DashboardPage() {
     }, []);
 
     const load = async () => {
+
         try {
-            const [coursesData, submissionsData, resultsData] = await Promise.all([
+
+            const [
+                coursesData,
+                submissionsData,
+                resultsData
+            ] = await Promise.all([
+
                 apiFetch("/courses"),
-                apiFetch("/submissions/my").catch(() => []),
-                apiFetch("/my-results").catch(() => [])
+
+                apiFetch("/submissions/my")
+                    .catch(() => []),
+
+                apiFetch("/my-results")
+                    .catch(() => [])
+
             ]);
 
             setCourses(coursesData || []);
             setSubmissions(submissionsData || []);
             setResults(resultsData || []);
-        } catch (e) {
+
+        }
+        catch (e) {
             console.error(e);
-        } finally {
+        }
+        finally {
             setLoading(false);
         }
-    };
 
-    const checked = submissions.filter(s => s.status === "CHECKED").length;
-    const toFix = submissions.filter(s => s.status === "TO_FIX").length;
-    const waiting = submissions.filter(s => s.status === "NEW").length;
-    const lastSubmissions = submissions.slice(0, 4);
-    const firstCourse = courses[0];
-
-    const statusStyle = (status) => {
-        if (status === "CHECKED") return "bg-green-500/10 text-green-400 border-green-500/30";
-        if (status === "TO_FIX") return "bg-yellow-500/10 text-yellow-400 border-yellow-500/30";
-        return "bg-blue-500/10 text-blue-400 border-blue-500/30";
     };
 
     if (loading) {
+
         return (
-            <div className="flex items-center justify-center h-96">
-                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+
+            <div className="flex items-center justify-center h-[70vh]">
+
+                <div className="
+                    w-16
+                    h-16
+                    rounded-full
+                    border-4
+                    border-cyan-500
+                    border-t-transparent
+                    animate-spin
+                "/>
+
             </div>
+
         );
+
     }
 
+    const checked =
+        submissions.filter(s => s.status === "CHECKED").length;
+
+    const firstCourse =
+        courses[0];
+
+    const lastSubmissions = submissions.slice(0, 5);
+
+    const xp =
+        checked * 40 +
+        submissions.length * 10 +
+        results.length * 20;
+
+    const level =
+        Math.max(1, Math.floor(xp / 250) + 1);
+
+    const progress =
+        xp % 250;
+
+    const statusStyle = (status) => {
+
+        if (status === "CHECKED")
+            return "bg-green-500/10 text-green-300 border-green-500/30";
+
+        if (status === "TO_FIX")
+            return "bg-orange-500/10 text-orange-300 border-orange-500/30";
+
+        return "bg-cyan-500/10 text-cyan-300 border-cyan-500/30";
+    };
+
     return (
+
         <div className="space-y-10 text-white">
 
-            <section className="relative overflow-hidden rounded-[2rem] border border-blue-500/20 bg-gradient-to-br from-blue-600/30 via-gray-900 to-purple-700/20 p-8 shadow-2xl">
-                <div className="absolute -top-24 -right-24 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl" />
-                <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
+            {/* ================================================= */}
 
-                <div className="relative z-10 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-8">
-                    <div>
-                        <p className="text-blue-300 font-semibold mb-2 flex items-center gap-2">
-                            <BsStars />
-                            Panel nauki
-                        </p>
+            {/* HERO DASHBOARD */}
 
-                        <h1 className="text-4xl md:text-5xl font-black">
-                            Kontynuuj swoją ścieżkę
-                        </h1>
+            {/* ================================================= */}
 
-                        <p className="text-gray-300 mt-4 max-w-2xl text-lg">
-                            Ucz się krok po kroku, rozwiązuj zadania, wysyłaj projekty
-                            i buduj realne umiejętności do INF.02, INF.03, matury i programowania.
-                        </p>
-                    </div>
+            <section
+                className="
+                    relative
+                    overflow-hidden
+                    rounded-[42px]
+                    border
+                    border-cyan-500/20
+                    bg-gradient-to-br
+                    from-slate-950
+                    via-[#081325]
+                    to-cyan-950
+                    p-12
+                "
+            >
 
-                    <div className="bg-gray-950/70 border border-white/10 rounded-3xl p-6 min-w-[280px]">
-                        <p className="text-gray-400 text-sm mb-2">Twój status</p>
+                <div className="
+                    absolute
+                    -left-24
+                    -top-24
+                    w-96
+                    h-96
+                    rounded-full
+                    bg-cyan-500/10
+                    blur-3xl
+                "/>
 
-                        <div className="flex items-center gap-3">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                                <BsLightningChargeFill size={28} />
+                <div className="
+                    absolute
+                    -right-32
+                    bottom-0
+                    w-[500px]
+                    h-[500px]
+                    rounded-full
+                    bg-blue-600/10
+                    blur-3xl
+                "/>
+
+                <div className="relative z-10">
+
+                    <div className="grid xl:grid-cols-[1.5fr_0.9fr] gap-10">
+
+                        {/* ================================= */}
+
+                        {/* LEWA STRONA */}
+
+                        {/* ================================= */}
+
+                        <div>
+
+                            <div className="
+                                inline-flex
+                                items-center
+                                gap-2
+                                rounded-full
+                                border
+                                border-cyan-500/20
+                                bg-cyan-500/10
+                                px-5
+                                py-2
+                                text-cyan-300
+                                font-semibold
+                            ">
+
+                                <BsStars/>
+
+                                EDUHUB 2026
+
                             </div>
 
-                            <div>
-                                <h2 className="text-2xl font-black">Poziom 1</h2>
-                                <p className="text-gray-400 text-sm">Start nauki</p>
-                            </div>
-                        </div>
+                            <h1 className="
+                                mt-8
+                                text-6xl
+                                font-black
+                                leading-tight
+                            ">
 
-                        <div className="mt-5">
-                            <div className="flex justify-between text-sm mb-2">
-                                <span className="text-gray-400">XP</span>
-                                <span className="font-bold">0 / 100</span>
-                            </div>
+                                Witaj ponownie.
 
-                            <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
-                                <div className="h-3 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full w-[0%]" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                                <br/>
 
-            <section className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                <StatCard icon={<BsBook />} label="Kursy" value={courses.length} color="text-blue-400" />
-                <StatCard icon={<BsClipboardCheck />} label="Wysłane prace" value={submissions.length} color="text-purple-400" />
-                <StatCard icon={<BsClockHistory />} label="Czekają" value={waiting} color="text-yellow-400" />
-                <StatCard icon={<BsExclamationCircle />} label="Do poprawy" value={toFix} color="text-red-400" />
-            </section>
+                                Kontynuuj naukę.
 
-            <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                            </h1>
 
-                <div className="xl:col-span-2 space-y-6">
-                    <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6">
-                        <div className="flex items-center justify-between gap-4 mb-5">
-                            <div>
-                                <h2 className="text-2xl font-black">Kontynuuj naukę</h2>
-                                <p className="text-gray-400 mt-1">
-                                    Wróć do ostatnio wybranego kursu albo rozpocznij nową ścieżkę.
-                                </p>
-                            </div>
+                            <p className="
+                                mt-8
+                                max-w-3xl
+                                text-xl
+                                leading-9
+                                text-gray-300
+                            ">
 
-                            <BsPlayFill className="text-blue-400" size={34} />
-                        </div>
+                                Rozwiązuj kolejne zadania,
+                                zdobywaj doświadczenie,
+                                rozwijaj umiejętności programistyczne
+                                i odblokowuj następne moduły.
 
-                        {firstCourse ? (
-                            <div className="rounded-3xl bg-gradient-to-br from-gray-800 to-gray-950 border border-gray-700 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-                                <div>
-                                    <p className="text-blue-400 text-sm font-semibold mb-2">
-                                        Aktywna ścieżka
-                                    </p>
+                            </p>
 
-                                    <h3 className="text-2xl font-bold">
-                                        {firstCourse.title || firstCourse.name}
-                                    </h3>
-
-                                    <p className="text-gray-400 mt-2 max-w-xl">
-                                        {firstCourse.description || "Przejdź do modułów i rozpocznij naukę krok po kroku."}
-                                    </p>
-                                </div>
+                            {firstCourse && (
 
                                 <button
-                                    onClick={() => navigate(`/modules/${firstCourse.id}`)}
-                                    className="bg-blue-600 hover:bg-blue-700 px-6 py-4 rounded-2xl font-bold flex items-center gap-2 justify-center"
-                                >
-                                    Kontynuuj
-                                    <BsArrowRight />
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="bg-gray-800 rounded-2xl p-5 text-gray-400">
-                                Brak dostępnych kursów.
-                            </div>
-                        )}
-                    </div>
 
-                    <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-black">Ostatnie prace</h2>
-                            <span className="text-sm text-gray-500">{submissions.length} łącznie</span>
+                                    onClick={() =>
+                                        navigate(`/modules/${firstCourse.id}`)
+                                    }
+
+                                    className="
+                                        mt-10
+                                        rounded-2xl
+                                        bg-gradient-to-r
+                                        from-cyan-500
+                                        to-blue-600
+                                        px-8
+                                        py-5
+                                        font-bold
+                                        flex
+                                        items-center
+                                        gap-3
+                                        hover:scale-[1.02]
+                                        transition
+                                        shadow-[0_20px_60px_rgba(6,182,212,0.25)]
+                                    "
+
+                                >
+
+                                    <BsPlayFill size={20}/>
+
+                                    Kontynuuj naukę
+
+                                    <BsArrowRight/>
+
+                                </button>
+
+                            )}
+
                         </div>
 
-                        {lastSubmissions.length === 0 ? (
-                            <div className="text-gray-400 bg-gray-800 rounded-2xl p-5">
-                                Nie wysłałeś jeszcze żadnej pracy.
+                        {/* ================================= */}
+
+                        {/* PRAWA STRONA */}
+
+                        {/* ================================= */}
+
+                        <div className="grid gap-5">
+
+                            <div className="
+                                rounded-3xl
+                                border
+                                border-white/10
+                                bg-white/[0.05]
+                                backdrop-blur-xl
+                                p-7
+                            ">
+
+                                <div className="flex items-center gap-4">
+
+                                    <div className="
+                                        w-16
+                                        h-16
+                                        rounded-2xl
+                                        bg-gradient-to-br
+                                        from-cyan-500
+                                        to-blue-600
+                                        flex
+                                        items-center
+                                        justify-center
+                                    ">
+
+                                        <BsLightningChargeFill size={28}/>
+
+                                    </div>
+
+                                    <div>
+
+                                        <p className="text-gray-400">
+
+                                            Aktualny poziom
+
+                                        </p>
+
+                                        <h2 className="text-4xl font-black">
+
+                                            {level}
+
+                                        </h2>
+
+                                    </div>
+
+                                </div>
+
+                                <div className="mt-7">
+
+                                    <div className="
+                                        flex
+                                        justify-between
+                                        mb-3
+                                        text-sm
+                                    ">
+
+                                        <span className="text-gray-400">
+
+                                            XP
+
+                                        </span>
+
+                                        <span>
+
+                                            {progress} / 250
+
+                                        </span>
+
+                                    </div>
+
+                                    <div className="
+                                        h-3
+                                        rounded-full
+                                        bg-black/30
+                                        overflow-hidden
+                                    ">
+
+                                        <div
+                                            className="
+                                                h-full
+                                                rounded-full
+                                                bg-gradient-to-r
+                                                from-cyan-500
+                                                to-blue-600
+                                            "
+                                            style={{
+                                                width: `${progress / 2.5}%`
+                                            }}
+                                        />
+
+                                    </div>
+
+                                </div>
+
                             </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {lastSubmissions.map(s => (
-                                    <SubmissionCard key={s.id} submission={s} statusStyle={statusStyle} />
-                                ))}
+
+                            <div className="grid grid-cols-3 gap-4">
+                                {/* QUICK STATS */}
+
+                                <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl p-5">
+
+                                    <div className="flex items-center justify-between">
+
+                                        <div>
+
+                                            <p className="text-gray-400 text-sm">
+
+                                                Kursy
+
+                                            </p>
+
+                                            <h3 className="text-3xl font-black mt-2">
+
+                                                {courses.length}
+
+                                            </h3>
+
+                                        </div>
+
+                                        <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+
+                                            <BsBookHalf size={24}/>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl p-5">
+
+                                    <div className="flex items-center justify-between">
+
+                                        <div>
+
+                                            <p className="text-gray-400 text-sm">
+
+                                                Seria
+
+                                            </p>
+
+                                            <h3 className="text-3xl font-black mt-2">
+
+                                                {submissions.length}
+
+                                            </h3>
+
+                                        </div>
+
+                                        <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400">
+
+                                            <BsFire size={24}/>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl p-5">
+
+                                    <div className="flex items-center justify-between">
+
+                                        <div>
+
+                                            <p className="text-gray-400 text-sm">
+
+                                                Osiągnięcia
+
+                                            </p>
+
+                                            <h3 className="text-3xl font-black mt-2">
+
+                                                {checked}
+
+                                            </h3>
+
+                                        </div>
+
+                                        <div className="w-14 h-14 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-yellow-400">
+
+                                            <BsTrophyFill size={24}/>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
                             </div>
-                        )}
+
+                        </div>
+
                     </div>
                 </div>
 
-                <aside className="space-y-6">
-                    <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6">
-                        <h2 className="text-2xl font-black mb-5">Osiągnięcia</h2>
-
-                        <div className="space-y-3">
-                            <Achievement icon={<BsFire />} title="Pierwszy dzień" description="Rozpocznij naukę." active />
-                            <Achievement icon={<BsTrophyFill />} title="Pierwsza praca" description="Wyślij pierwsze zadanie." active={submissions.length > 0} />
-                            <Achievement icon={<BsClipboardCheck />} title="Sprawdzone" description="Otrzymaj ocenę od nauczyciela." active={checked > 0} />
-                        </div>
-                    </div>
-
-                    <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6">
-                        <h2 className="text-2xl font-black mb-5">Podsumowanie</h2>
-
-                        <div className="space-y-3">
-                            <SummaryRow label="Sprawdzone" value={checked} color="text-green-400" />
-                            <SummaryRow label="Czekają" value={waiting} color="text-blue-400" />
-                            <SummaryRow label="Do poprawy" value={toFix} color="text-yellow-400" />
-                            <SummaryRow label="Testy" value={results.length} color="text-purple-400" />
-                        </div>
-                    </div>
-                </aside>
             </section>
-        </div>
-    );
-}
 
-function StatCard({ icon, label, value, color }) {
-    return (
-        <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 hover:border-blue-500/40 transition">
-            <div className="flex items-center justify-between">
-                <p className="text-gray-400">{label}</p>
-                <div className={color}>{icon}</div>
+
+            {/* ========================================= */}
+
+            {/* CONTINUE LEARNING */}
+
+            {/* ========================================= */}
+
+            <section className="space-y-6">
+
+                <div className="flex justify-between items-center">
+
+                    <div>
+
+                        <h2 className="text-3xl font-black">
+
+                            Continue Learning
+
+                        </h2>
+
+                        <p className="text-gray-400 mt-2">
+
+                            Wróć do ostatnio rozpoczętej ścieżki.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+                {firstCourse && (
+
+                    <div
+                        className="
+                        relative
+                        overflow-hidden
+                        rounded-[36px]
+                        border
+                        border-white/10
+                        bg-gradient-to-br
+                        from-[#111827]
+                        via-[#0F172A]
+                        to-[#111827]
+                        p-10
+                    "
+                    >
+
+                        <div className="absolute -right-24 -top-24 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl"/>
+
+                        <div className="grid lg:grid-cols-[1.4fr_420px] gap-10 items-center">
+
+                            <div>
+
+                                <div className="inline-flex rounded-full bg-cyan-500/10 text-cyan-300 px-5 py-2 font-semibold">
+
+                                    Aktualna ścieżka
+
+                                </div>
+
+                                <h2 className="text-5xl font-black mt-6">
+
+                                    {firstCourse.title || firstCourse.name}
+
+                                </h2>
+
+                                <p className="mt-6 text-gray-400 text-lg leading-8 max-w-2xl">
+
+                                    {firstCourse.description ||
+                                        "Rozpocznij naukę i odblokowuj kolejne lekcje."}
+
+                                </p>
+
+                                <button
+
+                                    onClick={() =>
+                                        navigate(`/modules/${firstCourse.id}`)
+                                    }
+
+                                    className="
+                                        mt-10
+                                        rounded-2xl
+                                        bg-gradient-to-r
+                                        from-cyan-500
+                                        to-blue-600
+                                        px-8
+                                        py-5
+                                        font-bold
+                                        flex
+                                        items-center
+                                        gap-3
+                                        hover:scale-[1.02]
+                                        transition
+                                    "
+
+                                >
+
+                                    <BsPlayFill/>
+
+                                    Kontynuuj
+
+                                    <BsArrowRight/>
+
+                                </button>
+
+                            </div>
+
+                            <div className="space-y-6">
+
+                                <div>
+
+                                    <div className="flex justify-between text-sm mb-3">
+
+                                        <span className="text-gray-400">
+
+                                            Postęp kursu
+
+                                        </span>
+
+                                        <span>
+
+                                            {firstCourse.progress ?? 0}%
+
+                                        </span>
+
+                                    </div>
+
+                                    <div className="h-4 rounded-full bg-black/30 overflow-hidden">
+
+                                        <div
+
+                                            className="
+                                                h-full
+                                                rounded-full
+                                                bg-gradient-to-r
+                                                from-cyan-500
+                                                to-blue-600
+                                            "
+
+                                            style={{
+                                                width: `${firstCourse.progress ?? 0}%`
+                                            }}
+
+                                        />
+
+                                    </div>
+
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+
+                                    <div className="rounded-2xl bg-black/20 p-5">
+
+                                        <p className="text-gray-400 text-sm">
+
+                                            Lekcje
+
+                                        </p>
+
+                                        <h3 className="text-3xl font-black mt-2">
+
+                                            {firstCourse.lessonCount ?? "-"}
+
+                                        </h3>
+
+                                    </div>
+
+                                    <div className="rounded-2xl bg-black/20 p-5">
+
+                                        <p className="text-gray-400 text-sm">
+
+                                            Projekty
+
+                                        </p>
+
+                                        <h3 className="text-3xl font-black mt-2">
+
+                                            {firstCourse.projectCount ?? "-"}
+
+                                        </h3>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                )}
+
+            </section>
+
+            {/* ========================================= */}
+
+            {/* RECOMMENDED COURSES */}
+
+            {/* ========================================= */}
+
+            <section className="space-y-6">
+
+                <div className="flex justify-between items-center">
+
+                    <h2 className="text-3xl font-black">
+
+                        Polecane ścieżki
+
+                    </h2>
+
+                </div>
+
+                <div className="grid lg:grid-cols-3 gap-6">
+
+                    {courses.slice(0,3).map(course=>(
+
+                        <button
+
+                            key={course.id}
+
+                            onClick={()=>navigate(`/modules/${course.id}`)}
+
+                            className="
+                                group
+                                text-left
+                                rounded-[30px]
+                                border
+                                border-white/10
+                                bg-white/[0.04]
+                                overflow-hidden
+                                hover:border-cyan-500
+                                transition
+                            "
+
+                        >
+
+                            <img
+
+                                src={course.thumbnailUrl}
+
+                                alt=""
+
+                                className="
+                                    w-full
+                                    h-52
+                                    object-cover
+                                    group-hover:scale-105
+                                    transition
+                                "
+
+                            />
+
+                            <div className="p-6">
+
+                                <h3 className="text-2xl font-black">
+
+                                    {course.title || course.name}
+
+                                </h3>
+
+                                <p className="mt-3 text-gray-400 line-clamp-3">
+
+                                    {course.description}
+
+                                </p>
+
+                            </div>
+
+                        </button>
+
+                    ))}
+
+                </div>
+
+            </section>
+
+            {/* ========================================= */}
+
+            {/* RECENT ACTIVITY + WEEKLY */}
+
+            {/* ========================================= */}
+
+            {/* RECENT ACTIVITY */}
+
+            <div className="space-y-5">
+
+                <h2 className="text-3xl font-black">
+
+                    Ostatnia aktywność
+
+                </h2>
+
+                {lastSubmissions.length === 0 ? (
+
+                    <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 text-center">
+
+                        <p className="text-gray-400">
+
+                            Nie wysłałeś jeszcze żadnych prac.
+
+                        </p>
+
+                    </div>
+
+                ) : (
+
+                    lastSubmissions.map((submission) => (
+
+                        <ActivityCard
+                            key={submission.id}
+                            submission={submission}
+                            statusStyle={statusStyle}
+                        />
+
+                    ))
+
+                )}
+
             </div>
 
-            <h2 className="text-4xl font-black mt-4">{value}</h2>
-        </div>
-    );
-}
+            {/* PRAWA KOLUMNA */}
 
-function SubmissionCard({ submission, statusStyle }) {
-    return (
-        <div className="bg-gray-800 rounded-2xl p-5 border border-gray-700/60">
-            <div className="flex justify-between gap-4">
-                <div>
-                    <h3 className="font-bold text-lg">
-                        {submission.lesson?.title || "Brak lekcji"}
-                    </h3>
+            <div className="space-y-6">
 
-                    <p className="text-sm text-gray-500 mt-1">
-                        Wysłano: {submission.submittedAt?.replace("T", " ").slice(0, 16)}
+                <div className="rounded-[32px] border border-white/10 bg-white/[0.04] backdrop-blur-xl p-8">
+
+                    <h2 className="text-2xl font-black">
+
+                        Weekly Progress
+
+                    </h2>
+
+                    <p className="text-gray-400 mt-2">
+
+                        Aktywność z ostatnich dni.
+
                     </p>
+
+                    <div className="mt-8 space-y-5">
+
+                        <ProgressRow
+                            label="Przesłane prace"
+                            value={submissions.length}
+                            max={10}
+                        />
+
+                        <ProgressRow
+                            label="Sprawdzone"
+                            value={checked}
+                            max={10}
+                        />
+
+                        <ProgressRow
+                            label="Testy"
+                            value={results.length}
+                            max={10}
+                        />
+
+                    </div>
+
                 </div>
 
-                <span className={`h-fit border px-3 py-1 rounded-full text-sm ${statusStyle(submission.status)}`}>
-                    {submission.status}
+                <div className="rounded-[32px] border border-white/10 bg-white/[0.04] backdrop-blur-xl p-8">
+
+                    <h2 className="text-2xl font-black">
+
+                        Achievements
+
+                    </h2>
+
+                    <div className="space-y-4 mt-6">
+
+                        <AchievementCard
+
+                            title="Pierwszy krok"
+
+                            description="Rozpocznij pierwszy kurs."
+
+                            active={courses.length > 0}
+
+                        />
+
+                        <AchievementCard
+
+                            title="Pierwsza praca"
+
+                            description="Wyślij rozwiązanie."
+
+                            active={submissions.length > 0}
+
+                        />
+
+                        <AchievementCard
+
+                            title="Pierwsza ocena"
+
+                            description="Odbierz ocenę nauczyciela."
+
+                            active={checked > 0}
+
+                        />
+
+                        <AchievementCard
+                            title="Mistrz nauki"
+                            description="Ukończ cały kurs."
+                            active={false}
+                        />
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+);
+
+}
+
+/* ========================================================= */
+/* COMPONENTS */
+/* ========================================================= */
+
+function ProgressRow({ label, value, max }) {
+
+    const percent = Math.min((value / max) * 100, 100);
+
+
+
+    return (
+
+        <div>
+
+            <div className="flex justify-between text-sm mb-2">
+
+                <span className="text-gray-400">
+
+                    {label}
+
                 </span>
+
+                <span className="font-bold">
+
+                    {value}
+
+                </span>
+
+            </div>
+
+            <div className="h-3 rounded-full bg-black/30 overflow-hidden">
+
+                <div
+
+                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600"
+
+                    style={{ width: `${percent}%` }}
+
+                />
+
+            </div>
+
+        </div>
+
+    );
+
+}
+
+function ActivityCard({ submission, statusStyle }) {
+
+    return (
+
+        <div className="rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6">
+
+            <div className="flex justify-between items-start gap-5">
+
+                <div>
+
+                    <h3 className="text-xl font-black">
+
+                        {submission.lesson?.title || "Lekcja"}
+
+                    </h3>
+
+                    <p className="text-gray-400 mt-2">
+
+                        {submission.submittedAt
+                            ?.replace("T", " ")
+                            .substring(0, 16)}
+
+                    </p>
+
+                </div>
+
+                <span
+
+                    className={`
+                        px-4
+                        py-2
+                        rounded-full
+                        border
+                        text-sm
+                        font-semibold
+                        ${statusStyle(submission.status)}
+                    `}
+
+                >
+
+                    {submission.status}
+
+                </span>
+
             </div>
 
             {submission.grade && (
-                <p className="mt-3 text-green-400 font-semibold">
-                    Ocena: {submission.grade}
-                </p>
+
+                <div className="mt-6">
+
+                    <p className="text-gray-400 text-sm">
+
+                        Ocena
+
+                    </p>
+
+                    <h3 className="text-3xl font-black mt-2">
+
+                        {submission.grade}
+
+                    </h3>
+
+                </div>
+
             )}
 
             {submission.teacherComment && (
-                <div className="mt-4 bg-gray-900 rounded-xl p-4 border border-gray-700">
-                    <div className="flex items-center gap-2 text-blue-400 mb-2">
-                        <BsChatLeftText />
-                        <span className="font-semibold">Komentarz nauczyciela</span>
-                    </div>
 
-                    <p className="text-gray-300 whitespace-pre-line">
-                        {submission.teacherComment}
+                <div className="mt-6 rounded-2xl bg-black/20 border border-white/5 p-5">
+
+                    <p className="text-cyan-300 font-semibold mb-2">
+
+                        Komentarz nauczyciela
+
                     </p>
+
+                    <p className="text-gray-300 whitespace-pre-wrap">
+
+                        {submission.teacherComment}
+
+                    </p>
+
                 </div>
+
             )}
+
         </div>
+
     );
+
 }
 
-function SummaryRow({ label, value, color }) {
-    return (
-        <div className="flex justify-between bg-gray-800 p-4 rounded-2xl">
-            <span className="text-gray-400">{label}</span>
-            <span className={`${color} font-black`}>{value}</span>
-        </div>
-    );
-}
+function AchievementCard({ title, description, active }) {
 
-function Achievement({ icon, title, description, active }) {
     return (
-        <div className={`rounded-2xl border p-4 flex gap-4 ${
-            active
-                ? "bg-blue-500/10 border-blue-500/30"
-                : "bg-gray-800/60 border-gray-700 opacity-60"
-        }`}>
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                active ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-400"
-            }`}>
-                {icon}
-            </div>
 
-            <div>
-                <h3 className="font-bold">{title}</h3>
-                <p className="text-sm text-gray-400 mt-1">{description}</p>
+        <div
+
+            className={`
+                rounded-2xl
+                border
+                p-5
+                transition
+
+                ${
+                active
+                    ? "border-cyan-500/30 bg-cyan-500/10"
+                    : "border-white/10 bg-black/20 opacity-60"
+            }
+            `}
+
+        >
+
+            <h3 className="font-black text-lg">
+
+                {title}
+
+            </h3>
+
+            <p className="text-gray-400 mt-2">
+
+                {description}
+
+            </p>
+
+            <div className="mt-5">
+
+                <span
+
+                    className={`
+                        inline-flex
+                        rounded-full
+                        px-4
+                        py-2
+                        text-sm
+                        font-semibold
+
+                        ${
+                        active
+                            ? "bg-cyan-500/20 text-cyan-300"
+                            : "bg-white/10 text-gray-400"
+                    }
+                    `}
+
+                >
+
+                    {active ? "Odblokowane" : "Zablokowane"}
+
+                </span>
+
             </div>
         </div>
-    );
+
+);
+
 }

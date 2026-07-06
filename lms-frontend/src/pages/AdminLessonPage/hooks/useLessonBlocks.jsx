@@ -2,15 +2,27 @@ import { useState } from "react";
 import { apiFetch } from "../../../api/api";
 
 const emptyBlock = {
+    id: null,
+
     title: "",
     type: "TEXT",
+
     content: "",
+    description: "",
+    instruction: "",
+
+    starterCode: "",
+    expectedAnswer: "",
+    hint: "",
+
     language: "java",
+
     mediaUrl: "",
     mediaType: "",
-    taskId: null,
+
     published: true,
-    points: 0
+    points: 0,
+    orderIndex: 0
 };
 
 export default function useLessonBlocks() {
