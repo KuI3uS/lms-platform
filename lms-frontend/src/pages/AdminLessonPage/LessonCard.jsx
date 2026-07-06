@@ -1,107 +1,316 @@
 import {
     BsChevronDown,
     BsChevronUp,
+    BsCollection,
     BsPencilSquare,
     BsTrash,
-    BsCollection
+    BsStars,
+    BsArrowRight
 } from "react-icons/bs";
 
 import BlockManager from "../../components/BlockManager/BlockManager";
+
 export default function LessonCard({
 
                                        lesson,
 
                                        expanded,
+
                                        toggle,
 
                                        onEdit,
+
                                        onDelete,
 
                                        lessonBlocks,
+
                                        lessonTasks
 
                                    }) {
 
     return (
 
-        <div className="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden">
+        <div
+            className="
+                relative
+                overflow-hidden
+                rounded-[32px]
+                border
+                border-cyan-500/10
+                bg-gradient-to-br
+                from-slate-900
+                via-[#0b1424]
+                to-slate-900
+                transition
+                hover:border-cyan-500/40
+            "
+        >
+
+            {/* Glow */}
+
+            <div
+                className="
+                    absolute
+                    -right-20
+                    -top-20
+                    w-64
+                    h-64
+                    rounded-full
+                    bg-cyan-500/10
+                    blur-3xl
+                "
+            />
 
             {/* HEADER */}
 
-            <div className="flex items-center justify-between px-6 py-5">
+            <div className="relative z-10 p-7">
 
-                <div
-                    onClick={() => toggle(lesson.id)}
-                    className="flex items-center gap-4 cursor-pointer flex-1"
-                >
+                <div className="flex items-start justify-between gap-6">
 
-                    <div className="bg-blue-600 w-10 h-10 rounded-xl flex items-center justify-center">
+                    {/* LEWA */}
 
-                        <BsCollection />
+                    <div
+                        onClick={() => toggle(lesson.id)}
+                        className="
+                            flex
+                            gap-5
+                            flex-1
+                            cursor-pointer
+                        "
+                    >
+
+                        <div
+                            className="
+                                w-16
+                                h-16
+                                rounded-3xl
+                                bg-gradient-to-br
+                                from-cyan-500
+                                to-blue-600
+                                flex
+                                items-center
+                                justify-center
+                                shadow-lg
+                            "
+                        >
+
+                            <BsCollection size={28} />
+
+                        </div>
+
+                        <div className="flex-1">
+
+                            <div
+                                className="
+                                    inline-flex
+                                    items-center
+                                    gap-2
+                                    rounded-full
+                                    bg-cyan-500/10
+                                    border
+                                    border-cyan-500/20
+                                    px-4
+                                    py-1
+                                    text-cyan-300
+                                    text-sm
+                                    font-semibold
+                                "
+                            >
+
+                                <BsStars />
+
+                                Lekcja {lesson.orderIndex}
+
+                            </div>
+
+                            <h2 className="text-3xl font-black mt-5">
+
+                                {lesson.title}
+
+                            </h2>
+
+                            <p className="text-gray-400 mt-3">
+
+                                Zarządzaj blokami,
+                                zadaniami,
+                                teorią,
+                                quizami
+                                oraz multimediami.
+
+                            </p>
+
+                        </div>
 
                     </div>
 
-                    <div>
+                    {/* PRAWA */}
 
-                        <h2 className="text-lg font-bold text-white">
-                            Lekcja {lesson.orderIndex}
-                        </h2>
+                    <div className="flex gap-3">
 
-                        <p className="text-gray-400">
-                            {lesson.title}
-                        </p>
+                        <button
+
+                            onClick={() => onEdit(lesson)}
+
+                            className="
+                                w-12
+                                h-12
+                                rounded-2xl
+                                bg-yellow-500/10
+                                border
+                                border-yellow-500/20
+                                text-yellow-300
+                                hover:bg-yellow-500
+                                hover:text-white
+                                transition
+                            "
+
+                        >
+
+                            <BsPencilSquare size={18} />
+
+                        </button>
+
+                        <button
+
+                            onClick={() => onDelete(lesson.id)}
+
+                            className="
+                                w-12
+                                h-12
+                                rounded-2xl
+                                bg-red-500/10
+                                border
+                                border-red-500/20
+                                text-red-300
+                                hover:bg-red-600
+                                hover:text-white
+                                transition
+                            "
+
+                        >
+
+                            <BsTrash size={18} />
+
+                        </button>
+
+                        <button
+
+                            onClick={() => toggle(lesson.id)}
+
+                            className="
+                                w-12
+                                h-12
+                                rounded-2xl
+                                bg-cyan-500/10
+                                border
+                                border-cyan-500/20
+                                text-cyan-300
+                                hover:bg-cyan-500
+                                hover:text-white
+                                transition
+                            "
+
+                        >
+
+                            {
+
+                                expanded
+
+                                    ? <BsChevronUp size={18}/>
+
+                                    : <BsChevronDown size={18}/>
+
+                            }
+
+                        </button>
 
                     </div>
 
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Footer */}
+
+                <div
+                    className="
+                        mt-8
+                        flex
+                        items-center
+                        justify-between
+                        border-t
+                        border-white/5
+                        pt-6
+                    "
+                >
+
+                    <div className="text-gray-500 text-sm">
+
+                        Kliknij kartę aby rozwinąć edytor lekcji.
+
+                    </div>
 
                     <button
-                        onClick={() => onEdit(lesson)}
-                        className="w-10 h-10 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center"
-                    >
-                        <BsPencilSquare />
-                    </button>
 
-                    <button
-                        onClick={() => onDelete(lesson.id)}
-                        className="w-10 h-10 rounded-xl bg-red-600 hover:bg-red-700 flex items-center justify-center"
-                    >
-                        <BsTrash />
-                    </button>
-
-                    <button
                         onClick={() => toggle(lesson.id)}
-                        className="w-10 h-10 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center"
+
+                        className="
+                            flex
+                            items-center
+                            gap-2
+                            text-cyan-400
+                            font-semibold
+                            hover:text-cyan-300
+                            transition
+                        "
+
                     >
-                        {expanded
-                            ? <BsChevronUp />
-                            : <BsChevronDown />
+
+                        {
+
+                            expanded
+
+                                ? "Ukryj edytor"
+
+                                : "Otwórz edytor"
+
                         }
+
+                        <BsArrowRight/>
+
                     </button>
 
                 </div>
 
             </div>
 
-            {expanded && (
+            {
 
-                <div className="border-t border-gray-800 p-6 space-y-8">
+                expanded && (
 
-                    <BlockManager
+                    <div
+                        className="
+                            border-t
+                            border-white/10
+                            bg-black/20
+                            backdrop-blur-xl
+                            p-8
+                        "
+                    >
 
-                        lessonId={lesson.id}
+                        <BlockManager
 
-                        lessonBlocks={lessonBlocks}
+                            lessonId={lesson.id}
 
-                        lessonTasks={lessonTasks}
+                            lessonBlocks={lessonBlocks}
 
-                    />
+                            lessonTasks={lessonTasks}
 
-                </div>
+                        />
 
-            )}
+                    </div>
+
+                )
+
+            }
 
         </div>
 
