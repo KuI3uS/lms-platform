@@ -5,4 +5,6 @@ public class CreateAnswerRequest {
     public String content;
     public boolean correct;
 
+
+
 }

@@ -1,11 +1,14 @@
 package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.LessonSubmitRequest;
-import com.twojlogin.lms.dto.TaskAnswerDto;
-import com.twojlogin.lms.entity.*;
+import com.twojlogin.lms.entity.Lesson;
+import com.twojlogin.lms.entity.LessonBlock;
+import com.twojlogin.lms.entity.LessonSubmission;
+import com.twojlogin.lms.entity.LessonSubmissionAnswer;
+import com.twojlogin.lms.entity.User;
+import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.LessonSubmissionRepository;
-import com.twojlogin.lms.repository.TaskRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -24,79 +27,85 @@ public class LessonSubmitController {
     private final JavaMailSender mailSender;
     private final UserRepository userRepository;
     private final LessonRepository lessonRepository;
-    private final TaskRepository taskRepository;
+    private final LessonBlockRepository lessonBlockRepository;
     private final LessonSubmissionRepository submissionRepository;
 
     public LessonSubmitController(
             JavaMailSender mailSender,
             UserRepository userRepository,
             LessonRepository lessonRepository,
-            TaskRepository taskRepository,
+            LessonBlockRepository lessonBlockRepository,
             LessonSubmissionRepository submissionRepository
     ) {
         this.mailSender = mailSender;
         this.userRepository = userRepository;
         this.lessonRepository = lessonRepository;
-        this.taskRepository = taskRepository;
+        this.lessonBlockRepository = lessonBlockRepository;
         this.submissionRepository = submissionRepository;
     }
 
     @PostMapping
-    public void submitLesson(@RequestBody LessonSubmitRequest request) {
+    public void submitLesson(
+            @RequestBody LessonSubmitRequest request
+    ) {
 
-        // ===== USER =====
-
-        UserDetails userDetails = (UserDetails)
-                SecurityContextHolder.getContext()
+        UserDetails userDetails =
+                (UserDetails) SecurityContextHolder
+                        .getContext()
                         .getAuthentication()
                         .getPrincipal();
 
-        User user = userRepository.findByEmail(userDetails.getUsername())
+        User user = userRepository
+                .findByEmail(userDetails.getUsername())
                 .orElseThrow();
 
-        // ===== LESSON =====
-
-        Lesson lesson = lessonRepository.findById(request.getLessonId())
+        Lesson lesson = lessonRepository
+                .findById(request.getLessonId())
                 .orElseThrow();
-
-        // ===== SUBMISSION =====
 
         LessonSubmission submission = new LessonSubmission();
 
         submission.setUser(user);
         submission.setLesson(lesson);
-
         submission.setSubmittedAt(LocalDateTime.now());
-
         submission.setStatus("NEW");
-
-        // ===== ANSWERS =====
 
         List<LessonSubmissionAnswer> savedAnswers = new ArrayList<>();
 
-        for (TaskAnswerDto dto : request.getAnswers()) {
+        for (LessonSubmissionAnswer dto : request.getAnswers()) {
 
-            Task task = taskRepository.findById(dto.getTaskId())
-                    .orElseThrow();
+            LessonBlock block =
+                    lessonBlockRepository.findById(dto.getBlockId())
+                            .orElseThrow();
 
-            LessonSubmissionAnswer answer = new LessonSubmissionAnswer();
+            LessonSubmissionAnswer answer =
+                    new LessonSubmissionAnswer();
 
             answer.setSubmission(submission);
 
-            answer.setTaskId(task.getId());
+            answer.setBlockId(block.getId());
 
-            answer.setTaskContent(task.getInstruction());
+            answer.setTaskContent(block.getTitle());
 
-            answer.setStudentAnswer(dto.getStudentAnswer());
+            answer.setInstruction(dto.getInstruction());
 
-            answer.setExpectedAnswer(task.getExpectedAnswer());
+            answer.setExpectedAnswer(
+                    block.getExpectedAnswer()
+            );
 
-            boolean correct =
-                    task.getExpectedAnswer() != null
-                            && dto.getStudentAnswer() != null
-                            && task.getExpectedAnswer()
-                            .trim()
-                            .equalsIgnoreCase(dto.getStudentAnswer().trim());
+            boolean correct = false;
+
+            if (block.getExpectedAnswer() != null
+                    && dto.getInstruction() != null) {
+
+                String expected =
+                        normalize(block.getExpectedAnswer());
+
+                String student =
+                        normalize(dto.getInstruction());
+
+                correct = student.contains(expected);
+            }
 
             answer.setCorrect(correct);
 
@@ -107,11 +116,9 @@ public class LessonSubmitController {
 
         submissionRepository.save(submission);
 
-        // ===== EMAIL =====
-
         StringBuilder body = new StringBuilder();
 
-        body.append("Uczeń przesłał rozwiązania lekcji\n\n");
+        body.append("Uczeń przesłał rozwiązanie lekcji\n\n");
 
         body.append("Uczeń: ")
                 .append(user.getEmail())
@@ -123,43 +130,55 @@ public class LessonSubmitController {
 
         int i = 1;
 
-        for (LessonSubmissionAnswer a : savedAnswers) {
+        for (LessonSubmissionAnswer answer : savedAnswers) {
 
-            body.append("Zadanie ")
-                    .append(i)
+            body.append("Blok ")
+                    .append(i++)
                     .append("\n");
 
-            body.append("Treść: ")
-                    .append(a.getTaskContent())
-                    .append("\n");
+            body.append("Tytuł: ")
+                    .append(answer.getTaskContent())
+                    .append("\n\n");
 
             body.append("Odpowiedź ucznia:\n")
-                    .append(a.getStudentAnswer())
-                    .append("\n");
+                    .append(answer.getInstruction())
+                    .append("\n\n");
 
             body.append("Poprawna odpowiedź:\n")
-                    .append(a.getExpectedAnswer())
-                    .append("\n");
+                    .append(answer.getExpectedAnswer())
+                    .append("\n\n");
 
             body.append("Wynik: ")
-                    .append(a.getCorrect() ? "POPRAWNA" : "BŁĘDNA")
+                    .append(answer.getCorrect() ? "POPRAWNA" : "BŁĘDNA")
                     .append("\n");
 
-            body.append("---------------------\n\n");
-
-            i++;
+            body.append("--------------------------------------\n\n");
         }
 
-        SimpleMailMessage message = new SimpleMailMessage();
+        SimpleMailMessage message =
+                new SimpleMailMessage();
 
         message.setTo("jakub.marcinkowski.p@mojcosinus.pl");
 
         message.setSubject(
-                "Nowe rozwiązanie lekcji - " + lesson.getTitle()
+                "Nowe rozwiązanie lekcji - "
+                        + lesson.getTitle()
         );
 
         message.setText(body.toString());
 
         mailSender.send(message);
+    }
+
+    private String normalize(String code) {
+
+        if (code == null) {
+            return "";
+        }
+
+        return code
+                .replaceAll("\\s+", "")
+                .replace("'", "\"")
+                .toLowerCase();
     }
 }

@@ -10,7 +10,7 @@ public class LessonSubmissionAnswer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long taskId;
+    private Long blockId;
 
     @Lob
     @Column(columnDefinition = "TEXT")
@@ -18,7 +18,7 @@ public class LessonSubmissionAnswer {
 
     @Lob
     @Column(columnDefinition = "LONGTEXT")
-    private String studentAnswer;
+    private String instruction;
 
     @Lob
     @Column(columnDefinition = "TEXT")
@@ -35,14 +35,6 @@ public class LessonSubmissionAnswer {
         return id;
     }
 
-    public Long getTaskId() {
-        return taskId;
-    }
-
-    public void setTaskId(Long taskId) {
-        this.taskId = taskId;
-    }
-
     public String getTaskContent() {
         return taskContent;
     }
@@ -51,12 +43,25 @@ public class LessonSubmissionAnswer {
         this.taskContent = taskContent;
     }
 
-    public String getStudentAnswer() {
-        return studentAnswer;
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public void setStudentAnswer(String studentAnswer) {
-        this.studentAnswer = studentAnswer;
+    public Long getBlockId() {
+        return blockId;
+    }
+
+    public void setBlockId(Long blockId) {
+        this.blockId = blockId;
+    }
+
+    public String getInstruction() {
+        return instruction;
+    }
+
+    public void setInstruction(String instruction) {
+        this.instruction = instruction;
     }
 
     public String getExpectedAnswer() {

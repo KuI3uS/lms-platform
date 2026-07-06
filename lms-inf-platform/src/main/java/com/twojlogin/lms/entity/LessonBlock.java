@@ -1,6 +1,7 @@
 package com.twojlogin.lms.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
@@ -73,7 +74,7 @@ public class LessonBlock {
 
     @ManyToOne
     @JoinColumn(name = "lesson_id")
-    @JsonIgnore
+    @JsonIgnoreProperties({"course","lessons"})
     private Lesson lesson;
 
     /*
