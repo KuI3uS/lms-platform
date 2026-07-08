@@ -5,7 +5,6 @@
         BsDatabase,
         BsDiagram3,
         BsGithub,
-        BsLinkedin,
         BsMortarboard,
         BsRocketTakeoff,
         BsShieldCheck,
@@ -150,8 +149,8 @@
                                     <BsShieldCheck size={30} className="accent" />
                                     <h3>4. Śledzisz progres</h3>
                                     <p>
-                                        System zapisuje ukończone lekcje, prace ucznia,
-                                        wyniki i komentarze nauczyciela.
+                                        System zapisuje ukończone lekcje,
+                                        postęp kursu i odblokowuje kolejne moduły.
                                     </p>
                                 </div>
                             </div>
@@ -176,7 +175,7 @@
                                         <li>wybierasz dostępny termin z kalendarza,</li>
                                         <li>podajesz temat zajęć,</li>
                                         <li>rezerwujesz termin,</li>
-                                        <li>po akceptacji otrzymujesz link do spotkania.</li>
+                                        <li>otrzymujesz link do spotkania online.</li>
                                     </ul>
 
                                     <h3>Tematy zajęć</h3>
@@ -227,7 +226,10 @@
                                         <li>Zadania kodowe ze starter code</li>
                                         <li>Blokowanie lekcji krok po kroku</li>
                                         <li>Panel ucznia i panel administratora</li>
-                                        <li>Wysyłanie prac do sprawdzenia</li>
+                                        <li>Automatyczne sprawdzanie zadań</li>
+                                        <li>Zapisywanie postępu nauki</li>
+                                        <li>Odblokowywanie kolejnych lekcji</li>
+                                        <li>Ćwiczenia praktyczne z kodem</li>
                                     </ul>
 
                                     <h3>Dla kogo?</h3>
@@ -309,12 +311,77 @@
                             </div>
                         </div>
                     </section>
+
+                    <section id="creator" className="section">
+                        <div className="container card card--featured">
+
+        <span className="featured-label">
+            TWÓRCA PLATFORMY
+        </span>
+
+                            <h2>Poznaj mnie i moje projekty</h2>
+
+                            <p className="featured-intro">
+                                EduHub jest autorskim projektem tworzonym od podstaw.
+                                Jeżeli interesuje Cię moja działalność jako programisty,
+                                chcesz zobaczyć pozostałe projekty lub nawiązać współpracę,
+                                zapraszam do odwiedzenia mojego portfolio.
+                            </p>
+
+                            <div className="featured-grid">
+
+                                <div className="featured-text">
+
+                                    <h3>Znajdziesz tam między innymi:</h3>
+
+                                    <ul>
+                                        <li>projekty Full Stack</li>
+                                        <li>aplikacje Java / Spring Boot</li>
+                                        <li>React i nowoczesny frontend</li>
+                                        <li>Docker, CI/CD i deployment</li>
+                                        <li>projekty edukacyjne</li>
+                                        <li>informacje o mnie i możliwość kontaktu</li>
+                                    </ul>
+
+                                    <div className="featured-cta">
+
+                                        <a
+                                            href="https://kui3us.github.io/portfolio/"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="btn-outline"
+                                        >
+                                            Zobacz portfolio
+                                        </a>
+
+                                    </div>
+
+                                </div>
+
+                                <div className="architecture-diagram card">
+
+                                    <div>
+
+                                        <BsGithub size={52} className="accent" />
+
+                                        <p>
+                                            Portfolio • Projekty • Kontakt • Technologie
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </section>
                 </main>
 
 
                 <footer>
                     <p>
-                        © 2025 Jakub Marcinkowski ·
+                        © EduHub — Wszystkie prawa zastrzeżone.
                         <a href="https://github.com/KuI3uS" target="_blank"><i className="fab fa-github"></i></a> ·
                         <a href="https://linkedin.com/in/jakubmarcinkowski" target="_blank"><i
                             className="fab fa-linkedin"></i></a>
