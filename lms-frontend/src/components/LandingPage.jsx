@@ -6,7 +6,6 @@
         BsDiagram3,
         BsGithub,
         BsMortarboard,
-        BsRocketTakeoff,
         BsShieldCheck,
         BsTerminal,
         BsCalendarCheck,
@@ -14,6 +13,7 @@
 
     import "../styles/landing.css";
     import TutoringFloatingButton from "../pages/TutoringFloatingButton";
+    import dashboardPreview from "../assets/images/dashboard-preview.png";
 
     export default function LandingPage() {
         return (
@@ -249,12 +249,17 @@
                                 </div>
 
                                 <div className="architecture-diagram card">
-                                    <div>
-                                        <BsRocketTakeoff size={52} className="accent" />
-                                        <p>
-                                            Kursy → Moduły → Lekcje → Zadania → Progres
-                                        </p>
-                                    </div>
+
+                                    <img
+
+                                        src={dashboardPreview}
+
+                                        alt="Panel ucznia EduHub"
+
+                                        className="platform-preview"
+
+                                    />
+
                                 </div>
                             </div>
                         </div>
@@ -363,10 +368,6 @@
                                     <div>
 
                                         <BsGithub size={52} className="accent" />
-
-                                        <p>
-                                            Portfolio • Projekty • Kontakt • Technologie
-                                        </p>
 
                                     </div>
 
