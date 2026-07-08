@@ -7,13 +7,13 @@
         BsGithub,
         BsMortarboard,
         BsShieldCheck,
-        BsTerminal,
-        BsCalendarCheck,
+        BsTerminal
     } from "react-icons/bs";
 
     import "../styles/landing.css";
     import TutoringFloatingButton from "../pages/TutoringFloatingButton";
     import dashboardPreview from "../assets/images/dashboard-preview.png";
+    import korepetycje from "../assets/images/KOREPETYCJE.png";
 
     export default function LandingPage() {
         return (
@@ -194,12 +194,17 @@
                                 </div>
 
                                 <div className="architecture-diagram card">
-                                    <div>
-                                        <BsCalendarCheck size={52} className="accent" />
-                                        <p>
-                                            Kalendarz → Termin → Rezerwacja → Spotkanie online
-                                        </p>
-                                    </div>
+
+                                    <img
+
+                                        src={korepetycje}
+
+                                        alt="Panel ucznia EduHub"
+
+                                        className="KOREPETYCJE"
+
+                                    />
+
                                 </div>
                             </div>
                         </div>
