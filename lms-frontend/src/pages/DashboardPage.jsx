@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
+import {
+    getCourseCover,
+    getGeneratedCourseCover
+} from "../utils/courseCover";
 
 import {
     BsArrowRight,
@@ -700,9 +704,18 @@ export default function DashboardPage() {
 
                             <img
 
-                                src={course.thumbnailUrl}
+                                src={getCourseCover(course)}
 
-                                alt=""
+                                alt={course.title || course.name}
+
+                                loading="lazy"
+
+                                decoding="async"
+
+                                onError={({ currentTarget }) => {
+                                    currentTarget.onerror = null;
+                                    currentTarget.src = getGeneratedCourseCover(course);
+                                }}
 
                                 className="
                                     w-full

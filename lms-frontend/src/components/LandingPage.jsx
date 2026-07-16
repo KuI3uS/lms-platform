@@ -201,7 +201,7 @@
 
                                         alt="Panel ucznia EduHub"
 
-                                        className="KOREPETYCJE"
+                                        className="platform-preview"
 
                                     />
 
