@@ -1,17 +1,20 @@
 package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.AnswerRequest;
+import com.twojlogin.lms.dto.LessonBlockDto;
+import com.twojlogin.lms.dto.TaskCheckResponse;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.LessonRepository;
+import com.twojlogin.lms.repository.TaskAttemptRepository;
+import com.twojlogin.lms.service.TaskEvaluationService;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/lesson-blocks")
@@ -19,23 +22,41 @@ public class LessonBlockController {
 
     private final LessonBlockRepository blockRepository;
     private final LessonRepository lessonRepository;
+    private final TaskAttemptRepository attemptRepository;
+    private final TaskEvaluationService evaluationService;
 
     public LessonBlockController(
             LessonBlockRepository blockRepository,
-            LessonRepository lessonRepository
+            LessonRepository lessonRepository,
+            TaskAttemptRepository attemptRepository,
+            TaskEvaluationService evaluationService
     ) {
         this.blockRepository = blockRepository;
         this.lessonRepository = lessonRepository;
+        this.attemptRepository = attemptRepository;
+        this.evaluationService = evaluationService;
     }
 
     @GetMapping("/lesson/{lessonId}")
-    public List<LessonBlock> getByLesson(@PathVariable Long lessonId) {
-        return blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
+    public List<LessonBlockDto> getByLesson(
+            @PathVariable Long lessonId,
+            Authentication authentication
+    ) {
+        boolean admin = isAdmin(authentication);
+
+        return blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId).stream()
+                .filter(block -> admin || !Boolean.FALSE.equals(block.getPublished()))
+                .map(block -> LessonBlockDto.from(block, admin))
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public LessonBlock getOne(@PathVariable Long id) {
-        return blockRepository.findById(id).orElseThrow();
+    public LessonBlockDto getOne(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        LessonBlock block = blockRepository.findById(id).orElseThrow();
+        return LessonBlockDto.from(block, isAdmin(authentication));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -97,6 +118,8 @@ public class LessonBlockController {
         block.setStarterCode(updated.getStarterCode());
         block.setExpectedAnswer(updated.getExpectedAnswer());
         block.setHint(updated.getHint());
+        block.setDetailedHint(updated.getDetailedHint());
+        block.setSolutionExplanation(updated.getSolutionExplanation());
         block.setLanguage(updated.getLanguage());
 
         block.setMediaUrl(updated.getMediaUrl());
@@ -119,6 +142,7 @@ public class LessonBlockController {
 
         Long lessonId = block.getLesson().getId();
 
+        attemptRepository.deleteByBlockId(id);
         blockRepository.delete(block);
 
         List<LessonBlock> blocks =
@@ -156,87 +180,16 @@ public class LessonBlockController {
     }
 
     @PostMapping("/{id}/check")
-    public Map<String, Object> check(
+    public TaskCheckResponse check(
             @PathVariable Long id,
-            @RequestBody AnswerRequest request
+            @RequestBody AnswerRequest request,
+            Authentication authentication
     ) {
-
-        LessonBlock block = blockRepository.findById(id)
-                .orElseThrow();
-
-        if (request.getAnswer() == null) {
-
-            return Map.of(
-                    "correct", false,
-                    "message", "Brak odpowiedzi."
-            );
-
-        }
-
-        if (block.getExpectedAnswer() == null
-                || block.getExpectedAnswer().isBlank()) {
-
-            return Map.of(
-                    "correct", false,
-                    "message", "Brak zdefiniowanej poprawnej odpowiedzi."
-            );
-
-        }
-
-        String student =
-                normalize(request.getAnswer());
-
-        String expected =
-                block.getExpectedAnswer();
-
-        String[] requiredParts =
-                expected.split("\\n");
-
-        List<String> missing =
-                new ArrayList<>();
-
-        for (String part : requiredParts) {
-
-            if (part == null || part.isBlank()) {
-                continue;
-            }
-
-            String normalized =
-                    normalize(part);
-
-            if (!student.contains(normalized)) {
-                missing.add(part.trim());
-            }
-
-        }
-
-        if (missing.isEmpty()) {
-
-            return Map.of(
-                    "correct", true,
-                    "message", "Poprawna odpowiedź."
-            );
-
-        }
-
-        return Map.of(
-                "correct", false,
-                "message", "Brakuje wymaganych elementów.",
-                "missing", missing
-        );
+        return evaluationService.check(id, request.getAnswer(), authentication);
     }
 
-    private String normalize(String code) {
-
-        if (code == null) {
-            return "";
-        }
-
-        return code
-                .trim()
-                .replaceAll("\\s+", "")
-                .replace("'", "\"")
-                .toLowerCase();
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
-
 }

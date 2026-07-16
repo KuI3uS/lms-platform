@@ -23,7 +23,7 @@ export default function LessonHero({
 
     return (
 
-        <section className="relative overflow-hidden rounded-[2rem] border border-blue-500/20 bg-gradient-to-br from-blue-600/25 via-gray-900 to-purple-700/20 p-8 shadow-2xl">
+        <section className="relative overflow-hidden rounded-[2rem] border border-blue-500/20 bg-gradient-to-br from-blue-600/25 via-gray-900 to-purple-700/20 p-5 shadow-2xl sm:p-8">
 
             <div className="absolute -top-24 -right-24 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl" />
 
@@ -73,7 +73,7 @@ export default function LessonHero({
 
                         </div>
 
-                        <h1 className="text-5xl font-black">
+                        <h1 className="text-3xl font-black sm:text-4xl lg:text-5xl">
 
                             {lesson.title}
 
@@ -118,7 +118,7 @@ export default function LessonHero({
 
                 </div>
 
-                <div className="bg-gray-950/70 border border-white/10 rounded-3xl p-6 min-w-[300px]">
+                <div className="w-full rounded-3xl border border-white/10 bg-gray-950/70 p-6 lg:min-w-[300px] lg:w-auto">
 
                     <div className="flex justify-between mb-3">
 

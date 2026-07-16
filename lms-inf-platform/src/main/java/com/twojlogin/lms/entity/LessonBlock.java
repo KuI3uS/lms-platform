@@ -48,6 +48,14 @@ public class LessonBlock {
     @Column(columnDefinition = "LONGTEXT")
     private String hint;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String detailedHint;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String solutionExplanation;
+
     private String language;
 
     /*
@@ -159,6 +167,22 @@ public class LessonBlock {
 
     public void setHint(String hint) {
         this.hint = hint;
+    }
+
+    public String getDetailedHint() {
+        return detailedHint;
+    }
+
+    public void setDetailedHint(String detailedHint) {
+        this.detailedHint = detailedHint;
+    }
+
+    public String getSolutionExplanation() {
+        return solutionExplanation;
+    }
+
+    public void setSolutionExplanation(String solutionExplanation) {
+        this.solutionExplanation = solutionExplanation;
     }
 
     public String getLanguage() {

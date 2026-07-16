@@ -17,6 +17,8 @@ public interface LessonProgressRepository extends JpaRepository<LessonProgress, 
 
     void deleteByLessonId(Long lessonId);
 
+    void deleteByUserId(Long userId);
+
     @Query("""
             select count(progress)
             from LessonProgress progress

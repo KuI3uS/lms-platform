@@ -11,6 +11,7 @@ public class LessonDto {
     public boolean freePreview;
     public Integer orderIndex;
     public Long moduleId;
+    public boolean completed;
 
     public LessonDto(com.twojlogin.lms.entity.Lesson lesson) {
         this.id = lesson.getId();
@@ -23,5 +24,10 @@ public class LessonDto {
         this.freePreview = lesson.isFreePreview();
         this.orderIndex = lesson.getOrderIndex();
         this.moduleId = lesson.getModule() != null ? lesson.getModule().getId() : null;
+    }
+
+    public LessonDto(com.twojlogin.lms.entity.Lesson lesson, boolean completed) {
+        this(lesson);
+        this.completed = completed;
     }
 }

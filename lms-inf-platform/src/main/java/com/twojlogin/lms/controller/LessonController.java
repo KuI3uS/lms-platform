@@ -4,9 +4,11 @@ import com.twojlogin.lms.dto.LessonDto;
 import com.twojlogin.lms.entity.*;
 import com.twojlogin.lms.repository.*;
 import jakarta.transaction.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,18 +26,24 @@ public class LessonController {
     private final LessonSubmissionRepository lessonSubmissionRepository;
     private final LessonProgressRepository lessonProgressRepository;
     private final UserRepository userRepository;
+    private final TaskAttemptRepository taskAttemptRepository;
+    private final LessonBlockRepository lessonBlockRepository;
 
     public LessonController(
             LessonRepository lessonRepository,
             CourseModuleRepository moduleRepository, LessonSubmissionRepository lessonSubmissionRepository,
             LessonProgressRepository lessonProgressRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            TaskAttemptRepository taskAttemptRepository,
+            LessonBlockRepository lessonBlockRepository
     ) {
         this.lessonRepository = lessonRepository;
         this.moduleRepository = moduleRepository;
         this.lessonSubmissionRepository = lessonSubmissionRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.userRepository = userRepository;
+        this.taskAttemptRepository = taskAttemptRepository;
+        this.lessonBlockRepository = lessonBlockRepository;
     }
 
 
@@ -54,8 +62,19 @@ public class LessonController {
 
     // GET lessons
     @GetMapping("/module/{moduleId}")
-    public List<Lesson> getByModule(@PathVariable Long moduleId) {
-        return lessonRepository.findByModuleIdOrderByOrderIndexAsc(moduleId);
+    public List<LessonDto> getByModule(
+            @PathVariable Long moduleId,
+            Authentication authentication
+    ) {
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow();
+
+        return lessonRepository.findByModuleIdOrderByOrderIndexAsc(moduleId).stream()
+                .map(lesson -> new LessonDto(
+                        lesson,
+                        lessonProgressRepository.existsByUserAndLessonAndCompletedTrue(user, lesson)
+                ))
+                .toList();
     }
 
     // DELETE lesson
@@ -67,6 +86,7 @@ public class LessonController {
         List<LessonSubmission> submissions = lessonSubmissionRepository.findByLessonId(id);
         lessonSubmissionRepository.deleteAll(submissions);
 
+        taskAttemptRepository.deleteByBlockLessonId(id);
         lessonProgressRepository.deleteByLessonId(id);
 
         lessonRepository.deleteById(id);
@@ -152,7 +172,7 @@ public class LessonController {
     }
 
     @PostMapping("/{id}/complete")
-    public LessonProgress completeLesson(
+    public Map<String, Object> completeLesson(
             @PathVariable Long id,
             Authentication authentication
     ) {
@@ -161,6 +181,22 @@ public class LessonController {
 
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow();
+
+        long requiredTasks = lessonBlockRepository.countByLessonIdAndTypeAndPublishedTrue(
+                lesson.getId(),
+                BlockType.TASK
+        );
+        long correctTasks = taskAttemptRepository.countCorrectTasksByUserAndLesson(
+                user.getId(),
+                lesson.getId()
+        );
+
+        if (correctTasks < requiredTasks) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Najpierw popraw wszystkie zadania w tej lekcji"
+            );
+        }
 
         LessonProgress progress = lessonProgressRepository
                 .findByUserAndLesson(user, lesson)
@@ -171,6 +207,11 @@ public class LessonController {
         progress.setCompleted(true);
         progress.setCompletedAt(LocalDateTime.now());
 
-        return lessonProgressRepository.save(progress);
+        lessonProgressRepository.save(progress);
+
+        return Map.of(
+                "completed", true,
+                "lessonId", lesson.getId()
+        );
     }
 }
