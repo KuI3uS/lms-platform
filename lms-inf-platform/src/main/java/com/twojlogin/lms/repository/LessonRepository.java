@@ -10,6 +10,8 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
     List<Lesson> findByModuleIdOrderByOrderIndexAsc(Long moduleId);
 
+    long countByModuleCourseId(Long courseId);
+
     Optional<Lesson> findFirstByModuleIdAndOrderIndexLessThanOrderByOrderIndexDesc(
             Long moduleId,
             Integer orderIndex
