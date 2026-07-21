@@ -6,7 +6,17 @@ import {
     BsCheckCircle,
     BsGlobe
 } from "react-icons/bs";
-import MonacoEditorBox from "../../../../pages/LessonPage/MonacoEditor";
+import { lazy, Suspense } from "react";
+
+const MonacoEditorBox = lazy(() => import("../../../../pages/LessonPage/MonacoEditor"));
+
+function EditorLoader() {
+    return (
+        <div className="flex min-h-72 items-center justify-center rounded-3xl border border-white/10 bg-gray-950 text-gray-400">
+            Ładowanie edytora kodu...
+        </div>
+    );
+}
 
 export default function TaskBlockForm({
 
@@ -131,11 +141,13 @@ export default function TaskBlockForm({
                         Kod startowy
                     </label>
 
-                    <MonacoEditorBox
-                        language={task.language}
-                        value={task.starterCode || ""}
-                        onChange={(value) => update("starterCode", value)}
-                    />
+                    <Suspense fallback={<EditorLoader />}>
+                        <MonacoEditorBox
+                            language={task.language}
+                            value={task.starterCode || ""}
+                            onChange={(value) => update("starterCode", value)}
+                        />
+                    </Suspense>
 
                 </div>
 
@@ -189,11 +201,13 @@ export default function TaskBlockForm({
 
                     </label>
 
-                    <MonacoEditorBox
-                        language={task.language}
-                        value={task.expectedAnswer || ""}
-                        onChange={(value) => update("expectedAnswer", value)}
-                    />
+                    <Suspense fallback={<EditorLoader />}>
+                        <MonacoEditorBox
+                            language={task.language}
+                            value={task.expectedAnswer || ""}
+                            onChange={(value) => update("expectedAnswer", value)}
+                        />
+                    </Suspense>
 
                 </div>
 

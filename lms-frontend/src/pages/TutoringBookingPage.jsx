@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "../styles/tutoring-calendar.css";
+import { API_URL } from "../api/api";
 
 
 import {
@@ -16,8 +17,6 @@ import {
     BsArrowLeft,
     BsCreditCard
 } from "react-icons/bs";
-
-const API_URL = "https://lms-platform-1-dcxg.onrender.com/api";
 
 export default function TutoringBookingPage() {
     const [availability, setAvailability] = useState([]);
@@ -39,10 +38,6 @@ export default function TutoringBookingPage() {
     const [error, setError] = useState(null);
 
     const PRICE_PER_HOUR = 80;
-
-    useEffect(() => {
-        loadAvailability();
-    }, []);
 
     const sameDay = (a, b) => {
         const d1 = new Date(a);
@@ -89,6 +84,11 @@ export default function TutoringBookingPage() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadAvailability();
+    }, []);
 
     const getPaymentLink = (price) => {
         const p = Number(price);

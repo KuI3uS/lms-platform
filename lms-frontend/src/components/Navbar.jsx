@@ -1,4 +1,5 @@
-import { logout } from "../api/api";
+import { useEffect, useState } from "react";
+import { apiFetch, logout } from "../api/api";
 import {
     BsBell,
     BsBoxArrowRight,
@@ -9,6 +10,7 @@ import {
 } from "react-icons/bs";
 
 export default function Navbar({ onMenuClick }) {
+    const [learningStats, setLearningStats] = useState({ xp: 0, streakDays: 0 });
     const token = localStorage.getItem("token");
 
     let email = "";
@@ -23,6 +25,22 @@ export default function Navbar({ onMenuClick }) {
             console.error("Błędny token", error);
         }
     }
+
+    useEffect(() => {
+        let active = true;
+
+        apiFetch("/learning-stats")
+            .then(data => {
+                if (active && data) setLearningStats(data);
+            })
+            .catch(error => console.error("Nie udało się pobrać statystyk nauki", error));
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    const streakLabel = learningStats.streakDays === 1 ? "dzień" : "dni";
 
     return (
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-slate-950/90 px-3 backdrop-blur-xl sm:h-20 sm:px-5 lg:px-8">
@@ -50,10 +68,12 @@ export default function Navbar({ onMenuClick }) {
             <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
                 <div className="hidden items-center gap-2 rounded-2xl border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-orange-300 2xl:flex">
                     <BsFire />
-                    <span className="text-sm font-bold">Seria: 0 dni</span>
+                    <span className="text-sm font-bold">
+                        Seria: {learningStats.streakDays} {streakLabel}
+                    </span>
                 </div>
                 <div className="hidden items-center gap-2 rounded-2xl border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-blue-300 md:flex">
-                    <span className="text-sm font-bold">0 XP</span>
+                    <span className="text-sm font-bold">{learningStats.xp} XP</span>
                 </div>
                 <button
                     type="button"

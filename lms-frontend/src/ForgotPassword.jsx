@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { API_URL } from "./api/api";
+
 export default function ForgotPassword() {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
@@ -13,7 +15,7 @@ export default function ForgotPassword() {
         try {
             setLoading(true);
 
-            const res = await fetch("https://lms-platform-1-dcxg.onrender.com/api/auth/forgot-password", {
+            const res = await fetch(`${API_URL}/auth/forgot-password`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

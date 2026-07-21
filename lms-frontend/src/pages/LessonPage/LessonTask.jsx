@@ -5,8 +5,17 @@ import {
     BsLightbulb,
     BsPlayFill
 } from "react-icons/bs";
+import { lazy, Suspense } from "react";
 
-import MonacoEditorBox from "./MonacoEditor";
+const MonacoEditorBox = lazy(() => import("./MonacoEditor"));
+
+function EditorLoader() {
+    return (
+        <div className="flex min-h-72 items-center justify-center rounded-3xl border border-white/10 bg-gray-950 text-gray-400">
+            Ładowanie edytora kodu...
+        </div>
+    );
+}
 
 export default function LessonTask({
                                        block,
@@ -42,11 +51,13 @@ export default function LessonTask({
 
             <div className="space-y-6 p-4 sm:p-8">
                 {isCodeTask ? (
-                    <MonacoEditorBox
-                        language={block.language || "java"}
-                        value={value}
-                        onChange={(newValue) => onAnswerChange(block.id, newValue)}
-                    />
+                    <Suspense fallback={<EditorLoader />}>
+                        <MonacoEditorBox
+                            language={block.language || "java"}
+                            value={value}
+                            onChange={(newValue) => onAnswerChange(block.id, newValue)}
+                        />
+                    </Suspense>
                 ) : (
                     <textarea
                         className="min-h-72 w-full rounded-3xl border border-gray-700 bg-gray-950 p-6 text-gray-200 outline-none focus:border-blue-500"

@@ -25,10 +25,6 @@ export default function DashboardPage() {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        load();
-    }, []);
-
     const load = async () => {
 
         try {
@@ -62,6 +58,11 @@ export default function DashboardPage() {
         }
 
     };
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        load();
+    }, []);
 
     if (loading) {
 
@@ -707,6 +708,10 @@ export default function DashboardPage() {
                                 src={getCourseCover(course)}
 
                                 alt={course.title || course.name}
+
+                                loading="lazy"
+
+                                decoding="async"
 
                                 loading="lazy"
 

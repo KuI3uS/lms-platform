@@ -4,6 +4,7 @@ import com.twojlogin.lms.dto.*;
 import com.twojlogin.lms.entity.*;
 import com.twojlogin.lms.repository.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -29,13 +30,14 @@ public class SubmissionController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
         submissionRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/module/{moduleId}")
-    public Submission submit(@PathVariable Long moduleId,
+    public SubmissionResultDto submit(@PathVariable Long moduleId,
                              @RequestBody SubmitRequest request) {
 
         int total = request.answers.size();
@@ -95,6 +97,6 @@ public class SubmissionController {
         submission.setUser(user);
         submission.setModule(module);
 
-        return submissionRepository.save(submission);
+        return SubmissionResultDto.from(submissionRepository.save(submission));
     }
 }

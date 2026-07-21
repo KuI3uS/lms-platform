@@ -1,5 +1,6 @@
 package com.twojlogin.lms.controller;
 
+import com.twojlogin.lms.dto.CourseModuleDto;
 import com.twojlogin.lms.entity.Course;
 import com.twojlogin.lms.entity.CourseModule;
 import com.twojlogin.lms.repository.CourseModuleRepository;
@@ -26,19 +27,21 @@ public class CourseModuleController {
 
     @PostMapping("/course/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public CourseModule create(@PathVariable Long courseId,
+    public CourseModuleDto create(@PathVariable Long courseId,
                                @RequestBody CourseModule module) {
 
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
         module.setCourse(course);
-        return moduleRepository.save(module);
+        return CourseModuleDto.from(moduleRepository.save(module));
     }
 
     @GetMapping("/course/{courseId}")
-    public List<CourseModule> getByCourse(@PathVariable Long courseId) {
-        return moduleRepository.findByCourseId(courseId);
+    public List<CourseModuleDto> getByCourse(@PathVariable Long courseId) {
+        return moduleRepository.findByCourseId(courseId).stream()
+                .map(CourseModuleDto::from)
+                .toList();
     }
 
 
@@ -57,18 +60,18 @@ public class CourseModuleController {
     }
 
     @GetMapping("/{id}")
-    public CourseModule getOne(@PathVariable Long id) {
-        return moduleRepository.findById(id).orElseThrow();
+    public CourseModuleDto getOne(@PathVariable Long id) {
+        return CourseModuleDto.from(moduleRepository.findById(id).orElseThrow());
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public CourseModule update(@PathVariable Long id, @RequestBody CourseModule updated) {
+    public CourseModuleDto update(@PathVariable Long id, @RequestBody CourseModule updated) {
         CourseModule module = moduleRepository.findById(id).orElseThrow();
 
         module.setName(updated.getName());
         module.setLessonsLocked(updated.isLessonsLocked());
 
-        return moduleRepository.save(module);
+        return CourseModuleDto.from(moduleRepository.save(module));
     }
 }

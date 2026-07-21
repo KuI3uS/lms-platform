@@ -12,8 +12,8 @@
 
     import "../styles/landing.css";
     import TutoringFloatingButton from "../pages/TutoringFloatingButton";
-    import dashboardPreview from "../assets/images/dashboard-preview.png";
-    import korepetycje from "../assets/images/KOREPETYCJE.png";
+    import dashboardPreview from "../assets/images/dashboard-preview.webp";
+    import korepetycje from "../assets/images/KOREPETYCJE.webp";
 
     export default function LandingPage() {
         return (
@@ -201,6 +201,14 @@
 
                                         alt="Panel ucznia EduHub"
 
+                                        width="1536"
+
+                                        height="1024"
+
+                                        loading="lazy"
+
+                                        decoding="async"
+
                                         className="platform-preview"
 
                                     />
@@ -260,6 +268,14 @@
                                         src={dashboardPreview}
 
                                         alt="Panel ucznia EduHub"
+
+                                        width="1536"
+
+                                        height="1024"
+
+                                        loading="lazy"
+
+                                        decoding="async"
 
                                         className="platform-preview"
 

@@ -1,7 +1,10 @@
 package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.TutoringAdminUpdateRequest;
+import com.twojlogin.lms.dto.TutoringAvailabilityDto;
+import com.twojlogin.lms.dto.TutoringBlockedSlotDto;
 import com.twojlogin.lms.dto.TutoringBookRequest;
+import com.twojlogin.lms.dto.TutoringBookingDto;
 import com.twojlogin.lms.entity.*;
 import com.twojlogin.lms.repository.TutoringAvailabilityRepository;
 import com.twojlogin.lms.repository.TutoringBookingRepository;
@@ -40,26 +43,32 @@ public class TutoringController {
     }
 
     @GetMapping("/available")
-    public List<TutoringAvailability> available() {
-        return availabilityRepository.findByAvailableTrueOrderByStartTimeAsc();
+    public List<TutoringAvailabilityDto> available() {
+        return availabilityRepository.findByAvailableTrueOrderByStartTimeAsc().stream()
+                .map(TutoringAvailabilityDto::from)
+                .toList();
     }
 
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<TutoringBooking> getAll() {
-        return bookingRepository.findAllByOrderByStartTimeAsc();
+    public List<TutoringBookingDto> getAll() {
+        return bookingRepository.findAllByOrderByStartTimeAsc().stream()
+                .map(TutoringBookingDto::from)
+                .toList();
     }
 
     @GetMapping("/my")
-    public List<TutoringBooking> getMyBookings(Authentication authentication) {
+    public List<TutoringBookingDto> getMyBookings(Authentication authentication) {
         User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow();
 
-        return bookingRepository.findByStudentOrderByStartTimeDesc(user);
+        return bookingRepository.findByStudentOrderByStartTimeDesc(user).stream()
+                .map(TutoringBookingDto::from)
+                .toList();
     }
 
     @PostMapping("/book")
-    public TutoringBooking book(
+    public TutoringBookingDto book(
             @RequestBody TutoringBookRequest request
     ) {
         if (request.getStartTime() == null || request.getEndTime() == null) {
@@ -127,12 +136,12 @@ public class TutoringController {
 
         emailService.sendTutoringPaymentEmail(saved);
 
-        return saved;
+        return TutoringBookingDto.from(saved);
     }
 
     @PutMapping("/admin/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public TutoringBooking adminUpdate(
+    public TutoringBookingDto adminUpdate(
             @PathVariable Long id,
             @RequestBody TutoringAdminUpdateRequest request
     ) {
@@ -146,10 +155,12 @@ public class TutoringController {
         booking.setAdminComment(request.getAdminComment());
         booking.setMeetingLink(request.getMeetingLink());
 
-        return bookingRepository.save(booking);
+        return TutoringBookingDto.from(bookingRepository.save(booking));
     }
     @GetMapping("/blocked")
-    public List<TutoringBooking> blocked() {
-        return bookingRepository.findActiveBlockedBookings(LocalDateTime.now());
+    public List<TutoringBlockedSlotDto> blocked() {
+        return bookingRepository.findActiveBlockedBookings(LocalDateTime.now()).stream()
+                .map(TutoringBlockedSlotDto::from)
+                .toList();
     }
 }
