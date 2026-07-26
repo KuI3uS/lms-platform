@@ -2,6 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+@media print {
+    body {
+        background: white !important;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+
+    .certificate-sheet,
+    .certificate-sheet * {
+        visibility: visible;
+    }
+
+    .certificate-sheet {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .certificate-controls {
+        display: none !important;
+    }
+}
+
 body {
     @apply bg-gray-900 text-white;
 }

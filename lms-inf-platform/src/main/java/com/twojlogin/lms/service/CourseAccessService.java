@@ -1,0 +1,147 @@
+package com.twojlogin.lms.service;
+
+import com.twojlogin.lms.entity.Course;
+import com.twojlogin.lms.entity.CourseModule;
+import com.twojlogin.lms.entity.CourseOrderStatus;
+import com.twojlogin.lms.entity.Lesson;
+import com.twojlogin.lms.entity.Role;
+import com.twojlogin.lms.entity.User;
+import com.twojlogin.lms.repository.CourseEnrollmentRepository;
+import com.twojlogin.lms.repository.CourseModuleRepository;
+import com.twojlogin.lms.repository.CourseOrderRepository;
+import com.twojlogin.lms.repository.CourseRepository;
+import com.twojlogin.lms.repository.LessonRepository;
+import com.twojlogin.lms.repository.UserRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.math.BigDecimal;
+
+@Service
+public class CourseAccessService {
+
+    private final UserRepository userRepository;
+    private final CourseRepository courseRepository;
+    private final CourseModuleRepository moduleRepository;
+    private final LessonRepository lessonRepository;
+    private final CourseEnrollmentRepository enrollmentRepository;
+    private final CourseOrderRepository orderRepository;
+
+    public CourseAccessService(
+            UserRepository userRepository,
+            CourseRepository courseRepository,
+            CourseModuleRepository moduleRepository,
+            LessonRepository lessonRepository,
+            CourseEnrollmentRepository enrollmentRepository,
+            CourseOrderRepository orderRepository
+    ) {
+        this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
+        this.moduleRepository = moduleRepository;
+        this.lessonRepository = lessonRepository;
+        this.enrollmentRepository = enrollmentRepository;
+        this.orderRepository = orderRepository;
+    }
+
+    public User currentUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Wymagane logowanie");
+        }
+        return userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Nie znaleziono użytkownika"
+                ));
+    }
+
+    public boolean isAdmin(User user) {
+        return user.getRole() == Role.ADMIN;
+    }
+
+    public boolean isFree(Course course) {
+        return course.getPrice() == null
+                || course.getPrice().compareTo(BigDecimal.ZERO) <= 0;
+    }
+
+    public boolean hasAccess(User user, Course course) {
+        return isAdmin(user)
+                || isFree(course)
+                || enrollmentRepository.existsByUserIdAndCourseIdAndActiveTrue(
+                        user.getId(),
+                        course.getId()
+                );
+    }
+
+    public boolean hasPendingOrder(User user, Course course) {
+        return orderRepository
+                .findFirstByUserIdAndCourseIdAndStatusOrderByCreatedAtDesc(
+                        user.getId(),
+                        course.getId(),
+                        CourseOrderStatus.PENDING
+                )
+                .isPresent();
+    }
+
+    public String accessStatus(User user, Course course) {
+        if (isAdmin(user)) return "ADMIN";
+        if (isFree(course)) return "FREE";
+        if (enrollmentRepository.existsByUserIdAndCourseIdAndActiveTrue(
+                user.getId(),
+                course.getId()
+        )) return "ACTIVE";
+        if (hasPendingOrder(user, course)) return "PENDING";
+        return "LOCKED";
+    }
+
+    public Course requireCourseAccess(Long courseId, Authentication authentication) {
+        User user = currentUser(authentication);
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Kurs nie istnieje"
+                ));
+        requireAccess(user, course);
+        return course;
+    }
+
+    public CourseModule requireModuleAccess(Long moduleId, Authentication authentication) {
+        User user = currentUser(authentication);
+        CourseModule module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Moduł nie istnieje"
+                ));
+        requireAccess(user, module.getCourse());
+        return module;
+    }
+
+    public Lesson requireLessonAccess(Long lessonId, Authentication authentication) {
+        User user = currentUser(authentication);
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Lekcja nie istnieje"
+                ));
+        if (!lesson.getModule().getCourse().isPublished() && !isAdmin(user)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lekcja nie istnieje");
+        }
+        if (!lesson.isFreePreview()) {
+            requireAccess(user, lesson.getModule().getCourse());
+        }
+        return lesson;
+    }
+
+    public void requireAccess(User user, Course course) {
+        if (!course.isPublished() && !isAdmin(user)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Kurs nie istnieje");
+        }
+        if (!hasAccess(user, course)) {
+            throw new ResponseStatusException(
+                    HttpStatus.PAYMENT_REQUIRED,
+                    "Ten kurs wymaga aktywnego dostępu"
+            );
+        }
+    }
+}

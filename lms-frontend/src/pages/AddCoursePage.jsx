@@ -19,6 +19,7 @@ const EMPTY_COURSE = {
     description: "",
     level: "Podstawy",
     price: "0",
+    paymentUrl: "",
     thumbnailUrl: "",
     published: true
 };
@@ -62,6 +63,7 @@ export default function AddCoursePage() {
                         description: data.description || "",
                         level: data.level || "Podstawy",
                         price: data.price ?? "0",
+                        paymentUrl: data.paymentUrl || "",
                         thumbnailUrl: data.thumbnailUrl || "",
                         published: Boolean(data.published)
                     });
@@ -196,6 +198,21 @@ export default function AddCoursePage() {
                                 />
                             </label>
                         </div>
+
+                        <label className="block space-y-2">
+                            <span className="text-sm font-bold text-slate-300">Link do płatności za kurs</span>
+                            <input
+                                name="paymentUrl"
+                                type="url"
+                                value={course.paymentUrl}
+                                onChange={updateField}
+                                placeholder="https://checkout.revolut.com/pay/..."
+                                className={fieldClass}
+                            />
+                            <span className="block text-xs leading-5 text-slate-500">
+                                Wymagany tylko dla kursu płatnego. Po płatności administrator potwierdza zamówienie i odblokowuje dostęp.
+                            </span>
+                        </label>
 
                         <label className="block space-y-2">
                             <span className="text-sm font-bold text-slate-300">Opis</span>

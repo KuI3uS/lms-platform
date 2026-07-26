@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface QuestionRepository extends JpaRepository<Question, Long> {
     List<Question> findByModuleId(Long moduleId);
+
+    List<Question> findByModuleCourseId(Long courseId);
 }

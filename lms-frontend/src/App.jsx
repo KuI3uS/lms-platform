@@ -18,6 +18,11 @@ const LessonListPage = lazy(() => import("./pages/LessonListPage"));
 const LessonPage = lazy(() => import("./pages/LessonPage/LessonPage.jsx"));
 const TestPage = lazy(() => import("./pages/TestPage"));
 const ResultsPage = lazy(() => import("./pages/ResultsPage"));
+const CourseCheckoutPage = lazy(() => import("./pages/CourseCheckoutPage"));
+const ExamsPage = lazy(() => import("./pages/ExamsPage"));
+const ExamAttemptPage = lazy(() => import("./pages/ExamAttemptPage"));
+const LearningCenterPage = lazy(() => import("./pages/LearningCenterPage"));
+const CertificatePage = lazy(() => import("./pages/CertificatePage"));
 
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
@@ -26,6 +31,7 @@ const AddQuestionPage = lazy(() => import("./pages/AddQuestionPage"));
 const AdminTutoringPage = lazy(() => import("./pages/AdminTutoringPage"));
 const AdminLessonPage = lazy(() => import("./pages/AdminLessonPage/AdminLessonPage.jsx"));
 const AdminSubmissionsPage = lazy(() => import("./pages/AdminSubmissionsPage"));
+const AdminCourseOrdersPage = lazy(() => import("./pages/AdminCourseOrdersPage"));
 
 function PageLoader() {
     return (
@@ -49,6 +55,7 @@ export default function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/tutoring-booking" element={<TutoringBookingPage />} />
+                <Route path="/certificates/:certificateNumber" element={<CertificatePage />} />
 
                 <Route element={<ProtectedRoute />}>
                     <Route element={<Layout />}>
@@ -59,6 +66,10 @@ export default function App() {
                         <Route path="/lesson/:lessonId" element={<LessonPage />} />
                         <Route path="/test/:moduleId" element={<TestPage />} />
                         <Route path="/results" element={<ResultsPage />} />
+                        <Route path="/checkout/:courseId" element={<CourseCheckoutPage />} />
+                        <Route path="/exams" element={<ExamsPage />} />
+                        <Route path="/exams/:attemptId" element={<ExamAttemptPage />} />
+                        <Route path="/learning-center" element={<LearningCenterPage />} />
 
                         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
                         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
@@ -68,6 +79,7 @@ export default function App() {
                         <Route path="/admin/tutoring" element={<AdminRoute><AdminTutoringPage /></AdminRoute>} />
                         <Route path="/admin/lessons/:moduleId" element={<AdminRoute><AdminLessonPage /></AdminRoute>} />
                         <Route path="/admin/submissions" element={<AdminRoute><AdminSubmissionsPage /></AdminRoute>} />
+                        <Route path="/admin/course-orders" element={<AdminRoute><AdminCourseOrdersPage /></AdminRoute>} />
 
                         <Route path="*" element={
                             <div className="p-10 text-white">404 - Strona nie istnieje</div>

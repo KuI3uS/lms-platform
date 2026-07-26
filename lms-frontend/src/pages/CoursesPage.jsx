@@ -5,6 +5,8 @@ import {
     BsCheckCircle,
     BsCollection,
     BsExclamationTriangle,
+    BsHourglassSplit,
+    BsLockFill,
     BsPencil,
     BsPlayFill,
     BsPlusCircle,
@@ -46,6 +48,14 @@ function Metric({ label, value }) {
     );
 }
 
+function formatPrice(price) {
+    return new Intl.NumberFormat("pl-PL", {
+        style: "currency",
+        currency: "PLN",
+        maximumFractionDigits: Number(price) % 1 === 0 ? 0 : 2
+    }).format(Number(price || 0));
+}
+
 function CourseSkeleton() {
     return (
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04]">
@@ -69,6 +79,15 @@ function CourseSkeleton() {
 
 function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
     const progress = Math.min(100, Math.max(0, course.progress ?? 0));
+    const pending = course.accessStatus === "PENDING";
+    const locked = !course.canAccess && !isAdmin;
+    const actionLabel = pending
+        ? "Płatność oczekuje"
+        : locked
+            ? `Kup kurs — ${formatPrice(course.price)}`
+            : progress > 0
+                ? "Kontynuuj naukę"
+                : "Rozpocznij naukę";
 
     return (
         <article className="group flex min-w-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-2xl transition duration-300 md:hover:-translate-y-1 md:hover:border-cyan-400/50 md:hover:shadow-[0_20px_60px_rgba(6,182,212,0.12)]">
@@ -85,6 +104,9 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
                     className="aspect-[3/2] w-full object-cover transition duration-500 md:group-hover:scale-[1.03]"
                 />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#090d15]/70 via-transparent to-transparent" />
+                <div className="absolute right-4 top-4 rounded-full border border-white/15 bg-slate-950/85 px-3 py-1.5 text-xs font-black backdrop-blur-xl">
+                    {course.paid ? formatPrice(course.price) : "Bezpłatny"}
+                </div>
             </div>
 
             <div className="flex flex-1 flex-col gap-5 p-5 sm:p-6">
@@ -133,10 +155,16 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
                 <button
                     type="button"
                     onClick={onOpen}
-                    className="mt-auto flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-3.5 font-black transition hover:brightness-110"
+                    className={`mt-auto flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 font-black transition hover:brightness-110 ${
+                        pending
+                            ? "border border-amber-500/30 bg-amber-500/10 text-amber-200"
+                            : locked
+                                ? "bg-gradient-to-r from-violet-500 to-blue-600"
+                                : "bg-gradient-to-r from-cyan-500 to-blue-600"
+                    }`}
                 >
-                    <BsPlayFill />
-                    {progress > 0 ? "Kontynuuj naukę" : "Rozpocznij naukę"}
+                    {pending ? <BsHourglassSplit /> : locked ? <BsLockFill /> : <BsPlayFill />}
+                    {actionLabel}
                 </button>
 
                 {isAdmin && (
@@ -173,6 +201,7 @@ export default function CoursesPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const isAdmin = getRoleFromToken() === "ADMIN";
+    const [view, setView] = useState("catalog");
 
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -183,7 +212,7 @@ export default function CoursesPage() {
         try {
             setLoading(true);
             setError("");
-            const data = await apiFetch("/courses");
+            const data = await apiFetch(view === "mine" ? "/courses/my" : "/courses");
             setCourses(data || []);
         } catch (loadError) {
             setError(getErrorMessage(loadError));
@@ -195,7 +224,7 @@ export default function CoursesPage() {
     useEffect(() => {
         let active = true;
 
-        apiFetch("/courses")
+        apiFetch(view === "mine" ? "/courses/my" : "/courses")
             .then((data) => {
                 if (active) setCourses(data || []);
             })
@@ -209,7 +238,13 @@ export default function CoursesPage() {
         return () => {
             active = false;
         };
-    }, []);
+    }, [view]);
+
+    const changeView = (nextView) => {
+        setLoading(true);
+        setError("");
+        setView(nextView);
+    };
 
     const deleteCourse = async (course) => {
         const title = course.title || course.name;
@@ -275,10 +310,39 @@ export default function CoursesPage() {
             </div>
 
             <section>
+                {!isAdmin && (
+                    <div className="mb-7 inline-flex rounded-2xl border border-white/10 bg-black/20 p-1.5">
+                        <button
+                            type="button"
+                            onClick={() => changeView("catalog")}
+                            className={`rounded-xl px-5 py-2.5 text-sm font-black transition ${
+                                view === "catalog"
+                                    ? "bg-cyan-500 text-slate-950"
+                                    : "text-slate-400 hover:text-white"
+                            }`}
+                        >
+                            Katalog
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => changeView("mine")}
+                            className={`rounded-xl px-5 py-2.5 text-sm font-black transition ${
+                                view === "mine"
+                                    ? "bg-cyan-500 text-slate-950"
+                                    : "text-slate-400 hover:text-white"
+                            }`}
+                        >
+                            Moje kursy
+                        </button>
+                    </div>
+                )}
+
                 <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300 sm:text-sm">Kursy</p>
-                        <h2 className="mt-2 text-3xl font-black sm:text-4xl">Dostępne ścieżki nauki</h2>
+                        <h2 className="mt-2 text-3xl font-black sm:text-4xl">
+                            {view === "mine" && !isAdmin ? "Moje kursy" : "Dostępne ścieżki nauki"}
+                        </h2>
                     </div>
 
                     {isAdmin && (
@@ -324,7 +388,9 @@ export default function CoursesPage() {
                         <p className="mx-auto mt-2 max-w-xl text-slate-400">
                             {isAdmin
                                 ? "Utwórz pierwszy kurs, a następnie dodaj do niego moduły i lekcje."
-                                : "Nowe ścieżki nauki pojawią się tutaj po ich opublikowaniu."}
+                                : view === "mine"
+                                    ? "Nie masz jeszcze żadnego kursu. Wybierz kurs z katalogu i aktywuj dostęp."
+                                    : "Nowe ścieżki nauki pojawią się tutaj po ich opublikowaniu."}
                         </p>
                         {isAdmin && (
                             <button
@@ -344,7 +410,11 @@ export default function CoursesPage() {
                                 course={course}
                                 isAdmin={isAdmin}
                                 deleting={deletingCourseId === course.id}
-                                onOpen={() => navigate(`/modules/${course.id}`)}
+                                onOpen={() => navigate(
+                                    course.canAccess || isAdmin
+                                        ? `/modules/${course.id}`
+                                        : `/checkout/${course.id}`
+                                )}
                                 onEdit={() => navigate(`/admin/courses/${course.id}/edit`)}
                                 onDelete={() => deleteCourse(course)}
                             />

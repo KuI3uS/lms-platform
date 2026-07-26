@@ -12,7 +12,14 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
     long countByModuleCourseId(Long courseId);
 
+    long countByModuleId(Long moduleId);
+
     Optional<Lesson> findFirstByModuleIdAndOrderIndexLessThanOrderByOrderIndexDesc(
+            Long moduleId,
+            Integer orderIndex
+    );
+
+    Optional<Lesson> findFirstByModuleIdAndOrderIndexGreaterThanOrderByOrderIndexAsc(
             Long moduleId,
             Integer orderIndex
     );

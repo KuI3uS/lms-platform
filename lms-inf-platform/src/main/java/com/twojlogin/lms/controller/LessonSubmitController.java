@@ -14,6 +14,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
+import com.twojlogin.lms.service.CourseAccessService;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -29,25 +31,31 @@ public class LessonSubmitController {
     private final LessonRepository lessonRepository;
     private final LessonBlockRepository lessonBlockRepository;
     private final LessonSubmissionRepository submissionRepository;
+    private final CourseAccessService courseAccessService;
 
     public LessonSubmitController(
             JavaMailSender mailSender,
             UserRepository userRepository,
             LessonRepository lessonRepository,
             LessonBlockRepository lessonBlockRepository,
-            LessonSubmissionRepository submissionRepository
+            LessonSubmissionRepository submissionRepository,
+            CourseAccessService courseAccessService
     ) {
         this.mailSender = mailSender;
         this.userRepository = userRepository;
         this.lessonRepository = lessonRepository;
         this.lessonBlockRepository = lessonBlockRepository;
         this.submissionRepository = submissionRepository;
+        this.courseAccessService = courseAccessService;
     }
 
     @PostMapping
     public void submitLesson(
-            @RequestBody LessonSubmitRequest request
+            @RequestBody LessonSubmitRequest request,
+            Authentication authentication
     ) {
+
+        courseAccessService.requireLessonAccess(request.getLessonId(), authentication);
 
         UserDetails userDetails =
                 (UserDetails) SecurityContextHolder

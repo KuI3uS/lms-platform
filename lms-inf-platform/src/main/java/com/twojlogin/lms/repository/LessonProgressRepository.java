@@ -44,4 +44,16 @@ public interface LessonProgressRepository extends JpaRepository<LessonProgress, 
             @Param("userId") Long userId,
             @Param("courseId") Long courseId
     );
+
+    @Query("""
+            select count(progress)
+            from LessonProgress progress
+            where progress.user.id = :userId
+              and progress.lesson.module.id = :moduleId
+              and progress.completed = true
+            """)
+    long countCompletedByUserIdAndModuleId(
+            @Param("userId") Long userId,
+            @Param("moduleId") Long moduleId
+    );
 }

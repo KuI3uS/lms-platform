@@ -9,6 +9,10 @@ import com.twojlogin.lms.repository.CourseRepository;
 import com.twojlogin.lms.repository.LessonProgressRepository;
 import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.UserRepository;
+import com.twojlogin.lms.repository.CourseEnrollmentRepository;
+import com.twojlogin.lms.repository.CourseOrderRepository;
+import com.twojlogin.lms.repository.CourseCertificateRepository;
+import com.twojlogin.lms.repository.ExamAttemptRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -26,19 +30,34 @@ public class CourseService {
     private final LessonRepository lessonRepository;
     private final LessonProgressRepository lessonProgressRepository;
     private final UserRepository userRepository;
+    private final CourseAccessService accessService;
+    private final CourseEnrollmentRepository enrollmentRepository;
+    private final CourseOrderRepository orderRepository;
+    private final CourseCertificateRepository certificateRepository;
+    private final ExamAttemptRepository examAttemptRepository;
 
     public CourseService(
             CourseRepository courseRepository,
             CourseModuleRepository moduleRepository,
             LessonRepository lessonRepository,
             LessonProgressRepository lessonProgressRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            CourseAccessService accessService,
+            CourseEnrollmentRepository enrollmentRepository,
+            CourseOrderRepository orderRepository,
+            CourseCertificateRepository certificateRepository,
+            ExamAttemptRepository examAttemptRepository
     ) {
         this.courseRepository = courseRepository;
         this.moduleRepository = moduleRepository;
         this.lessonRepository = lessonRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.userRepository = userRepository;
+        this.accessService = accessService;
+        this.enrollmentRepository = enrollmentRepository;
+        this.orderRepository = orderRepository;
+        this.certificateRepository = certificateRepository;
+        this.examAttemptRepository = examAttemptRepository;
     }
 
     @Transactional(readOnly = true)
@@ -49,7 +68,22 @@ public class CourseService {
                 : courseRepository.findByPublishedTrueOrderByIdAsc();
 
         return courses.stream()
-                .map(course -> toSummary(course, user))
+                .map(course -> toSummary(course, user, isAdmin(authentication)))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseSummaryDto> getMy(Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        boolean admin = isAdmin(authentication);
+        List<Course> courses = admin
+                ? courseRepository.findAllByOrderByIdAsc()
+                : courseRepository.findByPublishedTrueOrderByIdAsc().stream()
+                        .filter(course -> accessService.hasAccess(user, course))
+                        .toList();
+
+        return courses.stream()
+                .map(course -> toSummary(course, user, admin))
                 .toList();
     }
 
@@ -62,7 +96,7 @@ public class CourseService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Kurs nie istnieje");
         }
 
-        return toSummary(course, user);
+        return toSummary(course, user, isAdmin(authentication));
     }
 
     @Transactional
@@ -71,7 +105,7 @@ public class CourseService {
         Course course = new Course();
         applyRequest(course, request);
 
-        return toSummary(courseRepository.save(course), user);
+        return toSummary(courseRepository.save(course), user, true);
     }
 
     @Transactional
@@ -80,7 +114,7 @@ public class CourseService {
         Course course = findCourse(id);
         applyRequest(course, request);
 
-        return toSummary(courseRepository.save(course), user);
+        return toSummary(courseRepository.save(course), user, true);
     }
 
     @Transactional
@@ -89,6 +123,10 @@ public class CourseService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Kurs nie istnieje");
         }
 
+        examAttemptRepository.deleteByCourseId(id);
+        certificateRepository.deleteByCourseId(id);
+        orderRepository.deleteByCourseId(id);
+        enrollmentRepository.deleteByCourseId(id);
         courseRepository.deleteById(id);
     }
 
@@ -117,7 +155,7 @@ public class CourseService {
                 .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
-    private CourseSummaryDto toSummary(Course course, User user) {
+    private CourseSummaryDto toSummary(Course course, User user, boolean admin) {
         long moduleCount = moduleRepository.countByCourseId(course.getId());
         long lessonCount = lessonRepository.countByModuleCourseId(course.getId());
         long completedLessonCount = lessonProgressRepository
@@ -125,6 +163,10 @@ public class CourseService {
         int progress = lessonCount == 0
                 ? 0
                 : (int) Math.round(completedLessonCount * 100.0 / lessonCount);
+
+        String accessStatus = accessService.accessStatus(user, course);
+        boolean canAccess = accessService.hasAccess(user, course);
+        boolean paid = !accessService.isFree(course);
 
         return new CourseSummaryDto(
                 course.getId(),
@@ -138,7 +180,12 @@ public class CourseService {
                 moduleCount,
                 lessonCount,
                 completedLessonCount,
-                progress
+                progress,
+                paid,
+                canAccess,
+                "ACTIVE".equals(accessStatus) || "ADMIN".equals(accessStatus),
+                accessStatus,
+                admin ? course.getPaymentUrl() : null
         );
     }
 
@@ -167,6 +214,7 @@ public class CourseService {
         course.setPublished(request.published());
         course.setThumbnailUrl(clean(request.thumbnailUrl()));
         course.setLevel(clean(request.level()) == null ? "Podstawy" : clean(request.level()));
+        course.setPaymentUrl(clean(request.paymentUrl()));
     }
 
     private String clean(String value) {

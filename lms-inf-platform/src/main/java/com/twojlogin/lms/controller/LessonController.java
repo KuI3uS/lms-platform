@@ -9,6 +9,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import com.twojlogin.lms.service.CourseAccessService;
+import com.twojlogin.lms.service.ProgressRewardService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +30,8 @@ public class LessonController {
     private final UserRepository userRepository;
     private final TaskAttemptRepository taskAttemptRepository;
     private final LessonBlockRepository lessonBlockRepository;
+    private final CourseAccessService courseAccessService;
+    private final ProgressRewardService rewardService;
 
     public LessonController(
             LessonRepository lessonRepository,
@@ -35,7 +39,9 @@ public class LessonController {
             LessonProgressRepository lessonProgressRepository,
             UserRepository userRepository,
             TaskAttemptRepository taskAttemptRepository,
-            LessonBlockRepository lessonBlockRepository
+            LessonBlockRepository lessonBlockRepository,
+            CourseAccessService courseAccessService,
+            ProgressRewardService rewardService
     ) {
         this.lessonRepository = lessonRepository;
         this.moduleRepository = moduleRepository;
@@ -44,6 +50,8 @@ public class LessonController {
         this.userRepository = userRepository;
         this.taskAttemptRepository = taskAttemptRepository;
         this.lessonBlockRepository = lessonBlockRepository;
+        this.courseAccessService = courseAccessService;
+        this.rewardService = rewardService;
     }
 
 
@@ -66,6 +74,7 @@ public class LessonController {
             @PathVariable Long moduleId,
             Authentication authentication
     ) {
+        courseAccessService.requireModuleAccess(moduleId, authentication);
         User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow();
 
@@ -113,9 +122,8 @@ public class LessonController {
     }
 
     @GetMapping("/{id}")
-    public LessonDto getOne(@PathVariable Long id) {
-        Lesson lesson = lessonRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+    public LessonDto getOne(@PathVariable Long id, Authentication authentication) {
+        Lesson lesson = courseAccessService.requireLessonAccess(id, authentication);
         return new LessonDto(lesson);
     }
 
@@ -125,9 +133,6 @@ public class LessonController {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
 
-        if (!lesson.getModule().isLessonsLocked()) {
-            return true;
-        }
         if (lesson.isFreePreview()) {
             return true;
         }
@@ -137,6 +142,13 @@ public class LessonController {
 
         User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow();
+
+        if (!courseAccessService.hasAccess(user, lesson.getModule().getCourse())) {
+            return false;
+        }
+        if (!lesson.getModule().isLessonsLocked()) {
+            return true;
+        }
 
         Optional<Lesson> previousLesson =
                 lessonRepository.findFirstByModuleIdAndOrderIndexLessThanOrderByOrderIndexDesc(
@@ -160,8 +172,7 @@ public class LessonController {
         User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow();
 
-        Lesson lesson = lessonRepository.findById(id)
-                .orElseThrow();
+        Lesson lesson = courseAccessService.requireLessonAccess(id, authentication);
 
         long requiredTasks = lessonBlockRepository.countByLessonIdAndTypeAndPublishedTrue(
                 lesson.getId(),
@@ -183,6 +194,7 @@ public class LessonController {
                 .findByUserAndLesson(user, lesson)
                 .orElse(new LessonProgress());
 
+        boolean newlyCompleted = !progress.isCompleted();
         progress.setUser(user);
         progress.setLesson(lesson);
         if (!progress.isCompleted() || progress.getCompletedAt() == null) {
@@ -191,6 +203,9 @@ public class LessonController {
         progress.setCompleted(true);
 
         lessonProgressRepository.save(progress);
+        if (newlyCompleted) {
+            rewardService.afterLessonCompleted(user, lesson);
+        }
 
         return Map.of(
                 "completed", true,

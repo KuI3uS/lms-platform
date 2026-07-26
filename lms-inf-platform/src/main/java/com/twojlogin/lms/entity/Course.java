@@ -21,6 +21,8 @@ public class Course {
     private boolean published;
     private String thumbnailUrl;
     private String level;
+    @Column(length = 1000)
+    private String paymentUrl;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     @JsonIgnore
@@ -97,5 +99,13 @@ public class Course {
 
     public void setLevel(String level) {
         this.level = level;
+    }
+
+    public String getPaymentUrl() {
+        return paymentUrl;
+    }
+
+    public void setPaymentUrl(String paymentUrl) {
+        this.paymentUrl = paymentUrl;
     }
 }

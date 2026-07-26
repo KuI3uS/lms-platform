@@ -9,6 +9,7 @@ import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
 import com.twojlogin.lms.service.TaskEvaluationService;
+import com.twojlogin.lms.service.CourseAccessService;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -24,17 +25,20 @@ public class LessonBlockController {
     private final LessonRepository lessonRepository;
     private final TaskAttemptRepository attemptRepository;
     private final TaskEvaluationService evaluationService;
+    private final CourseAccessService accessService;
 
     public LessonBlockController(
             LessonBlockRepository blockRepository,
             LessonRepository lessonRepository,
             TaskAttemptRepository attemptRepository,
-            TaskEvaluationService evaluationService
+            TaskEvaluationService evaluationService,
+            CourseAccessService accessService
     ) {
         this.blockRepository = blockRepository;
         this.lessonRepository = lessonRepository;
         this.attemptRepository = attemptRepository;
         this.evaluationService = evaluationService;
+        this.accessService = accessService;
     }
 
     @GetMapping("/lesson/{lessonId}")
@@ -42,6 +46,7 @@ public class LessonBlockController {
             @PathVariable Long lessonId,
             Authentication authentication
     ) {
+        accessService.requireLessonAccess(lessonId, authentication);
         boolean admin = isAdmin(authentication);
 
         return blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId).stream()
@@ -56,6 +61,7 @@ public class LessonBlockController {
             Authentication authentication
     ) {
         LessonBlock block = blockRepository.findById(id).orElseThrow();
+        accessService.requireLessonAccess(block.getLesson().getId(), authentication);
         return LessonBlockDto.from(block, isAdmin(authentication));
     }
 
@@ -185,6 +191,8 @@ public class LessonBlockController {
             @RequestBody AnswerRequest request,
             Authentication authentication
     ) {
+        LessonBlock block = blockRepository.findById(id).orElseThrow();
+        accessService.requireLessonAccess(block.getLesson().getId(), authentication);
         return evaluationService.check(id, request.getAnswer(), authentication);
     }
 
