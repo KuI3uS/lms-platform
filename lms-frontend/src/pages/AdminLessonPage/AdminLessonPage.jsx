@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 
 import LessonForm from "./LessonForm";
@@ -17,14 +16,6 @@ export default function AdminLessonPage() {
     const lessonBlocks = useLessonBlocks();
     const lessonTasks = useLessonTasks();
     const expanded = useExpandedLesson();
-
-    useEffect(() => {
-
-        if (!moduleId) return;
-
-        lessons.loadLessons();
-
-    }, [moduleId, lessons.loadLessons]);
 
     return (
 

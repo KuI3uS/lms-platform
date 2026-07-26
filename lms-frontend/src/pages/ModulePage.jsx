@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import {
@@ -28,11 +28,7 @@ export default function ModulePage() {
         role = null;
     }
 
-    useEffect(() => {
-        loadRoadmap();
-    }, [courseId]);
-
-    const loadRoadmap = async () => {
+    const loadRoadmap = useCallback(async () => {
         setLoading(true);
 
         try {
@@ -68,7 +64,12 @@ export default function ModulePage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [courseId]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(loadRoadmap, 0);
+        return () => window.clearTimeout(timer);
+    }, [loadRoadmap]);
 
     const createModule = async () => {
         if (!newModule.trim()) {

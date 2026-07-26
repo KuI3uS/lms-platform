@@ -2,11 +2,12 @@ package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.LoginRequest;
 import com.twojlogin.lms.dto.RegisterRequest;
-import com.twojlogin.lms.entity.User;
+import com.twojlogin.lms.dto.ForgotPasswordRequest;
 import com.twojlogin.lms.service.AuthService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -19,20 +20,26 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
     public void register(@RequestBody RegisterRequest request) {
         authService.register(request);
     }
+
     @PostMapping("/login")
-    public java.util.Map<String, String> login(@RequestBody LoginRequest request) {
-
+    public Map<String, String> login(@RequestBody LoginRequest request) {
         String token = authService.login(request);
-
-        return java.util.Map.of("token", token);
+        return Map.of("token", token);
     }
 
     @GetMapping("/verify-email")
-    public String verifyEmail(@RequestParam String token) {
+    public Map<String, String> verifyEmail(@RequestParam String token) {
         authService.verifyEmail(token);
-        return "Email został potwierdzony. Możesz się zalogować.";
+        return Map.of("message", "Email został potwierdzony. Możesz się zalogować.");
+    }
+
+    @PostMapping("/resend-verification")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resendVerification(@RequestBody ForgotPasswordRequest request) {
+        authService.resendVerification(request.getEmail());
     }
 }

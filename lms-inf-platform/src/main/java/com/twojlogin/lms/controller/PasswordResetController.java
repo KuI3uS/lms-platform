@@ -7,10 +7,12 @@ import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.PasswordResetTokenRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -36,9 +38,14 @@ public class PasswordResetController {
 
     @Value("${frontend.url}")
     private String frontendUrl;
+
     @PostMapping("/forgot-password")
     public void forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        if (request == null || request.getEmail() == null || request.getEmail().isBlank()) {
+            return;
+        }
+
+        User user = userRepository.findByEmailIgnoreCase(request.getEmail().trim())
                 .orElse(null);
 
         if (user == null) {
@@ -73,19 +80,39 @@ public class PasswordResetController {
 
     @PostMapping("/reset-password")
     public void resetPassword(@RequestBody ResetPasswordRequest request) {
+        if (request == null || request.getToken() == null || request.getToken().isBlank()
+                || request.getNewPassword() == null || request.getNewPassword().length() < 8) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Link jest nieprawidłowy lub hasło ma mniej niż 8 znaków."
+            );
+        }
+
         PasswordResetToken resetToken = tokenRepository.findByToken(request.getToken())
-                .orElseThrow(() -> new RuntimeException("Nieprawidłowy token"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Link do resetu hasła jest nieprawidłowy."
+                ));
 
         if (resetToken.isUsed()) {
-            throw new RuntimeException("Token został już użyty");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Link do resetu hasła został już użyty."
+            );
         }
 
         if (resetToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token wygasł");
+            throw new ResponseStatusException(
+                    HttpStatus.GONE,
+                    "Link do resetu hasła wygasł."
+            );
         }
 
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setEnabled(true);
+        user.setVerificationToken(null);
+        user.setVerificationTokenExpiresAt(null);
 
         resetToken.setUsed(true);
 
