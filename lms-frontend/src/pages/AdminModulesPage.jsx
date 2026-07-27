@@ -3,10 +3,8 @@ import { Link } from "react-router-dom";
 import {
     BsBook,
     BsCheck2,
-    BsCloudDownload,
     BsGear,
     BsPlusCircle,
-    BsStars,
     BsTrash
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
@@ -18,9 +16,6 @@ export default function AdminModulesPage() {
     const [newModuleName, setNewModuleName] = useState("");
     const [loading, setLoading] = useState(true);
     const [savingId, setSavingId] = useState(null);
-    const [importPlan, setImportPlan] = useState(null);
-    const [importing, setImporting] = useState(false);
-    const [importResult, setImportResult] = useState(null);
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -61,27 +56,6 @@ export default function AdminModulesPage() {
             })
             .finally(() => {
                 if (active) setLoading(false);
-            });
-        return () => {
-            active = false;
-        };
-    }, [courseId]);
-
-    useEffect(() => {
-        if (!courseId) {
-            return undefined;
-        }
-
-        let active = true;
-        apiFetch(`/admin/curricula/java-junior/course/${courseId}/preview`)
-            .then((data) => {
-                if (active) setImportPlan(data);
-            })
-            .catch((loadError) => {
-                if (active) {
-                    setImportPlan(null);
-                    setError(loadError.message || "Nie udało się przygotować podglądu importu.");
-                }
             });
         return () => {
             active = false;
@@ -144,36 +118,6 @@ export default function AdminModulesPage() {
         }
     };
 
-    const importCurriculum = async () => {
-        if (!courseId || !importPlan || importPlan.readyModules === 0) return;
-
-        const confirmed = window.confirm(
-            `Uzupełnić ${importPlan.readyModules} pustych modułów?\n\n`
-            + `Powstanie ${importPlan.lessons} lekcji i ${importPlan.blocks} bloków. `
-            + "Moduły, które mają już lekcje, zostaną pominięte."
-        );
-        if (!confirmed) return;
-
-        try {
-            setImporting(true);
-            setError("");
-            setImportResult(null);
-            const result = await apiFetch(
-                `/admin/curricula/java-junior/course/${courseId}/import`,
-                { method: "POST" }
-            );
-            setImportResult(result);
-            const nextPlan = await apiFetch(
-                `/admin/curricula/java-junior/course/${courseId}/preview`
-            );
-            setImportPlan(nextPlan);
-        } catch (importError) {
-            setError(importError.message || "Nie udało się zaimportować programu kursu.");
-        } finally {
-            setImporting(false);
-        }
-    };
-
     return (
         <div className="mx-auto max-w-6xl space-y-8 text-white">
             <header className="rounded-[34px] border border-emerald-500/20 bg-gradient-to-br from-emerald-950/80 to-slate-950 p-7 sm:p-10">
@@ -228,68 +172,6 @@ export default function AdminModulesPage() {
                     </button>
                 </form>
             </section>
-
-            {importPlan && (
-                <section className="overflow-hidden rounded-3xl border border-cyan-400/25 bg-gradient-to-br from-cyan-500/10 via-slate-950 to-blue-500/10">
-                    <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[1fr_auto] lg:items-center">
-                        <div>
-                            <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.24em] text-cyan-300">
-                                <BsStars /> Gotowy program kursu
-                            </p>
-                            <h2 className="mt-2 text-2xl font-black">
-                                {importPlan.curriculum}
-                                <span className="ml-2 text-sm text-slate-500">v{importPlan.version}</span>
-                            </h2>
-                            <p className="mt-3 max-w-3xl leading-7 text-slate-400">
-                                Bezpieczny import uzupełnia tylko puste, ponumerowane etapy.
-                                Każdy etap otrzyma lekcję teorii i laboratorium z przykładem,
-                                zadaniem, quizem, wskazówkami oraz podsumowaniem.
-                            </p>
-                            <div className="mt-4 flex flex-wrap gap-2 text-sm font-bold">
-                                <span className="rounded-full bg-white/5 px-3 py-1.5 text-slate-300">
-                                    {importPlan.readyModules} modułów do uzupełnienia
-                                </span>
-                                <span className="rounded-full bg-white/5 px-3 py-1.5 text-slate-300">
-                                    {importPlan.lessons} lekcji
-                                </span>
-                                <span className="rounded-full bg-white/5 px-3 py-1.5 text-slate-300">
-                                    {importPlan.blocks} bloków
-                                </span>
-                                {importPlan.skippedNonEmptyModules > 0 && (
-                                    <span className="rounded-full bg-amber-500/10 px-3 py-1.5 text-amber-200">
-                                        {importPlan.skippedNonEmptyModules} z treścią — bez zmian
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={importCurriculum}
-                            disabled={importing || importPlan.readyModules === 0}
-                            className="inline-flex min-w-52 items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-5 py-4 font-black text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
-                        >
-                            <BsCloudDownload />
-                            {importing
-                                ? "Tworzę materiały..."
-                                : importPlan.readyModules > 0
-                                    ? "Uzupełnij kurs"
-                                    : "Kurs jest uzupełniony"}
-                        </button>
-                    </div>
-                    {importPlan.warnings?.length > 0 && (
-                        <div className="border-t border-amber-400/15 bg-amber-500/[0.06] px-5 py-4 text-sm text-amber-100 sm:px-7">
-                            {importPlan.warnings.join(" ")}
-                        </div>
-                    )}
-                </section>
-            )}
-
-            {importResult && (
-                <div role="status" className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-5 text-emerald-100">
-                    Gotowe — utworzono {importResult.lessons} lekcji i {importResult.blocks} bloków
-                    w {importResult.readyModules} modułach. Istniejące materiały pozostały bez zmian.
-                </div>
-            )}
 
             {loading ? (
                 <div className="grid min-h-52 place-items-center">
