@@ -17,6 +17,16 @@ function EditorLoader() {
     );
 }
 
+const DIAGNOSTIC_LABELS = {
+    EMPTY_ANSWER: "Brak odpowiedzi",
+    INVALID_JAVA_STATEMENT: "Niepoprawna instrukcja",
+    MISSING_OUTPUT: "Brak wyniku programu",
+    MISSING_SEMICOLON: "Brak średnika",
+    MISSING_REQUIRED_ELEMENT: "Niepełne rozwiązanie",
+    UNBALANCED_DELIMITER: "Niedomknięty znak",
+    UNCLOSED_STRING: "Niedomknięty tekst"
+};
+
 export default function LessonTask({
                                        block,
                                        answers,
@@ -91,44 +101,72 @@ export default function LessonTask({
 
                 {result && (
                     <div
-                        className={`rounded-2xl border p-5 ${
+                        className={`overflow-hidden rounded-3xl border ${
                             result.correct
-                                ? "border-green-500/30 bg-green-500/10 text-green-200"
-                                : "border-red-500/30 bg-red-500/10 text-red-200"
+                                ? "border-emerald-400/30 bg-emerald-500/[0.08]"
+                                : "border-orange-400/30 bg-slate-950/70"
                         }`}
                     >
-                        <div className="flex gap-4">
-                            {result.correct
-                                ? <BsCheckCircleFill className="mt-0.5 shrink-0" size={24}/>
-                                : <BsExclamationCircle className="mt-0.5 shrink-0" size={24}/>
-                            }
+                        <div className="flex items-start gap-4 border-b border-white/10 p-5 sm:p-6">
+                            <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${
+                                result.correct
+                                    ? "bg-emerald-500/15 text-emerald-300"
+                                    : "bg-orange-500/15 text-orange-300"
+                            }`}>
+                                {result.correct
+                                    ? <BsCheckCircleFill size={22}/>
+                                    : <BsExclamationCircle size={22}/>
+                                }
+                            </div>
 
                             <div className="min-w-0 flex-1">
-                                <p className="font-black">
-                                    {result.correct ? "Poprawna odpowiedź" : "Rozwiązanie wymaga poprawy"}
-                                </p>
-                                <p className="mt-1 text-sm sm:text-base">{result.message}</p>
-
-                                {result.attemptCount > 0 && (
-                                    <p className="mt-2 text-xs opacity-70">
-                                        Próba {result.attemptCount}
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <p className={`text-lg font-black ${
+                                        result.correct ? "text-emerald-200" : "text-white"
+                                    }`}>
+                                        {result.correct ? "Dobra robota — kod działa" : "Sprawdź wskazane miejsca"}
                                     </p>
-                                )}
+                                    {result.attemptCount > 0 && (
+                                        <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-slate-400">
+                                            Próba {result.attemptCount}
+                                        </span>
+                                    )}
+                                </div>
+                                <p className={`mt-1 text-sm sm:text-base ${
+                                    result.correct ? "text-emerald-100/80" : "text-slate-400"
+                                }`}>
+                                    {result.message}
+                                </p>
                             </div>
                         </div>
 
                         {!result.correct && result.diagnostics?.length > 0 && (
-                            <ul className="mt-5 space-y-3 border-t border-white/10 pt-5">
+                            <ul className="space-y-3 p-4 sm:p-5">
                                 {result.diagnostics.map((diagnostic, index) => (
-                                    <li key={`${diagnostic.type}-${diagnostic.line}-${index}`} className="rounded-xl bg-black/20 p-4">
-                                        <p className="font-semibold">
-                                            {diagnostic.line ? `Linia ${diagnostic.line}: ` : ""}
+                                    <li
+                                        key={`${diagnostic.type}-${diagnostic.line}-${index}`}
+                                        className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+                                    >
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="grid h-7 w-7 place-items-center rounded-lg bg-orange-500/15 text-xs font-black text-orange-200">
+                                                {index + 1}
+                                            </span>
+                                            <p className="font-black text-white">
+                                                {DIAGNOSTIC_LABELS[diagnostic.type] || "Element do poprawy"}
+                                            </p>
+                                            {diagnostic.line && (
+                                                <span className="rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-bold text-blue-200">
+                                                    Linia {diagnostic.line}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="mt-3 leading-6 text-slate-300">
                                             {diagnostic.message}
                                         </p>
                                         {diagnostic.suggestion && (
-                                            <p className="mt-2 text-sm text-yellow-100">
-                                                Jak poprawić: {diagnostic.suggestion}
-                                            </p>
+                                            <div className="mt-3 rounded-xl bg-cyan-500/10 px-4 py-3 text-sm leading-6 text-cyan-100">
+                                                <strong>Jak poprawić:</strong> {diagnostic.suggestion}
+                                            </div>
                                         )}
                                     </li>
                                 ))}
@@ -136,11 +174,15 @@ export default function LessonTask({
                         )}
 
                         {!result.correct && result.hint && (
-                            <div className="mt-5 flex gap-3 rounded-xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-yellow-100">
+                            <div className="mx-4 mb-4 flex gap-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-yellow-100 sm:mx-5 sm:mb-5">
                                 <BsLightbulb className="mt-0.5 shrink-0 text-yellow-300" size={20}/>
                                 <div>
                                     <p className="font-bold">
-                                        {result.hintLevel >= 3 ? "Wyjaśnienie rozwiązania" : "Podpowiedź"}
+                                        {result.hintLevel >= 3
+                                            ? "Wyjaśnienie rozwiązania"
+                                            : result.hintLevel >= 2
+                                                ? "Większa podpowiedź"
+                                                : "Wskazówka"}
                                     </p>
                                     <p className="mt-1 whitespace-pre-line text-sm sm:text-base">{result.hint}</p>
                                 </div>
@@ -148,7 +190,7 @@ export default function LessonTask({
                         )}
 
                         {!result.correct && result.solutionPreview && (
-                            <div className="mt-5">
+                            <div className="mx-4 mb-4 sm:mx-5 sm:mb-5">
                                 <p className="mb-2 font-bold text-yellow-100">Przykładowe poprawne rozwiązanie</p>
                                 <pre className="overflow-x-auto rounded-xl border border-white/10 bg-gray-950 p-4 text-sm text-gray-100">
                                     <code>{result.solutionPreview}</code>

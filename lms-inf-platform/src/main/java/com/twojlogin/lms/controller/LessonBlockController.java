@@ -5,6 +5,7 @@ import com.twojlogin.lms.dto.LessonBlockDto;
 import com.twojlogin.lms.dto.TaskCheckResponse;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
+import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
@@ -192,8 +193,9 @@ public class LessonBlockController {
             Authentication authentication
     ) {
         LessonBlock block = blockRepository.findById(id).orElseThrow();
-        accessService.requireLessonAccess(block.getLesson().getId(), authentication);
-        return evaluationService.check(id, request.getAnswer(), authentication);
+        User user = accessService.currentUser(authentication);
+        accessService.requireLessonAccess(user, block.getLesson());
+        return evaluationService.check(block, request.getAnswer(), user);
     }
 
     private boolean isAdmin(Authentication authentication) {

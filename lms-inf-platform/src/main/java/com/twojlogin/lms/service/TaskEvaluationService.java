@@ -64,6 +64,15 @@ public class TaskEvaluationService {
                         "Nie znaleziono zadania"
                 ));
 
+        return check(block, answer, user);
+    }
+
+    @Transactional
+    public TaskCheckResponse check(
+            LessonBlock block,
+            String answer,
+            User user
+    ) {
         if (block.getType() != BlockType.TASK) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -154,6 +163,13 @@ public class TaskEvaluationService {
         String normalizedStudent = normalize(student);
         String[] expectedLines = expected.split("\\R");
         String[] studentLines = student.split("\\R", -1);
+        addInvalidJavaStatementDiagnostics(
+                studentLines,
+                expectedLines,
+                language,
+                diagnostics,
+                diagnosticKeys
+        );
 
         for (String expectedLine : expectedLines) {
             String trimmedExpected = expectedLine.trim();
@@ -188,19 +204,120 @@ public class TaskEvaluationService {
                 }
             }
 
-            addDiagnostic(
-                    diagnostics,
-                    diagnosticKeys,
-                    new TaskDiagnosticDto(
-                            "MISSING_REQUIRED_ELEMENT",
-                            null,
-                            "W rozwiązaniu brakuje wymaganego elementu: " + summarize(trimmedExpected),
-                            "Porównaj strukturę swojego kodu z poleceniem i dodaj brakujący element."
-                    )
-            );
+            addDiagnostic(diagnostics, diagnosticKeys, missingElementDiagnostic(trimmedExpected));
         }
 
         return diagnostics;
+    }
+
+    private void addInvalidJavaStatementDiagnostics(
+            String[] studentLines,
+            String[] expectedLines,
+            String language,
+            List<TaskDiagnosticDto> diagnostics,
+            Set<String> keys
+    ) {
+        if (language == null || !language.equalsIgnoreCase("java")) return;
+
+        for (int index = 0; index < studentLines.length; index++) {
+            String line = studentLines[index].trim();
+
+            if (isJavaStructureLine(line)
+                    || matchesExpectedWithoutSemicolon(line, expectedLines)) {
+                continue;
+            }
+
+            int lineNumber = index + 1;
+            addDiagnostic(
+                    diagnostics,
+                    keys,
+                    new TaskDiagnosticDto(
+                            "INVALID_JAVA_STATEMENT",
+                            lineNumber,
+                            "Ta linia nie jest poprawną instrukcją Javy.",
+                            "Usuń fragment „" + summarize(line)
+                                    + "” albo zastąp go instrukcją realizującą polecenie."
+                    )
+            );
+        }
+    }
+
+    private boolean isJavaStructureLine(String line) {
+        if (line.isBlank()
+                || line.equals("{")
+                || line.equals("}")
+                || line.endsWith("{")
+                || line.endsWith("}")
+                || line.endsWith(";")
+                || line.startsWith("//")
+                || line.startsWith("/*")
+                || line.startsWith("*")
+                || line.startsWith("@")
+                || line.startsWith("package ")
+                || line.startsWith("import ")) {
+            return true;
+        }
+
+        if (line.endsWith(")") && (
+                line.startsWith("if ")
+                        || line.startsWith("if(")
+                        || line.startsWith("for ")
+                        || line.startsWith("for(")
+                        || line.startsWith("while ")
+                        || line.startsWith("while(")
+                        || line.startsWith("switch ")
+                        || line.startsWith("switch(")
+                        || line.startsWith("catch ")
+                        || line.startsWith("synchronized ")
+                        || line.matches(".*\\b(public|protected|private|static|final|void)\\b.*")
+        )) {
+            return true;
+        }
+
+        return line.equals("else")
+                || line.equals("try")
+                || line.equals("do")
+                || line.equals("finally")
+                || line.startsWith("else ")
+                || line.startsWith("catch ")
+                || line.startsWith("case ")
+                || line.startsWith("default:");
+    }
+
+    private boolean matchesExpectedWithoutSemicolon(
+            String studentLine,
+            String[] expectedLines
+    ) {
+        String normalizedStudentLine = normalize(studentLine);
+
+        for (String expectedLine : expectedLines) {
+            String trimmed = expectedLine.trim();
+            if (!trimmed.endsWith(";")) continue;
+
+            String withoutSemicolon = trimmed.substring(0, trimmed.length() - 1);
+            if (normalize(withoutSemicolon).equals(normalizedStudentLine)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private TaskDiagnosticDto missingElementDiagnostic(String expectedLine) {
+        if (expectedLine.contains("System.out.print")) {
+            return new TaskDiagnosticDto(
+                    "MISSING_OUTPUT",
+                    null,
+                    "Program nie wyświetla tekstu wymaganego w poleceniu.",
+                    "W metodzie main użyj System.out.println(...), aby wypisać właściwy tekst."
+            );
+        }
+
+        return new TaskDiagnosticDto(
+                "MISSING_REQUIRED_ELEMENT",
+                null,
+                "Brakuje części rozwiązania wymaganej przez polecenie.",
+                "Sprawdź polecenie i uzupełnij brakujący fragment programu."
+        );
     }
 
     private void addDelimiterDiagnostic(
@@ -336,10 +453,9 @@ public class TaskEvaluationService {
 
     private String buildMessage(boolean correct, List<TaskDiagnosticDto> diagnostics) {
         if (correct) return "Świetnie — rozwiązanie jest poprawne.";
-        if (diagnostics.size() == 1) return diagnostics.get(0).message();
         int count = diagnostics.size();
-        String noun = count >= 2 && count <= 4 ? "problemy" : "problemów";
-        return "Znaleziono " + count + " " + noun + " wymagających poprawy.";
+        if (count == 1) return "Znaleziono 1 rzecz do poprawy.";
+        return "Znaleziono " + count + " rzeczy do poprawy.";
     }
 
     private String buildHint(
