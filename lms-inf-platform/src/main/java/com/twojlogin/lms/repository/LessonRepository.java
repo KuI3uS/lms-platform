@@ -12,6 +12,17 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
     List<Lesson> findByModuleIdOrderByOrderIndexAsc(Long moduleId);
 
+    @Query("""
+            select lesson
+            from Lesson lesson
+            join fetch lesson.module module
+            where module.course.id = :courseId
+            order by module.id asc, lesson.orderIndex asc, lesson.id asc
+            """)
+    List<Lesson> findRoadmapLessonsByCourseId(
+            @Param("courseId") Long courseId
+    );
+
     long countByModuleCourseId(Long courseId);
 
     @Query("""

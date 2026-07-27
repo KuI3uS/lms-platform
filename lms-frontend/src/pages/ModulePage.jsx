@@ -17,6 +17,9 @@ import {
     getCourseLanguageLabel
 } from "../utils/courseTaxonomy";
 
+const ROADMAP_CACHE_TTL = 60_000;
+const roadmapCache = new Map();
+
 export default function ModulePage() {
     const { courseId } = useParams();
     const navigate = useNavigate();
@@ -37,33 +40,45 @@ export default function ModulePage() {
     }
 
     const loadRoadmap = useCallback(async () => {
-        setLoading(true);
+        const cached = roadmapCache.get(String(courseId));
+        const cacheIsFresh = cached
+            && Date.now() - cached.savedAt < ROADMAP_CACHE_TTL;
+
+        if (cacheIsFresh) {
+            setCourse(cached.course);
+            setModules(cached.modules);
+            setLoading(false);
+        } else {
+            setLoading(true);
+        }
         setError("");
 
         try {
-            const [courseData, modulesData] = await Promise.all([
-                apiFetch(`/courses/${courseId}`),
-                apiFetch(`/modules/course/${courseId}`)
-            ]);
-
-            const modulesWithLessons = await Promise.all(
-                (modulesData || []).map(async (module) => {
-                    const lessons = await apiFetch(`/lessons/module/${module.id}`);
-
-                    return {
-                        ...module,
-                        lessons: (lessons || []).sort(
-                            (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
-                        )
-                    };
-                })
+            const roadmap = await apiFetch(
+                `/modules/course/${courseId}/roadmap`
             );
+            const courseData = {
+                id: roadmap.id,
+                name: roadmap.name,
+                title: roadmap.title,
+                category: roadmap.category,
+                courseLanguage: roadmap.courseLanguage,
+                cefrLevel: roadmap.cefrLevel
+            };
+            const moduleData = roadmap.modules || [];
 
+            roadmapCache.set(String(courseId), {
+                course: courseData,
+                modules: moduleData,
+                savedAt: Date.now()
+            });
             setCourse(courseData);
-            setModules(modulesWithLessons);
+            setModules(moduleData);
         } catch (e) {
             console.error(e);
-            setError(e.message || "Nie udało się pobrać ścieżki kursu.");
+            if (!cacheIsFresh) {
+                setError(e.message || "Nie udało się pobrać ścieżki kursu.");
+            }
         } finally {
             setLoading(false);
         }
@@ -89,6 +104,7 @@ export default function ModulePage() {
         });
 
         setModules(prev => [...prev, { ...module, lessons: [] }]);
+        roadmapCache.delete(String(courseId));
         setNewModule("");
     };
 
@@ -100,6 +116,7 @@ export default function ModulePage() {
         });
 
         setModules(prev => prev.filter(m => m.id !== id));
+        roadmapCache.delete(String(courseId));
     };
 
     const allLessons = modules.flatMap(m => m.lessons || []);

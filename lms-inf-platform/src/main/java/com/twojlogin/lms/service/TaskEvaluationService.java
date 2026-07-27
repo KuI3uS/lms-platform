@@ -73,10 +73,11 @@ public class TaskEvaluationService {
             String answer,
             User user
     ) {
-        if (block.getType() != BlockType.TASK) {
+        if (block.getType() != BlockType.TASK
+                && block.getType() != BlockType.QUIZ) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Ten blok nie jest zadaniem"
+                    "Tego bloku nie można sprawdzić automatycznie"
             );
         }
 
@@ -94,11 +95,13 @@ public class TaskEvaluationService {
         }
 
         String studentAnswer = answer == null ? "" : answer;
-        List<TaskDiagnosticDto> diagnostics = evaluate(
-                studentAnswer,
-                block.getExpectedAnswer(),
-                block.getLanguage()
-        );
+        List<TaskDiagnosticDto> diagnostics = block.getType() == BlockType.QUIZ
+                ? evaluateQuiz(studentAnswer, block.getExpectedAnswer())
+                : evaluate(
+                        studentAnswer,
+                        block.getExpectedAnswer(),
+                        block.getLanguage()
+                );
         boolean correct = diagnostics.isEmpty();
 
         TaskAttempt attempt = attemptRepository.findByUserAndBlock(user, block)
@@ -127,14 +130,39 @@ public class TaskEvaluationService {
 
         return new TaskCheckResponse(
                 correct,
-                buildMessage(correct, diagnostics),
+                buildMessage(block.getType(), correct, diagnostics),
                 attempt.getAttemptCount(),
                 hintLevel,
                 correct ? null : buildHint(block, hintLevel, diagnostics),
                 visibleDiagnostics,
-                hintLevel >= 3 ? block.getExpectedAnswer() : null,
+                hintLevel >= 3 && block.getType() == BlockType.TASK
+                        ? block.getExpectedAnswer()
+                        : null,
                 lessonCompleted
         );
+    }
+
+    private List<TaskDiagnosticDto> evaluateQuiz(
+            String student,
+            String expected
+    ) {
+        if (student.isBlank()) {
+            return List.of(new TaskDiagnosticDto(
+                    "EMPTY_ANSWER",
+                    null,
+                    "Najpierw wybierz jedną odpowiedź.",
+                    "Przeczytaj wszystkie możliwości i zaznacz tę, która najlepiej odpowiada na pytanie."
+            ));
+        }
+        if (student.trim().equalsIgnoreCase(expected.trim())) {
+            return List.of();
+        }
+        return List.of(new TaskDiagnosticDto(
+                "INCORRECT_QUIZ_ANSWER",
+                null,
+                "Wybrana odpowiedź nie jest poprawna.",
+                "Wróć do materiału poprzedzającego quiz i sprawdź definicję z pytania."
+        ));
     }
 
     private List<TaskDiagnosticDto> evaluate(
@@ -451,7 +479,16 @@ public class TaskEvaluationService {
         return 1;
     }
 
-    private String buildMessage(boolean correct, List<TaskDiagnosticDto> diagnostics) {
+    private String buildMessage(
+            BlockType type,
+            boolean correct,
+            List<TaskDiagnosticDto> diagnostics
+    ) {
+        if (type == BlockType.QUIZ) {
+            return correct
+                    ? "Dobrze — to poprawna odpowiedź."
+                    : "Ta odpowiedź nie jest poprawna.";
+        }
         if (correct) return "Świetnie — rozwiązanie jest poprawne.";
         int count = diagnostics.size();
         if (count == 1) return "Znaleziono 1 rzecz do poprawy.";
@@ -477,6 +514,13 @@ public class TaskEvaluationService {
             return "Popraw kolejno wskazane problemy, zaczynając od pierwszego na liście.";
         }
 
+        if (block.getType() == BlockType.QUIZ) {
+            return hasText(block.getSolutionExplanation())
+                    ? block.getSolutionExplanation()
+                    : "Poprawna odpowiedź to: " + block.getExpectedAnswer()
+                    + ". Wróć do materiału i sprawdź, dlaczego właśnie ona pasuje do pytania.";
+        }
+
         return hasText(block.getSolutionExplanation())
                 ? block.getSolutionExplanation()
                 : "Poniżej znajdziesz przykładowe poprawne rozwiązanie. Porównaj je linia po linii ze swoim kodem.";
@@ -487,14 +531,15 @@ public class TaskEvaluationService {
     }
 
     private boolean completeLessonWhenReady(User user, Lesson lesson) {
-        long requiredTasks = blockRepository.countByLessonIdAndTypeAndPublishedTrue(
-                lesson.getId(),
-                BlockType.TASK
-        );
-        long correctTasks = attemptRepository.countCorrectTasksByUserAndLesson(
-                user.getId(),
-                lesson.getId()
-        );
+        long requiredTasks =
+                blockRepository.countRequiredAssessmentsByLessonId(
+                        lesson.getId()
+                );
+        long correctTasks =
+                attemptRepository.countCorrectAssessmentsByUserAndLesson(
+                        user.getId(),
+                        lesson.getId()
+                );
 
         if (requiredTasks == 0 || correctTasks < requiredTasks) return false;
 

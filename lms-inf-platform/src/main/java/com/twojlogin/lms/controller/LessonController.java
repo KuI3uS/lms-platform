@@ -195,14 +195,15 @@ public class LessonController {
 
         Lesson lesson = courseAccessService.requireLessonAccess(id, authentication);
 
-        long requiredTasks = lessonBlockRepository.countByLessonIdAndTypeAndPublishedTrue(
-                lesson.getId(),
-                BlockType.TASK
-        );
-        long correctTasks = taskAttemptRepository.countCorrectTasksByUserAndLesson(
-                user.getId(),
-                lesson.getId()
-        );
+        long requiredTasks =
+                lessonBlockRepository.countRequiredAssessmentsByLessonId(
+                        lesson.getId()
+                );
+        long correctTasks =
+                taskAttemptRepository.countCorrectAssessmentsByUserAndLesson(
+                        user.getId(),
+                        lesson.getId()
+                );
 
         if (correctTasks < requiredTasks) {
             throw new ResponseStatusException(

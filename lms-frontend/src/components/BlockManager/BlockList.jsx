@@ -6,7 +6,8 @@ import {
 
 import {
     getBlockIcon,
-    getBlockLabel
+    getBlockLabel,
+    getBlockType
 } from "./blockTypes.jsx";
 
 export default function BlockList({
@@ -44,13 +45,17 @@ export default function BlockList({
 
         <div className="space-y-3">
 
-            {blocks
+            {[...blocks]
                 .sort((a, b) => a.orderIndex - b.orderIndex)
                 .map((block, index) => (
 
                     <div
                         key={block.id}
-                        className="group bg-gray-900 border border-gray-800 hover:border-blue-500 rounded-2xl p-4 transition"
+                        className={`group rounded-2xl border p-4 transition hover:-translate-y-0.5 ${
+                            getBlockType(block.type)?.surface || "bg-gray-900"
+                        } ${
+                            getBlockType(block.type)?.border || "border-gray-800"
+                        }`}
                     >
 
                         <div className="flex items-center justify-between">
@@ -65,7 +70,9 @@ export default function BlockList({
 
                                 </div>
 
-                                <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-xl">
+                                <div className={`flex h-12 w-12 items-center justify-center rounded-xl text-xl ${
+                                    getBlockType(block.type)?.iconBox || "bg-blue-600"
+                                }`}>
 
                                     {getBlockIcon(block.type)}
 

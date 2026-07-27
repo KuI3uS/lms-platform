@@ -2,6 +2,11 @@ import LessonText from "./LessonText";
 import LessonExample from "./LessonExample";
 import LessonImage from "./LessonImage";
 import LessonTask from "./LessonTask";
+import LessonVideo from "./LessonVideo";
+import LessonDownload from "./LessonDownload";
+import LessonQuote from "./LessonQuote";
+import LessonDivider from "./LessonDivider";
+import LessonQuiz from "./LessonQuiz";
 
 export default function LessonBlock({
                                         block,
@@ -35,6 +40,32 @@ export default function LessonBlock({
 
         case "IMAGE":
             return <LessonImage block={block} />;
+
+        case "VIDEO":
+            return <LessonVideo block={block} />;
+
+        case "PDF":
+        case "DOWNLOAD":
+            return <LessonDownload block={block} />;
+
+        case "QUOTE":
+            return <LessonQuote block={block} />;
+
+        case "DIVIDER":
+            return <LessonDivider block={block} />;
+
+        case "QUIZ":
+            return (
+                <LessonQuiz
+                    block={block}
+                    answers={answers}
+                    result={results[block.id]}
+                    checking={checkingTaskId === block.id}
+                    onAnswerChange={onAnswerChange}
+                    onReset={onReset}
+                    onCheck={onCheck}
+                />
+            );
 
         case "TASK":
             return (

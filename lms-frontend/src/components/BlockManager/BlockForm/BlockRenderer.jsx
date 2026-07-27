@@ -22,9 +22,6 @@ export default function BlockRenderer({
         case "INFO":
         case "SUMMARY":
 
-            console.log(block);
-
-            console.log(block.type);
             return (
                 <TextBlockForm
                     block={block}
@@ -56,6 +53,7 @@ export default function BlockRenderer({
                 />
             );
 
+        case "PDF":
         case "DOWNLOAD":
             return (
                 <DownloadBlockForm
@@ -91,7 +89,10 @@ export default function BlockRenderer({
 
         case "DIVIDER":
             return (
-                <DividerBlockForm />
+                <DividerBlockForm
+                    block={block}
+                    setBlock={setBlock}
+                />
             );
 
         default:

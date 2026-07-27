@@ -62,9 +62,11 @@ export default function LessonPage() {
 
             const initialAnswers = {};
             sorted
-                .filter(block => block.type === "TASK")
+                .filter(block => ["TASK", "QUIZ"].includes(block.type))
                 .forEach(block => {
-                    initialAnswers[block.id] = block.starterCode || "";
+                    initialAnswers[block.id] = block.type === "QUIZ"
+                        ? ""
+                        : block.starterCode || "";
                 });
             setAnswers(initialAnswers);
         } catch (requestError) {
@@ -107,7 +109,10 @@ export default function LessonPage() {
     }
 
     function resetTask(block) {
-        updateAnswer(block.id, block.starterCode || "");
+        updateAnswer(
+            block.id,
+            block.type === "QUIZ" ? "" : block.starterCode || ""
+        );
     }
 
     async function checkTask(blockId) {
@@ -154,7 +159,9 @@ export default function LessonPage() {
     }
 
     async function finishLesson() {
-        const taskBlocks = blocks.filter(block => block.type === "TASK");
+        const taskBlocks = blocks.filter(
+            block => ["TASK", "QUIZ"].includes(block.type)
+        );
 
         try {
             setFinishing(true);
@@ -249,7 +256,9 @@ export default function LessonPage() {
     const nextLesson = currentIndex >= 0 && currentIndex < moduleLessons.length - 1
         ? moduleLessons[currentIndex + 1]
         : null;
-    const hasTasks = blocks.some(block => block.type === "TASK");
+    const hasTasks = blocks.some(
+        block => ["TASK", "QUIZ"].includes(block.type)
+    );
 
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(147,51,234,0.15),transparent_35%),#030712] text-white">

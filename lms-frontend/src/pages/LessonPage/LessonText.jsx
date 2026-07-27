@@ -1,193 +1,116 @@
 import {
     BsBook,
-    BsLightbulb,
+    BsCheckCircleFill,
     BsExclamationTriangle,
     BsInfoCircle,
-    BsCheckCircle,
-    BsQuote
+    BsLightbulb
 } from "react-icons/bs";
 
+const CALLOUTS = {
+    TIP: {
+        wrapper: "border-violet-500/30 bg-violet-500/10",
+        bar: "bg-violet-400",
+        iconBox: "bg-violet-500/20 text-violet-200",
+        label: "text-violet-300",
+        labelText: "Wskazówka",
+        title: "Dobra praktyka",
+        icon: <BsLightbulb />
+    },
+    WARNING: {
+        wrapper: "border-amber-500/30 bg-amber-500/10",
+        bar: "bg-amber-400",
+        iconBox: "bg-amber-500/20 text-amber-200",
+        label: "text-amber-300",
+        labelText: "Ostrzeżenie",
+        title: "Zwróć uwagę",
+        icon: <BsExclamationTriangle />
+    },
+    INFO: {
+        wrapper: "border-sky-500/30 bg-sky-500/10",
+        bar: "bg-sky-400",
+        iconBox: "bg-sky-500/20 text-sky-200",
+        label: "text-sky-300",
+        labelText: "Informacja",
+        title: "Warto wiedzieć",
+        icon: <BsInfoCircle />
+    }
+};
+
 export default function LessonText({ block }) {
-
-    const config = getTextBlockConfig(block.type);
-
-    return (
-
-        <section className={`relative overflow-hidden rounded-3xl border p-8 ${config.wrapper}`}>
-
-            <div className={`absolute -top-20 -right-20 w-56 h-56 rounded-full blur-3xl ${config.glow}`} />
-
-            <div className="relative z-10">
-
-                <div className="flex items-center gap-4 mb-8">
-
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${config.iconBox}`}>
-
-                        {config.icon}
-
-                    </div>
-
-                    <div>
-
-                        <p className={`text-sm font-bold uppercase tracking-wider ${config.label}`}>
-
-                            {config.labelText}
-
-                        </p>
-
-                        <h2 className="text-3xl font-black text-white">
-
-                            {block.title || config.defaultTitle}
-
-                        </h2>
-
-                    </div>
-
-                </div>
-
-                <div className="prose prose-invert max-w-none">
-
-                    <div className="whitespace-pre-line text-gray-300 leading-8 text-lg">
-
-                        {block.content || "Brak treści."}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-    );
-
-}
-
-function getTextBlockConfig(type) {
-
-    switch (type) {
-
-        case "TIP":
-
-            return {
-
-                wrapper: "bg-purple-500/10 border-purple-500/30",
-
-                glow: "bg-purple-500/20",
-
-                iconBox: "bg-purple-500/20 text-purple-300",
-
-                label: "text-purple-300",
-
-                labelText: "Wskazówka",
-
-                defaultTitle: "Wskazówka",
-
-                icon: <BsLightbulb />
-
-            };
-
-        case "WARNING":
-
-            return {
-
-                wrapper: "bg-yellow-500/10 border-yellow-500/30",
-
-                glow: "bg-yellow-500/20",
-
-                iconBox: "bg-yellow-500/20 text-yellow-300",
-
-                label: "text-yellow-300",
-
-                labelText: "Uwaga",
-
-                defaultTitle: "Ostrzeżenie",
-
-                icon: <BsExclamationTriangle />
-
-            };
-
-        case "INFO":
-
-            return {
-
-                wrapper: "bg-sky-500/10 border-sky-500/30",
-
-                glow: "bg-sky-500/20",
-
-                iconBox: "bg-sky-500/20 text-sky-300",
-
-                label: "text-sky-300",
-
-                labelText: "Informacja",
-
-                defaultTitle: "Informacja",
-
-                icon: <BsInfoCircle />
-
-            };
-
-        case "SUMMARY":
-
-            return {
-
-                wrapper: "bg-green-500/10 border-green-500/30",
-
-                glow: "bg-green-500/20",
-
-                iconBox: "bg-green-500/20 text-green-300",
-
-                label: "text-green-300",
-
-                labelText: "Podsumowanie",
-
-                defaultTitle: "Podsumowanie",
-
-                icon: <BsCheckCircle />
-
-            };
-
-        case "QUOTE":
-
-            return {
-
-                wrapper: "bg-orange-500/10 border-orange-500/30",
-
-                glow: "bg-orange-500/20",
-
-                iconBox: "bg-orange-500/20 text-orange-300",
-
-                label: "text-orange-300",
-
-                labelText: "Cytat",
-
-                defaultTitle: "Cytat",
-
-                icon: <BsQuote />
-
-            };
-
-        case "TEXT":
-        default:
-
-            return {
-
-                wrapper: "bg-gray-900 border-gray-800",
-
-                glow: "bg-blue-500/10",
-
-                iconBox: "bg-blue-500/20 text-blue-300",
-
-                label: "text-blue-300",
-
-                labelText: "Teoria",
-
-                defaultTitle: "Teoria",
-
-                icon: <BsBook />
-
-            };
-
+    if (block.type === "SUMMARY") {
+        const points = (block.content || "")
+            .split("\n")
+            .map(point => point.trim().replace(/^[-•]\s*/, ""))
+            .filter(Boolean);
+
+        return (
+            <section className="overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 via-gray-900 to-gray-950">
+                <header className="border-b border-emerald-300/15 p-6 sm:p-8">
+                    <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-300">
+                        Podsumowanie
+                    </p>
+                    <h2 className="mt-2 text-3xl font-black text-white">
+                        {block.title || "Co warto zapamiętać?"}
+                    </h2>
+                </header>
+                <ul className="grid gap-3 p-5 sm:p-8 md:grid-cols-2">
+                    {(points.length ? points : ["Brak punktów podsumowania."]).map((point, index) => (
+                        <li
+                            key={`${point}-${index}`}
+                            className="flex gap-3 rounded-2xl border border-emerald-400/15 bg-emerald-500/[0.07] p-4 leading-7 text-emerald-50"
+                        >
+                            <BsCheckCircleFill className="mt-1 shrink-0 text-emerald-300" />
+                            <span>{point}</span>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        );
     }
 
+    const callout = CALLOUTS[block.type];
+    if (callout) {
+        return (
+            <aside className={`relative overflow-hidden rounded-3xl border p-5 sm:p-7 ${callout.wrapper}`}>
+                <div className={`absolute inset-y-0 left-0 w-1.5 ${callout.bar}`} />
+                <div className="flex items-start gap-4">
+                    <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-xl ${callout.iconBox}`}>
+                        {callout.icon}
+                    </div>
+                    <div className="min-w-0">
+                        <p className={`text-xs font-black uppercase tracking-[0.2em] ${callout.label}`}>
+                            {callout.labelText}
+                        </p>
+                        <h2 className="mt-1 text-2xl font-black text-white">
+                            {block.title || callout.title}
+                        </h2>
+                        <p className="mt-3 whitespace-pre-line text-base leading-7 text-gray-200 sm:text-lg sm:leading-8">
+                            {block.content || "Brak treści."}
+                        </p>
+                    </div>
+                </div>
+            </aside>
+        );
+    }
+
+    return (
+        <article className="rounded-3xl border border-gray-800 bg-gray-900 p-6 sm:p-9">
+            <header className="mb-7 flex items-center gap-4 border-b border-gray-800 pb-6">
+                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-500/15 text-xl text-blue-200">
+                    <BsBook />
+                </div>
+                <div>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">
+                        Materiał
+                    </p>
+                    <h2 className="mt-1 text-3xl font-black text-white">
+                        {block.title || "Teoria"}
+                    </h2>
+                </div>
+            </header>
+            <div className="whitespace-pre-line text-lg leading-9 text-gray-300">
+                {block.content || "Brak treści."}
+            </div>
+        </article>
+    );
 }

@@ -34,6 +34,23 @@ public interface TaskAttemptRepository extends JpaRepository<TaskAttempt, Long> 
             @Param("lessonId") Long lessonId
     );
 
+    @Query("""
+            select count(attempt)
+            from TaskAttempt attempt
+            where attempt.user.id = :userId
+              and attempt.block.lesson.id = :lessonId
+              and attempt.block.type in (
+                com.twojlogin.lms.entity.BlockType.TASK,
+                com.twojlogin.lms.entity.BlockType.QUIZ
+              )
+              and attempt.block.published = true
+              and attempt.correct = true
+            """)
+    long countCorrectAssessmentsByUserAndLesson(
+            @Param("userId") Long userId,
+            @Param("lessonId") Long lessonId
+    );
+
     List<TaskAttempt> findTop5ByUserIdOrderByAttemptCountDesc(Long userId);
 
     long countByUserId(Long userId);
