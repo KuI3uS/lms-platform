@@ -11,9 +11,11 @@ import {
     BsLightningChargeFill,
     BsLockFill,
     BsPrinterFill,
-    BsTrophyFill
+    BsTrophyFill,
+    BsTranslate
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
+import { getCourseLanguageLabel } from "../utils/courseTaxonomy";
 
 function formatDuration(seconds) {
     const hours = Math.floor(seconds / 3600);
@@ -211,6 +213,12 @@ export default function LearningCenterPage() {
                                     <div className="min-w-0 flex-1">
                                         <p className="text-xs font-black uppercase tracking-widest text-amber-300">Certyfikat EduHub</p>
                                         <h3 className="mt-2 text-xl font-black">{certificate.courseTitle}</h3>
+                                        {certificate.category === "LANGUAGE" && (
+                                            <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-black text-violet-200">
+                                                <BsTranslate />
+                                                {getCourseLanguageLabel(certificate.courseLanguage)} · CEFR {certificate.cefrLevel}
+                                            </p>
+                                        )}
                                         <p className="mt-2 break-all font-mono text-xs text-slate-500">{certificate.certificateNumber}</p>
                                     </div>
                                 </div>

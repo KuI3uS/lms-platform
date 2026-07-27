@@ -3,20 +3,42 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
     BsArrowClockwise,
     BsCheckCircle,
+    BsCodeSlash,
     BsCollection,
     BsExclamationTriangle,
     BsHourglassSplit,
+    BsLaptop,
     BsLockFill,
     BsPencil,
     BsPlayFill,
     BsPlusCircle,
-    BsTrash
+    BsTrash,
+    BsTranslate
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
 import {
     getCourseCover,
     getGeneratedCourseCover
 } from "../utils/courseCover";
+import {
+    COURSE_CATEGORIES,
+    getCategoryDefinition,
+    getCourseCategory,
+    getCourseLanguageLabel,
+    getCourseLevelLabel
+} from "../utils/courseTaxonomy";
+
+const CATEGORY_ICONS = {
+    PROGRAMMING: BsCodeSlash,
+    DIGITAL_SKILLS: BsLaptop,
+    LANGUAGE: BsTranslate
+};
+
+const CATEGORY_STYLES = {
+    PROGRAMMING: "border-cyan-400/30 bg-cyan-500/10 text-cyan-200",
+    DIGITAL_SKILLS: "border-blue-400/30 bg-blue-500/10 text-blue-200",
+    LANGUAGE: "border-violet-400/30 bg-violet-500/10 text-violet-200"
+};
 
 function getRoleFromToken() {
     const token = localStorage.getItem("token");
@@ -78,6 +100,9 @@ function CourseSkeleton() {
 }
 
 function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
+    const category = getCourseCategory(course);
+    const categoryDefinition = getCategoryDefinition(category);
+    const CategoryIcon = CATEGORY_ICONS[category] || BsCollection;
     const progress = Math.min(100, Math.max(0, course.progress ?? 0));
     const pending = course.accessStatus === "PENDING";
     const locked = !course.canAccess && !isAdmin;
@@ -104,6 +129,10 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
                     className="aspect-[3/2] w-full object-cover transition duration-500 md:group-hover:scale-[1.03]"
                 />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#090d15]/70 via-transparent to-transparent" />
+                <div className={`absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-black backdrop-blur-xl ${CATEGORY_STYLES[category] || CATEGORY_STYLES.PROGRAMMING}`}>
+                    <CategoryIcon />
+                    {categoryDefinition.label}
+                </div>
                 <div className="absolute right-4 top-4 rounded-full border border-white/15 bg-slate-950/85 px-3 py-1.5 text-xs font-black backdrop-blur-xl">
                     {course.paid ? formatPrice(course.price) : "Bezpłatny"}
                 </div>
@@ -125,9 +154,11 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
                         <p className="mt-2 text-xl font-black sm:text-2xl">{course.lessonCount ?? 0}</p>
                     </div>
                     <div className="min-w-0 rounded-2xl border border-white/5 bg-black/20 p-3 sm:p-4">
-                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">Poziom</p>
-                        <p className="mt-2 truncate text-sm font-black sm:text-base" title={course.level || "Podstawy"}>
-                            {course.level || "Podstawy"}
+                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">
+                            {category === "LANGUAGE" ? "CEFR" : "Poziom"}
+                        </p>
+                        <p className="mt-2 truncate text-sm font-black sm:text-base" title={getCourseLevelLabel(course)}>
+                            {getCourseLevelLabel(course)}
                         </p>
                     </div>
                     <div className="min-w-0 rounded-2xl border border-white/5 bg-black/20 p-3 sm:p-4">
@@ -135,6 +166,13 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
                         <p className="mt-2 text-xl font-black sm:text-2xl">{course.moduleCount ?? 0}</p>
                     </div>
                 </div>
+
+                {category === "LANGUAGE" && (
+                    <div className="flex items-center gap-2 text-sm font-bold text-violet-200">
+                        <BsTranslate />
+                        {getCourseLanguageLabel(course.courseLanguage)} · poziom {course.cefrLevel || "A1"}
+                    </div>
+                )}
 
                 <div>
                     <div className="mb-2 flex justify-between text-sm text-slate-400">
@@ -269,6 +307,12 @@ export default function CoursesPage() {
     const averageProgress = courses.length
         ? Math.round(courses.reduce((sum, course) => sum + (course.progress || 0), 0) / courses.length)
         : 0;
+    const groupedCourses = COURSE_CATEGORIES
+        .map((category) => ({
+            ...category,
+            courses: courses.filter((course) => getCourseCategory(course) === category.value)
+        }))
+        .filter((category) => category.courses.length > 0);
 
     return (
         <div className="space-y-8 text-white sm:space-y-12">
@@ -285,20 +329,21 @@ export default function CoursesPage() {
 
                 <div className="relative z-10 max-w-4xl">
                     <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300 sm:text-sm sm:tracking-[0.35em]">
-                        EDUHUB • PROGRAMOWANIE
+                        EDUHUB • NAUKA BEZ GRANIC
                     </p>
                     <h1 className="mt-5 text-3xl font-black leading-tight sm:text-5xl lg:text-6xl">
-                        Ucz się programowania
-                        <br className="hidden sm:block" /> w nowoczesny sposób.
+                        Programowanie i języki
+                        <br className="hidden sm:block" /> w jednym miejscu.
                     </h1>
                     <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:mt-7 sm:text-xl sm:leading-9">
-                        Interaktywne kursy, praktyczne projekty i automatyczne sprawdzanie zadań prowadzą Cię od podstaw do samodzielnego programowania.
+                        Wybierz ścieżkę technologiczną, rozwój cyfrowy albo język od A1 do C2. Każdy kurs prowadzi krok po kroku i kończy się certyfikatem.
                     </p>
 
                     <div className="mt-7 flex flex-wrap gap-2.5 text-sm font-semibold sm:mt-9 sm:gap-3">
                         <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-cyan-200">Interaktywne lekcje</span>
                         <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-blue-200">Projekty praktyczne</span>
-                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-emerald-200">Automatyczna ocena</span>
+                        <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-violet-200">Języki A1–C2</span>
+                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-emerald-200">Certyfikaty</span>
                     </div>
                 </div>
             </section>
@@ -403,22 +448,41 @@ export default function CoursesPage() {
                         )}
                     </div>
                 ) : (
-                    <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-                        {courses.map((course) => (
-                            <CourseCard
-                                key={course.id}
-                                course={course}
-                                isAdmin={isAdmin}
-                                deleting={deletingCourseId === course.id}
-                                onOpen={() => navigate(
-                                    course.canAccess || isAdmin
-                                        ? `/modules/${course.id}`
-                                        : `/checkout/${course.id}`
-                                )}
-                                onEdit={() => navigate(`/admin/courses/${course.id}/edit`)}
-                                onDelete={() => deleteCourse(course)}
-                            />
-                        ))}
+                    <div className="space-y-12">
+                        {groupedCourses.map((category) => {
+                            const CategoryIcon = CATEGORY_ICONS[category.value] || BsCollection;
+
+                            return (
+                                <section key={category.value}>
+                                    <div className="mb-5 flex items-center gap-4">
+                                        <div className={`grid h-12 w-12 place-items-center rounded-2xl border text-xl ${CATEGORY_STYLES[category.value]}`}>
+                                            <CategoryIcon />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-black sm:text-3xl">{category.title}</h3>
+                                            <p className="mt-1 text-sm text-slate-500">{category.description}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+                                        {category.courses.map((course) => (
+                                            <CourseCard
+                                                key={course.id}
+                                                course={course}
+                                                isAdmin={isAdmin}
+                                                deleting={deletingCourseId === course.id}
+                                                onOpen={() => navigate(
+                                                    course.canAccess || isAdmin
+                                                        ? `/modules/${course.id}`
+                                                        : `/checkout/${course.id}`
+                                                )}
+                                                onEdit={() => navigate(`/admin/courses/${course.id}/edit`)}
+                                                onDelete={() => deleteCourse(course)}
+                                            />
+                                        ))}
+                                    </div>
+                                </section>
+                            );
+                        })}
                     </div>
                 )}
             </section>

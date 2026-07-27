@@ -33,3 +33,18 @@
 body {
     @apply bg-gray-900 text-white;
 }
+
+/*
+ * Monaco używa technicznego pola textarea do obsługi klawiatury. Safari potrafi
+ * narysować mu białe tło i uchwyt zmiany rozmiaru nad pierwszą linią kodu.
+ * Pole pozostaje aktywne dla edytora, ale nie jest już widocznym elementem UI.
+ */
+.monaco-editor textarea.inputarea {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    opacity: 0 !important;
+    outline: 0 !important;
+    resize: none !important;
+}

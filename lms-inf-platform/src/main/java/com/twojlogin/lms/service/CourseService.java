@@ -21,9 +21,32 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class CourseService {
+
+    private static final Set<String> COURSE_CATEGORIES = Set.of(
+            "PROGRAMMING",
+            "DIGITAL_SKILLS",
+            "LANGUAGE"
+    );
+    private static final Set<String> COURSE_LANGUAGES = Set.of(
+            "ENGLISH",
+            "GERMAN",
+            "SPANISH",
+            "FRENCH",
+            "POLISH"
+    );
+    private static final Set<String> CEFR_LEVELS = Set.of(
+            "A1",
+            "A2",
+            "B1",
+            "B2",
+            "C1",
+            "C2"
+    );
 
     private final CourseRepository courseRepository;
     private final CourseModuleRepository moduleRepository;
@@ -185,7 +208,10 @@ public class CourseService {
                 canAccess,
                 "ACTIVE".equals(accessStatus) || "ADMIN".equals(accessStatus),
                 accessStatus,
-                admin ? course.getPaymentUrl() : null
+                admin ? course.getPaymentUrl() : null,
+                course.getCategory(),
+                course.getCourseLanguage(),
+                course.getCefrLevel()
         );
     }
 
@@ -215,6 +241,38 @@ public class CourseService {
         course.setThumbnailUrl(clean(request.thumbnailUrl()));
         course.setLevel(clean(request.level()) == null ? "Podstawy" : clean(request.level()));
         course.setPaymentUrl(clean(request.paymentUrl()));
+
+        String category = uppercase(request.category());
+        if (category == null) {
+            category = course.getCategory();
+        }
+        if (!COURSE_CATEGORIES.contains(category)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Nieprawidłowa kategoria kursu"
+            );
+        }
+        course.setCategory(category);
+
+        if ("LANGUAGE".equals(category)) {
+            String language = uppercase(request.courseLanguage());
+            String cefrLevel = uppercase(request.cefrLevel());
+
+            if (language == null || cefrLevel == null
+                    || !COURSE_LANGUAGES.contains(language)
+                    || !CEFR_LEVELS.contains(cefrLevel)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Kurs językowy wymaga języka i poziomu od A1 do C2"
+                );
+            }
+
+            course.setCourseLanguage(language);
+            course.setCefrLevel(cefrLevel);
+        } else {
+            course.setCourseLanguage(null);
+            course.setCefrLevel(null);
+        }
     }
 
     private String clean(String value) {
@@ -223,5 +281,10 @@ public class CourseService {
         }
 
         return value.trim();
+    }
+
+    private String uppercase(String value) {
+        String cleaned = clean(value);
+        return cleaned == null ? null : cleaned.toUpperCase(Locale.ROOT);
     }
 }

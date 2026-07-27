@@ -21,6 +21,9 @@ public class Course {
     private boolean published;
     private String thumbnailUrl;
     private String level;
+    private String category = "PROGRAMMING";
+    private String courseLanguage;
+    private String cefrLevel;
     @Column(length = 1000)
     private String paymentUrl;
 
@@ -99,6 +102,30 @@ public class Course {
 
     public void setLevel(String level) {
         this.level = level;
+    }
+
+    public String getCategory() {
+        return category == null ? "PROGRAMMING" : category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getCourseLanguage() {
+        return courseLanguage;
+    }
+
+    public void setCourseLanguage(String courseLanguage) {
+        this.courseLanguage = courseLanguage;
+    }
+
+    public String getCefrLevel() {
+        return cefrLevel;
+    }
+
+    public void setCefrLevel(String cefrLevel) {
+        this.cefrLevel = cefrLevel;
     }
 
     public String getPaymentUrl() {

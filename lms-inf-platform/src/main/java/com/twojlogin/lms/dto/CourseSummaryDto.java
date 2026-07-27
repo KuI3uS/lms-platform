@@ -19,6 +19,9 @@ public record CourseSummaryDto(
         boolean canAccess,
         boolean enrolled,
         String accessStatus,
-        String paymentUrl
+        String paymentUrl,
+        String category,
+        String courseLanguage,
+        String cefrLevel
 ) {
 }

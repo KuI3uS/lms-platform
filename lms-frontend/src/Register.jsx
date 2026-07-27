@@ -7,16 +7,12 @@ export default function Register() {
         email: "",
         password: "",
         firstName: "",
-        lastName: "",
-        className: ""
+        lastName: ""
     });
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [created, setCreated] = useState(false);
-
-    const [level, setLevel] = useState("");
-    const [group, setGroup] = useState("");
 
     const update = (field, value) => {
         setForm(prev => ({ ...prev, [field]: value }));
@@ -24,8 +20,8 @@ export default function Register() {
 
     const submit = async (event) => {
         event?.preventDefault();
-        if (!form.email || !form.password || !level || !group) {
-            setError("Uzupełnij email, hasło, klasę i grupę.");
+        if (!form.email || !form.password) {
+            setError("Uzupełnij email i hasło.");
             return;
         }
         if (form.password.length < 8) {
@@ -41,8 +37,7 @@ export default function Register() {
                 method: "POST",
                 body: JSON.stringify({
                     ...form,
-                    email: form.email.trim().toLowerCase(),
-                    className: `${level}${group}`
+                    email: form.email.trim().toLowerCase()
                 })
             });
 
@@ -123,40 +118,6 @@ export default function Register() {
                     value={form.lastName}
                     onChange={(e) => update("lastName", e.target.value)}
                 />
-
-                <div className="grid grid-cols-2 gap-3">
-
-                    <select
-                        value={level}
-                        onChange={(e) => {
-                            setLevel(e.target.value);
-                            setGroup("");
-                        }}
-                        className="w-full p-2 bg-gray-700 rounded"
-                    >
-                        <option value="">Wybierz klasę</option>
-                        <option value="1">1 klasa</option>
-                        <option value="2">2 klasa</option>
-                        <option value="3">3 klasa</option>
-                    </select>
-
-                    <select
-                        value={group}
-                        onChange={(e) => setGroup(e.target.value)}
-                        disabled={!level}
-                        className="w-full p-2 bg-gray-700 rounded disabled:opacity-50"
-                    >
-                        <option value="">Wybierz grupę</option>
-                        <option value="TIA">TIA</option>
-                        <option value="TIB">TIB</option>
-                        <option value="TIC">TIC</option>
-                        <option value="TPA">TPA</option>
-                        <option value="TPB">TPB</option>
-                        <option value="TPC">TPC</option>
-                    </select>
-
-                </div>
-
 
                 <button
                     type="submit"

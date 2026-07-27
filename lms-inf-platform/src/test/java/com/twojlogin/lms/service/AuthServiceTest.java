@@ -1,6 +1,7 @@
 package com.twojlogin.lms.service;
 
 import com.twojlogin.lms.dto.LoginRequest;
+import com.twojlogin.lms.dto.RegisterRequest;
 import com.twojlogin.lms.entity.Role;
 import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.SchoolClassRepository;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -110,6 +112,35 @@ class AuthServiceTest {
         verify(emailService).sendVerificationEmail(
                 eq("student@example.com"),
                 eq(user.getVerificationToken())
+        );
+    }
+
+    @Test
+    void registerAllowsAccountWithoutSchoolClass() {
+        RegisterRequest request = new RegisterRequest();
+        request.email = " New.Student@Example.com ";
+        request.password = "secure-password";
+        request.firstName = "Nowy";
+        request.lastName = "Uczeń";
+
+        when(userRepository.findByEmailIgnoreCase("new.student@example.com"))
+                .thenReturn(Optional.empty());
+        when(passwordEncoder.encode("secure-password")).thenReturn("encoded-password");
+
+        authService.register(request);
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        User savedUser = userCaptor.getValue();
+
+        assertEquals("new.student@example.com", savedUser.getEmail());
+        assertEquals("encoded-password", savedUser.getPassword());
+        assertNull(savedUser.getSchoolClass());
+        assertFalse(savedUser.isEnabled());
+        verifyNoInteractions(schoolClassRepository);
+        verify(emailService).sendVerificationEmail(
+                eq("new.student@example.com"),
+                eq(savedUser.getVerificationToken())
         );
     }
 

@@ -49,11 +49,10 @@ public class AuthService {
         String password = request == null ? null : request.password;
 
         if (email == null || !email.contains("@")
-                || password == null || password.length() < 8
-                || request.className == null || request.className.isBlank()) {
+                || password == null || password.length() < 8) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Podaj poprawny email, klasę i hasło mające co najmniej 8 znaków."
+                    "Podaj poprawny email i hasło mające co najmniej 8 znaków."
             );
         }
         if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
@@ -69,19 +68,20 @@ public class AuthService {
         user.setFirstName(request.firstName);
         user.setLastName(request.lastName);
 
-        String normalizedClassName = ClassNameNormalizer.normalize(request.className);
-
-        SchoolClass schoolClass = schoolClassRepository
-                .findByName(normalizedClassName)
-                .orElseGet(() -> {
-                    SchoolClass newClass = new SchoolClass();
-                    newClass.setName(normalizedClassName);
-                    return schoolClassRepository.save(newClass);
-                });
+        if (request.className != null && !request.className.isBlank()) {
+            String normalizedClassName = ClassNameNormalizer.normalize(request.className);
+            SchoolClass schoolClass = schoolClassRepository
+                    .findByName(normalizedClassName)
+                    .orElseGet(() -> {
+                        SchoolClass newClass = new SchoolClass();
+                        newClass.setName(normalizedClassName);
+                        return schoolClassRepository.save(newClass);
+                    });
+            user.setSchoolClass(schoolClass);
+        }
 
         String token = UUID.randomUUID().toString();
 
-        user.setSchoolClass(schoolClass);
         user.setRole(Role.STUDENT);
         user.setEnabled(false);
         user.setVerificationToken(token);

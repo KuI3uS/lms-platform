@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { BsArrowLeft, BsAwardFill, BsPrinterFill, BsShieldCheck } from "react-icons/bs";
+import { BsArrowLeft, BsAwardFill, BsPrinterFill, BsShieldCheck, BsTranslate } from "react-icons/bs";
 import { apiFetch } from "../api/api";
+import { getCourseLanguageLabel } from "../utils/courseTaxonomy";
 
 export default function CertificatePage() {
     const { certificateNumber } = useParams();
@@ -22,6 +23,8 @@ export default function CertificatePage() {
             </div>
         );
     }
+
+    const isLanguageCertificate = certificate.category === "LANGUAGE";
 
     return (
         <div className="certificate-page mx-auto max-w-5xl text-white">
@@ -51,8 +54,16 @@ export default function CertificatePage() {
                     <p className="mt-8 text-lg text-slate-600">Niniejszym potwierdzamy, że</p>
                     <p className="mt-3 font-serif text-3xl font-black sm:text-5xl">{certificate.studentName}</p>
                     <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-slate-600">
-                        ukończył(a) wszystkie lekcje i zadania kursu
+                        {isLanguageCertificate
+                            ? `ukończył(a) kurs języka ${getCourseLanguageLabel(certificate.courseLanguage).toLowerCase()} na poziomie`
+                            : "ukończył(a) wszystkie lekcje i zadania kursu"}
                     </p>
+                    {isLanguageCertificate && (
+                        <div className="mx-auto mt-4 inline-flex items-center gap-3 rounded-2xl border border-violet-300 bg-violet-50 px-6 py-3 text-violet-900">
+                            <BsTranslate />
+                            <strong className="text-2xl">CEFR {certificate.cefrLevel}</strong>
+                        </div>
+                    )}
                     <h2 className="mt-3 text-2xl font-black text-amber-800 sm:text-4xl">{certificate.courseTitle}</h2>
 
                     <div className="mx-auto mt-12 grid max-w-2xl gap-6 border-t border-amber-700/20 pt-8 sm:grid-cols-2">
