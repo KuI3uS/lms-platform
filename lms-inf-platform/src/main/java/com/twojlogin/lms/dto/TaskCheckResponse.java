@@ -10,6 +10,11 @@ public record TaskCheckResponse(
         String hint,
         List<TaskDiagnosticDto> diagnostics,
         String solutionPreview,
-        boolean lessonCompleted
+        boolean lessonCompleted,
+        int xpEarned,
+        int xpMultiplier,
+        int taskStreak,
+        int level,
+        boolean levelUp
 ) {
 }

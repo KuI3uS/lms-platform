@@ -118,7 +118,15 @@ export default function MonacoEditorBox({
 
                     smoothScrolling: true,
 
-                    cursorBlinking: "solid",
+                    /*
+                     * EditContext jest nadal eksperymentalny i w części
+                     * przeglądarek rozjeżdża pozycję warstwy kursora po
+                     * kontrolowanej aktualizacji Reacta. Stabilny mechanizm
+                     * textarea Monaco zachowuje pozycję zaznaczenia.
+                     */
+                    editContext: false,
+
+                    cursorBlinking: "blink",
 
                     cursorSmoothCaretAnimation: "off",
 

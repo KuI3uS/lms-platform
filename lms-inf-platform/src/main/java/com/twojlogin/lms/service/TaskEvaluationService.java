@@ -3,6 +3,7 @@ package com.twojlogin.lms.service;
 import com.twojlogin.lms.dto.TaskCheckResponse;
 import com.twojlogin.lms.dto.TaskDiagnosticDto;
 import com.twojlogin.lms.entity.BlockType;
+import com.twojlogin.lms.entity.GamificationProfile;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.entity.LessonProgress;
@@ -32,19 +33,22 @@ public class TaskEvaluationService {
     private final LessonProgressRepository lessonProgressRepository;
     private final UserRepository userRepository;
     private final ProgressRewardService rewardService;
+    private final GamificationService gamificationService;
 
     public TaskEvaluationService(
             LessonBlockRepository blockRepository,
             TaskAttemptRepository attemptRepository,
             LessonProgressRepository lessonProgressRepository,
             UserRepository userRepository,
-            ProgressRewardService rewardService
+            ProgressRewardService rewardService,
+            GamificationService gamificationService
     ) {
         this.blockRepository = blockRepository;
         this.attemptRepository = attemptRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.userRepository = userRepository;
         this.rewardService = rewardService;
+        this.gamificationService = gamificationService;
     }
 
     @Transactional
@@ -90,6 +94,11 @@ public class TaskEvaluationService {
                     null,
                     List.of(),
                     null,
+                    false,
+                    0,
+                    1,
+                    0,
+                    1,
                     false
             );
         }
@@ -104,14 +113,23 @@ public class TaskEvaluationService {
                 );
         boolean correct = diagnostics.isEmpty();
 
+        GamificationProfile profile = gamificationService.profileForUpdate(user);
         TaskAttempt attempt = attemptRepository.findByUserAndBlock(user, block)
                 .orElseGet(TaskAttempt::new);
+        boolean previouslyCorrect = attempt.isCorrect();
         attempt.setUser(user);
         attempt.setBlock(block);
         attempt.setAttemptCount(attempt.getAttemptCount() + 1);
         attempt.setCorrect(correct);
         attempt.setLastAnswer(studentAnswer);
         attempt.setUpdatedAt(LocalDateTime.now());
+        GamificationService.AwardResult award = gamificationService.recordTaskResult(
+                profile,
+                block,
+                attempt,
+                previouslyCorrect,
+                correct
+        );
         attemptRepository.save(attempt);
 
         int hintLevel = correct ? 0 : hintLevel(attempt.getAttemptCount());
@@ -138,7 +156,12 @@ public class TaskEvaluationService {
                 hintLevel >= 3 && block.getType() == BlockType.TASK
                         ? block.getExpectedAnswer()
                         : null,
-                lessonCompleted
+                lessonCompleted,
+                award.xpEarned(),
+                award.multiplier(),
+                award.taskStreak(),
+                award.level(),
+                award.levelUp()
         );
     }
 

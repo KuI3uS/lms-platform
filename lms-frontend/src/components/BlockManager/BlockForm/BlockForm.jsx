@@ -6,7 +6,9 @@ export default function BlockForm({
                                       block,
                                       setBlock,
                                       onSave,
-                                      tasks = []
+                                      tasks = [],
+                                      saving = false,
+                                      error = ""
                                   }) {
 
     return (
@@ -47,10 +49,20 @@ export default function BlockForm({
                 tasks={tasks}
             />
 
+            {error && (
+                <div
+                    role="alert"
+                    className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm font-semibold text-red-200"
+                >
+                    Nie udało się zapisać elementu: {error}
+                </div>
+            )}
+
             <BlockFooter
                 block={block}
                 setBlock={setBlock}
                 onSave={onSave}
+                saving={saving}
             />
 
         </section>

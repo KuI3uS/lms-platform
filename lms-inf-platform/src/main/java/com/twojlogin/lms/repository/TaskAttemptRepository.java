@@ -56,4 +56,17 @@ public interface TaskAttemptRepository extends JpaRepository<TaskAttempt, Long> 
     long countByUserId(Long userId);
 
     long countByUserIdAndCorrectTrue(Long userId);
+
+    @Query("""
+            select coalesce(sum(
+                case
+                    when attempt.block.points is null or attempt.block.points <= 0 then 10
+                    else attempt.block.points
+                end
+            ), 0)
+            from TaskAttempt attempt
+            where attempt.user.id = :userId
+              and attempt.correct = true
+            """)
+    long sumHistoricalBaseXpByUserId(@Param("userId") Long userId);
 }

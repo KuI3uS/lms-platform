@@ -7,7 +7,8 @@ import {
 export default function BlockFooter({
                                         block,
                                         setBlock,
-                                        onSave
+                                        onSave,
+                                        saving = false
                                     }) {
 
     return (
@@ -78,15 +79,18 @@ export default function BlockFooter({
 
             <button
                 type="button"
+                disabled={saving}
                 onClick={onSave}
-                className="w-full bg-blue-600 hover:bg-blue-700 rounded-2xl py-4 font-bold flex items-center justify-center gap-3 transition"
+                className="flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 py-4 font-bold transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
             >
 
                 <BsSave />
 
-                {block.id
-                    ? "Zapisz zmiany"
-                    : "Dodaj element"}
+                {saving
+                    ? "Zapisywanie..."
+                    : block.id
+                        ? "Zapisz zmiany"
+                        : "Dodaj element"}
 
             </button>
 

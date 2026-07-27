@@ -1,5 +1,6 @@
 package com.twojlogin.lms.controller;
 
+import com.twojlogin.lms.dto.CourseOrderCreateRequest;
 import com.twojlogin.lms.dto.CourseOrderDto;
 import com.twojlogin.lms.service.CourseOrderService;
 import org.springframework.http.HttpStatus;
@@ -23,9 +24,14 @@ public class CourseOrderController {
     @ResponseStatus(HttpStatus.CREATED)
     public CourseOrderDto create(
             @PathVariable Long courseId,
+            @RequestBody(required = false) CourseOrderCreateRequest request,
             Authentication authentication
     ) {
-        return orderService.create(courseId, authentication);
+        return orderService.create(
+                courseId,
+                request == null ? null : request.requestedDiscount(),
+                authentication
+        );
     }
 
     @GetMapping("/my")

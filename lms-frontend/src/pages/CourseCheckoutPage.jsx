@@ -26,6 +26,8 @@ export default function CourseCheckoutPage() {
     const navigate = useNavigate();
     const [course, setCourse] = useState(null);
     const [order, setOrder] = useState(null);
+    const [learningStats, setLearningStats] = useState(null);
+    const [applyReward, setApplyReward] = useState(false);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -39,21 +41,33 @@ export default function CourseCheckoutPage() {
         () => resolveCoursePaymentUrl(course, order),
         [course, order]
     );
+    const availableReward = useMemo(() => {
+        const balance = Number(learningStats?.discountBalance || 0);
+        const courseLimit = Number(course?.price || 0) * 0.2;
+        return Math.floor(Math.min(balance, courseLimit) / 50) * 50;
+    }, [course, learningStats]);
+    const previewDiscount = applyReward ? availableReward : 0;
+    const amountDue = order?.amount ?? Math.max(
+        0,
+        Number(course?.price || 0) - previewDiscount
+    );
 
     useEffect(() => {
         let active = true;
 
         Promise.all([
             apiFetch(`/courses/${courseId}`),
-            apiFetch("/course-orders/my")
+            apiFetch("/course-orders/my"),
+            apiFetch("/learning-stats")
         ])
-            .then(([courseData, orders]) => {
+            .then(([courseData, orders, statsData]) => {
                 if (!active) return;
                 setCourse(courseData);
                 setOrder((orders || []).find(
                     (item) => String(item.courseId) === String(courseId)
                         && item.status === "PENDING"
                 ) || null);
+                setLearningStats(statsData);
             })
             .catch((loadError) => {
                 if (active) setError(loadError.message || "Nie udało się pobrać zamówienia.");
@@ -91,7 +105,10 @@ export default function CourseCheckoutPage() {
             setBusy(true);
             setError("");
             const created = await apiFetch(`/course-orders/course/${courseId}`, {
-                method: "POST"
+                method: "POST",
+                body: JSON.stringify({
+                    requestedDiscount: applyReward ? availableReward : 0
+                })
             });
             setOrder(created);
 
@@ -169,7 +186,17 @@ export default function CourseCheckoutPage() {
 
                 <aside className="h-fit rounded-[30px] border border-cyan-500/20 bg-slate-900/80 p-6 shadow-2xl shadow-cyan-950/20 sm:p-7">
                     <p className="text-sm font-bold text-slate-400">Do zapłaty</p>
-                    <p className="mt-2 text-4xl font-black text-white">{formatPrice(course?.price)}</p>
+                    <p className="mt-2 text-4xl font-black text-white">{formatPrice(amountDue)}</p>
+                    {Number(order?.discountAmount || previewDiscount) > 0 && (
+                        <div className="mt-3 flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-2 text-sm">
+                            <span className="text-slate-400">
+                                Cena przed nagrodą: {formatPrice(order?.originalAmount ?? course?.price)}
+                            </span>
+                            <strong className="text-emerald-300">
+                                −{formatPrice(order?.discountAmount ?? previewDiscount)}
+                            </strong>
+                        </div>
+                    )}
 
                     {course?.canAccess || order?.status === "PAID" ? (
                         <div className="mt-7">
@@ -236,23 +263,49 @@ export default function CourseCheckoutPage() {
                                     </button>
                                 </>
                             ) : (
-                                <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
-                                    Administrator nie skonfigurował jeszcze linku do płatności dla tego kursu.
-                                </p>
+                                Number(order.discountAmount || 0) > 0 ? (
+                                    <p className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm leading-6 text-amber-100">
+                                        Zniżka została zarezerwowana. Stały link Revolut ma zapisaną pełną cenę, dlatego nie otwieramy go, aby nie pobrać za dużo. Administrator potwierdzi płatność obniżonej kwoty: {formatPrice(order.amount)}.
+                                    </p>
+                                ) : (
+                                    <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+                                        Administrator nie skonfigurował jeszcze linku do płatności dla tego kursu.
+                                    </p>
+                                )
                             )}
                         </div>
                     ) : (
-                        <button
-                            type="button"
-                            disabled={busy}
-                            onClick={createOrder}
-                            className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-blue-600 px-5 py-4 font-black shadow-lg shadow-blue-600/20 transition hover:brightness-110 disabled:opacity-60"
-                        >
-                            {busy
-                                ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                : <BsCreditCard />}
-                            {busy ? "Tworzenie zamówienia..." : "Kup kurs"}
-                        </button>
+                        <div className="mt-7 space-y-4">
+                            {availableReward > 0 && (
+                                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                                    <input
+                                        type="checkbox"
+                                        checked={applyReward}
+                                        onChange={(event) => setApplyReward(event.target.checked)}
+                                        className="mt-1"
+                                    />
+                                    <span>
+                                        <span className="block font-black text-emerald-200">
+                                            Użyj {formatPrice(availableReward)} z portfela nagród
+                                        </span>
+                                        <span className="mt-1 block text-xs leading-5 text-slate-400">
+                                            Limit bezpieczeństwa to 20% ceny kursu. Niewykorzystana kwota pozostanie na koncie.
+                                        </span>
+                                    </span>
+                                </label>
+                            )}
+                            <button
+                                type="button"
+                                disabled={busy}
+                                onClick={createOrder}
+                                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-blue-600 px-5 py-4 font-black shadow-lg shadow-blue-600/20 transition hover:brightness-110 disabled:opacity-60"
+                            >
+                                {busy
+                                    ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    : <BsCreditCard />}
+                                {busy ? "Tworzenie zamówienia..." : "Kup kurs"}
+                            </button>
+                        </div>
                     )}
 
                     <p className="mt-5 text-xs leading-5 text-slate-500">

@@ -2,6 +2,7 @@ package com.twojlogin.lms.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
@@ -31,5 +32,17 @@ public class GlobalExceptionHandler {
                 ex.getReason() == null ? resolvedStatus.getReasonPhrase() : ex.getReason()
         );
         return new ResponseEntity<>(error, resolvedStatus);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(
+            DataIntegrityViolationException ex
+    ) {
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                "Nie udało się zapisać danych. Odśwież stronę i sprawdź uzupełnione pola."
+        );
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 }

@@ -14,7 +14,12 @@ import {
 
 export default function Navbar({ onMenuClick }) {
     const navigate = useNavigate();
-    const [learningStats, setLearningStats] = useState({ xp: 0, streakDays: 0 });
+    const [learningStats, setLearningStats] = useState({
+        xp: 0,
+        level: 1,
+        taskStreak: 0,
+        xpMultiplier: 1
+    });
     const [notifications, setNotifications] = useState({
         unreadCount: 0,
         notifications: []
@@ -59,11 +64,13 @@ export default function Navbar({ onMenuClick }) {
         refresh();
         const timer = window.setInterval(refresh, 30000);
         document.addEventListener("visibilitychange", refreshWhenVisible);
+        window.addEventListener("eduhub:stats-changed", refresh);
 
         return () => {
             active = false;
             window.clearInterval(timer);
             document.removeEventListener("visibilitychange", refreshWhenVisible);
+            window.removeEventListener("eduhub:stats-changed", refresh);
         };
     }, []);
 
@@ -77,8 +84,6 @@ export default function Navbar({ onMenuClick }) {
         document.addEventListener("keydown", closeOnEscape);
         return () => document.removeEventListener("keydown", closeOnEscape);
     }, [notificationsOpen]);
-
-    const streakLabel = learningStats.streakDays === 1 ? "dzień" : "dni";
 
     const openNotification = async (notification) => {
         if (!notification.read) {
@@ -213,11 +218,13 @@ export default function Navbar({ onMenuClick }) {
                 <div className="hidden items-center gap-2 rounded-2xl border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-orange-300 2xl:flex">
                     <BsFire />
                     <span className="text-sm font-bold">
-                        Seria: {learningStats.streakDays} {streakLabel}
+                        Seria: {learningStats.taskStreak || 0} · x{learningStats.xpMultiplier || 1}
                     </span>
                 </div>
                 <div className="hidden items-center gap-2 rounded-2xl border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-blue-300 md:flex">
-                    <span className="text-sm font-bold">{learningStats.xp} XP</span>
+                    <span className="text-sm font-bold">
+                        Poziom {learningStats.level || 1} · {learningStats.xp || 0} XP
+                    </span>
                 </div>
                 <div className="relative block">
                     <button

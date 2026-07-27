@@ -13,6 +13,8 @@ public record CourseOrderDto(
         String reference,
         Long courseId,
         String courseTitle,
+        BigDecimal originalAmount,
+        BigDecimal discountAmount,
         BigDecimal amount,
         String currency,
         CourseOrderStatus status,
@@ -30,10 +32,14 @@ public record CourseOrderDto(
                 order.getCourse().getTitle() == null
                         ? order.getCourse().getName()
                         : order.getCourse().getTitle(),
+                order.getOriginalAmount(),
+                order.getDiscountAmount(),
                 order.getAmount(),
                 order.getCurrency(),
                 order.getStatus(),
-                includePaymentUrl ? order.getCourse().getPaymentUrl() : null,
+                includePaymentUrl && order.getDiscountAmount().signum() == 0
+                        ? order.getCourse().getPaymentUrl()
+                        : null,
                 order.getCreatedAt(),
                 order.getPaidAt(),
                 order.getUser().getId(),

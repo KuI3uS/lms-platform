@@ -57,9 +57,12 @@ export default function DashboardPage() {
     const [courses, setCourses] = useState(initialCache.courses || []);
     const [submissions, setSubmissions] = useState(initialCache.submissions || []);
     const [results, setResults] = useState(initialCache.results || []);
+    const [learningStats, setLearningStats] = useState(initialCache.learningStats || null);
     const [loading, setLoading] = useState(!Array.isArray(initialCache.courses));
     const [detailsLoading, setDetailsLoading] = useState(
-        !Array.isArray(initialCache.submissions) || !Array.isArray(initialCache.results)
+        !Array.isArray(initialCache.submissions)
+        || !Array.isArray(initialCache.results)
+        || !initialCache.learningStats
     );
 
     useEffect(() => {
@@ -79,16 +82,19 @@ export default function DashboardPage() {
 
         Promise.all([
             apiFetch("/submissions/my").catch(() => []),
-            apiFetch("/my-results").catch(() => [])
-        ]).then(([submissionsData, resultsData]) => {
+            apiFetch("/my-results").catch(() => []),
+            apiFetch("/learning-stats").catch(() => null)
+        ]).then(([submissionsData, resultsData, statsData]) => {
             if (!active) return;
             const nextSubmissions = submissionsData || [];
             const nextResults = resultsData || [];
             setSubmissions(nextSubmissions);
             setResults(nextResults);
+            setLearningStats(statsData);
             updateDashboardCache({
                 submissions: nextSubmissions,
-                results: nextResults
+                results: nextResults,
+                learningStats: statsData
             });
         }).finally(() => {
             if (active) setDetailsLoading(false);
@@ -129,16 +135,12 @@ export default function DashboardPage() {
 
     const lastSubmissions = submissions.slice(0, 5);
 
-    const xp =
-        checked * 40 +
-        submissions.length * 10 +
-        results.length * 20;
+    const xp = Number(learningStats?.xp || 0);
 
-    const level =
-        Math.max(1, Math.floor(xp / 250) + 1);
+    const level = Number(learningStats?.level || 1);
 
-    const progress =
-        xp % 250;
+    const progress = Number(learningStats?.xpIntoLevel || 0);
+    const progressTarget = Math.max(1, Number(learningStats?.xpForNextLevel || 1));
 
     const statusStyle = (status) => {
 
@@ -369,7 +371,9 @@ export default function DashboardPage() {
 
                                         <span>
 
-                                            {detailsLoading ? "Ładowanie…" : `${progress} / 250`}
+                                            {detailsLoading
+                                                ? "Ładowanie…"
+                                                : `${xp} XP · ${progress} / ${progressTarget}`}
 
                                         </span>
 
@@ -391,7 +395,7 @@ export default function DashboardPage() {
                                                 to-blue-600
                                             "
                                             style={{
-                                                width: `${detailsLoading ? 0 : progress / 2.5}%`
+                                                width: `${detailsLoading ? 0 : Math.min(100, progress * 100 / progressTarget)}%`
                                             }}
                                         />
 
@@ -448,7 +452,9 @@ export default function DashboardPage() {
 
                                             <h3 className="text-3xl font-black mt-2">
 
-                                                {detailsLoading ? "—" : submissions.length}
+                                                {detailsLoading
+                                                    ? "—"
+                                                    : `${learningStats?.taskStreak || 0} · x${learningStats?.xpMultiplier || 1}`}
 
                                             </h3>
 
