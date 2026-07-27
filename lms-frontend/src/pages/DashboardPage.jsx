@@ -16,52 +16,87 @@ import {
     BsTrophyFill
 } from "react-icons/bs";
 
+const DASHBOARD_CACHE_PREFIX = "eduhub-dashboard-cache";
+
+function getDashboardCacheKey() {
+    const token = localStorage.getItem("token");
+    if (!token) return `${DASHBOARD_CACHE_PREFIX}:anonymous`;
+
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return `${DASHBOARD_CACHE_PREFIX}:${payload.sub || payload.email || "user"}`;
+    } catch {
+        return `${DASHBOARD_CACHE_PREFIX}:user`;
+    }
+}
+
+function readDashboardCache() {
+    try {
+        return JSON.parse(sessionStorage.getItem(getDashboardCacheKey())) || {};
+    } catch {
+        return {};
+    }
+}
+
+function updateDashboardCache(data) {
+    try {
+        sessionStorage.setItem(
+            getDashboardCacheKey(),
+            JSON.stringify({ ...readDashboardCache(), ...data })
+        );
+    } catch {
+        // Brak miejsca w pamięci przeglądarki nie może blokować dashboardu.
+    }
+}
+
 export default function DashboardPage() {
 
     const navigate = useNavigate();
+    const [initialCache] = useState(readDashboardCache);
 
-    const [courses, setCourses] = useState([]);
-    const [submissions, setSubmissions] = useState([]);
-    const [results, setResults] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    const load = async () => {
-
-        try {
-
-            const [
-                coursesData,
-                submissionsData,
-                resultsData
-            ] = await Promise.all([
-
-                apiFetch("/courses"),
-
-                apiFetch("/submissions/my")
-                    .catch(() => []),
-
-                apiFetch("/my-results")
-                    .catch(() => [])
-
-            ]);
-
-            setCourses(coursesData || []);
-            setSubmissions(submissionsData || []);
-            setResults(resultsData || []);
-
-        }
-        catch (e) {
-            console.error(e);
-        }
-        finally {
-            setLoading(false);
-        }
-
-    };
+    const [courses, setCourses] = useState(initialCache.courses || []);
+    const [submissions, setSubmissions] = useState(initialCache.submissions || []);
+    const [results, setResults] = useState(initialCache.results || []);
+    const [loading, setLoading] = useState(!Array.isArray(initialCache.courses));
+    const [detailsLoading, setDetailsLoading] = useState(
+        !Array.isArray(initialCache.submissions) || !Array.isArray(initialCache.results)
+    );
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        load();
+        let active = true;
+
+        apiFetch("/courses/my")
+            .then((coursesData) => {
+                if (!active) return;
+                const nextCourses = coursesData || [];
+                setCourses(nextCourses);
+                updateDashboardCache({ courses: nextCourses });
+            })
+            .catch((error) => console.error("Nie udało się pobrać kursów", error))
+            .finally(() => {
+                if (active) setLoading(false);
+            });
+
+        Promise.all([
+            apiFetch("/submissions/my").catch(() => []),
+            apiFetch("/my-results").catch(() => [])
+        ]).then(([submissionsData, resultsData]) => {
+            if (!active) return;
+            const nextSubmissions = submissionsData || [];
+            const nextResults = resultsData || [];
+            setSubmissions(nextSubmissions);
+            setResults(nextResults);
+            updateDashboardCache({
+                submissions: nextSubmissions,
+                results: nextResults
+            });
+        }).finally(() => {
+            if (active) setDetailsLoading(false);
+        });
+
+        return () => {
+            active = false;
+        };
     }, []);
 
     if (loading) {
@@ -309,7 +344,7 @@ export default function DashboardPage() {
 
                                         <h2 className="text-4xl font-black">
 
-                                            {level}
+                                            {detailsLoading ? "—" : level}
 
                                         </h2>
 
@@ -334,7 +369,7 @@ export default function DashboardPage() {
 
                                         <span>
 
-                                            {progress} / 250
+                                            {detailsLoading ? "Ładowanie…" : `${progress} / 250`}
 
                                         </span>
 
@@ -356,7 +391,7 @@ export default function DashboardPage() {
                                                 to-blue-600
                                             "
                                             style={{
-                                                width: `${progress / 2.5}%`
+                                                width: `${detailsLoading ? 0 : progress / 2.5}%`
                                             }}
                                         />
 
@@ -413,7 +448,7 @@ export default function DashboardPage() {
 
                                             <h3 className="text-3xl font-black mt-2">
 
-                                                {submissions.length}
+                                                {detailsLoading ? "—" : submissions.length}
 
                                             </h3>
 
@@ -443,7 +478,7 @@ export default function DashboardPage() {
 
                                             <h3 className="text-3xl font-black mt-2">
 
-                                                {checked}
+                                                {detailsLoading ? "—" : checked}
 
                                             </h3>
 
@@ -713,10 +748,6 @@ export default function DashboardPage() {
 
                                 decoding="async"
 
-                                loading="lazy"
-
-                                decoding="async"
-
                                 onError={({ currentTarget }) => {
                                     currentTarget.onerror = null;
                                     currentTarget.src = getGeneratedCourseCover(course);
@@ -772,7 +803,11 @@ export default function DashboardPage() {
 
                 </h2>
 
-                {lastSubmissions.length === 0 ? (
+                {detailsLoading ? (
+                    <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 text-center">
+                        <div className="mx-auto h-6 w-40 animate-pulse rounded-full bg-white/10" />
+                    </div>
+                ) : lastSubmissions.length === 0 ? (
 
                     <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 text-center">
 

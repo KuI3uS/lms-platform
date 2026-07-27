@@ -50,20 +50,9 @@ export default function ModulePage() {
                 (modulesData || []).map(async (module) => {
                     const lessons = await apiFetch(`/lessons/module/${module.id}`);
 
-                    const lessonsWithAccess = await Promise.all(
-                        (lessons || []).map(async (lesson) => {
-                            try {
-                                const canAccess = await apiFetch(`/lessons/${lesson.id}/access`);
-                                return { ...lesson, canAccess };
-                            } catch {
-                                return { ...lesson, canAccess: false };
-                            }
-                        })
-                    );
-
                     return {
                         ...module,
-                        lessons: lessonsWithAccess.sort(
+                        lessons: (lessons || []).sort(
                             (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
                         )
                     };

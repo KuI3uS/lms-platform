@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
+@Table(
+        name = "course_module",
+        indexes = @Index(name = "idx_module_course", columnList = "course_id")
+)
 public class CourseModule {
 
     @Id

@@ -118,9 +118,15 @@ export default function MonacoEditorBox({
 
                     smoothScrolling: true,
 
+                    accessibilitySupport: "off",
+
                     cursorBlinking: "smooth",
 
                     cursorSmoothCaretAnimation: "on",
+
+                    cursorStyle: "line",
+
+                    cursorWidth: 2,
 
                     scrollBeyondLastLine: false,
 
@@ -129,6 +135,8 @@ export default function MonacoEditorBox({
                     tabSize: 4,
 
                     renderLineHighlight: "all",
+
+                    renderLineHighlightOnlyWhenFocus: false,
 
                     roundedSelection: true,
 

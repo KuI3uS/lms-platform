@@ -5,6 +5,13 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(
+        name = "lesson_progress",
+        indexes = {
+                @Index(name = "idx_progress_user_completed", columnList = "user_id, completed"),
+                @Index(name = "idx_progress_lesson", columnList = "lesson_id")
+        }
+)
 public class LessonProgress {
 
     @Id

@@ -22,6 +22,14 @@ public interface CourseOrderRepository extends JpaRepository<CourseOrder, Long> 
 
     List<CourseOrder> findAllByOrderByCreatedAtDesc();
 
+    @Query("""
+            select distinct courseOrder.course.id
+            from CourseOrder courseOrder
+            where courseOrder.user.id = :userId
+              and courseOrder.status = com.twojlogin.lms.entity.CourseOrderStatus.PENDING
+            """)
+    List<Long> findPendingCourseIdsByUserId(@Param("userId") Long userId);
+
     void deleteByUserId(Long userId);
 
     void deleteByCourseId(Long courseId);
