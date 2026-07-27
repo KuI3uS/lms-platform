@@ -12,6 +12,7 @@ import {
     getCourseCover,
     getGeneratedCourseCover
 } from "../utils/courseCover";
+import { getDefaultCoursePaymentUrl } from "../utils/paymentLinks";
 
 const EMPTY_COURSE = {
     name: "",
@@ -63,7 +64,7 @@ export default function AddCoursePage() {
                         description: data.description || "",
                         level: data.level || "Podstawy",
                         price: data.price ?? "0",
-                        paymentUrl: data.paymentUrl || "",
+                        paymentUrl: data.paymentUrl || getDefaultCoursePaymentUrl(data),
                         thumbnailUrl: data.thumbnailUrl || "",
                         published: Boolean(data.published)
                     });
