@@ -4,6 +4,7 @@ import com.twojlogin.lms.dto.LessonBlockDto;
 import com.twojlogin.lms.dto.LessonBlockRequest;
 import com.twojlogin.lms.entity.BlockType;
 import com.twojlogin.lms.entity.Lesson;
+import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
@@ -12,6 +13,8 @@ import com.twojlogin.lms.service.TaskEvaluationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -132,8 +135,35 @@ class LessonBlockControllerPersistenceTest {
             );
 
             assertNotNull(saved.id());
-            assertEquals(type, saved.type());
+            assertEquals(type.normalized(), saved.type());
         }
+    }
+
+    @Test
+    void readsHistoricalBlockTypesAsText() {
+        Lesson lesson = createLesson();
+
+        for (BlockType legacyType : new BlockType[]{
+                BlockType.THEORY,
+                BlockType.CONTENT
+        }) {
+            LessonBlock legacyBlock = new LessonBlock();
+            legacyBlock.setLesson(lesson);
+            legacyBlock.setTitle("Starszy materiał");
+            legacyBlock.setType(legacyType);
+            legacyBlock.setContent("Treść");
+            legacyBlock.setPublished(true);
+            legacyBlock.setPoints(0);
+            legacyBlock.setOrderIndex(0);
+            blockRepository.saveAndFlush(legacyBlock);
+        }
+
+        List<LessonBlockDto> blocks =
+                createController().getByLesson(lesson.getId(), null);
+
+        assertEquals(2, blocks.size());
+        assertEquals(BlockType.TEXT, blocks.get(0).type());
+        assertEquals(BlockType.TEXT, blocks.get(1).type());
     }
 
     private Lesson createLesson() {

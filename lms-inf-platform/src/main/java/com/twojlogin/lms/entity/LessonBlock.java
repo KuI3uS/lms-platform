@@ -18,6 +18,7 @@ public class LessonBlock {
     private String title;
 
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(32)")
     private BlockType type;
 
     @Lob

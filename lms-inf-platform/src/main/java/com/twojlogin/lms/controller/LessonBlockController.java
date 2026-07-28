@@ -214,7 +214,7 @@ public class LessonBlockController {
          * bezpiecznie zapisywać bloki na takim schemacie.
          */
         block.setTitle(trimToEmpty(request.title()));
-        block.setType(request.type());
+        block.setType(request.type().normalized());
         block.setContent(trimToEmpty(request.content()));
         block.setDescription(trimToEmpty(request.description()));
         block.setInstruction(trimToEmpty(request.instruction()));

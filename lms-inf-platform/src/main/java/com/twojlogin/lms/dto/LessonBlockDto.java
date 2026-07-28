@@ -27,7 +27,7 @@ public record LessonBlockDto(
         return new LessonBlockDto(
                 block.getId(),
                 block.getTitle(),
-                block.getType(),
+                block.getType() == null ? null : block.getType().normalized(),
                 block.getContent(),
                 block.getDescription(),
                 block.getInstruction(),
