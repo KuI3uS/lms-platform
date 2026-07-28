@@ -11,6 +11,7 @@ import java.util.Date;
 @Service
 public class JwtService {
 
+    private static final long TOKEN_TTL_MILLIS = 1000L * 60 * 60 * 12;
 
     private final String SECRET = "c2VjcmV0a2x1Y3pqd3QxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTA=";
 
@@ -42,7 +43,7 @@ public class JwtService {
                 .setSubject(email)
                 .claim("role", role)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .setExpiration(new Date(System.currentTimeMillis() + TOKEN_TTL_MILLIS))
                 .signWith(getSigningKey())
                 .compact();
     }

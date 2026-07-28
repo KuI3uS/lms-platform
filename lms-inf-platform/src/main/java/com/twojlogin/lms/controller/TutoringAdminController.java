@@ -5,10 +5,13 @@ import com.twojlogin.lms.dto.TutoringAvailabilityDto;
 import com.twojlogin.lms.dto.TutoringBookingDto;
 import com.twojlogin.lms.entity.TutoringAvailability;
 import com.twojlogin.lms.entity.TutoringBooking;
+import com.twojlogin.lms.entity.TutoringStatus;
 import com.twojlogin.lms.repository.TutoringAvailabilityRepository;
 import com.twojlogin.lms.repository.TutoringBookingRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -55,5 +58,24 @@ public class TutoringAdminController {
         return bookingRepository.findAllByOrderByStartTimeAsc().stream()
                 .map(TutoringBookingDto::from)
                 .toList();
+    }
+
+    @DeleteMapping("/bookings/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteBooking(@PathVariable Long id) {
+        TutoringBooking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Nie znaleziono tej rezerwacji."
+                ));
+
+        if (booking.getStatus() != TutoringStatus.CANCELLED) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Najpierw anuluj rezerwację, a dopiero potem usuń ją z historii."
+            );
+        }
+
+        bookingRepository.delete(booking);
     }
 }

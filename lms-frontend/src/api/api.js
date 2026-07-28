@@ -24,11 +24,30 @@ export function logout() {
     window.location.href = "/";
 }
 
+let redirectingToLogin = false;
+
+function redirectAfterUnauthorized() {
+    localStorage.removeItem("token");
+
+    if (redirectingToLogin || window.location.pathname === "/login") {
+        return;
+    }
+
+    redirectingToLogin = true;
+    const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    sessionStorage.setItem("eduhub:return-after-login", returnTo);
+    window.location.replace("/login?session=expired");
+}
+
 export async function apiFetch(url, options = {}) {
     const token = getToken();
+    const {
+        skipAuthRedirect = false,
+        ...fetchOptions
+    } = options;
 
     const res = await fetch(API_URL + url, {
-        ...options,
+        ...fetchOptions,
         headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: "Bearer " + token } : {}),
@@ -46,6 +65,17 @@ export async function apiFetch(url, options = {}) {
         } catch {
             // Odpowiedź błędu nie musi być JSON-em.
         }
+
+        if (
+            res.status === 401
+            && token
+            && !skipAuthRedirect
+            && !url.startsWith("/auth/")
+        ) {
+            message = "Sesja wygasła. Zaloguj się ponownie.";
+            redirectAfterUnauthorized();
+        }
+
         throw new Error(message);
     }
 
