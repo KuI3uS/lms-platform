@@ -207,19 +207,25 @@ public class LessonBlockController {
             );
         }
 
-        block.setTitle(trimToNull(request.title()));
+        /*
+         * Produkcyjna baza powstawała przez kilka wersji aplikacji. W części
+         * starszych schematów opcjonalne kolumny tekstowe nadal mają NOT NULL.
+         * Pusty tekst zachowuje znaczenie braku wartości, a jednocześnie pozwala
+         * bezpiecznie zapisywać bloki na takim schemacie.
+         */
+        block.setTitle(trimToEmpty(request.title()));
         block.setType(request.type());
-        block.setContent(trimToNull(request.content()));
-        block.setDescription(trimToNull(request.description()));
-        block.setInstruction(trimToNull(request.instruction()));
-        block.setStarterCode(emptyToNull(request.starterCode()));
-        block.setExpectedAnswer(emptyToNull(request.expectedAnswer()));
-        block.setHint(trimToNull(request.hint()));
-        block.setDetailedHint(trimToNull(request.detailedHint()));
-        block.setSolutionExplanation(trimToNull(request.solutionExplanation()));
-        block.setLanguage(trimToNull(request.language()));
-        block.setMediaUrl(trimToNull(request.mediaUrl()));
-        block.setMediaType(trimToNull(request.mediaType()));
+        block.setContent(trimToEmpty(request.content()));
+        block.setDescription(trimToEmpty(request.description()));
+        block.setInstruction(trimToEmpty(request.instruction()));
+        block.setStarterCode(valueOrEmpty(request.starterCode()));
+        block.setExpectedAnswer(valueOrEmpty(request.expectedAnswer()));
+        block.setHint(trimToEmpty(request.hint()));
+        block.setDetailedHint(trimToEmpty(request.detailedHint()));
+        block.setSolutionExplanation(trimToEmpty(request.solutionExplanation()));
+        block.setLanguage(trimToEmpty(request.language()));
+        block.setMediaUrl(trimToEmpty(request.mediaUrl()));
+        block.setMediaType(trimToEmpty(request.mediaType()));
         block.setPublished(request.published() == null || request.published());
         block.setPoints(Math.max(0, Math.min(
                 request.points() == null ? 0 : request.points(),
@@ -235,12 +241,12 @@ public class LessonBlockController {
         return value == null || value.isBlank();
     }
 
-    private String trimToNull(String value) {
-        if (value == null || value.isBlank()) return null;
+    private String trimToEmpty(String value) {
+        if (value == null || value.isBlank()) return "";
         return value.trim();
     }
 
-    private String emptyToNull(String value) {
-        return value == null || value.isEmpty() ? null : value;
+    private String valueOrEmpty(String value) {
+        return value == null ? "" : value;
     }
 }

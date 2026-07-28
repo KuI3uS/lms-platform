@@ -5,7 +5,6 @@ import LessonCard from "./LessonCard";
 
 import useLessons from "./hooks/useLessons";
 import useLessonBlocks from "./hooks/useLessonBlocks";
-import useLessonTasks from "./hooks/useLessonTasks";
 import useExpandedLesson from "./hooks/useExpandedLesson";
 
 export default function AdminLessonPage() {
@@ -14,7 +13,6 @@ export default function AdminLessonPage() {
 
     const lessons = useLessons(moduleId);
     const lessonBlocks = useLessonBlocks();
-    const lessonTasks = useLessonTasks();
     const expanded = useExpandedLesson();
 
     return (
@@ -82,8 +80,7 @@ export default function AdminLessonPage() {
                             toggle={() =>
                                 expanded.toggle(
                                     lesson.id,
-                                    lessonBlocks,
-                                    lessonTasks
+                                    lessonBlocks
                                 )
                             }
 
@@ -92,8 +89,6 @@ export default function AdminLessonPage() {
                             onDelete={lessons.deleteLesson}
 
                             lessonBlocks={lessonBlocks}
-
-                            lessonTasks={lessonTasks}
 
                         />
 

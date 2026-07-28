@@ -18,6 +18,8 @@ public enum BlockType {
 
     PDF,
 
+    DOWNLOAD,
+
     EXAMPLE,
 
     TASK,

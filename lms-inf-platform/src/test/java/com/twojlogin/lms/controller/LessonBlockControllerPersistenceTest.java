@@ -31,18 +31,8 @@ class LessonBlockControllerPersistenceTest {
 
     @Test
     void createsACompleteTaskBlockWithoutEntityDeserialization() {
-        Lesson lesson = new Lesson();
-        lesson.setTitle("Pierwsza lekcja");
-        lesson.setOrderIndex(1);
-        lesson = lessonRepository.saveAndFlush(lesson);
-
-        LessonBlockController controller = new LessonBlockController(
-                blockRepository,
-                lessonRepository,
-                attemptRepository,
-                mock(TaskEvaluationService.class),
-                mock(CourseAccessService.class)
-        );
+        Lesson lesson = createLesson();
+        LessonBlockController controller = createController();
         LessonBlockRequest request = new LessonBlockRequest(
                 "Wyświetl napis",
                 BlockType.TASK,
@@ -69,5 +59,97 @@ class LessonBlockControllerPersistenceTest {
         assertEquals(lesson.getId(), saved.lessonId());
         assertEquals(0, saved.orderIndex());
         assertEquals(10, saved.points());
+    }
+
+    @Test
+    void createsLongTextBlockWithLegacyCompatibleEmptyValues() {
+        Lesson lesson = createLesson();
+        LessonBlockController controller = createController();
+        String content = "Długi materiał lekcji. ".repeat(100);
+
+        LessonBlockDto saved = controller.create(
+                lesson.getId(),
+                new LessonBlockRequest(
+                        "Programowanie od absolutnych podstaw",
+                        BlockType.TEXT,
+                        content,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        true,
+                        5,
+                        null
+                )
+        );
+
+        assertNotNull(saved.id());
+        assertEquals(content.trim(), saved.content());
+        assertEquals("", saved.description());
+        assertEquals("", saved.instruction());
+        assertEquals("", saved.starterCode());
+        assertEquals("", saved.expectedAnswer());
+        assertEquals("", saved.mediaUrl());
+    }
+
+    @Test
+    void createsEverySupportedBlockType() {
+        Lesson lesson = createLesson();
+        LessonBlockController controller = createController();
+
+        for (BlockType type : BlockType.values()) {
+            String requiredAnswer =
+                    type == BlockType.TASK || type == BlockType.QUIZ
+                            ? "poprawna odpowiedź"
+                            : null;
+
+            LessonBlockDto saved = controller.create(
+                    lesson.getId(),
+                    new LessonBlockRequest(
+                            type == BlockType.DIVIDER ? null : "Blok " + type,
+                            type,
+                            "Treść",
+                            null,
+                            type == BlockType.TASK ? "Wykonaj zadanie" : null,
+                            null,
+                            requiredAnswer,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            true,
+                            5,
+                            null
+                    )
+            );
+
+            assertNotNull(saved.id());
+            assertEquals(type, saved.type());
+        }
+    }
+
+    private Lesson createLesson() {
+        Lesson lesson = new Lesson();
+        lesson.setTitle("Pierwsza lekcja");
+        lesson.setOrderIndex(1);
+        return lessonRepository.saveAndFlush(lesson);
+    }
+
+    private LessonBlockController createController() {
+        return new LessonBlockController(
+                blockRepository,
+                lessonRepository,
+                attemptRepository,
+                mock(TaskEvaluationService.class),
+                mock(CourseAccessService.class)
+        );
     }
 }

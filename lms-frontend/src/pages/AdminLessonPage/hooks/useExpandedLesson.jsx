@@ -24,8 +24,7 @@ export default function useExpandedLesson() {
 
     async function toggle(
         lessonId,
-        lessonBlocks,
-        lessonTasks
+        lessonBlocks
     ) {
 
         if (expandedLessonId === lessonId) {
@@ -44,15 +43,6 @@ export default function useExpandedLesson() {
         ) {
 
             await lessonBlocks.loadBlocks(lessonId);
-
-        }
-
-        if (
-            lessonTasks &&
-            lessonTasks.getTasks(lessonId).length === 0
-        ) {
-
-            await lessonTasks.loadTasks(lessonId);
 
         }
 
