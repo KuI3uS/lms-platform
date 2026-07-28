@@ -1,13 +1,32 @@
-import { BsQuestionCircle } from "react-icons/bs";
+import {
+    BsCheckCircleFill,
+    BsQuestionCircle
+} from "react-icons/bs";
 
 export default function QuizBlockForm({ block, setBlock }) {
-    const answers = (block.content || "")
-        .split("\n")
-        .map(answer => answer.trim())
-        .filter(Boolean);
+    function parseAnswers(value) {
+        return (value || "")
+            .split("\n")
+            .map(answer => answer.trim())
+            .filter(Boolean);
+    }
+
+    const answers = parseAnswers(block.content);
 
     function update(field, value) {
         setBlock(previous => ({ ...previous, [field]: value }));
+    }
+
+    function updateAnswers(value) {
+        const nextAnswers = parseAnswers(value);
+
+        setBlock(previous => ({
+            ...previous,
+            content: value,
+            expectedAnswer: nextAnswers.includes(previous.expectedAnswer)
+                ? previous.expectedAnswer
+                : ""
+        }));
     }
 
     return (
@@ -46,30 +65,69 @@ export default function QuizBlockForm({ block, setBlock }) {
                 <span className="font-semibold">Odpowiedzi — każda w nowym wierszu</span>
                 <textarea
                     value={block.content || ""}
-                    onChange={event => update("content", event.target.value)}
+                    onChange={event => updateAnswers(event.target.value)}
                     placeholder={"String\nint\nboolean\nchar"}
                     className="min-h-36 w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 leading-7 outline-none focus:border-indigo-300/50"
                 />
+                <span className="block text-xs leading-5 text-indigo-200/70">
+                    Po wpisaniu odpowiedzi zaznacz poniżej tę, która jest poprawna.
+                </span>
             </label>
 
-            <label className="block space-y-2">
-                <span className="font-semibold">Poprawna odpowiedź</span>
-                <select
-                    value={block.expectedAnswer || ""}
-                    onChange={event => update("expectedAnswer", event.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-indigo-300/50"
-                >
-                    <option value="">Wybierz poprawną odpowiedź</option>
-                    {answers.map((answer, index) => (
-                        <option key={`${answer}-${index}`} value={answer}>{answer}</option>
-                    ))}
-                </select>
+            <fieldset className="space-y-3">
+                <legend className="font-semibold">
+                    Zaznacz poprawną odpowiedź
+                </legend>
+                <p className="text-xs text-gray-400">
+                    Zielone oznaczenie widzi tylko administrator. Uczeń nie otrzyma odpowiedzi przed sprawdzeniem quizu.
+                </p>
+
+                {answers.length >= 2 && (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        {answers.map((answer, index) => (
+                            <label
+                                key={`${answer}-${index}`}
+                                className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-4 transition ${
+                                    block.expectedAnswer === answer
+                                        ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-50 shadow-lg shadow-emerald-950/20"
+                                        : "border-white/10 bg-gray-950/60 text-gray-300 hover:border-indigo-300/40 hover:bg-indigo-500/10"
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name={`quiz-answer-${block.id || "new"}`}
+                                    value={answer}
+                                    checked={block.expectedAnswer === answer}
+                                    onChange={() => update("expectedAnswer", answer)}
+                                    className="sr-only"
+                                />
+                                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black ${
+                                    block.expectedAnswer === answer
+                                        ? "bg-emerald-400 text-emerald-950"
+                                        : "bg-white/[0.06] text-gray-400"
+                                }`}>
+                                    {String.fromCharCode(65 + index)}
+                                </span>
+                                <span className="min-w-0 flex-1 font-semibold">
+                                    {answer}
+                                </span>
+                                {block.expectedAnswer === answer && (
+                                    <span className="flex shrink-0 items-center gap-1.5 text-xs font-black uppercase tracking-wide text-emerald-300">
+                                        <BsCheckCircleFill />
+                                        Poprawna
+                                    </span>
+                                )}
+                            </label>
+                        ))}
+                    </div>
+                )}
+
                 {answers.length < 2 && (
-                    <p className="text-xs text-amber-200">
+                    <p className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs text-amber-200">
                         Dodaj przynajmniej dwie odpowiedzi, aby skonfigurować quiz.
                     </p>
                 )}
-            </label>
+            </fieldset>
 
             <div className="grid gap-4 lg:grid-cols-2">
                 <label className="block space-y-2">
