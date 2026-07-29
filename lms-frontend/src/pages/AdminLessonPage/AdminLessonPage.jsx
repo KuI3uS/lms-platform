@@ -19,6 +19,20 @@ export default function AdminLessonPage() {
 
         <div className="space-y-10">
 
+            <section className="rounded-3xl border border-cyan-400/20 bg-cyan-400/[0.07] p-5 text-cyan-50 sm:p-6">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
+                    Jak zbudować ścieżkę
+                </p>
+                <h2 className="mt-2 text-xl font-black">
+                    Jedna karta poniżej to jedna lekcja na roadmapie ucznia
+                </h2>
+                <p className="mt-3 max-w-4xl leading-7 text-cyan-100/75">
+                    Jeżeli uczeń ma osobno ukończyć „Wprowadzenie”, „Pierwszy program” i „Zmienne”,
+                    utwórz trzy oddzielne lekcje. Bloki tekstu, informacji, zadań i quizów są krokami
+                    wewnątrz jednej lekcji — nie tworzą kolejnych lekcji ani nie odblokowują następnej karty modułu.
+                </p>
+            </section>
+
             <LessonForm
                 form={lessons.lessonForm}
                 setForm={lessons.setLessonForm}

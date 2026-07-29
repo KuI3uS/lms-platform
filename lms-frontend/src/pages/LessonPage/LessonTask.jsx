@@ -24,6 +24,9 @@ const DIAGNOSTIC_LABELS = {
     MISSING_OUTPUT: "Brak wyniku programu",
     MISSING_SEMICOLON: "Brak średnika",
     MISSING_REQUIRED_ELEMENT: "Niepełne rozwiązanie",
+    MISSING_REQUIRED_COMMENT: "Brak wymaganego komentarza",
+    INCORRECT_COMMENT_COUNT: "Nieprawidłowa liczba komentarzy",
+    UNCHANGED_STARTER: "Nieuzupełniony szablon",
     UNBALANCED_DELIMITER: "Niedomknięty znak",
     UNCLOSED_STRING: "Niedomknięty tekst"
 };
