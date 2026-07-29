@@ -21,4 +21,27 @@ public interface CourseModuleRepository extends JpaRepository<CourseModule, Long
             group by module.course.id
             """)
     List<Object[]> countByCourseIds(@Param("courseIds") List<Long> courseIds);
+
+    @Query(value = """
+            select count(*)
+            from course_module cm
+            where exists (
+                select 1
+                from lesson l
+                where l.module_id = cm.id
+            )
+              and not exists (
+                select 1
+                from lesson l
+                where l.module_id = cm.id
+                  and not exists (
+                      select 1
+                      from lesson_progress lp
+                      where lp.lesson_id = l.id
+                        and lp.user_id = :userId
+                        and lp.completed = true
+                  )
+            )
+            """, nativeQuery = true)
+    long countCompletedModulesByUserId(@Param("userId") Long userId);
 }

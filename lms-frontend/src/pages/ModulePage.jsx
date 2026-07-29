@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import {
-    BsArrowRight,
     BsCheckCircle,
     BsLockFill,
+    BsPlayFill,
     BsPlusCircle,
     BsTrash,
     BsGearFill,
@@ -142,68 +142,64 @@ export default function ModulePage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto text-white space-y-10">
+        <div className="mx-auto max-w-5xl space-y-10 text-white">
+            <header className="relative px-2 py-3 sm:px-4">
+                <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
+                <div className="relative flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <p className="mb-3 text-sm font-semibold text-blue-300">
+                            {isLanguageCourse ? (
+                                <span className="inline-flex items-center gap-2">
+                                    <BsTranslate />
+                                    {getCourseLanguageLabel(course?.courseLanguage)} · CEFR {course?.cefrLevel}
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-2">
+                                    <BsCodeSlash />
+                                    Ścieżka technologiczna
+                                </span>
+                            )}
+                        </p>
+                        <h1 className="text-3xl font-black sm:text-5xl">
+                            {course?.title || course?.name || "Roadmap kursu"}
+                        </h1>
+                        <p className="mt-3 max-w-2xl text-gray-400">
+                            {isLanguageCourse
+                                ? "Krótka lekcja po krótkiej lekcji — aż do certyfikatu."
+                                : "Jedna umiejętność naraz. Ukończ węzeł, aby odblokować następny."}
+                        </p>
+                    </div>
 
-            <section className="relative overflow-hidden bg-gradient-to-br from-blue-600/30 via-purple-600/20 to-cyan-500/10 border border-blue-500/20 rounded-3xl p-8">
-                <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/20 blur-3xl rounded-full" />
-
-                <div className="relative z-10">
-                    <p className="text-blue-300 font-semibold mb-2">
-                        {isLanguageCourse ? (
-                            <span className="inline-flex items-center gap-2">
-                                <BsTranslate />
-                                {getCourseLanguageLabel(course?.courseLanguage)} · CEFR {course?.cefrLevel}
-                            </span>
-                        ) : (
-                            <span className="inline-flex items-center gap-2">
-                                <BsCodeSlash />
-                                Ścieżka technologiczna
-                            </span>
-                        )}
-                    </p>
-
-                    <h1 className="text-4xl font-black">
-                        {course?.title || course?.name || "Roadmap kursu"}
-                    </h1>
-
-                    <p className="text-gray-300 mt-3 max-w-2xl">
-                        {isLanguageCourse
-                            ? "Rozwijaj słownictwo, gramatykę i komunikację krok po kroku. Każdy moduł przybliża Cię do ukończenia poziomu i certyfikatu."
-                            : "Ucz się krok po kroku. Każda lekcja prowadzi do kolejnego etapu, a zadania praktyczne przygotowują Cię do prawdziwych projektów."}
-                    </p>
-
-                    <div className="mt-6 bg-gray-950/60 border border-white/10 rounded-2xl p-5 max-w-xl">
-                        <div className="flex justify-between text-sm mb-2">
-                            <span className="text-gray-400">Postęp kursu</span>
-                            <span className="font-bold">{progress}%</span>
+                    <div className="w-full max-w-sm lg:w-80">
+                        <div className="mb-2 flex items-center justify-between text-sm">
+                            <span className="text-gray-500">Postęp całego kursu</span>
+                            <span className="font-black text-cyan-300">{progress}%</span>
                         </div>
-
-                        <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden">
+                        <div className="h-2.5 overflow-hidden rounded-full bg-gray-800/80">
                             <div
-                                className="h-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400"
+                                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-[width] duration-500"
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
-
-                        <p className="text-sm text-gray-400 mt-3">
+                        <p className="mt-2 text-xs text-gray-600">
                             Ukończono {completedCount} z {allLessons.length} lekcji
                         </p>
                     </div>
                 </div>
-            </section>
+            </header>
 
             {role === "ADMIN" && (
-                <section className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex gap-3">
+                <section className="mx-auto flex max-w-3xl gap-3 px-2">
                     <input
                         value={newModule}
                         onChange={e => setNewModule(e.target.value)}
                         placeholder="Nazwa nowej sekcji, np. Zmienne i typy danych"
-                        className="bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 flex-1 outline-none focus:border-blue-500"
+                        className="flex-1 rounded-xl border border-gray-800 bg-gray-900/70 px-4 py-3 outline-none transition focus:border-blue-500"
                     />
 
                     <button
                         onClick={createModule}
-                        className="bg-green-600 hover:bg-green-700 px-5 py-3 rounded-xl font-semibold flex items-center gap-2"
+                        className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-semibold transition hover:bg-green-700"
                     >
                         <BsPlusCircle />
                         Dodaj
@@ -211,9 +207,9 @@ export default function ModulePage() {
                 </section>
             )}
 
-            <section className="space-y-14">
+            <section className="mx-auto max-w-3xl space-y-24 pb-16">
                 {modules.length === 0 ? (
-                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-gray-400">
+                    <div className="py-16 text-center text-gray-500">
                         Brak sekcji w tym kursie.
                     </div>
                 ) : (
@@ -227,131 +223,126 @@ export default function ModulePage() {
                         return (
                             <article
                                 key={module.id}
-                                className="overflow-hidden rounded-[2rem] border border-white/10 bg-gray-900/70 shadow-2xl"
+                                className="relative"
                             >
-                                <header className="border-b border-white/10 bg-gradient-to-r from-blue-500/10 via-violet-500/10 to-cyan-500/10 p-5 sm:p-7">
-                                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                                        <div className="flex items-start gap-4">
-                                            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-blue-300/30 bg-blue-500/15 text-xl font-black text-blue-200">
+                                <header className="flex flex-col gap-4 border-t border-white/10 px-2 pt-8 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-4">
+                                            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-500/15 text-base font-black text-blue-200 ring-1 ring-blue-300/20">
                                                 {moduleIndex + 1}
                                             </div>
                                             <div>
                                                 <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">
                                                     Etap {moduleIndex + 1}
                                                 </p>
-                                                <h2 className="mt-1 text-2xl font-black">
+                                                <h2 className="mt-1 text-xl font-black sm:text-2xl">
                                                     {module.name}
                                                 </h2>
-                                                <p className="mt-2 text-sm text-gray-400">
+                                                <p className="mt-1 text-xs text-gray-500">
                                                     {lessons.length} {lessons.length === 1 ? "lekcja" : "lekcji"} · ukończono {completedLessons}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-3">
-                                            <div className="min-w-32">
-                                                <div className="mb-2 flex justify-between text-xs font-bold text-gray-400">
-                                                    <span>Postęp</span>
-                                                    <span>{moduleProgress}%</span>
-                                                </div>
-                                                <div className="h-2 overflow-hidden rounded-full bg-gray-800">
-                                                    <div
-                                                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400"
-                                                        style={{ width: `${moduleProgress}%` }}
-                                                    />
-                                                </div>
+                                    <div className="flex items-center gap-3 self-end sm:self-auto">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
+                                            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-800">
+                                                <div
+                                                    className="h-full rounded-full bg-cyan-400 transition-[width] duration-500"
+                                                    style={{ width: `${moduleProgress}%` }}
+                                                />
                                             </div>
-
-                                            {role === "ADMIN" && (
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Edytuj etap ${module.name}`}
-                                                        onClick={() => navigate(`/admin/lessons/${module.id}`)}
-                                                        className="rounded-xl bg-yellow-600/20 p-3 text-yellow-300 transition hover:bg-yellow-600 hover:text-white"
-                                                    >
-                                                        <BsGearFill />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        aria-label={`Usuń etap ${module.name}`}
-                                                        onClick={() => deleteModule(module.id)}
-                                                        className="rounded-xl bg-red-600/20 p-3 text-red-400 transition hover:bg-red-600 hover:text-white"
-                                                    >
-                                                        <BsTrash />
-                                                    </button>
-                                                </div>
-                                            )}
+                                            <span>{moduleProgress}%</span>
                                         </div>
+
+                                        {role === "ADMIN" && (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Edytuj etap ${module.name}`}
+                                                    onClick={() => navigate(`/admin/lessons/${module.id}`)}
+                                                    className="grid h-9 w-9 place-items-center rounded-full bg-yellow-500/10 text-yellow-300 transition hover:bg-yellow-500 hover:text-white"
+                                                >
+                                                    <BsGearFill />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Usuń etap ${module.name}`}
+                                                    onClick={() => deleteModule(module.id)}
+                                                    className="grid h-9 w-9 place-items-center rounded-full bg-red-500/10 text-red-300 transition hover:bg-red-500 hover:text-white"
+                                                >
+                                                    <BsTrash />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </header>
 
-                                <div className="p-5 sm:p-8">
+                                <div className="pt-8">
                                     {lessons.length === 0 ? (
-                                        <div className="rounded-2xl border border-dashed border-gray-700 bg-gray-950/40 p-6 text-gray-500">
-                                            Brak lekcji w tej sekcji.
+                                        <div className="flex flex-col items-center py-5 text-center">
+                                            <div className="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-gray-700 text-gray-600">
+                                                <BsLockFill />
+                                            </div>
+                                            <p className="mt-3 text-sm text-gray-600">
+                                                Lekcje w przygotowaniu
+                                            </p>
                                         </div>
                                     ) : (
-                                        <ol className="relative mx-auto max-w-4xl space-y-5">
-                                            <div className="absolute bottom-7 left-7 top-7 w-1 -translate-x-1/2 rounded-full bg-gradient-to-b from-blue-500 via-violet-500 to-cyan-400 opacity-35" />
+                                        <ol className="space-y-4 py-2">
+                                            {lessons.map((lesson, index) => {
+                                                const offsets = [0, -64, 0, 64];
+                                                const offset = offsets[index % offsets.length];
+                                                const current = lesson.canAccess && !lesson.completed;
 
-                                            {lessons.map((lesson, index) => (
-                                                <li key={lesson.id} className="relative flex items-center gap-4 sm:gap-6">
-                                                    <div className={`z-10 grid h-14 w-14 shrink-0 place-items-center rounded-2xl border-4 font-black shadow-lg ${
-                                                        lesson.completed
-                                                            ? "border-emerald-300 bg-emerald-500 text-white"
-                                                            : lesson.canAccess
-                                                                ? "border-blue-300 bg-blue-600 text-white shadow-blue-500/20"
-                                                                : "border-gray-700 bg-gray-800 text-gray-500"
-                                                    }`}>
-                                                        {lesson.completed ? (
-                                                            <BsCheckCircle size={23} />
-                                                        ) : lesson.canAccess ? (
-                                                            index + 1
-                                                        ) : (
-                                                            <BsLockFill size={19} />
-                                                        )}
-                                                    </div>
-
-                                                    <button
-                                                        type="button"
-                                                        disabled={!lesson.canAccess}
-                                                        onClick={() => lesson.canAccess && navigate(`/lesson/${lesson.id}`)}
-                                                        className={`group min-w-0 flex-1 rounded-2xl border p-4 text-left transition sm:p-5 ${
-                                                            lesson.canAccess
-                                                                ? "border-white/10 bg-gray-950/60 hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-blue-500/[0.08]"
-                                                                : "cursor-not-allowed border-white/5 bg-gray-950/30 opacity-55"
-                                                        }`}
+                                                return (
+                                                    <li
+                                                        key={lesson.id}
+                                                        className="flex justify-center py-2"
                                                     >
-                                                        <div className="flex items-center justify-between gap-4">
-                                                            <div className="min-w-0">
-                                                                <p className="text-xs font-black uppercase tracking-[0.14em] text-gray-500">
-                                                                    Lekcja {lesson.orderIndex ?? index + 1}
-                                                                </p>
-                                                                <h3 className="mt-1 truncate text-lg font-black text-white">
-                                                                    {lesson.title}
-                                                                </h3>
-                                                                <p className={`mt-2 text-sm ${
+                                                        <div
+                                                            className="transition-transform duration-500 ease-out"
+                                                            style={{ transform: `translateX(${offset}px)` }}
+                                                        >
+                                                            <button
+                                                                type="button"
+                                                                disabled={!lesson.canAccess}
+                                                                onClick={() => lesson.canAccess && navigate(`/lesson/${lesson.id}`)}
+                                                                aria-label={`Lekcja ${lesson.orderIndex ?? index + 1}: ${lesson.title}`}
+                                                                className="group flex w-56 flex-col items-center text-center disabled:cursor-not-allowed"
+                                                            >
+                                                                {current && (
+                                                                    <span className="mb-2 rounded-full bg-blue-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/25">
+                                                                        Kontynuuj
+                                                                    </span>
+                                                                )}
+                                                                <span className={`relative grid h-20 w-20 place-items-center rounded-full border-2 border-b-[7px] text-2xl font-black transition-all duration-200 motion-safe:group-hover:-translate-y-1 motion-safe:group-active:translate-y-0 ${
                                                                     lesson.completed
-                                                                        ? "text-emerald-300"
+                                                                        ? "border-emerald-300/70 border-b-emerald-700 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
                                                                         : lesson.canAccess
-                                                                            ? "text-blue-300"
-                                                                            : "text-gray-500"
+                                                                            ? "border-blue-300/80 border-b-blue-800 bg-blue-600 text-white shadow-xl shadow-blue-500/25"
+                                                                            : "border-gray-700 border-b-gray-950 bg-gray-800 text-gray-600"
                                                                 }`}>
-                                                                    {lesson.completed
-                                                                        ? "Ukończona"
-                                                                        : lesson.canAccess
-                                                                            ? "Gotowa do rozpoczęcia"
-                                                                            : "Ukończ poprzednią lekcję, aby odblokować"}
-                                                                </p>
-                                                            </div>
-                                                            {lesson.canAccess && (
-                                                                <BsArrowRight className="shrink-0 text-gray-600 transition group-hover:translate-x-1 group-hover:text-blue-300" />
-                                                            )}
+                                                                    {lesson.completed ? (
+                                                                        <BsCheckCircle size={30} />
+                                                                    ) : lesson.canAccess ? (
+                                                                        <BsPlayFill className="ml-1" size={28} />
+                                                                    ) : (
+                                                                        <BsLockFill size={23} />
+                                                                    )}
+                                                                </span>
+                                                                <span className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-gray-600">
+                                                                    Lekcja {lesson.orderIndex ?? index + 1}
+                                                                </span>
+                                                                <span className={`mt-1 line-clamp-2 max-w-52 text-sm font-black leading-5 ${
+                                                                    lesson.canAccess ? "text-gray-100" : "text-gray-600"
+                                                                }`}>
+                                                                    {lesson.title}
+                                                                </span>
+                                                            </button>
                                                         </div>
-                                                    </button>
-                                                </li>
-                                            ))}
+                                                    </li>
+                                                );
+                                            })}
                                         </ol>
                                     )}
                                 </div>

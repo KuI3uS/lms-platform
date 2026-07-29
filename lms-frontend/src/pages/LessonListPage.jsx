@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
+import { fetchLearningStats } from "../api/learningStats";
 
 import {
     BsArrowRight,
@@ -40,7 +41,7 @@ export default function LessonListPage() {
 
                 apiFetch(`/lessons/module/${moduleId}`),
 
-                apiFetch("/learning-stats")
+                fetchLearningStats()
 
             ]);
 

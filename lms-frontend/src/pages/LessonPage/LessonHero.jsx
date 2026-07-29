@@ -1,8 +1,7 @@
 import {
     BsArrowLeft,
     BsClock,
-    BsFire,
-    BsStars
+    BsFire
 } from "react-icons/bs";
 
 export default function LessonHero({
@@ -10,155 +9,63 @@ export default function LessonHero({
                                        moduleLessons,
                                        onBack
                                    }) {
-
-    const completedCount =
-        moduleLessons.filter(l => l.completed).length;
-
-    const progress =
-        moduleLessons.length
-            ? Math.round(
-                (completedCount / moduleLessons.length) * 100
-            )
-            : 0;
+    const completedCount = moduleLessons.filter(item => item.completed).length;
+    const progress = moduleLessons.length
+        ? Math.round((completedCount / moduleLessons.length) * 100)
+        : 0;
 
     return (
+        <header className="mx-auto flex max-w-5xl flex-col gap-5 px-2 py-2 sm:px-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
+                <button
+                    type="button"
+                    onClick={onBack}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 transition hover:text-white"
+                >
+                    <BsArrowLeft />
+                    Wróć do ścieżki
+                </button>
 
-        <section className="relative overflow-hidden rounded-[2rem] border border-blue-500/20 bg-gradient-to-br from-blue-600/25 via-gray-900 to-purple-700/20 p-5 shadow-2xl sm:p-8">
+                <p className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-blue-300">
+                    Lekcja {lesson.orderIndex}
+                    {lesson.freePreview ? " · Darmowy podgląd" : ""}
+                </p>
+                <h1 className="mt-2 text-3xl font-black leading-tight sm:text-4xl">
+                    {lesson.title}
+                </h1>
+                <p className="mt-3 max-w-3xl text-base leading-7 text-gray-400">
+                    {lesson.theory
+                        || "Przejdź przez materiał i wykonaj kolejne ćwiczenia."}
+                </p>
 
-            <div className="absolute -top-24 -right-24 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl" />
-
-            <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
-
-            <div className="relative z-10 flex flex-col lg:flex-row justify-between gap-8">
-
-                <div className="space-y-5">
-
-                    <button
-                        onClick={onBack}
-                        className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white transition"
-                    >
-                        <BsArrowLeft />
-
-                        Wróć do kursu
-
-                    </button>
-
-                    <div>
-
-                        <div className="flex flex-wrap gap-3 mb-4">
-
-                            <span className="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-sm font-bold">
-
-                                Lekcja {lesson.orderIndex}
-
-                            </span>
-
-                            {lesson.freePreview && (
-
-                                <span className="px-3 py-1 rounded-full bg-green-500/20 border border-green-500/30 text-green-300 text-sm font-bold">
-
-                                    Darmowy podgląd
-
-                                </span>
-
-                            )}
-
-                            <span className="px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm font-bold flex items-center gap-2">
-
-                                <BsStars />
-
-                                EduHub 2026
-
-                            </span>
-
-                        </div>
-
-                        <h1 className="text-3xl font-black sm:text-4xl lg:text-5xl">
-
-                            {lesson.title}
-
-                        </h1>
-
-                        <p className="mt-5 text-lg text-gray-300 max-w-3xl whitespace-pre-line">
-
-                            {lesson.theory ||
-                                "Przejdź przez materiał, zapoznaj się z przykładami oraz wykonaj zadania praktyczne."}
-
-                        </p>
-
-                    </div>
-
-                    <div className="flex flex-wrap gap-3">
-
-                        <div className="bg-gray-950/60 border border-white/10 rounded-2xl px-4 py-3 flex items-center gap-3">
-
-                            <BsClock className="text-blue-400" />
-
-                            <span className="text-sm text-gray-300">
-
-                                około 45 minut
-
-                            </span>
-
-                        </div>
-
-                        <div className="bg-gray-950/60 border border-white/10 rounded-2xl px-4 py-3 flex items-center gap-3">
-
-                            <BsFire className="text-orange-400" />
-
-                            <span className="text-sm text-gray-300">
-
-                                teoria + praktyka
-
-                            </span>
-
-                        </div>
-
-                    </div>
-
+                <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-gray-500">
+                    <span className="inline-flex items-center gap-2">
+                        <BsClock className="text-blue-400" />
+                        około 45 minut
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                        <BsFire className="text-orange-400" />
+                        teoria + praktyka
+                    </span>
                 </div>
-
-                <div className="w-full rounded-3xl border border-white/10 bg-gray-950/70 p-6 lg:min-w-[300px] lg:w-auto">
-
-                    <div className="flex justify-between mb-3">
-
-                        <span className="text-gray-400">
-
-                            Postęp modułu
-
-                        </span>
-
-                        <span className="font-black">
-
-                            {progress}%
-
-                        </span>
-
-                    </div>
-
-                    <div className="w-full h-4 rounded-full overflow-hidden bg-gray-800">
-
-                        <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
-                            style={{
-                                width: `${progress}%`
-                            }}
-                        />
-
-                    </div>
-
-                    <p className="mt-4 text-sm text-gray-400">
-
-                        {completedCount} / {moduleLessons.length} lekcji ukończonych
-
-                    </p>
-
-                </div>
-
             </div>
 
-        </section>
-
+            <div className="flex shrink-0 items-center gap-3">
+                <div
+                    className="grid h-16 w-16 place-items-center rounded-full p-1"
+                    style={{
+                        background: `conic-gradient(#22d3ee ${progress}%, rgba(31,41,55,.8) ${progress}%)`
+                    }}
+                >
+                    <div className="grid h-full w-full place-items-center rounded-full bg-gray-950 text-sm font-black">
+                        {progress}%
+                    </div>
+                </div>
+                <div className="text-xs text-gray-500">
+                    <p className="font-bold text-gray-300">Postęp etapu</p>
+                    <p className="mt-1">{completedCount}/{moduleLessons.length} lekcji</p>
+                </div>
+            </div>
+        </header>
     );
-
 }

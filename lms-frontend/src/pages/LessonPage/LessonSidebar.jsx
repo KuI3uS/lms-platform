@@ -78,19 +78,22 @@ export default function LessonSidebar({
     return (
         <nav
             aria-label="Ścieżka lekcji"
-            className="rounded-[2rem] border border-white/10 bg-gray-900/90 p-4 shadow-2xl backdrop-blur sm:p-6"
+            className="mx-auto w-full max-w-5xl px-1 py-3 sm:px-4"
         >
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
                         Lekcja {currentLessonIndex + 1} z {moduleLessons.length}
                     </p>
-                    <h2 className="mt-1 truncate text-xl font-black text-white">
+                    <h2 className="mt-1 truncate text-base font-black text-white sm:text-lg">
                         Krok {selectedIndex + 1} z {blocks.length}: {selectedBlock?.title || "Materiał"}
                     </h2>
                 </div>
 
-                <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
+                <div
+                    className="flex max-w-full items-center gap-2 overflow-x-auto pb-1"
+                    aria-label="Lekcje w tym etapie"
+                >
                     {moduleLessons.map((lesson, index) => {
                         const active = Number(currentLessonId) === Number(lesson.id);
                         return (
@@ -101,14 +104,14 @@ export default function LessonSidebar({
                                 aria-label={`Lekcja ${index + 1}: ${lesson.title}`}
                                 disabled={!lesson.canAccess}
                                 onClick={() => lesson.canAccess && navigate(`/lesson/${lesson.id}`)}
-                                className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border text-sm font-black transition ${
+                                className={`grid h-9 w-9 shrink-0 place-items-center rounded-full border text-xs font-black transition-all duration-200 ${
                                     active
-                                        ? "border-cyan-300 bg-blue-600 text-white ring-4 ring-blue-500/20"
+                                        ? "scale-110 border-cyan-200 bg-blue-600 text-white shadow-lg shadow-blue-500/30 ring-4 ring-blue-500/15"
                                         : lesson.completed
-                                            ? "border-emerald-300/40 bg-emerald-500/20 text-emerald-200"
+                                            ? "border-emerald-300/50 bg-emerald-500 text-white"
                                             : lesson.canAccess
-                                                ? "border-white/15 bg-white/5 text-gray-300 hover:border-blue-400"
-                                                : "cursor-not-allowed border-white/5 bg-black/20 text-gray-600"
+                                                ? "border-white/15 bg-gray-800 text-gray-300 hover:-translate-y-0.5 hover:border-blue-400"
+                                                : "cursor-not-allowed border-white/5 bg-gray-900 text-gray-700"
                                 }`}
                             >
                                 {lesson.completed ? <BsCheckCircleFill /> : index + 1}
@@ -118,58 +121,67 @@ export default function LessonSidebar({
                 </div>
             </div>
 
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-gray-800">
+            <div className="mt-5 h-1 overflow-hidden rounded-full bg-gray-900">
                 <div
-                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 transition-all duration-300"
+                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 transition-[width] duration-500"
                     style={{ width: `${currentProgress}%` }}
                 />
             </div>
 
-            <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
-                {blocks.map((block, index) => {
-                    const active = Number(selectedBlock?.id) === Number(block.id);
-                    const accessible = canAccessBlock(block);
-                    const completed = isCompleted(block, index);
-                    const attemptedIncorrectly = ASSESSMENT_TYPES.has(block.type)
-                        && (block.attempted || results[block.id])
-                        && !completed;
+            {blocks.length > 0 && (
+                <div className="relative mt-6 overflow-x-auto pb-3 pt-2">
+                    <div
+                        aria-hidden="true"
+                        className="absolute left-9 right-9 top-[37px] h-1 rounded-full bg-gray-900"
+                    />
+                    <ol className="relative flex min-w-max items-start gap-5 px-2 sm:justify-center sm:gap-7">
+                        {blocks.map((block, index) => {
+                            const active = Number(selectedBlock?.id) === Number(block.id);
+                            const accessible = canAccessBlock(block);
+                            const completed = isCompleted(block, index);
+                            const attemptedIncorrectly = ASSESSMENT_TYPES.has(block.type)
+                                && (block.attempted || results[block.id])
+                                && !completed;
 
-                    return (
-                        <button
-                            key={block.id}
-                            type="button"
-                            disabled={!accessible}
-                            onClick={() => accessible && setSelectedBlock(block)}
-                            title={`${index + 1}. ${block.title || block.type}`}
-                            className="group flex min-w-[76px] shrink-0 flex-col items-center gap-2 text-center"
-                        >
-                            <span className={`grid h-12 w-12 place-items-center rounded-2xl border text-lg transition ${
-                                active
-                                    ? "border-cyan-200 bg-blue-600 text-white shadow-lg shadow-blue-500/25 ring-4 ring-blue-500/15"
-                                    : completed
-                                        ? "border-emerald-300/40 bg-emerald-500/20 text-emerald-200"
-                                        : attemptedIncorrectly
-                                            ? "border-orange-300/40 bg-orange-500/15 text-orange-200"
-                                            : accessible
-                                                ? "border-white/15 bg-gray-800 text-gray-300 group-hover:border-blue-400 group-hover:text-white"
-                                                : "border-white/5 bg-gray-950 text-gray-600"
-                            }`}>
-                                {!accessible
-                                    ? <BsLockFill />
-                                    : completed
-                                        ? <BsCheckCircleFill />
-                                        : blockIcon(block.type)
-                                }
-                            </span>
-                            <span className={`text-[11px] font-bold ${
-                                active ? "text-cyan-200" : "text-gray-500"
-                            }`}>
-                                Krok {index + 1}
-                            </span>
-                        </button>
-                    );
-                })}
-            </div>
+                            return (
+                                <li key={block.id}>
+                                    <button
+                                        type="button"
+                                        disabled={!accessible}
+                                        onClick={() => accessible && setSelectedBlock(block)}
+                                        title={`${index + 1}. ${block.title || block.type}`}
+                                        className="group flex w-[74px] shrink-0 flex-col items-center text-center sm:w-[84px]"
+                                    >
+                                        <span className={`relative z-10 grid h-14 w-14 place-items-center rounded-full border-2 border-b-[5px] text-lg transition-all duration-200 motion-safe:group-hover:-translate-y-1 motion-safe:group-active:translate-y-0 ${
+                                            active
+                                                ? "border-cyan-200 border-b-blue-900 bg-blue-600 text-white shadow-xl shadow-blue-500/30 ring-4 ring-blue-500/15"
+                                                : completed
+                                                    ? "border-emerald-300/70 border-b-emerald-800 bg-emerald-500 text-white"
+                                                    : attemptedIncorrectly
+                                                        ? "border-orange-300/60 border-b-orange-900 bg-orange-500/90 text-white"
+                                                        : accessible
+                                                            ? "border-gray-600 border-b-gray-950 bg-gray-800 text-gray-300 group-hover:border-blue-400 group-hover:text-white"
+                                                            : "border-gray-800 border-b-black bg-gray-900 text-gray-700"
+                                        }`}>
+                                            {!accessible
+                                                ? <BsLockFill />
+                                                : completed
+                                                    ? <BsCheckCircleFill />
+                                                    : blockIcon(block.type)
+                                            }
+                                        </span>
+                                        <span className={`mt-2 text-[10px] font-black uppercase tracking-wider ${
+                                            active ? "text-cyan-200" : "text-gray-600"
+                                        }`}>
+                                            Krok {index + 1}
+                                        </span>
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ol>
+                </div>
+            )}
         </nav>
     );
 }

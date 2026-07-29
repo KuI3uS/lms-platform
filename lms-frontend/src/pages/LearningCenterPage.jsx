@@ -16,7 +16,22 @@ import {
     BsTranslate
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
+import { fetchLearningStats } from "../api/learningStats";
 import { getCourseLanguageLabel } from "../utils/courseTaxonomy";
+
+const ANALYTICS_CACHE_TTL = 60_000;
+const analyticsCache = new Map();
+
+function analyticsCacheKey() {
+    return localStorage.getItem("token") || "anonymous";
+}
+
+function getCachedAnalytics() {
+    const cached = analyticsCache.get(analyticsCacheKey());
+    return cached && Date.now() - cached.savedAt < ANALYTICS_CACHE_TTL
+        ? cached.value
+        : null;
+}
 
 function formatDuration(seconds) {
     const hours = Math.floor(seconds / 3600);
@@ -38,27 +53,35 @@ const achievementIcons = {
 
 export default function LearningCenterPage() {
     const navigate = useNavigate();
-    const [data, setData] = useState(null);
+    const [data, setData] = useState(getCachedAnalytics);
     const [stats, setStats] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(() => !getCachedAnalytics());
     const [error, setError] = useState("");
 
     useEffect(() => {
         let active = true;
-        Promise.all([
-            apiFetch("/learning/analytics"),
-            apiFetch("/learning-stats")
-        ])
-            .then(([analyticsResponse, statsResponse]) => {
+        apiFetch("/learning/analytics")
+            .then((analyticsResponse) => {
                 if (!active) return;
+                analyticsCache.set(analyticsCacheKey(), {
+                    value: analyticsResponse,
+                    savedAt: Date.now()
+                });
                 setData(analyticsResponse);
-                setStats(statsResponse);
             })
             .catch((loadError) => {
                 if (active) setError(loadError.message || "Nie udało się pobrać statystyk.");
             })
             .finally(() => {
                 if (active) setLoading(false);
+            });
+
+        fetchLearningStats()
+            .then((statsResponse) => {
+                if (active) setStats(statsResponse);
+            })
+            .catch(() => {
+                // Główne statystyki nadal mogą zostać wyświetlone.
             });
         return () => {
             active = false;

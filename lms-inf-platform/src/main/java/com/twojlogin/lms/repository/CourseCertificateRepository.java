@@ -1,6 +1,7 @@
 package com.twojlogin.lms.repository;
 
 import com.twojlogin.lms.entity.CourseCertificate;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -10,6 +11,7 @@ public interface CourseCertificateRepository extends JpaRepository<CourseCertifi
 
     Optional<CourseCertificate> findByUserIdAndCourseId(Long userId, Long courseId);
 
+    @EntityGraph(attributePaths = "course")
     List<CourseCertificate> findByUserIdOrderByIssuedAtDesc(Long userId);
 
     Optional<CourseCertificate> findByCertificateNumber(String certificateNumber);

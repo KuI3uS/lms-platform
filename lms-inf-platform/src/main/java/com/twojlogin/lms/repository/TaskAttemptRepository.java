@@ -3,6 +3,7 @@ package com.twojlogin.lms.repository;
 import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.entity.TaskAttempt;
 import com.twojlogin.lms.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -53,6 +54,7 @@ public interface TaskAttemptRepository extends JpaRepository<TaskAttempt, Long> 
             @Param("lessonId") Long lessonId
     );
 
+    @EntityGraph(attributePaths = {"block", "block.lesson"})
     List<TaskAttempt> findTop5ByUserIdOrderByAttemptCountDesc(Long userId);
 
     long countByUserId(Long userId);
