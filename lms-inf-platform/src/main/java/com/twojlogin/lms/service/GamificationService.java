@@ -386,11 +386,7 @@ public class GamificationService {
                 profile.getXpBoostExpiresAt(),
                 league.displayName(),
                 league.color(),
-                league.symbol(),
-                league.nextLevel(),
-                profile.getEquippedOutfit(),
-                profile.getEquippedAccessory(),
-                profile.getEquippedAura()
+                league.nextLevel()
         );
     }
 
@@ -442,11 +438,7 @@ public class GamificationService {
             Instant xpBoostExpiresAt,
             String leagueName,
             String leagueColor,
-            String leagueSymbol,
-            Integer nextLeagueLevel,
-            String equippedOutfit,
-            String equippedAccessory,
-            String equippedAura
+            Integer nextLeagueLevel
     ) {
     }
 }

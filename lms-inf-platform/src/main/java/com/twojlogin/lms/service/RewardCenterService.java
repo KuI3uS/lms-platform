@@ -1,11 +1,9 @@
 package com.twojlogin.lms.service;
 
 import com.twojlogin.lms.dto.RewardCenterDto;
-import com.twojlogin.lms.entity.AvatarItemOwnership;
 import com.twojlogin.lms.entity.GamificationProfile;
 import com.twojlogin.lms.entity.RewardItemType;
 import com.twojlogin.lms.entity.User;
-import com.twojlogin.lms.repository.AvatarItemOwnershipRepository;
 import com.twojlogin.lms.repository.GamificationProfileRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -16,41 +14,29 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class RewardCenterService {
 
-    private static final Set<String> DEFAULT_AVATAR_ITEMS = Set.of(
-            "OUTFIT_CORE",
-            "ACCESSORY_NONE",
-            "AURA_NONE"
-    );
-
     private final CourseAccessService accessService;
     private final GamificationService gamificationService;
     private final GamificationProfileRepository profileRepository;
-    private final AvatarItemOwnershipRepository ownershipRepository;
     private final Clock clock = Clock.systemUTC();
 
     public RewardCenterService(
             CourseAccessService accessService,
             GamificationService gamificationService,
-            GamificationProfileRepository profileRepository,
-            AvatarItemOwnershipRepository ownershipRepository
+            GamificationProfileRepository profileRepository
     ) {
         this.accessService = accessService;
         this.gamificationService = gamificationService;
         this.profileRepository = profileRepository;
-        this.ownershipRepository = ownershipRepository;
     }
 
     @Transactional
     public RewardCenterDto get(Authentication authentication) {
         User user = accessService.currentUser(authentication);
-        GamificationProfile profile = gamificationService.profileForUpdate(user);
-        return toDto(profile);
+        return toDto(gamificationService.profileForUpdate(user));
     }
 
     @Transactional
@@ -62,54 +48,23 @@ public class RewardCenterService {
         if (profile.getLevel() < item.requiredLevel()) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Ten przedmiot odblokuje się na poziomie " + item.requiredLevel()
+                    "Ta nagroda odblokuje się na poziomie " + item.requiredLevel()
             );
         }
         if (profile.getGemBalance() < item.cost()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Masz za mało klejnotów");
-        }
-        if (isCosmetic(item)
-                && ownershipRepository.existsByUserIdAndItemCode(user.getId(), item.name())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ten przedmiot już należy do Ciebie");
         }
 
         profile.setGemBalance(profile.getGemBalance() - item.cost());
         switch (item.type()) {
             case DISCOUNT -> addVoucher(profile, item.discountPercent());
             case BOOSTER -> activateBoost(profile, item);
-            case OUTFIT, ACCESSORY, AURA -> saveOwnership(user, item);
         }
-        profileRepository.save(profile);
-        return toDto(profile);
-    }
-
-    @Transactional
-    public RewardCenterDto equip(String itemCode, Authentication authentication) {
-        User user = accessService.currentUser(authentication);
-        GamificationProfile profile = gamificationService.profileForUpdate(user);
-
-        if (DEFAULT_AVATAR_ITEMS.contains(itemCode)) {
-            equipDefault(profile, itemCode);
-        } else {
-            RewardShopItem item = requireItem(itemCode);
-            if (!isCosmetic(item)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tego przedmiotu nie można założyć");
-            }
-            if (!ownershipRepository.existsByUserIdAndItemCode(user.getId(), item.name())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Najpierw kup ten przedmiot");
-            }
-            equip(profile, item);
-        }
-
         profileRepository.save(profile);
         return toDto(profile);
     }
 
     private RewardCenterDto toDto(GamificationProfile profile) {
-        Set<String> ownedCodes = ownershipRepository.findByUserId(profile.getUser().getId())
-                .stream()
-                .map(AvatarItemOwnership::getItemCode)
-                .collect(Collectors.toSet());
         LearningLeague league = LearningLeague.forLevel(profile.getLevel());
         var catalog = Arrays.stream(RewardShopItem.values())
                 .map(item -> new RewardCenterDto.RewardItemDto(
@@ -123,8 +78,6 @@ public class RewardCenterService {
                         item.boostPercent(),
                         item.boostHours(),
                         item.visualStyle(),
-                        isCosmetic(item) && ownedCodes.contains(item.name()),
-                        isEquipped(profile, item),
                         quantity(profile, item),
                         profile.getLevel() >= item.requiredLevel()
                 ))
@@ -135,11 +88,7 @@ public class RewardCenterService {
                 profile.getTotalGemsEarned(),
                 GamificationService.GEMS_PER_COMPLETED_LESSON,
                 profile.getLevel(),
-                new RewardCenterDto.LeagueDto(
-                        league.displayName(),
-                        league.color(),
-                        league.symbol()
-                ),
+                new RewardCenterDto.LeagueDto(league.displayName(), league.color()),
                 league.nextLevel(),
                 (profile.getLevel() / GamificationService.GEM_LEVEL_INTERVAL + 1)
                         * GamificationService.GEM_LEVEL_INTERVAL,
@@ -150,12 +99,6 @@ public class RewardCenterService {
                         profile.getVoucher5Count(),
                         profile.getVoucher10Count(),
                         profile.getVoucher20Count()
-                ),
-                new RewardCenterDto.AvatarDto(
-                        profile.getEquippedOutfit(),
-                        profile.getEquippedAccessory(),
-                        profile.getEquippedAura(),
-                        glowLevel(profile.getLevel())
                 ),
                 catalog
         );
@@ -190,44 +133,6 @@ public class RewardCenterService {
         }
     }
 
-    private void saveOwnership(User user, RewardShopItem item) {
-        AvatarItemOwnership ownership = new AvatarItemOwnership();
-        ownership.setUser(user);
-        ownership.setItemCode(item.name());
-        ownership.setPurchasedAt(clock.instant());
-        ownershipRepository.save(ownership);
-    }
-
-    private void equip(GamificationProfile profile, RewardShopItem item) {
-        switch (item.type()) {
-            case OUTFIT -> profile.setEquippedOutfit(item.name());
-            case ACCESSORY -> profile.setEquippedAccessory(item.name());
-            case AURA -> profile.setEquippedAura(item.name());
-            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tego przedmiotu nie można założyć");
-        }
-    }
-
-    private void equipDefault(GamificationProfile profile, String itemCode) {
-        if (itemCode.startsWith("OUTFIT_")) profile.setEquippedOutfit(itemCode);
-        else if (itemCode.startsWith("ACCESSORY_")) profile.setEquippedAccessory(itemCode);
-        else if (itemCode.startsWith("AURA_")) profile.setEquippedAura(itemCode);
-    }
-
-    private boolean isCosmetic(RewardShopItem item) {
-        return item.type() == RewardItemType.OUTFIT
-                || item.type() == RewardItemType.ACCESSORY
-                || item.type() == RewardItemType.AURA;
-    }
-
-    private boolean isEquipped(GamificationProfile profile, RewardShopItem item) {
-        return switch (item.type()) {
-            case OUTFIT -> item.name().equals(profile.getEquippedOutfit());
-            case ACCESSORY -> item.name().equals(profile.getEquippedAccessory());
-            case AURA -> item.name().equals(profile.getEquippedAura());
-            default -> false;
-        };
-    }
-
     private int quantity(GamificationProfile profile, RewardShopItem item) {
         if (item.type() != RewardItemType.DISCOUNT) return 0;
         return switch (item.discountPercent()) {
@@ -236,16 +141,6 @@ public class RewardCenterService {
             case 20 -> profile.getVoucher20Count();
             default -> 0;
         };
-    }
-
-    private int glowLevel(int level) {
-        if (level >= 60) return 6;
-        if (level >= 40) return 5;
-        if (level >= 25) return 4;
-        if (level >= 15) return 3;
-        if (level >= 10) return 2;
-        if (level >= 5) return 1;
-        return 0;
     }
 
     private RewardShopItem requireItem(String code) {

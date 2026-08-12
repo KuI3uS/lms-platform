@@ -16,7 +16,6 @@ import com.twojlogin.lms.repository.UserAchievementRepository;
 import com.twojlogin.lms.repository.CourseCertificateRepository;
 import com.twojlogin.lms.repository.StudyActivityRepository;
 import com.twojlogin.lms.repository.ExamAttemptRepository;
-import com.twojlogin.lms.repository.AvatarItemOwnershipRepository;
 import com.twojlogin.lms.repository.GamificationProfileRepository;
 import com.twojlogin.lms.repository.TutoringBookingRepository;
 import jakarta.transaction.Transactional;
@@ -46,7 +45,6 @@ public class UserController {
     private final StudyActivityRepository activityRepository;
     private final ExamAttemptRepository examAttemptRepository;
     private final TutoringBookingRepository tutoringBookingRepository;
-    private final AvatarItemOwnershipRepository avatarItemOwnershipRepository;
     private final GamificationProfileRepository gamificationProfileRepository;
 
     public UserController(UserRepository userRepository,
@@ -62,7 +60,6 @@ public class UserController {
                           StudyActivityRepository activityRepository,
                           ExamAttemptRepository examAttemptRepository,
                           TutoringBookingRepository tutoringBookingRepository,
-                          AvatarItemOwnershipRepository avatarItemOwnershipRepository,
                           GamificationProfileRepository gamificationProfileRepository) {
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
@@ -77,7 +74,6 @@ public class UserController {
         this.activityRepository = activityRepository;
         this.examAttemptRepository = examAttemptRepository;
         this.tutoringBookingRepository = tutoringBookingRepository;
-        this.avatarItemOwnershipRepository = avatarItemOwnershipRepository;
         this.gamificationProfileRepository = gamificationProfileRepository;
     }
 
@@ -112,7 +108,6 @@ public class UserController {
         orderRepository.clearConfirmedBy(id);
         orderRepository.deleteByUserId(id);
         enrollmentRepository.deleteByUserId(id);
-        avatarItemOwnershipRepository.deleteByUserId(id);
         gamificationProfileRepository.deleteByUserId(id);
         tutoringBookingRepository.clearStudent(id);
         userRepository.deleteById(id);
