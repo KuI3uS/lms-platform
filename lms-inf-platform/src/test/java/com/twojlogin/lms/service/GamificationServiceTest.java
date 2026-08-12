@@ -57,6 +57,7 @@ class GamificationServiceTest {
         profile.setUser(user);
         profile.setLevel(1);
         profile.setDiscountBalance(BigDecimal.ZERO.setScale(2));
+        profile.setGemEconomyInitialized(true);
 
         when(profileRepository.findByUserIdForUpdate(user.getId()))
                 .thenReturn(Optional.of(profile));
@@ -136,9 +137,10 @@ class GamificationServiceTest {
     }
 
     @Test
-    void grantsFiftyZlotyAtLevelTen() {
+    void grantsTwoHundredFiftyGemsAtEveryFifthLevel() {
         profile.setTotalXp(GamificationService.xpRequiredForLevel(10) - 10);
         profile.setLevel(9);
+        profile.setRewardedGemLevel(5);
         LessonBlock block = new LessonBlock();
         block.setPoints(10);
 
@@ -152,22 +154,31 @@ class GamificationServiceTest {
 
         assertEquals(10, result.level());
         assertTrue(result.levelUp());
-        assertEquals(new BigDecimal("50.00"), profile.getDiscountBalance());
-        assertEquals(1, profile.getRewardedMilestone());
+        assertEquals(250, profile.getGemBalance());
+        assertEquals(10, profile.getRewardedGemLevel());
     }
 
     @Test
-    void limitsCourseDiscountToTwentyPercentAndFiftyZlotySteps() {
-        profile.setDiscountBalance(new BigDecimal("300.00"));
+    void consumesTwentyPercentVoucherAndKeepsCourseAboveMinimumPrice() {
+        profile.setVoucher20Count(1);
 
-        BigDecimal discount = service.reserveDiscount(
+        BigDecimal discount = service.reserveVoucher(
                 user,
                 new BigDecimal("1000.00"),
-                new BigDecimal("275.00")
+                20
         );
 
         assertEquals(new BigDecimal("200.00"), discount);
-        assertEquals(new BigDecimal("100.00"), profile.getDiscountBalance());
+        assertEquals(0, profile.getVoucher20Count());
+    }
+
+    @Test
+    void completedLessonAwardsFiftyGemsOnlyWhenCalledForFirstCompletion() {
+        GamificationService.AwardResult result = service.awardLessonCompletion(user);
+
+        assertEquals(50, result.gemsEarned());
+        assertEquals(50, result.gemBalance());
+        assertEquals(50, profile.getTotalGemsEarned());
     }
 
     @Test

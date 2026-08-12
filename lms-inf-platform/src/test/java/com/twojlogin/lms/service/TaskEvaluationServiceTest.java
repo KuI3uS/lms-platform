@@ -77,7 +77,10 @@ class TaskEvaluationServiceTest {
                 1,
                 0,
                 1,
-                false
+                false,
+                0,
+                0,
+                0
         ));
 
         lesson = new Lesson();

@@ -16,6 +16,8 @@ import com.twojlogin.lms.repository.UserAchievementRepository;
 import com.twojlogin.lms.repository.CourseCertificateRepository;
 import com.twojlogin.lms.repository.StudyActivityRepository;
 import com.twojlogin.lms.repository.ExamAttemptRepository;
+import com.twojlogin.lms.repository.AvatarItemOwnershipRepository;
+import com.twojlogin.lms.repository.GamificationProfileRepository;
 import com.twojlogin.lms.repository.TutoringBookingRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,6 +46,8 @@ public class UserController {
     private final StudyActivityRepository activityRepository;
     private final ExamAttemptRepository examAttemptRepository;
     private final TutoringBookingRepository tutoringBookingRepository;
+    private final AvatarItemOwnershipRepository avatarItemOwnershipRepository;
+    private final GamificationProfileRepository gamificationProfileRepository;
 
     public UserController(UserRepository userRepository,
                           SubmissionRepository submissionRepository,
@@ -57,7 +61,9 @@ public class UserController {
                           CourseCertificateRepository certificateRepository,
                           StudyActivityRepository activityRepository,
                           ExamAttemptRepository examAttemptRepository,
-                          TutoringBookingRepository tutoringBookingRepository) {
+                          TutoringBookingRepository tutoringBookingRepository,
+                          AvatarItemOwnershipRepository avatarItemOwnershipRepository,
+                          GamificationProfileRepository gamificationProfileRepository) {
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
         this.schoolClassRepository = schoolClassRepository;
@@ -71,6 +77,8 @@ public class UserController {
         this.activityRepository = activityRepository;
         this.examAttemptRepository = examAttemptRepository;
         this.tutoringBookingRepository = tutoringBookingRepository;
+        this.avatarItemOwnershipRepository = avatarItemOwnershipRepository;
+        this.gamificationProfileRepository = gamificationProfileRepository;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -104,6 +112,8 @@ public class UserController {
         orderRepository.clearConfirmedBy(id);
         orderRepository.deleteByUserId(id);
         enrollmentRepository.deleteByUserId(id);
+        avatarItemOwnershipRepository.deleteByUserId(id);
+        gamificationProfileRepository.deleteByUserId(id);
         tutoringBookingRepository.clearStudent(id);
         userRepository.deleteById(id);
     }

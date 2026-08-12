@@ -8,6 +8,7 @@ import {
     BsBoxArrowRight,
     BsChevronDown,
     BsFire,
+    BsGem,
     BsList,
     BsPerson,
     BsX
@@ -54,7 +55,7 @@ export default function Navbar({ onMenuClick }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [identity] = useState(() => readIdentity());
-    const [learningStats, setLearningStats] = useState({ xp: 0, level: 1, taskStreak: 0, xpMultiplier: 1 });
+    const [learningStats, setLearningStats] = useState({ xp: 0, level: 1, taskStreak: 0, xpMultiplier: 1, gemBalance: 0 });
     const [notifications, setNotifications] = useState({ unreadCount: 0, notifications: [] });
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
@@ -192,8 +193,11 @@ export default function Navbar({ onMenuClick }) {
                         <span className="text-xs font-black">Seria {visibleStreak}</span>
                         <span className="rounded-md bg-black/20 px-1.5 py-0.5 text-[10px] font-black">×{visibleMultiplier}</span>
                     </div>
-                    <div className="hidden rounded-xl border border-blue-400/15 bg-blue-400/[0.08] px-3 py-2 text-xs font-black text-blue-200 md:block">
-                        Lvl {learningStats.level || 1} · {learningStats.xp || 0} XP
+                    <div className="hidden items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.08] px-3 py-2 text-xs font-black text-cyan-100 md:flex">
+                        <BsGem className="text-cyan-300" /> {Number(learningStats.gemBalance || 0).toLocaleString("pl-PL")}
+                    </div>
+                    <div className="hidden rounded-xl border px-3 py-2 text-xs font-black lg:block" style={{ borderColor: `${learningStats.leagueColor || "#60a5fa"}33`, color: learningStats.leagueColor || "#bfdbfe", backgroundColor: `${learningStats.leagueColor || "#60a5fa"}0d` }}>
+                        {learningStats.leagueSymbol || "C"} · {learningStats.leagueName || "Węgiel"} · L{learningStats.level || 1}
                     </div>
                     <button
                         type="button"
@@ -211,7 +215,7 @@ export default function Navbar({ onMenuClick }) {
                             onClick={() => { setProfileOpen((open) => !open); setNotificationsOpen(false); }}
                             className="flex h-10 items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] pl-1.5 pr-2 text-slate-300 transition hover:border-cyan-400/30"
                         >
-                            <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 text-[10px] font-black text-slate-950">{initials}</span>
+                            <span className="grid h-7 w-7 place-items-center rounded-lg border bg-slate-900 text-[10px] font-black" style={{ borderColor: learningStats.leagueColor || "#22d3ee", color: learningStats.leagueColor || "#22d3ee", boxShadow: Number(learningStats.level || 1) >= 5 ? `0 0 12px ${learningStats.leagueColor || "#22d3ee"}55` : "none" }}>{initials}</span>
                             <BsChevronDown className="hidden text-xs sm:block" />
                         </button>
                         {profileOpen && (

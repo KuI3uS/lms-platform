@@ -1,6 +1,5 @@
 package com.twojlogin.lms.dto;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
 public record LearningStatsDto(
@@ -16,8 +15,21 @@ public record LearningStatsDto(
         int xpMultiplier,
         Instant taskStreakExpiresAt,
         long completedLessons,
-        BigDecimal discountBalance,
-        int nextRewardLevel,
-        BigDecimal nextRewardAmount
+        long gemBalance,
+        long totalGemsEarned,
+        int nextGemRewardLevel,
+        int nextGemRewardAmount,
+        int voucher5Count,
+        int voucher10Count,
+        int voucher20Count,
+        int xpBoostPercent,
+        Instant xpBoostExpiresAt,
+        String leagueName,
+        String leagueColor,
+        String leagueSymbol,
+        Integer nextLeagueLevel,
+        String equippedOutfit,
+        String equippedAccessory,
+        String equippedAura
 ) {
 }

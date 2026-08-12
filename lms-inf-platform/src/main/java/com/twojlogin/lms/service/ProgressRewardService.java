@@ -29,8 +29,8 @@ public class ProgressRewardService {
     }
 
     @Transactional
-    public void afterLessonCompleted(User user, Lesson lesson) {
-        gamificationService.awardLessonCompletion(user);
+    public GamificationService.AwardResult afterLessonCompleted(User user, Lesson lesson) {
+        GamificationService.AwardResult award = gamificationService.awardLessonCompletion(user);
 
         lessonRepository
                 .findFirstByModuleIdAndOrderIndexGreaterThanOrderByOrderIndexAsc(
@@ -47,5 +47,6 @@ public class ProgressRewardService {
 
         certificateService.issueIfEligible(user, lesson.getModule().getCourse());
         achievementService.evaluate(user);
+        return award;
     }
 }

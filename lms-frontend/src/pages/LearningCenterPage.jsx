@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     BsAwardFill,
+    BsBagFill,
     BsBarChartFill,
     BsBookHalf,
-    BsCashCoin,
     BsCheckCircleFill,
     BsClockHistory,
     BsFire,
+    BsGem,
     BsGraphUpArrow,
     BsLightningChargeFill,
     BsLockFill,
@@ -72,8 +73,11 @@ export default function LearningCenterPage() {
     const navigate = useNavigate();
     const [data, setData] = useState(getCachedAnalytics);
     const [stats, setStats] = useState(null);
+    const [rewards, setRewards] = useState(null);
     const [loading, setLoading] = useState(() => !getCachedAnalytics());
     const [error, setError] = useState("");
+    const [rewardMessage, setRewardMessage] = useState("");
+    const [rewardBusy, setRewardBusy] = useState("");
 
     useEffect(() => {
         let active = true;
@@ -106,6 +110,13 @@ export default function LearningCenterPage() {
             .catch(() => {
                 // Główne statystyki nadal mogą zostać wyświetlone.
             });
+        apiFetch("/rewards")
+            .then((rewardResponse) => {
+                if (active) setRewards(rewardResponse);
+            })
+            .catch(() => {
+                // Sklep nie blokuje analityki nauki.
+            });
         return () => {
             active = false;
         };
@@ -114,6 +125,37 @@ export default function LearningCenterPage() {
     const maxActivity = useMemo(
         () => Math.max(1, ...(data?.recentActivity || []).map((item) => item.seconds)),
         [data]
+    );
+
+    const updateRewardCenter = async (path, successMessage) => {
+        try {
+            setRewardBusy(path);
+            setRewardMessage("");
+            const updated = await apiFetch(path, { method: "POST" });
+            setRewards(updated);
+            setRewardMessage(successMessage);
+            const refreshedStats = await fetchLearningStats({ force: true });
+            setStats(refreshedStats);
+            window.dispatchEvent(new Event("eduhub:stats-changed"));
+        } catch (requestError) {
+            setRewardMessage(requestError.message || "Nie udało się wykonać tej operacji.");
+        } finally {
+            setRewardBusy("");
+        }
+    };
+
+    const purchaseReward = (item) => updateRewardCenter(
+        `/rewards/purchase/${item.code}`,
+        item.type === "DISCOUNT"
+            ? `Kupon ${item.discountPercent}% trafił do Twojego portfela.`
+            : item.type === "BOOSTER"
+                ? `Aktywowano ${item.title}.`
+                : `${item.title} jest już w Twojej kolekcji.`
+    );
+
+    const equipReward = (item) => updateRewardCenter(
+        `/rewards/equip/${item.code}`,
+        `Założono: ${item.title}.`
     );
 
     if (loading) {
@@ -134,15 +176,47 @@ export default function LearningCenterPage() {
 
     return (
         <div className="space-y-10 text-white">
-            <section className="relative overflow-hidden rounded-[38px] border border-emerald-500/20 bg-gradient-to-br from-slate-950 via-emerald-950/50 to-blue-950 p-7 sm:p-11">
-                <div className="absolute -right-20 -top-24 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
-                <div className="relative">
-                    <p className="text-xs font-black uppercase tracking-[0.3em] text-emerald-300">Centrum rozwoju</p>
-                    <h1 className="mt-4 text-4xl font-black sm:text-6xl">Twoja nauka w liczbach</h1>
-                    <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
-                        Analizuj skuteczność, sprawdzaj najtrudniejsze zadania,
-                        zdobywaj osiągnięcia i odbieraj certyfikaty.
-                    </p>
+            <section className="relative overflow-hidden rounded-[38px] border border-cyan-400/15 bg-[#080d19] p-7 sm:p-10">
+                <div className="absolute -right-20 -top-24 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl" />
+                <div className="relative grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+                    <div>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-300">Twój profil rozwoju</p>
+                            {stats?.leagueName && (
+                                <span
+                                    className="rounded-full border px-3 py-1 text-xs font-black"
+                                    style={{ borderColor: `${stats.leagueColor}55`, color: stats.leagueColor, backgroundColor: `${stats.leagueColor}12` }}
+                                >
+                                    Liga {stats.leagueName}
+                                </span>
+                            )}
+                        </div>
+                        <h1 className="mt-4 max-w-3xl text-4xl font-black sm:text-6xl">Uczysz się. Awansujesz. Tworzysz.</h1>
+                        <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-400">
+                            Klejnoty zdobywasz wyłącznie za realne ukończenie lekcji. Wymieniaj je na dodatki, boostery XP i kupony na kursy.
+                        </p>
+                        <div className="mt-7 flex flex-wrap gap-3">
+                            <span className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 font-black text-cyan-100">
+                                <BsGem /> {Number(stats?.gemBalance || rewards?.gemBalance || 0).toLocaleString("pl-PL")} klejnotów
+                            </span>
+                            <span className="inline-flex items-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-300/10 px-4 py-3 font-black text-violet-100">
+                                <BsLightningChargeFill /> Poziom {stats?.level || 1}
+                            </span>
+                        </div>
+                    </div>
+                    <AvatarPreview
+                        avatar={rewards?.avatar || {
+                            outfit: stats?.equippedOutfit,
+                            accessory: stats?.equippedAccessory,
+                            aura: stats?.equippedAura,
+                            glowLevel: 0
+                        }}
+                        league={rewards?.league || {
+                            name: stats?.leagueName,
+                            color: stats?.leagueColor,
+                            symbol: stats?.leagueSymbol
+                        }}
+                    />
                 </div>
             </section>
 
@@ -154,7 +228,7 @@ export default function LearningCenterPage() {
             </div>
 
             {stats && (
-                <section className="grid gap-4 lg:grid-cols-3">
+                <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-3xl border border-blue-400/20 bg-blue-500/[0.08] p-6">
                         <p className="text-xs font-black uppercase tracking-widest text-blue-300">Poziom {stats.level}</p>
                         <p className="mt-3 text-3xl font-black">{stats.xp} XP</p>
@@ -184,19 +258,45 @@ export default function LearningCenterPage() {
                         </p>
                     </div>
 
-                    <div className="rounded-3xl border border-emerald-400/20 bg-emerald-500/[0.08] p-6">
+                    <div className="rounded-3xl border border-cyan-400/20 bg-cyan-500/[0.08] p-6">
                         <div className="flex items-center justify-between gap-4">
                             <div>
-                                <p className="text-xs font-black uppercase tracking-widest text-emerald-300">Portfel nagród</p>
-                                <p className="mt-3 text-3xl font-black">{Number(stats.discountBalance || 0)} zł</p>
+                                <p className="text-xs font-black uppercase tracking-widest text-cyan-300">Klejnoty</p>
+                                <p className="mt-3 text-3xl font-black">{Number(stats.gemBalance || 0).toLocaleString("pl-PL")}</p>
                             </div>
-                            <BsCashCoin className="text-3xl text-emerald-300" />
+                            <BsGem className="text-3xl text-cyan-300" />
                         </div>
                         <p className="mt-4 text-sm leading-6 text-slate-400">
-                            Kolejne {Number(stats.nextRewardAmount || 0)} zł otrzymasz na poziomie {stats.nextRewardLevel}. Na jeden kurs można wykorzystać maksymalnie 20% jego ceny.
+                            +50 za pierwsze ukończenie lekcji. Kolejne +{stats.nextGemRewardAmount} na poziomie {stats.nextGemRewardLevel}.
+                        </p>
+                    </div>
+
+                    <div className="rounded-3xl border p-6" style={{ borderColor: `${stats.leagueColor}33`, backgroundColor: `${stats.leagueColor}0d` }}>
+                        <p className="text-xs font-black uppercase tracking-widest" style={{ color: stats.leagueColor }}>Liga pierwiastków</p>
+                        <div className="mt-3 flex items-center gap-3">
+                            <span className="grid h-12 w-12 place-items-center rounded-2xl border text-lg font-black" style={{ borderColor: `${stats.leagueColor}55`, color: stats.leagueColor, boxShadow: `0 0 24px ${stats.leagueColor}22` }}>
+                                {stats.leagueSymbol}
+                            </span>
+                            <p className="text-3xl font-black">{stats.leagueName}</p>
+                        </div>
+                        <p className="mt-4 text-sm leading-6 text-slate-400">
+                            {stats.nextLeagueLevel
+                                ? `Następna liga od poziomu ${stats.nextLeagueLevel}. Awatar będzie świecić mocniej.`
+                                : "Najwyższa liga. Twój profil ma pełną poświatę Pryzmatu."}
                         </p>
                     </div>
                 </section>
+            )}
+
+            {rewards && (
+                <RewardShop
+                    rewards={rewards}
+                    busy={rewardBusy}
+                    message={rewardMessage}
+                    onPurchase={purchaseReward}
+                    onEquip={equipReward}
+                    onReset={(code) => updateRewardCenter(`/rewards/equip/${code}`, "Przywrócono podstawowy wygląd.")}
+                />
             )}
 
             <div className="grid gap-7 xl:grid-cols-[1.15fr_0.85fr]">
@@ -350,5 +450,221 @@ function Stat({ icon, label, value, color }) {
             <p className="mt-4 text-sm text-slate-500">{label}</p>
             <p className="mt-1 text-3xl font-black">{value}</p>
         </div>
+    );
+}
+
+function AvatarPreview({ avatar = {}, league = {} }) {
+    const color = league.color || "#22d3ee";
+    const glow = Math.max(0, Number(avatar.glowLevel || 0));
+    const orbitOutfit = avatar.outfit === "OUTFIT_ORBIT";
+    const novaOutfit = avatar.outfit === "OUTFIT_NOVA";
+    const visor = avatar.accessory === "ACCESSORY_VISOR";
+    const headphones = avatar.accessory === "ACCESSORY_HEADPHONES";
+    const prismAura = avatar.aura === "AURA_PRISM";
+    const pulseAura = avatar.aura === "AURA_PULSE";
+
+    return (
+        <div className="mx-auto w-full max-w-[280px]">
+            <div
+                className={`relative grid aspect-square place-items-center overflow-hidden rounded-[42px] border bg-black/25 ${pulseAura ? "animate-pulse" : ""}`}
+                style={{
+                    borderColor: `${color}55`,
+                    boxShadow: glow > 0
+                        ? `0 0 ${18 + glow * 9}px ${color}${Math.min(80, 24 + glow * 8).toString(16).padStart(2, "0")}`
+                        : "none"
+                }}
+            >
+                <div className="absolute inset-7 rounded-full opacity-25 blur-2xl" style={{ background: prismAura ? "conic-gradient(#22d3ee,#a78bfa,#f472b6,#facc15,#22d3ee)" : color }} />
+                <div className="relative mt-4 flex flex-col items-center">
+                    {headphones && <div className="absolute top-5 h-16 w-24 rounded-t-full border-[7px] border-emerald-300/80 border-b-0" />}
+                    <div className="relative z-10 h-20 w-20 rounded-[28px] border-4 border-slate-950 bg-gradient-to-br from-slate-100 to-slate-400">
+                        <div className="absolute left-4 top-8 h-2 w-2 rounded-full bg-slate-900" />
+                        <div className="absolute right-4 top-8 h-2 w-2 rounded-full bg-slate-900" />
+                        {visor && <div className="absolute left-1.5 right-1.5 top-6 h-7 rounded-xl border border-cyan-200/70 bg-cyan-300/45 shadow-lg shadow-cyan-300/50" />}
+                    </div>
+                    <div className={`relative -mt-2 h-24 w-32 rounded-[32px_32px_20px_20px] border-4 border-slate-950 ${orbitOutfit ? "bg-gradient-to-br from-violet-400 via-indigo-600 to-slate-900" : novaOutfit ? "bg-gradient-to-br from-cyan-300 via-blue-500 to-blue-950" : "bg-gradient-to-br from-slate-500 to-slate-800"}`}>
+                        <span className="absolute left-1/2 top-5 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-xl border border-white/15 bg-black/25 text-sm font-black" style={{ color }}>
+                            {league.symbol || "C"}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div className="mt-3 text-center">
+                <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color }}>Liga {league.name || "Węgiel"}</p>
+                <p className="mt-1 text-xs text-slate-600">Poświata rośnie wraz z poziomem</p>
+            </div>
+        </div>
+    );
+}
+
+function RewardShop({ rewards, busy, message, onPurchase, onEquip, onReset }) {
+    const groups = [
+        { type: "DISCOUNT", title: "Kupony na kursy", description: "Jednorazowe zniżki kupowane za konsekwentną naukę." },
+        { type: "BOOSTER", title: "Boostery XP", description: "Przyspieszają rozwój poziomu, ale nie zwiększają liczby klejnotów." },
+        { type: "COSMETIC", title: "Atelier awatara", description: "Stroje, dodatki i aury widoczne na Twoim profilu." }
+    ];
+
+    return (
+        <section className="overflow-hidden rounded-[38px] border border-white/10 bg-white/[0.025]">
+            <div className="grid gap-6 border-b border-white/[0.08] p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-end">
+                <div>
+                    <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">Skarbiec EduHub</p>
+                    <h2 className="mt-3 text-3xl font-black sm:text-4xl">Nagrody za wykonaną pracę</h2>
+                    <p className="mt-3 max-w-2xl leading-7 text-slate-400">
+                        Liczy się ukończona lekcja, nie czas spędzony na stronie. Kupon 5% wymaga 2500 klejnotów, czyli 50 pełnych lekcji — około 25 godzin aktywnej pracy przy średnio 30 minutach na lekcję.
+                    </p>
+                </div>
+                <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-5 py-4 text-right">
+                    <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">Dostępne</p>
+                    <p className="mt-1 flex items-center justify-end gap-2 text-3xl font-black"><BsGem /> {Number(rewards.gemBalance).toLocaleString("pl-PL")}</p>
+                </div>
+            </div>
+
+            {message && (
+                <div className="mx-6 mt-6 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.08] px-4 py-3 text-sm font-bold text-cyan-100 sm:mx-8">
+                    {message}
+                </div>
+            )}
+
+            <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3">
+                <div className="rounded-3xl border border-white/[0.08] bg-black/20 p-5">
+                    <p className="text-xs font-black uppercase tracking-widest text-violet-300">Aktywny booster</p>
+                    <p className="mt-2 text-2xl font-black">{rewards.xpBoostPercent > 0 ? `+${rewards.xpBoostPercent}% XP` : "Brak"}</p>
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                        {rewards.xpBoostExpiresAt
+                            ? `Działa do ${new Intl.DateTimeFormat("pl-PL", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Warsaw" }).format(new Date(rewards.xpBoostExpiresAt))}`
+                            : "Booster możesz aktywować w dowolnym momencie."}
+                    </p>
+                </div>
+                <div className="rounded-3xl border border-white/[0.08] bg-black/20 p-5">
+                    <p className="text-xs font-black uppercase tracking-widest text-emerald-300">Portfel kuponów</p>
+                    <div className="mt-4 flex gap-2">
+                        {[5, 10, 20].map((percent) => (
+                            <span key={percent} className="rounded-xl border border-emerald-300/15 bg-emerald-300/[0.07] px-3 py-2 text-sm font-black text-emerald-100">
+                                {percent}% × {rewards.vouchers[`discount${percent}`]}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+                <div className="rounded-3xl border border-white/[0.08] bg-black/20 p-5">
+                    <p className="text-xs font-black uppercase tracking-widest text-amber-300">Premia ligowa</p>
+                    <p className="mt-2 text-2xl font-black">+{rewards.nextGemRewardAmount} klejnotów</p>
+                    <p className="mt-2 text-xs leading-5 text-slate-500">Na poziomie {rewards.nextGemRewardLevel}. Premia wpada co 5 poziomów.</p>
+                </div>
+            </div>
+
+            <LeagueRoadmap currentLeague={rewards.league.name} />
+
+            <div className="space-y-10 border-t border-white/[0.08] p-6 sm:p-8">
+                {groups.map((group) => {
+                    const items = rewards.catalog.filter((item) => group.type === "COSMETIC"
+                        ? ["OUTFIT", "ACCESSORY", "AURA"].includes(item.type)
+                        : item.type === group.type);
+                    return (
+                        <div key={group.type}>
+                            <div className="flex flex-wrap items-end justify-between gap-3">
+                                <div>
+                                    <h3 className="text-2xl font-black">{group.title}</h3>
+                                    <p className="mt-1 text-sm text-slate-500">{group.description}</p>
+                                </div>
+                                {group.type === "COSMETIC" && (
+                                    <div className="flex gap-2">
+                                        <button type="button" disabled={Boolean(busy)} onClick={() => onReset("OUTFIT_CORE")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-slate-400 hover:text-white">Strój bazowy</button>
+                                        <button type="button" disabled={Boolean(busy)} onClick={() => onReset("AURA_NONE")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-slate-400 hover:text-white">Bez aury</button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                {items.map((item) => (
+                                    <RewardCard
+                                        key={item.code}
+                                        item={item}
+                                        gemBalance={rewards.gemBalance}
+                                        busy={busy}
+                                        onPurchase={onPurchase}
+                                        onEquip={onEquip}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </section>
+    );
+}
+
+function LeagueRoadmap({ currentLeague }) {
+    const leagues = [
+        { name: "Węgiel", symbol: "C", level: "1–4", color: "#64748b" },
+        { name: "Miedź", symbol: "Cu", level: "5–9", color: "#f97316" },
+        { name: "Srebro", symbol: "Ag", level: "10–14", color: "#cbd5e1" },
+        { name: "Złoto", symbol: "Au", level: "15–24", color: "#facc15" },
+        { name: "Platyna", symbol: "Pt", level: "25–39", color: "#22d3ee" },
+        { name: "Kryształ", symbol: "Kr", level: "40–59", color: "#a78bfa" },
+        { name: "Pryzmat", symbol: "∞", level: "60+", color: "#f472b6" }
+    ];
+
+    return (
+        <div className="border-t border-white/[0.08] px-6 py-7 sm:px-8">
+            <div className="flex items-end justify-between gap-4">
+                <div>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">Droga pierwiastków</p>
+                    <h3 className="mt-2 text-xl font-black">Im wyższa liga, tym silniejsza poświata awatara</h3>
+                </div>
+            </div>
+            <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
+                {leagues.map((league) => {
+                    const active = currentLeague === league.name;
+                    return (
+                        <div key={league.name} className={`min-w-[132px] rounded-2xl border p-4 ${active ? "bg-white/[0.08]" : "bg-black/15 opacity-65"}`} style={{ borderColor: `${league.color}${active ? "77" : "22"}`, boxShadow: active ? `0 0 24px ${league.color}22` : "none" }}>
+                            <span className="grid h-9 w-9 place-items-center rounded-xl border text-xs font-black" style={{ borderColor: `${league.color}55`, color: league.color }}>{league.symbol}</span>
+                            <p className="mt-3 text-sm font-black" style={{ color: active ? league.color : undefined }}>{league.name}</p>
+                            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-600">Poziom {league.level}</p>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+function RewardCard({ item, gemBalance, busy, onPurchase, onEquip }) {
+    const cosmetic = ["OUTFIT", "ACCESSORY", "AURA"].includes(item.type);
+    const canAfford = Number(gemBalance) >= item.cost;
+    const action = cosmetic && item.owned ? () => onEquip(item) : () => onPurchase(item);
+    const disabled = Boolean(busy) || !item.available || item.equipped || (!item.owned && !canAfford);
+    const label = !item.available
+        ? `Poziom ${item.requiredLevel}`
+        : item.equipped
+            ? "Założone"
+            : cosmetic && item.owned
+                ? "Załóż"
+                : !canAfford
+                    ? "Za mało klejnotów"
+                    : "Kup";
+
+    return (
+        <article className={`group rounded-3xl border p-5 transition ${item.equipped ? "border-cyan-300/35 bg-cyan-300/[0.08]" : "border-white/[0.08] bg-black/20 hover:-translate-y-1 hover:border-white/20"}`}>
+            <div className="flex items-start justify-between gap-4">
+                <span className={`grid h-12 w-12 place-items-center rounded-2xl text-xl ${item.type === "DISCOUNT" ? "bg-emerald-400/10 text-emerald-300" : item.type === "BOOSTER" ? "bg-violet-400/10 text-violet-300" : "bg-cyan-400/10 text-cyan-300"}`}>
+                    {item.type === "DISCOUNT" ? `${item.discountPercent}%` : item.type === "BOOSTER" ? <BsLightningChargeFill /> : <BsBagFill />}
+                </span>
+                {item.quantity > 0 && <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-black text-emerald-300">Masz {item.quantity}</span>}
+            </div>
+            <h4 className="mt-4 text-lg font-black">{item.title}</h4>
+            <p className="mt-2 min-h-12 text-sm leading-6 text-slate-500">{item.description}</p>
+            <div className="mt-5 flex items-center justify-between gap-3">
+                <span className="flex items-center gap-1.5 text-sm font-black text-cyan-200"><BsGem /> {item.cost.toLocaleString("pl-PL")}</span>
+                <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={action}
+                    className="rounded-xl bg-white px-4 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-600"
+                >
+                    {busy === `/rewards/purchase/${item.code}` || busy === `/rewards/equip/${item.code}` ? "Chwila…" : label}
+                </button>
+            </div>
+        </article>
     );
 }
