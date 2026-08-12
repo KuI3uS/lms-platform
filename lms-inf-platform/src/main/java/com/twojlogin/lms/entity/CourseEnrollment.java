@@ -36,6 +36,8 @@ public class CourseEnrollment {
     @Column(nullable = false)
     private LocalDateTime enrolledAt;
 
+    private LocalDateTime accessExpiresAt;
+
     public Long getId() {
         return id;
     }
@@ -78,5 +80,13 @@ public class CourseEnrollment {
 
     public void setEnrolledAt(LocalDateTime enrolledAt) {
         this.enrolledAt = enrolledAt;
+    }
+
+    public LocalDateTime getAccessExpiresAt() {
+        return accessExpiresAt;
+    }
+
+    public void setAccessExpiresAt(LocalDateTime accessExpiresAt) {
+        this.accessExpiresAt = accessExpiresAt;
     }
 }

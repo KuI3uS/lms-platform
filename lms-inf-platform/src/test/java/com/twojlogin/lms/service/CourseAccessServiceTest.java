@@ -8,11 +8,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 class CourseAccessServiceTest {
 
@@ -45,7 +48,9 @@ class CourseAccessServiceTest {
 
     @Test
     void paidCourseRequiresActiveEnrollmentForRegularUser() {
-        when(enrollmentRepository.existsByUserIdAndCourseIdAndActiveTrue(7L, 11L))
+        when(enrollmentRepository.hasActiveAccess(
+                eq(7L), eq(11L), any(LocalDateTime.class)
+        ))
                 .thenReturn(false);
 
         assertFalse(service.hasAccess(user, course));
@@ -53,7 +58,9 @@ class CourseAccessServiceTest {
 
     @Test
     void activeEnrollmentUnlocksPaidCourse() {
-        when(enrollmentRepository.existsByUserIdAndCourseIdAndActiveTrue(7L, 11L))
+        when(enrollmentRepository.hasActiveAccess(
+                eq(7L), eq(11L), any(LocalDateTime.class)
+        ))
                 .thenReturn(true);
 
         assertTrue(service.hasAccess(user, course));

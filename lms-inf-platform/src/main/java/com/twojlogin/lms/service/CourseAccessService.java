@@ -1,6 +1,7 @@
 package com.twojlogin.lms.service;
 
 import com.twojlogin.lms.entity.Course;
+import com.twojlogin.lms.entity.CourseBillingMode;
 import com.twojlogin.lms.entity.CourseModule;
 import com.twojlogin.lms.entity.CourseOrderStatus;
 import com.twojlogin.lms.entity.Lesson;
@@ -18,9 +19,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 public class CourseAccessService {
+
+    private static final ZoneId WARSAW_ZONE = ZoneId.of("Europe/Warsaw");
 
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
@@ -61,16 +66,16 @@ public class CourseAccessService {
     }
 
     public boolean isFree(Course course) {
-        return course.getPrice() == null
-                || course.getPrice().compareTo(BigDecimal.ZERO) <= 0;
+        return course.getBillingMode() == CourseBillingMode.FREE;
     }
 
     public boolean hasAccess(User user, Course course) {
         return isAdmin(user)
                 || isFree(course)
-                || enrollmentRepository.existsByUserIdAndCourseIdAndActiveTrue(
+                || enrollmentRepository.hasActiveAccess(
                         user.getId(),
-                        course.getId()
+                        course.getId(),
+                        LocalDateTime.now(WARSAW_ZONE)
                 );
     }
 
@@ -87,9 +92,10 @@ public class CourseAccessService {
     public String accessStatus(User user, Course course) {
         if (isAdmin(user)) return "ADMIN";
         if (isFree(course)) return "FREE";
-        if (enrollmentRepository.existsByUserIdAndCourseIdAndActiveTrue(
+        if (enrollmentRepository.hasActiveAccess(
                 user.getId(),
-                course.getId()
+                course.getId(),
+                LocalDateTime.now(WARSAW_ZONE)
         )) return "ACTIVE";
         if (hasPendingOrder(user, course)) return "PENDING";
         return "LOCKED";

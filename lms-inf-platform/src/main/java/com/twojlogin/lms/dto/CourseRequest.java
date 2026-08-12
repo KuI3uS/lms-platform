@@ -1,6 +1,7 @@
 package com.twojlogin.lms.dto;
 
 import java.math.BigDecimal;
+import com.twojlogin.lms.entity.CourseBillingMode;
 
 public record CourseRequest(
         String name,
@@ -11,6 +12,9 @@ public record CourseRequest(
         String thumbnailUrl,
         String level,
         String paymentUrl,
+        CourseBillingMode billingMode,
+        BigDecimal monthlyPrice,
+        String monthlyPaymentUrl,
         String category,
         String courseLanguage,
         String cefrLevel

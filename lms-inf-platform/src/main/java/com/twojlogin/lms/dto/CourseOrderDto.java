@@ -3,6 +3,7 @@ package com.twojlogin.lms.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.twojlogin.lms.entity.CourseOrder;
 import com.twojlogin.lms.entity.CourseOrderStatus;
+import com.twojlogin.lms.entity.CoursePurchaseType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,9 +19,11 @@ public record CourseOrderDto(
         BigDecimal amount,
         String currency,
         CourseOrderStatus status,
+        CoursePurchaseType purchaseType,
         String paymentUrl,
         LocalDateTime createdAt,
         LocalDateTime paidAt,
+        LocalDateTime accessUntil,
         Long userId,
         String userEmail
 ) {
@@ -37,11 +40,15 @@ public record CourseOrderDto(
                 order.getAmount(),
                 order.getCurrency(),
                 order.getStatus(),
+                order.getPurchaseType(),
                 includePaymentUrl && order.getDiscountAmount().signum() == 0
-                        ? order.getCourse().getPaymentUrl()
+                        ? order.getPurchaseType() == CoursePurchaseType.SUBSCRIPTION
+                                ? order.getCourse().getMonthlyPaymentUrl()
+                                : order.getCourse().getPaymentUrl()
                         : null,
                 order.getCreatedAt(),
                 order.getPaidAt(),
+                order.getAccessUntil(),
                 order.getUser().getId(),
                 order.getUser().getEmail()
         );

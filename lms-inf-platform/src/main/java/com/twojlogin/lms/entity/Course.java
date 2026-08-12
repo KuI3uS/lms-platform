@@ -18,6 +18,9 @@ public class Course {
     @Column(length = 5000)
     private String description;
     private BigDecimal price;
+    private BigDecimal monthlyPrice;
+    @Enumerated(EnumType.STRING)
+    private CourseBillingMode billingMode;
     private boolean published;
     private String thumbnailUrl;
     private String level;
@@ -26,6 +29,8 @@ public class Course {
     private String cefrLevel;
     @Column(length = 1000)
     private String paymentUrl;
+    @Column(length = 1000)
+    private String monthlyPaymentUrl;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     @JsonIgnore
@@ -78,6 +83,25 @@ public class Course {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public BigDecimal getMonthlyPrice() {
+        return monthlyPrice;
+    }
+
+    public void setMonthlyPrice(BigDecimal monthlyPrice) {
+        this.monthlyPrice = monthlyPrice;
+    }
+
+    public CourseBillingMode getBillingMode() {
+        if (billingMode != null) return billingMode;
+        return price == null || price.signum() <= 0
+                ? CourseBillingMode.FREE
+                : CourseBillingMode.ONE_TIME;
+    }
+
+    public void setBillingMode(CourseBillingMode billingMode) {
+        this.billingMode = billingMode;
     }
 
     public boolean isPublished() {
@@ -134,5 +158,13 @@ public class Course {
 
     public void setPaymentUrl(String paymentUrl) {
         this.paymentUrl = paymentUrl;
+    }
+
+    public String getMonthlyPaymentUrl() {
+        return monthlyPaymentUrl;
+    }
+
+    public void setMonthlyPaymentUrl(String monthlyPaymentUrl) {
+        this.monthlyPaymentUrl = monthlyPaymentUrl;
     }
 }

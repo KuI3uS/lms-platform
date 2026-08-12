@@ -3,6 +3,7 @@ package com.twojlogin.lms.service;
 import com.twojlogin.lms.dto.CourseRequest;
 import com.twojlogin.lms.dto.CourseSummaryDto;
 import com.twojlogin.lms.entity.Course;
+import com.twojlogin.lms.entity.CourseBillingMode;
 import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.CourseModuleRepository;
 import com.twojlogin.lms.repository.CourseRepository;
@@ -25,9 +26,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 public class CourseService {
+
+    private static final ZoneId WARSAW_ZONE = ZoneId.of("Europe/Warsaw");
 
     private static final Set<String> COURSE_CATEGORIES = Set.of(
             "PROGRAMMING",
@@ -197,9 +202,12 @@ public class CourseService {
                         courseIds
                 )
         );
-        Set<Long> activeCourseIds = admin
-                ? Set.of()
-                : Set.copyOf(enrollmentRepository.findActiveCourseIdsByUserId(user.getId()));
+        Map<Long, LocalDateTime> accessibleCourses = admin
+                ? Map.of()
+                : toAccessMap(enrollmentRepository.findAccessibleCoursesByUserId(
+                        user.getId(),
+                        LocalDateTime.now(WARSAW_ZONE)
+                ));
         Set<Long> pendingCourseIds = admin
                 ? Set.of()
                 : Set.copyOf(orderRepository.findPendingCourseIdsByUserId(user.getId()));
@@ -211,7 +219,7 @@ public class CourseService {
                         moduleCounts.getOrDefault(course.getId(), 0L),
                         lessonCounts.getOrDefault(course.getId(), 0L),
                         completedLessonCounts.getOrDefault(course.getId(), 0L),
-                        activeCourseIds,
+                        accessibleCourses,
                         pendingCourseIds
                 ))
                 .toList();
@@ -223,16 +231,15 @@ public class CourseService {
             long moduleCount,
             long lessonCount,
             long completedLessonCount,
-            Set<Long> activeCourseIds,
+            Map<Long, LocalDateTime> accessibleCourses,
             Set<Long> pendingCourseIds
     ) {
         int progress = lessonCount == 0
                 ? 0
                 : (int) Math.round(completedLessonCount * 100.0 / lessonCount);
 
-        boolean paid = course.getPrice() != null
-                && course.getPrice().compareTo(BigDecimal.ZERO) > 0;
-        boolean active = activeCourseIds.contains(course.getId());
+        boolean paid = course.getBillingMode() != CourseBillingMode.FREE;
+        boolean active = accessibleCourses.containsKey(course.getId());
         String accessStatus = admin
                 ? "ADMIN"
                 : !paid
@@ -262,10 +269,22 @@ public class CourseService {
                 "ACTIVE".equals(accessStatus) || "ADMIN".equals(accessStatus),
                 accessStatus,
                 admin ? course.getPaymentUrl() : null,
+                course.getBillingMode(),
+                course.getMonthlyPrice(),
+                admin ? course.getMonthlyPaymentUrl() : null,
+                accessibleCourses.get(course.getId()),
                 course.getCategory(),
                 course.getCourseLanguage(),
                 course.getCefrLevel()
         );
+    }
+
+    private Map<Long, LocalDateTime> toAccessMap(List<Object[]> rows) {
+        Map<Long, LocalDateTime> access = new HashMap<>();
+        for (Object[] row : rows) {
+            access.put(((Number) row[0]).longValue(), (LocalDateTime) row[1]);
+        }
+        return access;
     }
 
     private Map<Long, Long> toCountMap(List<Object[]> rows) {
@@ -290,21 +309,39 @@ public class CourseService {
         }
 
         BigDecimal price = request.price() == null ? BigDecimal.ZERO : request.price();
-        if (price.signum() < 0) {
+        BigDecimal monthlyPrice = request.monthlyPrice() == null
+                ? BigDecimal.ZERO
+                : request.monthlyPrice();
+        if (price.signum() < 0 || monthlyPrice.signum() < 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Cena nie może być ujemna"
             );
         }
 
+        CourseBillingMode billingMode = request.billingMode();
+        if (billingMode == null) {
+            billingMode = price.signum() > 0
+                    ? CourseBillingMode.ONE_TIME
+                    : monthlyPrice.signum() > 0
+                            ? CourseBillingMode.SUBSCRIPTION
+                            : CourseBillingMode.FREE;
+        }
+        if (!billingMode.allowsOneTime()) price = BigDecimal.ZERO;
+        if (!billingMode.allowsSubscription()) monthlyPrice = BigDecimal.ZERO;
+        validatePrices(billingMode, price, monthlyPrice);
+
         course.setName(name);
         course.setTitle(clean(request.title()));
         course.setDescription(clean(request.description()));
         course.setPrice(price);
+        course.setMonthlyPrice(monthlyPrice);
+        course.setBillingMode(billingMode);
         course.setPublished(request.published());
         course.setThumbnailUrl(clean(request.thumbnailUrl()));
         course.setLevel(clean(request.level()) == null ? "Podstawy" : clean(request.level()));
         course.setPaymentUrl(clean(request.paymentUrl()));
+        course.setMonthlyPaymentUrl(clean(request.monthlyPaymentUrl()));
 
         String category = uppercase(request.category());
         if (category == null) {
@@ -336,6 +373,27 @@ public class CourseService {
         } else {
             course.setCourseLanguage(null);
             course.setCefrLevel(null);
+        }
+    }
+
+    private void validatePrices(
+            CourseBillingMode billingMode,
+            BigDecimal price,
+            BigDecimal monthlyPrice
+    ) {
+        boolean oneTimeValid = price.signum() > 0;
+        boolean monthlyValid = monthlyPrice.signum() > 0;
+        boolean valid = switch (billingMode) {
+            case FREE -> price.signum() == 0 && monthlyPrice.signum() == 0;
+            case ONE_TIME -> oneTimeValid;
+            case SUBSCRIPTION -> monthlyValid;
+            case FLEXIBLE -> oneTimeValid && monthlyValid;
+        };
+        if (!valid) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Uzupełnij cenę odpowiednią dla wybranego sposobu płatności"
+            );
         }
     }
 

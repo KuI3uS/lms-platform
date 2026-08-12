@@ -78,6 +78,16 @@ function formatPrice(price) {
     }).format(Number(price || 0));
 }
 
+function formatCoursePrice(course) {
+    if (course.billingMode === "SUBSCRIPTION") {
+        return `${formatPrice(course.monthlyPrice)} / mies.`;
+    }
+    if (course.billingMode === "FLEXIBLE") {
+        return `od ${formatPrice(course.monthlyPrice)} / mies.`;
+    }
+    return formatPrice(course.price);
+}
+
 function CourseSkeleton() {
     return (
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04]">
@@ -109,7 +119,7 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
     const actionLabel = pending
         ? "Płatność oczekuje"
         : locked
-            ? `Kup kurs — ${formatPrice(course.price)}`
+            ? `Odblokuj — ${formatCoursePrice(course)}`
             : progress > 0
                 ? "Kontynuuj naukę"
                 : "Rozpocznij naukę";
@@ -134,7 +144,7 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
                     {categoryDefinition.label}
                 </div>
                 <div className="absolute right-4 top-4 rounded-full border border-white/15 bg-slate-950/85 px-3 py-1.5 text-xs font-black backdrop-blur-xl">
-                    {course.paid ? formatPrice(course.price) : "Bezpłatny"}
+                    {course.paid ? formatCoursePrice(course) : "Bezpłatny"}
                 </div>
             </div>
 

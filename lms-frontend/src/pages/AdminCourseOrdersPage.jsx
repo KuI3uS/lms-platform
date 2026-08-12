@@ -101,6 +101,10 @@ export default function AdminCourseOrdersPage() {
                                     <h2 className="truncate text-xl font-black">{order.courseTitle}</h2>
                                     <p className="mt-1 break-all text-sm text-slate-400">{order.userEmail}</p>
                                     <p className="mt-2 font-mono text-xs text-cyan-300">{order.reference}</p>
+                                    <p className="mt-2 text-xs font-bold text-violet-300">
+                                        {order.purchaseType === "SUBSCRIPTION" ? "Abonament miesięczny" : "Zakup jednorazowy"}
+                                        {order.accessUntil && ` · dostęp do ${new Date(order.accessUntil).toLocaleDateString("pl-PL")}`}
+                                    </p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center">

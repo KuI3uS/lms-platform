@@ -51,6 +51,11 @@ public class CourseOrder {
 
     private LocalDateTime paidAt;
 
+    @Enumerated(EnumType.STRING)
+    private CoursePurchaseType purchaseType;
+
+    private LocalDateTime accessUntil;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "confirmed_by_id")
     private User confirmedBy;
@@ -137,6 +142,22 @@ public class CourseOrder {
 
     public void setPaidAt(LocalDateTime paidAt) {
         this.paidAt = paidAt;
+    }
+
+    public CoursePurchaseType getPurchaseType() {
+        return purchaseType == null ? CoursePurchaseType.ONE_TIME : purchaseType;
+    }
+
+    public void setPurchaseType(CoursePurchaseType purchaseType) {
+        this.purchaseType = purchaseType;
+    }
+
+    public LocalDateTime getAccessUntil() {
+        return accessUntil;
+    }
+
+    public void setAccessUntil(LocalDateTime accessUntil) {
+        this.accessUntil = accessUntil;
     }
 
     public User getConfirmedBy() {

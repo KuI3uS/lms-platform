@@ -28,6 +28,7 @@ export default function CourseCheckoutPage() {
     const [course, setCourse] = useState(null);
     const [order, setOrder] = useState(null);
     const [learningStats, setLearningStats] = useState(null);
+    const [purchaseType, setPurchaseType] = useState("ONE_TIME");
     const [applyReward, setApplyReward] = useState(false);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
@@ -42,15 +43,18 @@ export default function CourseCheckoutPage() {
         () => resolveCoursePaymentUrl(course, order),
         [course, order]
     );
+    const selectedPrice = purchaseType === "SUBSCRIPTION"
+        ? Number(course?.monthlyPrice || 0)
+        : Number(course?.price || 0);
     const availableReward = useMemo(() => {
         const balance = Number(learningStats?.discountBalance || 0);
-        const courseLimit = Number(course?.price || 0) * 0.2;
+        const courseLimit = selectedPrice * 0.2;
         return Math.floor(Math.min(balance, courseLimit) / 50) * 50;
-    }, [course, learningStats]);
+    }, [selectedPrice, learningStats]);
     const previewDiscount = applyReward ? availableReward : 0;
     const amountDue = order?.amount ?? Math.max(
         0,
-        Number(course?.price || 0) - previewDiscount
+        selectedPrice - previewDiscount
     );
 
     useEffect(() => {
@@ -63,11 +67,15 @@ export default function CourseCheckoutPage() {
         ])
             .then(([courseData, orders, statsData]) => {
                 if (!active) return;
-                setCourse(courseData);
-                setOrder((orders || []).find(
+                const pendingOrder = (orders || []).find(
                     (item) => String(item.courseId) === String(courseId)
                         && item.status === "PENDING"
-                ) || null);
+                ) || null;
+                const initialPurchaseType = pendingOrder?.purchaseType
+                    || (courseData.billingMode === "SUBSCRIPTION" ? "SUBSCRIPTION" : "ONE_TIME");
+                setCourse(courseData);
+                setOrder(pendingOrder);
+                setPurchaseType(initialPurchaseType);
                 setLearningStats(statsData);
             })
             .catch((loadError) => {
@@ -108,7 +116,8 @@ export default function CourseCheckoutPage() {
             const created = await apiFetch(`/course-orders/course/${courseId}`, {
                 method: "POST",
                 body: JSON.stringify({
-                    requestedDiscount: applyReward ? availableReward : 0
+                    requestedDiscount: applyReward ? availableReward : 0,
+                    purchaseType
                 })
             });
             setOrder(created);
@@ -179,19 +188,39 @@ export default function CourseCheckoutPage() {
                     </div>
 
                     <div className="grid gap-4 p-6 sm:grid-cols-3 sm:p-8">
-                        <Info icon={<BsLockFill />} title="Dostęp na stałe" text="Kurs pojawi się w sekcji Moje kursy." />
+                        <Info
+                            icon={<BsLockFill />}
+                            title={purchaseType === "SUBSCRIPTION" ? "Dostęp miesięczny" : "Dostęp na stałe"}
+                            text={purchaseType === "SUBSCRIPTION" ? "Miesiąc od zatwierdzenia płatności." : "Kurs zostaje w Twojej bibliotece."}
+                        />
                         <Info icon={<BsShieldCheck />} title="Bezpieczna aktywacja" text="Dostęp nadaje backend po potwierdzeniu." />
                         <Info icon={<BsCheckCircleFill />} title="Pełna zawartość" text="Lekcje, egzaminy i certyfikat." />
                     </div>
                 </section>
 
                 <aside className="h-fit rounded-[30px] border border-cyan-500/20 bg-slate-900/80 p-6 shadow-2xl shadow-cyan-950/20 sm:p-7">
+                    {course?.billingMode === "FLEXIBLE" && !order && !course?.canAccess && (
+                        <div className="mb-6">
+                            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Wybierz dostęp</p>
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                                <button type="button" onClick={() => { setPurchaseType("ONE_TIME"); setApplyReward(false); }} className={`rounded-xl border p-3 text-left transition ${purchaseType === "ONE_TIME" ? "border-cyan-300 bg-cyan-300/10" : "border-white/10 bg-black/20"}`}>
+                                    <span className="block text-sm font-black">Na stałe</span>
+                                    <span className="mt-1 block text-xs text-slate-500">{formatPrice(course.price)}</span>
+                                </button>
+                                <button type="button" onClick={() => { setPurchaseType("SUBSCRIPTION"); setApplyReward(false); }} className={`rounded-xl border p-3 text-left transition ${purchaseType === "SUBSCRIPTION" ? "border-violet-300 bg-violet-300/10" : "border-white/10 bg-black/20"}`}>
+                                    <span className="block text-sm font-black">Na miesiąc</span>
+                                    <span className="mt-1 block text-xs text-slate-500">{formatPrice(course.monthlyPrice)} / mies.</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     <p className="text-sm font-bold text-slate-400">Do zapłaty</p>
                     <p className="mt-2 text-4xl font-black text-white">{formatPrice(amountDue)}</p>
+                    {purchaseType === "SUBSCRIPTION" && <p className="mt-1 text-xs font-bold text-violet-300">za 1 miesiąc dostępu</p>}
                     {Number(order?.discountAmount || previewDiscount) > 0 && (
                         <div className="mt-3 flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-2 text-sm">
                             <span className="text-slate-400">
-                                Cena przed nagrodą: {formatPrice(order?.originalAmount ?? course?.price)}
+                                Cena przed nagrodą: {formatPrice(order?.originalAmount ?? selectedPrice)}
                             </span>
                             <strong className="text-emerald-300">
                                 −{formatPrice(order?.discountAmount ?? previewDiscount)}
@@ -224,7 +253,7 @@ export default function CourseCheckoutPage() {
                                     <BsHourglassSplit /> Oczekuje na potwierdzenie
                                 </div>
                                 <p className="mt-2 text-sm text-amber-100/70">
-                                    Po płatności administrator potwierdzi zamówienie, a dostęp włączy się automatycznie.
+                                    Po płatności administrator potwierdzi zamówienie, a {purchaseType === "SUBSCRIPTION" ? "miesięczny " : ""}dostęp włączy się automatycznie.
                                 </p>
                             </div>
                             <div className="rounded-2xl bg-black/25 p-4">
@@ -304,7 +333,7 @@ export default function CourseCheckoutPage() {
                                 {busy
                                     ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                     : <BsCreditCard />}
-                                {busy ? "Tworzenie zamówienia..." : "Kup kurs"}
+                                {busy ? "Tworzenie zamówienia..." : purchaseType === "SUBSCRIPTION" ? "Wykup miesiąc" : "Kup kurs na stałe"}
                             </button>
                         </div>
                     )}

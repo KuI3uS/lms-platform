@@ -3,6 +3,7 @@ package com.twojlogin.lms.entity;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 @Entity
 @Table(
@@ -33,6 +34,8 @@ public class GamificationProfile {
 
     @Column(nullable = false)
     private int bestCorrectTaskStreak;
+
+    private Instant correctTaskStreakUpdatedAt;
 
     @Column(nullable = false)
     private int rewardedMilestone;
@@ -85,6 +88,14 @@ public class GamificationProfile {
 
     public void setBestCorrectTaskStreak(int bestCorrectTaskStreak) {
         this.bestCorrectTaskStreak = bestCorrectTaskStreak;
+    }
+
+    public Instant getCorrectTaskStreakUpdatedAt() {
+        return correctTaskStreakUpdatedAt;
+    }
+
+    public void setCorrectTaskStreakUpdatedAt(Instant correctTaskStreakUpdatedAt) {
+        this.correctTaskStreakUpdatedAt = correctTaskStreakUpdatedAt;
     }
 
     public int getRewardedMilestone() {

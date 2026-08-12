@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class AchievementService {
 
     private static final int XP_PER_LESSON = 20;
+    private static final ZoneId WARSAW_ZONE = ZoneId.of("Europe/Warsaw");
 
     private final UserAchievementRepository achievementRepository;
     private final LessonProgressRepository lessonProgressRepository;
@@ -57,7 +59,7 @@ public class AchievementService {
         int xp = Math.toIntExact(completedLessons * XP_PER_LESSON);
         int streak = LearningStatsService.calculateStreak(
                 lessonProgressRepository.findCompletedDatesByUserId(user.getId()),
-                LocalDate.now()
+                LocalDate.now(WARSAW_ZONE)
         );
         long completedModules = countCompletedModules(user.getId());
 

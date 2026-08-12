@@ -1,104 +1,102 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch, logout } from "../api/api";
-import {
-    fetchLearningStats,
-    invalidateLearningStats
-} from "../api/learningStats";
+import { fetchLearningStats, invalidateLearningStats } from "../api/learningStats";
 import {
     BsBell,
     BsBoxArrowRight,
+    BsChevronDown,
     BsFire,
     BsList,
-    BsPersonCircle,
-    BsRocketTakeoff,
+    BsPerson,
     BsX
 } from "react-icons/bs";
 
+const PAGE_TITLES = [
+    ["/dashboard", "Twój dzień"],
+    ["/courses", "Ścieżki nauki"],
+    ["/results", "Wyniki"],
+    ["/exams", "Egzaminy INF"],
+    ["/learning-center", "Postęp i nagrody"],
+    ["/admin/course-orders", "Zamówienia"],
+    ["/admin/users", "Użytkownicy"],
+    ["/admin/submissions", "Prace uczniów"],
+    ["/admin/tutoring", "Korepetycje"],
+    ["/admin", "Strefa twórcy"]
+];
+
+function readIdentity() {
+    try {
+        const token = localStorage.getItem("token");
+        const payload = token ? JSON.parse(atob(token.split(".")[1])) : {};
+        return {
+            email: payload.sub || payload.email || "Użytkownik",
+            role: payload.role || "STUDENT"
+        };
+    } catch {
+        return { email: "Użytkownik", role: "STUDENT" };
+    }
+}
+
+function formatExpiry(value) {
+    if (!value) return "Wykonaj zadanie, aby rozpocząć serię";
+    return `Wygasa ${new Intl.DateTimeFormat("pl-PL", {
+        timeZone: "Europe/Warsaw",
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(new Date(value))}`;
+}
+
 export default function Navbar({ onMenuClick }) {
     const navigate = useNavigate();
-    const [learningStats, setLearningStats] = useState({
-        xp: 0,
-        level: 1,
-        taskStreak: 0,
-        xpMultiplier: 1
-    });
-    const [notifications, setNotifications] = useState({
-        unreadCount: 0,
-        notifications: []
-    });
+    const location = useLocation();
+    const [identity] = useState(() => readIdentity());
+    const [learningStats, setLearningStats] = useState({ xp: 0, level: 1, taskStreak: 0, xpMultiplier: 1 });
+    const [notifications, setNotifications] = useState({ unreadCount: 0, notifications: [] });
     const [notificationsOpen, setNotificationsOpen] = useState(false);
-    const token = localStorage.getItem("token");
+    const [profileOpen, setProfileOpen] = useState(false);
 
-    let email = "";
-    let role = "";
-
-    if (token) {
-        try {
-            const payload = JSON.parse(atob(token.split(".")[1]));
-            email = payload.sub || payload.email || "";
-            role = payload.role || "";
-        } catch (error) {
-            console.error("Błędny token", error);
-        }
-    }
+    const pageTitle = PAGE_TITLES.find(([path]) => location.pathname.startsWith(path))?.[1] || "EduHub";
+    const streakActive = learningStats.taskStreak > 0
+        && Boolean(learningStats.taskStreakExpiresAt);
+    const visibleStreak = streakActive ? learningStats.taskStreak : 0;
+    const visibleMultiplier = streakActive ? learningStats.xpMultiplier : 1;
+    const initials = identity.email.slice(0, 2).toUpperCase();
 
     useEffect(() => {
         let active = true;
-
         const refresh = ({ force = false } = {}) => {
             fetchLearningStats({ force })
-                .then(data => {
-                    if (active && data) setLearningStats(data);
-                })
-                .catch(error => console.error("Nie udało się pobrać statystyk nauki", error));
-
+                .then((data) => active && data && setLearningStats(data))
+                .catch(() => {});
             apiFetch("/notifications")
-                .then(data => {
-                    if (active && data) setNotifications(data);
-                })
+                .then((data) => active && data && setNotifications(data))
                 .catch(() => {});
         };
-
-        const refreshWhenVisible = () => {
-            if (document.visibilityState === "visible") refresh();
-        };
-
-        refresh();
-        const timer = window.setInterval(refresh, 30000);
-        document.addEventListener("visibilitychange", refreshWhenVisible);
-        const refreshChangedStats = () => {
+        const refreshVisible = () => document.visibilityState === "visible" && refresh();
+        const refreshStats = () => {
             invalidateLearningStats();
             refresh({ force: true });
         };
-        window.addEventListener("eduhub:stats-changed", refreshChangedStats);
-
+        refresh();
+        const refreshTimer = window.setInterval(refresh, 30000);
+        document.addEventListener("visibilitychange", refreshVisible);
+        window.addEventListener("eduhub:stats-changed", refreshStats);
         return () => {
             active = false;
-            window.clearInterval(timer);
-            document.removeEventListener("visibilitychange", refreshWhenVisible);
-            window.removeEventListener("eduhub:stats-changed", refreshChangedStats);
+            window.clearInterval(refreshTimer);
+            document.removeEventListener("visibilitychange", refreshVisible);
+            window.removeEventListener("eduhub:stats-changed", refreshStats);
         };
     }, []);
-
-    useEffect(() => {
-        if (!notificationsOpen) return undefined;
-
-        const closeOnEscape = (event) => {
-            if (event.key === "Escape") setNotificationsOpen(false);
-        };
-
-        document.addEventListener("keydown", closeOnEscape);
-        return () => document.removeEventListener("keydown", closeOnEscape);
-    }, [notificationsOpen]);
 
     const openNotification = async (notification) => {
         if (!notification.read) {
             try {
-                await apiFetch(`/notifications/${notification.id}/read`, {
-                    method: "PUT"
-                });
+                await apiFetch(`/notifications/${notification.id}/read`, { method: "PUT" });
                 setNotifications((current) => ({
                     unreadCount: Math.max(0, current.unreadCount - 1),
                     notifications: current.notifications.map((item) =>
@@ -106,7 +104,7 @@ export default function Navbar({ onMenuClick }) {
                     )
                 }));
             } catch {
-                // Przejście do celu nadal jest możliwe.
+                // Nawigacja nadal może zostać wykonana.
             }
         }
         setNotificationsOpen(false);
@@ -121,7 +119,7 @@ export default function Navbar({ onMenuClick }) {
                 notifications: current.notifications.map((item) => ({ ...item, read: true }))
             }));
         } catch {
-            // Stan pozostaje bez zmian, jeśli serwer odrzuci operację.
+            // Nie zmieniamy lokalnego stanu po błędzie serwera.
         }
     };
 
@@ -132,65 +130,39 @@ export default function Navbar({ onMenuClick }) {
                     type="button"
                     aria-label="Zamknij powiadomienia"
                     onClick={() => setNotificationsOpen(false)}
-                    className="fixed inset-0 z-[9998] cursor-default bg-slate-950/25 backdrop-blur-[1px]"
+                    className="fixed inset-0 z-[9998] cursor-default bg-black/35 backdrop-blur-[2px]"
                 />
-                <section
-                    role="dialog"
-                    aria-label="Powiadomienia"
-                    className="fixed right-3 top-[4.5rem] z-[9999] w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden rounded-3xl border border-white/15 bg-slate-950 shadow-2xl shadow-black/80 sm:right-5 sm:top-[5.5rem]"
-                >
-                    <div className="flex items-center justify-between border-b border-white/10 p-4">
+                <section className="fixed right-3 top-[4.5rem] z-[9999] w-[min(23rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f19] shadow-2xl shadow-black/70 sm:right-5">
+                    <div className="flex items-center justify-between border-b border-white/[0.08] p-4">
                         <div>
                             <p className="font-black">Powiadomienia</p>
-                            <p className="text-xs text-slate-500">{notifications.unreadCount} nieprzeczytanych</p>
+                            <p className="text-xs text-slate-500">{notifications.unreadCount} nowych</p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             {notifications.unreadCount > 0 && (
-                                <button
-                                    type="button"
-                                    onClick={markAllRead}
-                                    className="text-xs font-bold text-cyan-300"
-                                >
-                                    Oznacz wszystkie
+                                <button type="button" onClick={markAllRead} className="text-xs font-bold text-cyan-300">
+                                    Przeczytaj wszystkie
                                 </button>
                             )}
-                            <button
-                                type="button"
-                                aria-label="Zamknij"
-                                onClick={() => setNotificationsOpen(false)}
-                                className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-white/10 hover:text-white"
-                            >
-                                <BsX size={22} />
+                            <button type="button" aria-label="Zamknij" onClick={() => setNotificationsOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-white/10">
+                                <BsX />
                             </button>
                         </div>
                     </div>
-                    <div className="max-h-[min(30rem,calc(100vh-7rem))] overflow-y-auto p-2">
+                    <div className="max-h-[28rem] overflow-y-auto p-2">
                         {notifications.notifications.length === 0 ? (
-                            <p className="p-6 text-center text-sm text-slate-500">Brak powiadomień.</p>
-                        ) : (
-                            notifications.notifications.slice(0, 10).map((notification) => (
-                                <button
-                                    key={notification.id}
-                                    type="button"
-                                    onClick={() => openNotification(notification)}
-                                    className={`block w-full rounded-2xl p-3 text-left transition hover:bg-white/5 ${
-                                        notification.read ? "opacity-65" : "bg-blue-500/5"
-                                    }`}
-                                >
-                                    <div className="flex gap-3">
-                                        <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
-                                            notification.read ? "bg-slate-700" : "bg-cyan-400"
-                                        }`} />
-                                        <span className="min-w-0">
-                                            <span className="block text-sm font-black">{notification.title}</span>
-                                            <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">
-                                                {notification.message}
-                                            </span>
-                                        </span>
-                                    </div>
-                                </button>
-                            ))
-                        )}
+                            <p className="p-8 text-center text-sm text-slate-500">Wszystko przeczytane. Możesz wracać do nauki.</p>
+                        ) : notifications.notifications.slice(0, 10).map((notification) => (
+                            <button
+                                key={notification.id}
+                                type="button"
+                                onClick={() => openNotification(notification)}
+                                className={`block w-full rounded-xl p-3 text-left transition hover:bg-white/[0.06] ${notification.read ? "opacity-60" : "bg-cyan-400/[0.04]"}`}
+                            >
+                                <span className="block text-sm font-black">{notification.title}</span>
+                                <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">{notification.message}</span>
+                            </button>
+                        ))}
                     </div>
                 </section>
             </>,
@@ -200,75 +172,66 @@ export default function Navbar({ onMenuClick }) {
 
     return (
         <>
-        <header className="relative z-40 flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-slate-950/90 px-3 backdrop-blur-xl sm:h-20 sm:px-5 lg:px-8">
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-                <button
-                    type="button"
-                    aria-label="Otwórz menu"
-                    onClick={onMenuClick}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-200 transition hover:border-cyan-500/50 hover:bg-cyan-500/10 lg:hidden"
-                >
-                    <BsList size={24} />
-                </button>
-
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/20 sm:h-11 sm:w-11 sm:rounded-2xl">
-                        <BsRocketTakeoff className="text-white" size={21} />
-                    </div>
-                    <div className="hidden sm:block">
-                        <h1 className="text-lg font-black text-white sm:text-xl">EduHub</h1>
-                        <p className="hidden text-xs text-slate-400 md:block">Platforma nauki programowania</p>
+            <header className="relative z-40 flex h-16 shrink-0 items-center justify-between border-b border-white/[0.08] bg-[#070a12]/90 px-3 backdrop-blur-2xl sm:px-5 lg:px-7">
+                <div className="flex min-w-0 items-center gap-3">
+                    <button type="button" aria-label="Otwórz menu" onClick={onMenuClick} className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 lg:hidden">
+                        <BsList size={22} />
+                    </button>
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-600">Przestrzeń nauki</p>
+                        <h2 className="truncate text-base font-black sm:text-lg">{pageTitle}</h2>
                     </div>
                 </div>
-            </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
-                <div className="hidden items-center gap-2 rounded-2xl border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-orange-300 2xl:flex">
-                    <BsFire />
-                    <span className="text-sm font-bold">
-                        Seria: {learningStats.taskStreak || 0} · x{learningStats.xpMultiplier || 1}
-                    </span>
-                </div>
-                <div className="hidden items-center gap-2 rounded-2xl border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-blue-300 md:flex">
-                    <span className="text-sm font-bold">
-                        Poziom {learningStats.level || 1} · {learningStats.xp || 0} XP
-                    </span>
-                </div>
-                <div className="relative block">
+                <div className="flex items-center gap-2">
+                    <div
+                        title={formatExpiry(streakActive ? learningStats.taskStreakExpiresAt : null)}
+                        className={`hidden items-center gap-2 rounded-xl border px-3 py-2 sm:flex ${streakActive ? "border-orange-400/20 bg-orange-400/10 text-orange-200" : "border-white/[0.08] bg-white/[0.03] text-slate-500"}`}
+                    >
+                        <BsFire />
+                        <span className="text-xs font-black">Seria {visibleStreak}</span>
+                        <span className="rounded-md bg-black/20 px-1.5 py-0.5 text-[10px] font-black">×{visibleMultiplier}</span>
+                    </div>
+                    <div className="hidden rounded-xl border border-blue-400/15 bg-blue-400/[0.08] px-3 py-2 text-xs font-black text-blue-200 md:block">
+                        Lvl {learningStats.level || 1} · {learningStats.xp || 0} XP
+                    </div>
                     <button
                         type="button"
-                        aria-label={`Powiadomienia: ${notifications.unreadCount} nieprzeczytanych`}
-                        onClick={() => setNotificationsOpen((open) => !open)}
-                        className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 transition hover:border-blue-500 sm:h-11 sm:w-11 sm:rounded-2xl"
+                        aria-label={`Powiadomienia: ${notifications.unreadCount} nowych`}
+                        onClick={() => { setNotificationsOpen((open) => !open); setProfileOpen(false); }}
+                        className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-slate-300 transition hover:border-cyan-400/30 hover:text-white"
                     >
-                        <BsBell className="text-slate-300" />
-                        {notifications.unreadCount > 0 && (
-                            <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-black text-white">
-                                {Math.min(99, notifications.unreadCount)}
-                            </span>
-                        )}
+                        <BsBell />
+                        {notifications.unreadCount > 0 && <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-cyan-400 px-1 text-[10px] font-black text-slate-950">{Math.min(99, notifications.unreadCount)}</span>}
                     </button>
-
-                </div>
-                <div className="hidden items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900 px-4 py-2 xl:flex">
-                    <BsPersonCircle className="text-blue-400" size={22} />
-                    <div className="min-w-0">
-                        <p className="max-w-[180px] truncate text-sm font-semibold text-white">{email || "Użytkownik"}</p>
-                        {role && <p className="text-xs text-slate-500">{role}</p>}
+                    <div className="relative">
+                        <button
+                            type="button"
+                            aria-label="Otwórz profil"
+                            onClick={() => { setProfileOpen((open) => !open); setNotificationsOpen(false); }}
+                            className="flex h-10 items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] pl-1.5 pr-2 text-slate-300 transition hover:border-cyan-400/30"
+                        >
+                            <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 text-[10px] font-black text-slate-950">{initials}</span>
+                            <BsChevronDown className="hidden text-xs sm:block" />
+                        </button>
+                        {profileOpen && (
+                            <div className="absolute right-0 top-12 w-64 overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f19] p-2 shadow-2xl shadow-black/60">
+                                <div className="border-b border-white/[0.08] px-3 py-3">
+                                    <p className="truncate text-sm font-black">{identity.email}</p>
+                                    <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300">{identity.role}</p>
+                                </div>
+                                <button type="button" onClick={() => navigate("/learning-center")} className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-300 hover:bg-white/[0.06]">
+                                    <BsPerson /> Mój postęp
+                                </button>
+                                <button type="button" onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-red-300 hover:bg-red-500/10">
+                                    <BsBoxArrowRight /> Wyloguj
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
-                <button
-                    type="button"
-                    onClick={logout}
-                    aria-label="Wyloguj"
-                    className="flex h-10 items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 text-sm font-bold text-red-300 transition hover:bg-red-600 hover:text-white sm:h-auto sm:py-2"
-                >
-                    <BsBoxArrowRight />
-                    <span className="hidden sm:inline">Wyloguj</span>
-                </button>
-            </div>
-        </header>
-        {notificationsLayer}
+            </header>
+            {notificationsLayer}
         </>
     );
 }
