@@ -1,18 +1,21 @@
 import { BsCheck2Circle } from "react-icons/bs";
-import { BLOCK_TYPES } from "../blockTypes.jsx";
+import { getBlockTypes } from "../blockTypes.jsx";
 
-export default function BlockTypeSelector({ value, onChange }) {
+export default function BlockTypeSelector({ value, onChange, variant = "PROGRAMMING" }) {
+    const blockTypes = getBlockTypes(variant);
     return (
         <section className="space-y-4">
             <div>
                 <h3 className="text-lg font-semibold">Typ bloku</h3>
                 <p className="mt-1 text-sm text-gray-400">
-                    Każdy element ma własny wygląd i pola dopasowane do swojej roli.
+                    {variant === "LANGUAGE"
+                        ? "Wyświetlamy tylko elementy potrzebne do krótkiej lekcji językowej."
+                        : "Każdy element ma własny wygląd i pola dopasowane do swojej roli."}
                 </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {BLOCK_TYPES.map(type => {
+                {blockTypes.map(type => {
                     const selected = value === type.value
                         || (value === "DOWNLOAD" && type.value === "PDF");
 

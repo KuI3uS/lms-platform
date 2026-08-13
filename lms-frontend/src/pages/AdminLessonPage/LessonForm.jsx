@@ -1,701 +1,182 @@
 import {
     BsBook,
     BsCardText,
+    BsChatDots,
     BsCodeSlash,
+    BsEye,
     BsImage,
+    BsSave,
     BsStars,
-    BsLightningChargeFill,
-    BsSave
+    BsTranslate
 } from "react-icons/bs";
 
 export default function LessonForm({
-                                       form,
-                                       setForm,
-                                       editingId,
-                                       onCreate,
-                                       onUpdate
-                                   }) {
+    form,
+    setForm,
+    editingId,
+    onCreate,
+    onUpdate,
+    variant = "PROGRAMMING"
+}) {
+    const language = variant === "LANGUAGE";
+    const accent = language ? "text-violet-300" : "text-cyan-300";
+    const focus = language ? "focus:border-violet-400" : "focus:border-cyan-400";
+    const fieldClass = "w-full rounded-2xl border border-white/10 bg-black/25 px-5 py-4 text-white outline-none transition placeholder:text-slate-600";
+    const update = (field, value) => setForm({ ...form, [field]: value });
 
     return (
+        <section className={`relative overflow-hidden rounded-[38px] border p-6 sm:p-9 ${
+            language
+                ? "border-violet-400/20 bg-gradient-to-br from-[#120d25] via-[#0c1020] to-violet-950/60"
+                : "border-cyan-400/20 bg-gradient-to-br from-slate-950 via-[#081325] to-cyan-950"
+        }`}>
+            <div className={`absolute -right-24 -top-24 h-80 w-80 rounded-full blur-3xl ${language ? "bg-violet-500/10" : "bg-cyan-500/10"}`} />
 
-        <section
-            className="
-                relative
-                overflow-hidden
-                rounded-[40px]
-                border
-                border-cyan-500/20
-                bg-gradient-to-br
-                from-slate-950
-                via-[#081325]
-                to-cyan-950
-                p-10
-            "
-        >
-
-            {/* BACKGROUND */}
-
-            <div
-                className="
-                    absolute
-                    -top-28
-                    -right-28
-                    w-[420px]
-                    h-[420px]
-                    rounded-full
-                    bg-cyan-500/10
-                    blur-3xl
-                "
-            />
-
-            <div
-                className="
-                    absolute
-                    -bottom-28
-                    -left-28
-                    w-[380px]
-                    h-[380px]
-                    rounded-full
-                    bg-blue-600/10
-                    blur-3xl
-                "
-            />
-
-            <div className="relative z-10 space-y-10">
-
-                {/* ================================================= */}
-
-                {/* HERO */}
-
-                {/* ================================================= */}
-
-                <div>
-
-                    <div
-                        className="
-                            inline-flex
-                            items-center
-                            gap-2
-                            rounded-full
-                            border
-                            border-cyan-500/20
-                            bg-cyan-500/10
-                            px-5
-                            py-2
-                            text-cyan-300
-                            font-semibold
-                        "
-                    >
-
-                        <BsStars />
-
-                        EDUHUB 2026
-
+            <div className="relative space-y-7">
+                <header>
+                    <div className={`inline-flex items-center gap-2 rounded-full border border-current/20 bg-white/[0.04] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] ${accent}`}>
+                        {language ? <BsTranslate /> : <BsStars />}
+                        {language ? "Prosty kreator językowy" : "EduHub Creator"}
                     </div>
-
-                    <h1
-                        className="
-                            mt-8
-                            text-5xl
-                            font-black
-                        "
-                    >
-
-                        {editingId
-                            ? "Edytuj lekcję"
-                            : "Nowa lekcja"}
-
+                    <h1 className="mt-5 text-4xl font-black sm:text-5xl">
+                        {editingId ? "Edytuj lekcję" : "Nowa lekcja"}
                     </h1>
-
-                    <p
-                        className="
-                            mt-6
-                            max-w-3xl
-                            text-lg
-                            leading-8
-                            text-gray-300
-                        "
-                    >
-
-                        Twórz profesjonalne lekcje,
-                        dodawaj teorię,
-                        przykłady,
-                        zadania,
-                        quizy,
-                        multimedia
-                        oraz projekty.
-
+                    <p className="mt-3 max-w-3xl leading-7 text-slate-400">
+                        {language
+                            ? "Ustal jeden cel, dodaj kilka zwrotów, a następnie zbuduj krótkie ćwiczenia. Bez pól programistycznych i zbędnej konfiguracji."
+                            : "Zdefiniuj cel lekcji i jej podstawowe materiały. Rozbudowane przykłady, zadania i quizy dodasz później jako bloki."}
                     </p>
+                </header>
 
-                </div>
-
-                {/* ================================================= */}
-
-                {/* TYTUŁ LEKCJI */}
-
-                {/* ================================================= */}
-
-                <div
-                    className="
-                        rounded-3xl
-                        border
-                        border-white/10
-                        bg-white/[0.04]
-                        backdrop-blur-xl
-                        p-7
-                    "
-                >
-
-                    <label
-                        className="
-                            flex
-                            items-center
-                            gap-3
-                            text-cyan-300
-                            font-semibold
-                            mb-5
-                        "
-                    >
-
-                        <BsBook size={20} />
-
-                        Tytuł lekcji
-
-                    </label>
-
-                    <input
-                        value={form.title || ""}
-                        onChange={(e) =>
-                            setForm({
-                                ...form,
-                                title: e.target.value
-                            })
-                        }
-                        placeholder="np. Czym jest programowanie?"
-                        className="
-                            w-full
-                            rounded-2xl
-                            border
-                            border-white/10
-                            bg-black/20
-                            px-5
-                            py-4
-                            outline-none
-                            focus:border-cyan-500
-                            transition
-                        "
-                    />
-                    {/* ================================================= */}
-
-                    {/* OPIS LEKCJI */}
-
-                    {/* ================================================= */}
-
-                    <div
-                        className="
-                        rounded-3xl
-                        border
-                        border-white/10
-                        bg-white/[0.04]
-                        backdrop-blur-xl
-                        p-7
-                    "
-                    >
-
-                        <label
-                            className="
-                            flex
-                            items-center
-                            gap-3
-                            text-cyan-300
-                            font-semibold
-                            mb-5
-                        "
-                        >
-
-                            <BsCardText size={20} />
-
-                            Opis lekcji
-
-                        </label>
-
-                        <textarea
-
-                            value={form.theory || ""}
-
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    theory: e.target.value
-                                })
-                            }
-
-                            placeholder="Wyjaśnij czego użytkownik nauczy się w tej lekcji..."
-
-                            className="
-                            w-full
-                            min-h-44
-                            rounded-2xl
-                            border
-                            border-white/10
-                            bg-black/20
-                            px-5
-                            py-4
-                            resize-none
-                            outline-none
-                            focus:border-cyan-500
-                            transition
-                        "
-
-                        />
-
-                    </div>
-
-                    {/* ================================================= */}
-
-                    {/* PRZYKŁAD KODU */}
-
-                    {/* ================================================= */}
-
-                    <div
-                        className="
-                        rounded-3xl
-                        border
-                        border-white/10
-                        bg-white/[0.04]
-                        backdrop-blur-xl
-                        p-7
-                    "
-                    >
-
-                        <label
-                            className="
-                            flex
-                            items-center
-                            gap-3
-                            text-cyan-300
-                            font-semibold
-                            mb-5
-                        "
-                        >
-
-                            <BsCodeSlash size={20} />
-
-                            Przykład kodu
-
-                        </label>
-
-                        <textarea
-
-                            value={form.example || ""}
-
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    example: e.target.value
-                                })
-                            }
-
-                            placeholder={`public class Main {
-
-    public static void main(String[] args) {
-
-        System.out.println("Hello World");
-
-    }
-
-}`}
-
-                            className="
-                            w-full
-                            min-h-72
-                            rounded-2xl
-                            border
-                            border-white/10
-                            bg-black/30
-                            px-5
-                            py-4
-                            font-mono
-                            text-[15px]
-                            resize-none
-                            outline-none
-                            focus:border-cyan-500
-                            transition
-                        "
-
-                        />
-
-                    </div>
-
-                    {/* ================================================= */}
-
-                    {/* DODATKOWE INFORMACJE */}
-
-                    {/* ================================================= */}
-
-                    <div
-                        className="
-                        rounded-3xl
-                        border
-                        border-white/10
-                        bg-white/[0.04]
-                        backdrop-blur-xl
-                        p-7
-                    "
-                    >
-
-                        <label
-                            className="
-                            flex
-                            items-center
-                            gap-3
-                            text-cyan-300
-                            font-semibold
-                            mb-5
-                        "
-                        >
-
-                            <BsCardText size={20} />
-
-                            Dodatkowe informacje
-
-                        </label>
-
-                        <textarea
-
-                            value={form.content || ""}
-
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    content: e.target.value
-                                })
-                            }
-
-                            placeholder="Tutaj możesz dodać dodatkowe wskazówki, materiały lub informacje dla kursanta..."
-
-                            className="
-                            w-full
-                            min-h-56
-                            rounded-2xl
-                            border
-                            border-white/10
-                            bg-black/20
-                            px-5
-                            py-4
-                            resize-none
-                            outline-none
-                            focus:border-cyan-500
-                            transition
-                        "
-
-                        />
-
-                    </div>
-                    {/* ================================================= */}
-
-                    {/* MINIATURA */}
-
-                    {/* ================================================= */}
-
-                    <div
-                        className="
-                        rounded-3xl
-                        border
-                        border-white/10
-                        bg-white/[0.04]
-                        backdrop-blur-xl
-                        p-7
-                    "
-                    >
-
-                        <label
-                            className="
-                            flex
-                            items-center
-                            gap-3
-                            text-cyan-300
-                            font-semibold
-                            mb-5
-                        "
-                        >
-
-                            <BsImage size={20} />
-
-                            Miniatura lekcji
-
-                        </label>
-
+                <div className="grid gap-5 xl:grid-cols-2">
+                    <Panel icon={<BsBook />} title="Tytuł lekcji" accent={accent}>
                         <input
-
-                            value={form.imageUrl || ""}
-
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    imageUrl: e.target.value
-                                })
-                            }
-
-                            placeholder="https://..."
-
-                            className="
-                            w-full
-                            rounded-2xl
-                            border
-                            border-white/10
-                            bg-black/20
-                            px-5
-                            py-4
-                            outline-none
-                            focus:border-cyan-500
-                            transition
-                        "
-
+                            value={form.title || ""}
+                            onChange={(event) => update("title", event.target.value)}
+                            placeholder={language ? "np. Przedstawianie się" : "np. Zmienne i typy danych"}
+                            className={`${fieldClass} ${focus}`}
                         />
-
-                        {form.imageUrl && (
-
-                            <img
-                                src={form.imageUrl}
-                                alt="Preview"
-                                className="
-                                mt-6
-                                w-full
-                                max-h-80
-                                rounded-2xl
-                                object-cover
-                                border
-                                border-white/10
-                            "
-                            />
-
-                        )}
-
-                    </div>
-
-                    {/* ================================================= */}
-
-                    {/* USTAWIENIA */}
-
-                    {/* ================================================= */}
-
-                    <div className="grid lg:grid-cols-2 gap-6">
-
-                        <div
-                            className="
-                            rounded-3xl
-                            border
-                            border-white/10
-                            bg-white/[0.04]
-                            backdrop-blur-xl
-                            p-6
-                        "
-                        >
-
-                            <div className="flex justify-between items-center">
-
-                                <div>
-
-                                    <h3 className="font-bold text-lg">
-
-                                        Opublikowana
-
-                                    </h3>
-
-                                    <p className="text-gray-400 mt-2">
-
-                                        Lekcja będzie widoczna dla użytkowników.
-
-                                    </p>
-
-                                </div>
-
-                                <button
-
-                                    type="button"
-
-                                    onClick={() =>
-                                        setForm({
-                                            ...form,
-                                            published: !form.published
-                                        })
-                                    }
-
-                                    className={`
-                                    relative
-                                    w-20
-                                    h-11
-                                    rounded-full
-                                    transition
-
-                                    ${
-                                        form.published
-                                            ? "bg-cyan-500"
-                                            : "bg-gray-700"
-                                    }
-                                `}
-
-                                >
-
-                                <span
-                                    className={`
-                                        absolute
-                                        top-1
-                                        w-9
-                                        h-9
-                                        rounded-full
-                                        bg-white
-                                        transition
-
-                                        ${
-                                        form.published
-                                            ? "left-10"
-                                            : "left-1"
-                                    }
-                                    `}
-                                />
-
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                        <div
-                            className="
-                            rounded-3xl
-                            border
-                            border-white/10
-                            bg-white/[0.04]
-                            backdrop-blur-xl
-                            p-6
-                        "
-                        >
-
-                            <div className="flex justify-between items-center">
-
-                                <div>
-
-                                    <h3 className="font-bold text-lg">
-
-                                        Darmowy podgląd
-
-                                    </h3>
-
-                                    <p className="text-gray-400 mt-2">
-
-                                        Lekcja będzie dostępna bez zakupu kursu.
-
-                                    </p>
-
-                                </div>
-
-                                <button
-
-                                    type="button"
-
-                                    onClick={() =>
-                                        setForm({
-                                            ...form,
-                                            freePreview: !form.freePreview
-                                        })
-                                    }
-
-                                    className={`
-                                    relative
-                                    w-20
-                                    h-11
-                                    rounded-full
-                                    transition
-
-                                    ${
-                                        form.freePreview
-                                            ? "bg-cyan-500"
-                                            : "bg-gray-700"
-                                    }
-                                `}
-
-                                >
-
-                                <span
-                                    className={`
-                                        absolute
-                                        top-1
-                                        w-9
-                                        h-9
-                                        rounded-full
-                                        bg-white
-                                        transition
-
-                                        ${
-                                        form.freePreview
-                                            ? "left-10"
-                                            : "left-1"
-                                    }
-                                    `}
-                                />
-
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    {/* ================================================= */}
-
-                    {/* SAVE */}
-
-                    {/* ================================================= */}
-
-                    <button
-
-                        onClick={editingId ? onUpdate : onCreate}
-
-                        className="
-                        w-full
-                        rounded-2xl
-                        bg-gradient-to-r
-                        from-cyan-500
-                        to-blue-600
-                        py-5
-                        text-lg
-                        font-bold
-                        flex
-                        items-center
-                        justify-center
-                        gap-3
-                        hover:scale-[1.01]
-                        transition
-                        shadow-[0_20px_60px_rgba(6,182,212,0.25)]
-                    "
-
-                    >
-
-                        <BsSave size={22} />
-
-                        {
-
-                            editingId
-
-                                ? "Zapisz lekcję"
-
-                                : "Utwórz lekcję"
-
-                        }
-
-                        <BsLightningChargeFill size={20} />
-
-                    </button>
-
+                    </Panel>
+
+                    <Panel icon={<BsCardText />} title={language ? "Cel komunikacyjny" : "Cel lekcji"} accent={accent}>
+                        <textarea
+                            value={form.theory || ""}
+                            onChange={(event) => update("theory", event.target.value)}
+                            placeholder={language
+                                ? "Po tej lekcji uczeń potrafi się przedstawić i zapytać rozmówcę o imię."
+                                : "Wyjaśnij, czego uczeń nauczy się i co będzie potrafił zrobić."}
+                            className={`${fieldClass} min-h-36 resize-y ${focus}`}
+                        />
+                    </Panel>
                 </div>
 
+                {language ? (
+                    <Panel icon={<BsChatDots />} title="Najważniejsze słowa i zdania" accent={accent}>
+                        <textarea
+                            value={form.content || ""}
+                            onChange={(event) => update("content", event.target.value)}
+                            placeholder={"Hello — Cześć\nMy name is… — Mam na imię…\nWhat is your name? — Jak masz na imię?"}
+                            className={`${fieldClass} min-h-48 resize-y ${focus}`}
+                        />
+                        <p className="mt-3 text-xs leading-5 text-slate-500">
+                            Wystarczy 5–8 nowych elementów. Kolejne przykłady i ćwiczenia dodasz w prostym edytorze pod kartą lekcji.
+                        </p>
+                    </Panel>
+                ) : (
+                    <div className="grid gap-5 xl:grid-cols-2">
+                        <Panel icon={<BsCodeSlash />} title="Krótki przykład startowy" accent={accent}>
+                            <textarea
+                                value={form.example || ""}
+                                onChange={(event) => update("example", event.target.value)}
+                                placeholder={"public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World\");\n    }\n}"}
+                                className={`${fieldClass} min-h-56 resize-y font-mono text-sm ${focus}`}
+                            />
+                        </Panel>
+                        <Panel icon={<BsCardText />} title="Dodatkowe informacje" accent={accent}>
+                            <textarea
+                                value={form.content || ""}
+                                onChange={(event) => update("content", event.target.value)}
+                                placeholder="Wymagania, potrzebne narzędzia albo krótka wskazówka organizacyjna."
+                                className={`${fieldClass} min-h-56 resize-y ${focus}`}
+                            />
+                        </Panel>
+                    </div>
+                )}
+
+                <Panel icon={<BsImage />} title="Grafika wprowadzająca (opcjonalnie)" accent={accent}>
+                    <input
+                        value={form.imageUrl || ""}
+                        onChange={(event) => update("imageUrl", event.target.value)}
+                        placeholder="https://..."
+                        className={`${fieldClass} ${focus}`}
+                    />
+                    {form.imageUrl && (
+                        <img
+                            src={form.imageUrl}
+                            alt="Podgląd grafiki lekcji"
+                            className="mt-4 max-h-72 w-full rounded-2xl border border-white/10 object-cover"
+                        />
+                    )}
+                </Panel>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                    <Toggle
+                        icon={<BsEye />}
+                        title="Opublikowana"
+                        description="Lekcja jest widoczna dla uczniów."
+                        checked={form.published ?? true}
+                        onChange={(checked) => update("published", checked)}
+                    />
+                    <Toggle
+                        icon={<BsStars />}
+                        title="Bezpłatny podgląd"
+                        description="Lekcję można otworzyć przed zakupem kursu."
+                        checked={form.freePreview ?? false}
+                        onChange={(checked) => update("freePreview", checked)}
+                    />
+                </div>
+
+                <button
+                    type="button"
+                    onClick={editingId ? onUpdate : onCreate}
+                    className={`flex w-full items-center justify-center gap-3 rounded-2xl py-4 font-black text-white transition hover:-translate-y-0.5 ${
+                        language
+                            ? "bg-gradient-to-r from-violet-600 to-fuchsia-600"
+                            : "bg-gradient-to-r from-cyan-500 to-blue-600"
+                    }`}
+                >
+                    <BsSave /> {editingId ? "Zapisz zmiany" : "Dodaj lekcję"}
+                </button>
             </div>
-
         </section>
+    );
+}
 
-);
+function Panel({ icon, title, accent, children }) {
+    return (
+        <div className="rounded-3xl border border-white/[0.08] bg-black/20 p-5 sm:p-6">
+            <label className={`mb-4 flex items-center gap-3 font-black ${accent}`}>
+                {icon} {title}
+            </label>
+            {children}
+        </div>
+    );
+}
 
+function Toggle({ icon, title, description, checked, onChange }) {
+    return (
+        <label className="flex cursor-pointer items-center gap-4 rounded-3xl border border-white/[0.08] bg-black/20 p-5">
+            <input
+                type="checkbox"
+                checked={checked}
+                onChange={(event) => onChange(event.target.checked)}
+                className="h-5 w-5 accent-violet-500"
+            />
+            <span className="text-xl text-slate-400">{icon}</span>
+            <span>
+                <span className="block font-black">{title}</span>
+                <span className="mt-1 block text-xs text-slate-500">{description}</span>
+            </span>
+        </label>
+    );
 }

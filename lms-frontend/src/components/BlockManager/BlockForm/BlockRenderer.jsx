@@ -7,10 +7,12 @@ import QuoteBlockForm from "./forms/QuoteBlockForm";
 import DividerBlockForm from "./forms/DividerBlockForm";
 import TaskBlockForm from "./forms/TaskBlockForm";
 import QuizBlockForm from "./forms/QuizBlockForm";
+import LanguageTaskBlockForm from "./forms/LanguageTaskBlockForm";
 
 export default function BlockRenderer({
                                           block,
-                                          setBlock
+                                          setBlock,
+                                          variant = "PROGRAMMING"
                                       }) {
 
     switch (block.type) {
@@ -70,6 +72,14 @@ export default function BlockRenderer({
             );
 
         case "TASK":
+            if (variant === "LANGUAGE") {
+                return (
+                    <LanguageTaskBlockForm
+                        block={block}
+                        setBlock={setBlock}
+                    />
+                );
+            }
             return (
                 <TaskBlockForm
                     block={block}

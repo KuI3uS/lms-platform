@@ -36,14 +36,13 @@ public class LegacySchemaCompatibility implements ApplicationRunner {
                 return;
             }
 
-            String columnType = findLessonBlockTypeColumn(connection);
-
-            if (columnType == null) {
-                return;
-            }
-
             try (Statement statement = connection.createStatement()) {
-                if (columnType.toUpperCase(Locale.ROOT).contains("ENUM")) {
+                String lessonBlockType = findColumnType(
+                        connection,
+                        "lesson_block",
+                        "type"
+                );
+                if (isEnum(lessonBlockType)) {
                     statement.execute(
                             "ALTER TABLE lesson_block " +
                                     "MODIFY COLUMN type VARCHAR(32) NULL"
@@ -51,28 +50,52 @@ public class LegacySchemaCompatibility implements ApplicationRunner {
                     log.info("Converted legacy lesson_block.type ENUM to VARCHAR(32)");
                 }
 
-                int migratedRows = statement.executeUpdate(
-                        "UPDATE lesson_block SET type = 'TEXT' " +
-                                "WHERE type IN ('THEORY', 'CONTENT')"
-                );
-                if (migratedRows > 0) {
-                    log.info(
-                            "Normalized {} historical lesson block types to TEXT",
-                            migratedRows
+                if (lessonBlockType != null) {
+                    int migratedRows = statement.executeUpdate(
+                            "UPDATE lesson_block SET type = 'TEXT' " +
+                                    "WHERE type IN ('THEORY', 'CONTENT')"
                     );
+                    if (migratedRows > 0) {
+                        log.info(
+                                "Normalized {} historical lesson block types to TEXT",
+                                migratedRows
+                        );
+                    }
+                }
+
+                String achievementType = findColumnType(
+                        connection,
+                        "user_achievements",
+                        "type"
+                );
+                if (isEnum(achievementType)) {
+                    statement.execute(
+                            "ALTER TABLE user_achievements " +
+                                    "MODIFY COLUMN type VARCHAR(64) NOT NULL"
+                    );
+                    log.info("Converted legacy user_achievements.type ENUM to VARCHAR(64)");
                 }
             }
         }
     }
 
-    private String findLessonBlockTypeColumn(Connection connection) throws Exception {
+    private boolean isEnum(String columnType) {
+        return columnType != null
+                && columnType.toUpperCase(Locale.ROOT).contains("ENUM");
+    }
+
+    private String findColumnType(
+            Connection connection,
+            String table,
+            String column
+    ) throws Exception {
         DatabaseMetaData metadata = connection.getMetaData();
 
         try (ResultSet columns = metadata.getColumns(
                 connection.getCatalog(),
                 null,
-                "lesson_block",
-                "type"
+                table,
+                column
         )) {
             return columns.next() ? columns.getString("TYPE_NAME") : null;
         }

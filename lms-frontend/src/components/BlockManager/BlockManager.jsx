@@ -7,7 +7,8 @@ export default function BlockManager({
 
                                          lessonId,
 
-                                         lessonBlocks
+                                         lessonBlocks,
+                                         variant = "PROGRAMMING"
 
                                      }) {
 
@@ -30,11 +31,13 @@ export default function BlockManager({
                 <div>
 
                     <h3 className="text-xl font-bold">
-                        Bloki lekcji
+                        {variant === "LANGUAGE" ? "Kroki lekcji językowej" : "Bloki lekcji"}
                     </h3>
 
                     <p className="text-gray-400 text-sm">
-                        Buduj lekcję z tekstów, obrazów, filmów, przykładów oraz zadań.
+                        {variant === "LANGUAGE"
+                            ? "Dodawaj tylko krótkie porcje materiału i ćwiczenia utrwalające."
+                            : "Buduj lekcję z tekstów, obrazów, filmów, przykładów oraz zadań."}
                     </p>
 
                 </div>
@@ -68,6 +71,7 @@ export default function BlockManager({
 
                 saving={Boolean(lessonBlocks.savingByLesson[lessonId])}
                 error={lessonBlocks.errorsByLesson[lessonId] || ""}
+                variant={variant}
 
                 onSave={() =>
                     block.id

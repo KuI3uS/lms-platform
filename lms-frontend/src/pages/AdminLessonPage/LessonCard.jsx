@@ -22,7 +22,8 @@ export default function LessonCard({
 
                                        onDelete,
 
-                                       lessonBlocks
+                                       lessonBlocks,
+                                       variant = "PROGRAMMING"
 
                                    }) {
 
@@ -129,11 +130,9 @@ export default function LessonCard({
 
                             <p className="text-gray-400 mt-3">
 
-                                Zarządzaj blokami,
-                                zadaniami,
-                                teorią,
-                                quizami
-                                oraz multimediami.
+                                {variant === "LANGUAGE"
+                                    ? "Dodaj słownictwo, przykłady, obrazy i krótkie ćwiczenia."
+                                    : "Zarządzaj blokami, zadaniami, teorią, quizami oraz multimediami."}
 
                             </p>
 
@@ -299,6 +298,7 @@ export default function LessonCard({
                             lessonId={lesson.id}
 
                             lessonBlocks={lessonBlocks}
+                            variant={variant}
 
                         />
 

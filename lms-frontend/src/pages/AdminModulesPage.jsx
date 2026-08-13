@@ -17,6 +17,8 @@ export default function AdminModulesPage() {
     const [loading, setLoading] = useState(true);
     const [savingId, setSavingId] = useState(null);
     const [error, setError] = useState("");
+    const selectedCourse = courses.find((course) => String(course.id) === String(courseId));
+    const isLanguageCourse = selectedCourse?.category === "LANGUAGE";
 
     useEffect(() => {
         let active = true;
@@ -121,10 +123,16 @@ export default function AdminModulesPage() {
     return (
         <div className="mx-auto max-w-6xl space-y-8 text-white">
             <header className="rounded-[34px] border border-emerald-500/20 bg-gradient-to-br from-emerald-950/80 to-slate-950 p-7 sm:p-10">
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-emerald-300">EduHub Creator</p>
-                <h1 className="mt-3 text-4xl font-black sm:text-5xl">Moduły kursów</h1>
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-emerald-300">
+                    {isLanguageCourse ? "EduHub Languages" : "EduHub Creator"}
+                </p>
+                <h1 className="mt-3 text-4xl font-black sm:text-5xl">
+                    {isLanguageCourse ? "Rozdziały kursu językowego" : "Moduły kursów"}
+                </h1>
                 <p className="mt-4 max-w-3xl text-slate-400">
-                    Wybierz kurs, uporządkuj jego moduły i przejdź bezpośrednio do edycji lekcji.
+                    {isLanguageCourse
+                        ? "Podziel kurs na proste sytuacje komunikacyjne, np. poznawanie ludzi, podróż albo praca."
+                        : "Wybierz kurs, uporządkuj jego moduły i przejdź bezpośrednio do edycji lekcji."}
                 </p>
             </header>
 
@@ -160,7 +168,7 @@ export default function AdminModulesPage() {
                     <input
                         value={newModuleName}
                         onChange={(event) => setNewModuleName(event.target.value)}
-                        placeholder="Nazwa nowego modułu"
+                        placeholder={isLanguageCourse ? "Nazwa rozdziału, np. W restauracji" : "Nazwa nowego modułu"}
                         className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-emerald-400"
                     />
                     <button
@@ -168,7 +176,7 @@ export default function AdminModulesPage() {
                         disabled={!courseId || !newModuleName.trim()}
                         className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 font-black disabled:opacity-40"
                     >
-                        <BsPlusCircle /> Dodaj moduł
+                        <BsPlusCircle /> {isLanguageCourse ? "Dodaj rozdział" : "Dodaj moduł"}
                     </button>
                 </form>
             </section>
@@ -207,7 +215,7 @@ export default function AdminModulesPage() {
                                             })}
                                             className="accent-emerald-500"
                                         />
-                                        Odblokowuj lekcje kolejno
+                                        {isLanguageCourse ? "Prowadź ucznia krok po kroku" : "Odblokowuj lekcje kolejno"}
                                     </label>
                                 </div>
                                 <div className="flex flex-wrap gap-2">

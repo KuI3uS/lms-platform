@@ -9,6 +9,7 @@ export default function useModule(moduleId) {
     });
 
     const [loading, setLoading] = useState(true);
+    const [course, setCourse] = useState(null);
 
     const loadModule = useCallback(async () => {
 
@@ -22,6 +23,11 @@ export default function useModule(moduleId) {
                 name: data?.name || "",
                 lessonsLocked: data?.lessonsLocked || false
             });
+            if (data?.courseId) {
+                setCourse(await apiFetch(`/courses/${data.courseId}`));
+            } else {
+                setCourse(null);
+            }
 
         } finally {
 
@@ -58,6 +64,8 @@ export default function useModule(moduleId) {
 
         moduleSettings,
         setModuleSettings,
+        course,
+        isLanguageCourse: course?.category === "LANGUAGE",
 
         loadModule,
         saveModuleSettings

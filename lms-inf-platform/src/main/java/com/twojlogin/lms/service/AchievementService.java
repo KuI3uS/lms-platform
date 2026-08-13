@@ -1,8 +1,18 @@
 package com.twojlogin.lms.service;
 
 import com.twojlogin.lms.dto.AchievementDto;
-import com.twojlogin.lms.entity.*;
-import com.twojlogin.lms.repository.*;
+import com.twojlogin.lms.entity.AchievementType;
+import com.twojlogin.lms.entity.ExamAttemptStatus;
+import com.twojlogin.lms.entity.NotificationType;
+import com.twojlogin.lms.entity.User;
+import com.twojlogin.lms.entity.UserAchievement;
+import com.twojlogin.lms.repository.CourseCertificateRepository;
+import com.twojlogin.lms.repository.CourseModuleRepository;
+import com.twojlogin.lms.repository.ExamAttemptRepository;
+import com.twojlogin.lms.repository.LessonProgressRepository;
+import com.twojlogin.lms.repository.StudyActivityRepository;
+import com.twojlogin.lms.repository.TaskAttemptRepository;
+import com.twojlogin.lms.repository.UserAchievementRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,14 +20,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
-import java.util.function.BooleanSupplier;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class AchievementService {
 
-    private static final int XP_PER_LESSON = 20;
     private static final ZoneId WARSAW_ZONE = ZoneId.of("Europe/Warsaw");
 
     private final UserAchievementRepository achievementRepository;
@@ -25,8 +36,11 @@ public class AchievementService {
     private final CourseModuleRepository moduleRepository;
     private final CourseCertificateRepository certificateRepository;
     private final ExamAttemptRepository examAttemptRepository;
+    private final TaskAttemptRepository taskAttemptRepository;
+    private final StudyActivityRepository activityRepository;
     private final CourseAccessService accessService;
     private final NotificationService notificationService;
+    private final GamificationService gamificationService;
 
     public AchievementService(
             UserAchievementRepository achievementRepository,
@@ -34,16 +48,22 @@ public class AchievementService {
             CourseModuleRepository moduleRepository,
             CourseCertificateRepository certificateRepository,
             ExamAttemptRepository examAttemptRepository,
+            TaskAttemptRepository taskAttemptRepository,
+            StudyActivityRepository activityRepository,
             CourseAccessService accessService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            GamificationService gamificationService
     ) {
         this.achievementRepository = achievementRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.moduleRepository = moduleRepository;
         this.certificateRepository = certificateRepository;
         this.examAttemptRepository = examAttemptRepository;
+        this.taskAttemptRepository = taskAttemptRepository;
+        this.activityRepository = activityRepository;
         this.accessService = accessService;
         this.notificationService = notificationService;
+        this.gamificationService = gamificationService;
     }
 
     @Transactional
@@ -53,79 +73,97 @@ public class AchievementService {
 
     @Transactional
     public List<AchievementDto> evaluate(User user) {
+        AchievementMetrics metrics = metricsFor(user);
         Map<AchievementType, UserAchievement> unlocked = unlockedFor(user);
-        long completedLessons = lessonProgressRepository
-                .countByUserIdAndCompletedTrue(user.getId());
-        int xp = Math.toIntExact(completedLessons * XP_PER_LESSON);
-        int streak = LearningStatsService.calculateStreak(
-                lessonProgressRepository.findCompletedDatesByUserId(user.getId()),
-                LocalDate.now(WARSAW_ZONE)
-        );
-        long completedModules = countCompletedModules(user.getId());
 
-        unlockWhen(user, unlocked, AchievementType.FIRST_LESSON, () -> completedLessons >= 1);
-        unlockWhen(user, unlocked, AchievementType.STREAK_3, () -> streak >= 3);
-        unlockWhen(user, unlocked, AchievementType.STREAK_7, () -> streak >= 7);
-        unlockWhen(user, unlocked, AchievementType.XP_100, () -> xp >= 100);
-        unlockWhen(user, unlocked, AchievementType.XP_500, () -> xp >= 500);
-        unlockWhen(user, unlocked, AchievementType.MODULE_MASTER, () -> completedModules >= 1);
-        unlockWhen(
-                user,
-                unlocked,
-                AchievementType.COURSE_GRADUATE,
-                () -> certificateRepository.countByUserId(user.getId()) >= 1
-        );
-        unlockWhen(
-                user,
-                unlocked,
-                AchievementType.PERFECT_EXAM,
-                () -> examAttemptRepository.existsByUserIdAndStatusAndPercentageGreaterThanEqual(
-                        user.getId(),
-                        ExamAttemptStatus.SUBMITTED,
-                        100
-                )
-        );
+        for (AchievementType type : AchievementType.values()) {
+            if (progressFor(type, metrics) >= type.target()) {
+                unlockOrReward(user, unlocked, type);
+            }
+        }
 
         return Arrays.stream(AchievementType.values())
-                .map(type -> toDto(type, unlocked.get(type)))
+                .map(type -> toDto(
+                        type,
+                        unlocked.get(type),
+                        progressFor(type, metrics)
+                ))
                 .toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<AchievementDto> getFor(User user) {
-        Map<AchievementType, UserAchievement> unlocked = unlockedFor(user);
-        return Arrays.stream(AchievementType.values())
-                .map(type -> toDto(type, unlocked.get(type)))
-                .toList();
+        return evaluate(user);
     }
 
     public long countCompletedModules(Long userId) {
         return moduleRepository.countCompletedModulesByUserId(userId);
     }
 
-    private void unlockWhen(
+    private AchievementMetrics metricsFor(User user) {
+        GamificationService.GamificationSnapshot gamification =
+                gamificationService.snapshot(user);
+        long completedLessons = lessonProgressRepository
+                .countByUserIdAndCompletedTrue(user.getId());
+        int learningDayStreak = LearningStatsService.calculateStreak(
+                lessonProgressRepository.findCompletedDatesByUserId(user.getId()),
+                LocalDate.now(WARSAW_ZONE)
+        );
+        long submittedExams = examAttemptRepository.countByUserIdAndStatus(
+                user.getId(),
+                ExamAttemptStatus.SUBMITTED
+        );
+        boolean perfectExam = examAttemptRepository
+                .existsByUserIdAndStatusAndPercentageGreaterThanEqual(
+                        user.getId(),
+                        ExamAttemptStatus.SUBMITTED,
+                        100
+                );
+
+        return new AchievementMetrics(
+                completedLessons,
+                learningDayStreak,
+                gamification.xp(),
+                taskAttemptRepository.countByUserIdAndCorrectTrue(user.getId()),
+                gamification.bestTaskStreak(),
+                countCompletedModules(user.getId()),
+                certificateRepository.countByUserId(user.getId()),
+                submittedExams,
+                perfectExam,
+                activityRepository.sumTotalSecondsByUserId(user.getId()),
+                gamification.level()
+        );
+    }
+
+    private void unlockOrReward(
             User user,
             Map<AchievementType, UserAchievement> unlocked,
-            AchievementType type,
-            BooleanSupplier condition
+            AchievementType type
     ) {
-        if (unlocked.containsKey(type) || !condition.getAsBoolean()) {
-            return;
+        UserAchievement achievement = unlocked.get(type);
+        boolean newlyUnlocked = achievement == null;
+
+        if (newlyUnlocked) {
+            achievement = new UserAchievement();
+            achievement.setUser(user);
+            achievement.setType(type);
+            achievement.setUnlockedAt(LocalDateTime.now(WARSAW_ZONE));
+            achievement = achievementRepository.saveAndFlush(achievement);
+            unlocked.put(type, achievement);
         }
 
-        UserAchievement achievement = new UserAchievement();
-        achievement.setUser(user);
-        achievement.setType(type);
-        achievement.setUnlockedAt(LocalDateTime.now());
-        UserAchievement saved = achievementRepository.save(achievement);
-        unlocked.put(type, saved);
+        if (achievement.isRewardClaimed()) return;
 
-        AchievementDto definition = toDto(type, saved);
+        gamificationService.awardAchievementGems(user, type.gemReward());
+        achievement.setRewardClaimed(true);
+        achievementRepository.save(achievement);
+
         notificationService.create(
                 user,
                 NotificationType.ACHIEVEMENT,
-                "Nowe osiągnięcie",
-                "Zdobyłeś osiągnięcie „" + definition.title() + "”.",
+                newlyUnlocked ? "Nowe osiągnięcie" : "Odebrano zaległą nagrodę",
+                "„" + type.title() + "” — otrzymujesz +"
+                        + type.gemReward() + " klejnotów.",
                 "/learning-center"
         );
     }
@@ -144,34 +182,55 @@ public class AchievementService {
 
     private AchievementDto toDto(
             AchievementType type,
-            UserAchievement unlocked
-    ) {
-        return switch (type) {
-            case FIRST_LESSON -> dto(type, "Pierwszy krok", "Ukończ pierwszą lekcję", "book", unlocked);
-            case STREAK_3 -> dto(type, "Dobry rytm", "Utrzymaj serię przez 3 dni", "fire", unlocked);
-            case STREAK_7 -> dto(type, "Tydzień nauki", "Utrzymaj serię przez 7 dni", "calendar", unlocked);
-            case XP_100 -> dto(type, "100 XP", "Zdobądź 100 punktów doświadczenia", "lightning", unlocked);
-            case XP_500 -> dto(type, "500 XP", "Zdobądź 500 punktów doświadczenia", "stars", unlocked);
-            case MODULE_MASTER -> dto(type, "Mistrz modułu", "Ukończ wszystkie lekcje w module", "layers", unlocked);
-            case COURSE_GRADUATE -> dto(type, "Absolwent EduHub", "Ukończ cały kurs", "certificate", unlocked);
-            case PERFECT_EXAM -> dto(type, "Perfekcyjny wynik", "Zdobądź 100% z egzaminu", "trophy", unlocked);
-        };
-    }
-
-    private AchievementDto dto(
-            AchievementType type,
-            String title,
-            String description,
-            String icon,
-            UserAchievement unlocked
+            UserAchievement unlocked,
+            long progress
     ) {
         return new AchievementDto(
                 type,
-                title,
-                description,
-                icon,
+                type.title(),
+                type.description(),
+                type.icon(),
+                type.gemReward(),
+                Math.min(progress, type.target()),
+                type.target(),
                 unlocked != null,
                 unlocked == null ? null : unlocked.getUnlockedAt()
         );
+    }
+
+    private long progressFor(AchievementType type, AchievementMetrics metrics) {
+        return switch (type) {
+            case FIRST_LESSON, LESSONS_5, LESSONS_10, LESSONS_25,
+                    LESSONS_50, LESSONS_100 -> metrics.completedLessons();
+            case STREAK_3, STREAK_7, STREAK_14, STREAK_30 ->
+                    metrics.learningDayStreak();
+            case TASKS_10, TASKS_50, TASKS_100, TASKS_250, TASKS_500 ->
+                    metrics.correctTasks();
+            case COMBO_10, COMBO_25 -> metrics.bestTaskStreak();
+            case XP_100, XP_500, XP_1000, XP_5000 -> metrics.xp();
+            case LEVEL_10, LEVEL_50, PRISM_LEAGUE, MYTHIC_LEAGUE ->
+                    metrics.level();
+            case MODULE_MASTER, MODULES_5, MODULES_10 -> metrics.completedModules();
+            case COURSE_GRADUATE, COURSES_3 -> metrics.completedCourses();
+            case PERFECT_EXAM -> metrics.perfectExam() ? 1 : 0;
+            case EXAMS_10 -> metrics.completedExams();
+            case STUDY_HOUR, STUDY_10_HOURS, STUDY_25_HOURS, STUDY_50_HOURS ->
+                    metrics.studySeconds();
+        };
+    }
+
+    private record AchievementMetrics(
+            long completedLessons,
+            int learningDayStreak,
+            long xp,
+            long correctTasks,
+            int bestTaskStreak,
+            long completedModules,
+            long completedCourses,
+            long completedExams,
+            boolean perfectExam,
+            long studySeconds,
+            int level
+    ) {
     }
 }

@@ -6,6 +6,7 @@ import LessonCard from "./LessonCard";
 import useLessons from "./hooks/useLessons";
 import useLessonBlocks from "./hooks/useLessonBlocks";
 import useExpandedLesson from "./hooks/useExpandedLesson";
+import useModule from "./hooks/useModule";
 
 export default function AdminLessonPage() {
 
@@ -14,6 +15,8 @@ export default function AdminLessonPage() {
     const lessons = useLessons(moduleId);
     const lessonBlocks = useLessonBlocks();
     const expanded = useExpandedLesson();
+    const moduleData = useModule(moduleId);
+    const lessonVariant = moduleData.isLanguageCourse ? "LANGUAGE" : "PROGRAMMING";
 
     return (
 
@@ -21,15 +24,17 @@ export default function AdminLessonPage() {
 
             <section className="rounded-3xl border border-cyan-400/20 bg-cyan-400/[0.07] p-5 text-cyan-50 sm:p-6">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
-                    Jak zbudować ścieżkę
+                    {moduleData.isLanguageCourse ? "Kreator językowy" : "Jak zbudować ścieżkę"}
                 </p>
                 <h2 className="mt-2 text-xl font-black">
-                    Jedna karta poniżej to jedna lekcja na roadmapie ucznia
+                    {moduleData.isLanguageCourse
+                        ? "Jedna krótka lekcja powinna ćwiczyć jeden cel komunikacyjny"
+                        : "Jedna karta poniżej to jedna lekcja na roadmapie ucznia"}
                 </h2>
                 <p className="mt-3 max-w-4xl leading-7 text-cyan-100/75">
-                    Jeżeli uczeń ma osobno ukończyć „Wprowadzenie”, „Pierwszy program” i „Zmienne”,
-                    utwórz trzy oddzielne lekcje. Bloki tekstu, informacji, zadań i quizów są krokami
-                    wewnątrz jednej lekcji — nie tworzą kolejnych lekcji ani nie odblokowują następnej karty modułu.
+                    {moduleData.isLanguageCourse
+                        ? "Dodaj kilka słów lub zwrotów, krótki przykład użycia i 2–4 proste ćwiczenia. Kreator ukrywa elementy programistyczne, aby budowanie lekcji było szybsze i czytelniejsze."
+                        : "Jeżeli uczeń ma osobno ukończyć „Wprowadzenie”, „Pierwszy program” i „Zmienne”, utwórz trzy oddzielne lekcje. Bloki tekstu, informacji, zadań i quizów są krokami wewnątrz jednej lekcji."}
                 </p>
             </section>
 
@@ -39,6 +44,7 @@ export default function AdminLessonPage() {
                 editingId={lessons.editingLessonId}
                 onCreate={lessons.createLesson}
                 onUpdate={lessons.updateLesson}
+                variant={lessonVariant}
             />
 
             {lessons.loading && (
@@ -103,6 +109,7 @@ export default function AdminLessonPage() {
                             onDelete={lessons.deleteLesson}
 
                             lessonBlocks={lessonBlocks}
+                            variant={lessonVariant}
 
                         />
 

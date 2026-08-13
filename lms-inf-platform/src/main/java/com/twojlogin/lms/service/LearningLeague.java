@@ -1,13 +1,16 @@
 package com.twojlogin.lms.service;
 
 public enum LearningLeague {
-    COPPER("Miedź", "#fb923c", 1, 5),
-    SILVER("Srebro", "#e2e8f0", 5, 10),
-    GOLD("Złoto", "#facc15", 10, 15),
-    PLATINUM("Platyna", "#22d3ee", 15, 25),
-    CRYSTAL("Kryształ", "#a78bfa", 25, 40),
-    DIAMOND("Diament", "#38bdf8", 40, 60),
-    PRISM("Pryzmat", "#f472b6", 60, null);
+    COPPER("Miedź", "#fb923c", 1, 11),
+    SILVER("Srebro", "#e2e8f0", 11, 21),
+    GOLD("Złoto", "#facc15", 21, 31),
+    PLATINUM("Platyna", "#22d3ee", 31, 41),
+    CRYSTAL("Kryształ", "#a78bfa", 41, 51),
+    DIAMOND("Diament", "#38bdf8", 51, 61),
+    PRISM("Pryzmat", "#f472b6", 61, 71),
+    LEGENDARY_ONE("Legendarny I", "#fb7185", 71, 91),
+    LEGENDARY_TWO("Legendarny II", "#ef4444", 91, 111),
+    MYTHIC("Mityczny", "#e879f9", 111, null);
 
     private final String displayName;
     private final String color;

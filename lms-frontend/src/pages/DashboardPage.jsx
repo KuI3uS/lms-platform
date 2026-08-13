@@ -227,8 +227,8 @@ export default function DashboardPage() {
                         </div>
                         <p className="mt-4 text-xs leading-5 text-slate-500">
                             {stats?.taskStreak > 0
-                                ? `Aktywna do ${formatDate(stats.taskStreakExpiresAt) || "24 godzin od ostatniego zadania"}.`
-                                : "Rozwiąż zadanie, aby uruchomić 24-godzinną serię."}
+                                ? `Aktywna do ${formatDate(stats.taskStreakExpiresAt) || "północy czasu polskiego"}.`
+                                : "Rozwiąż zadanie, aby rozpocząć dzisiejszą serię. Licznik zeruje się o północy."}
                         </p>
                     </div>
                 </div>
