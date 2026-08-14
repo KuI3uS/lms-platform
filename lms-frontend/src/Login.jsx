@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "./api/api";
+import { useAuth } from "./context/AuthContext";
 
 export default function Login() {
+    const { completeLogin } = useAuth();
     const sessionExpired = new URLSearchParams(window.location.search)
         .get("session") === "expired";
     const [email, setEmail] = useState("");
@@ -31,7 +33,7 @@ export default function Login() {
                 })
             });
 
-            localStorage.setItem("token", data.token);
+            completeLogin(data);
             const storedDestination = sessionStorage.getItem("eduhub:return-after-login");
             const destination = storedDestination?.startsWith("/")
                 && !storedDestination.startsWith("//")

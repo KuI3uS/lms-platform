@@ -1,12 +1,12 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute() {
+    const { user, loading } = useAuth();
 
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-        return <Navigate to="/login" />;
+    if (loading) {
+        return <div className="grid min-h-screen place-items-center bg-slate-950 text-cyan-300">Sprawdzanie bezpiecznej sesji…</div>;
     }
-
+    if (!user) return <Navigate to="/login" replace />;
     return <Outlet />;
 }

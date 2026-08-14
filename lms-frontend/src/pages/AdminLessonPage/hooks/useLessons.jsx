@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../../api/api";
+import { useFeedback } from "../../../context/FeedbackContext";
 
 const emptyLesson = {
     title: "",
@@ -12,6 +13,7 @@ const emptyLesson = {
 };
 
 export default function useLessons(moduleId) {
+    const { confirm, showToast } = useFeedback();
 
     const [lessons, setLessons] = useState([]);
     const [lessonForm, setLessonForm] = useState(emptyLesson);
@@ -48,7 +50,7 @@ export default function useLessons(moduleId) {
 
         if (!lessonForm.title.trim()) {
 
-            alert("Podaj nazwę lekcji.");
+            showToast("Podaj nazwę lekcji.", "warning");
             return;
 
         }
@@ -84,7 +86,7 @@ export default function useLessons(moduleId) {
 
     async function deleteLesson(id) {
 
-        if (!window.confirm("Usunąć lekcję?")) {
+        if (!await confirm({ title: "Usuń lekcję", message: "Usunąć lekcję wraz ze wszystkimi blokami i postępami?", confirmLabel: "Usuń lekcję" })) {
             return;
         }
 

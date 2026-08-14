@@ -1,6 +1,7 @@
 package com.twojlogin.lms.config;
 
 import com.twojlogin.lms.security.JwtFilter;
+import com.twojlogin.lms.security.CsrfCookieFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,9 +20,11 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final CsrfCookieFilter csrfCookieFilter;
 
-    public SecurityConfig(JwtFilter jwtFilter) {
+    public SecurityConfig(JwtFilter jwtFilter, CsrfCookieFilter csrfCookieFilter) {
         this.jwtFilter = jwtFilter;
+        this.csrfCookieFilter = csrfCookieFilter;
     }
 
     @Bean
@@ -43,7 +46,7 @@ public class SecurityConfig {
                                 ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER
                         ))
                         .addHeaderWriter(new PermissionsPolicyHeaderWriter(
-                                "camera=(), microphone=(), geolocation=()"
+                                "camera=(), microphone=(self), geolocation=()"
                         ))
                 )
                 .authorizeHttpRequests(auth -> auth
@@ -69,6 +72,9 @@ public class SecurityConfig {
                         // STUDENT LESSON PROGRESS
                         .requestMatchers(HttpMethod.POST, "/api/lessons/*/complete").authenticated()
 
+                        // STUDENT TASK EXECUTION — musi być przed szeroką regułą administracyjną /api/tasks/**
+                        .requestMatchers(HttpMethod.POST, "/api/tasks/*/check").authenticated()
+
 
                         // ADMIN WRITE
                         .requestMatchers(HttpMethod.POST, "/api/courses/**").hasRole("ADMIN")
@@ -91,7 +97,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/questions/**").hasRole("ADMIN")
 
                         // STUDENT ACTIONS
-                        .requestMatchers(HttpMethod.POST, "/api/tasks/*/check").authenticated()
                         .requestMatchers("/api/lesson-submit/**").authenticated()
                         .requestMatchers("/api/submissions/**").authenticated()
                         .requestMatchers("/api/submit/**").authenticated()
@@ -118,7 +123,8 @@ public class SecurityConfig {
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
                         )
                 )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(csrfCookieFilter, JwtFilter.class);
 
         return http.build();
     }

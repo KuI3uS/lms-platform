@@ -29,7 +29,15 @@ const DIAGNOSTIC_LABELS = {
     INCORRECT_COMMENT_COUNT: "Nieprawidłowa liczba komentarzy",
     UNCHANGED_STARTER: "Nieuzupełniony szablon",
     UNBALANCED_DELIMITER: "Niedomknięty znak",
-    UNCLOSED_STRING: "Niedomknięty tekst"
+    UNCLOSED_STRING: "Niedomknięty tekst",
+    COMPILATION_ERROR: "Błąd kompilacji",
+    EXECUTION_TIMEOUT: "Przekroczony czas",
+    OUTPUT_LIMIT: "Zbyt dużo danych",
+    RUNTIME_ERROR: "Błąd działania programu",
+    RUNNER_UNAVAILABLE: "Środowisko chwilowo niedostępne",
+    HIDDEN_TEST_FAILED: "Ukryty test nie przeszedł",
+    MAIN_CLASS_REQUIRED: "Brak klasy Main",
+    SOURCE_TOO_LARGE: "Kod jest zbyt długi"
 };
 
 export default function LessonTask({

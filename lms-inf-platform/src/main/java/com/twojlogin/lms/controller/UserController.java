@@ -17,6 +17,7 @@ import com.twojlogin.lms.repository.CourseCertificateRepository;
 import com.twojlogin.lms.repository.StudyActivityRepository;
 import com.twojlogin.lms.repository.ExamAttemptRepository;
 import com.twojlogin.lms.repository.GamificationProfileRepository;
+import com.twojlogin.lms.repository.LanguageReviewProgressRepository;
 import com.twojlogin.lms.repository.TutoringBookingRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -46,6 +47,7 @@ public class UserController {
     private final ExamAttemptRepository examAttemptRepository;
     private final TutoringBookingRepository tutoringBookingRepository;
     private final GamificationProfileRepository gamificationProfileRepository;
+    private final LanguageReviewProgressRepository reviewRepository;
 
     public UserController(UserRepository userRepository,
                           SubmissionRepository submissionRepository,
@@ -60,7 +62,8 @@ public class UserController {
                           StudyActivityRepository activityRepository,
                           ExamAttemptRepository examAttemptRepository,
                           TutoringBookingRepository tutoringBookingRepository,
-                          GamificationProfileRepository gamificationProfileRepository) {
+                          GamificationProfileRepository gamificationProfileRepository,
+                          LanguageReviewProgressRepository reviewRepository) {
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
         this.schoolClassRepository = schoolClassRepository;
@@ -75,6 +78,7 @@ public class UserController {
         this.examAttemptRepository = examAttemptRepository;
         this.tutoringBookingRepository = tutoringBookingRepository;
         this.gamificationProfileRepository = gamificationProfileRepository;
+        this.reviewRepository = reviewRepository;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -99,6 +103,7 @@ public class UserController {
     public void deleteUser(@PathVariable Long id) {
         submissionRepository.deleteByUserId(id);
         taskAttemptRepository.deleteByUserId(id);
+        reviewRepository.deleteByUserId(id);
         lessonProgressRepository.deleteByUserId(id);
         examAttemptRepository.deleteByUserId(id);
         certificateRepository.deleteByUserId(id);

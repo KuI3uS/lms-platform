@@ -1,37 +1,32 @@
-const DEFAULT_API_URL = "https://lms-platform-1-dcxg.onrender.com/api";
+const CSRF_STORAGE_KEY = "eduhub:csrf";
 
-function resolveApiUrl(value) {
-    const configuredUrl = value?.trim().replace(/\/+$/, "");
+// Żądania pozostają pod domeną frontendu, a hosting przekazuje /api do backendu.
+// Dzięki temu ciasteczko sesyjne nie staje się ciasteczkiem zewnętrznym.
+export const API_URL = "/api";
 
-    // Ten adres był przykładowym placeholderem i nie wskazuje na backend EduHub.
-    if (!configuredUrl || configuredUrl.includes("twoj-backend.onrender.com")) {
-        return DEFAULT_API_URL;
-    }
-
-    return configuredUrl.endsWith("/api")
-        ? configuredUrl
-        : `${configuredUrl}/api`;
+export function setCsrfToken(token) {
+    if (token) sessionStorage.setItem(CSRF_STORAGE_KEY, token);
+    else sessionStorage.removeItem(CSRF_STORAGE_KEY);
 }
 
-export const API_URL = resolveApiUrl(import.meta.env.VITE_API_URL);
-
-export function getToken() {
-    return localStorage.getItem("token");
+export function getCsrfToken() {
+    return sessionStorage.getItem(CSRF_STORAGE_KEY) || "";
 }
 
-export function logout() {
+export function clearClientSession() {
     localStorage.removeItem("token");
-    window.location.href = "/";
+    setCsrfToken("");
+    Object.keys(sessionStorage)
+        .filter((key) => key.startsWith("eduhub-"))
+        .forEach((key) => sessionStorage.removeItem(key));
 }
 
 let redirectingToLogin = false;
 
 function redirectAfterUnauthorized() {
-    localStorage.removeItem("token");
+    clearClientSession();
 
-    if (redirectingToLogin || window.location.pathname === "/login") {
-        return;
-    }
+    if (redirectingToLogin || window.location.pathname === "/login") return;
 
     redirectingToLogin = true;
     const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
@@ -39,18 +34,25 @@ function redirectAfterUnauthorized() {
     window.location.replace("/login?session=expired");
 }
 
+function isUnsafeMethod(method) {
+    return !["GET", "HEAD", "OPTIONS"].includes((method || "GET").toUpperCase());
+}
+
 export async function apiFetch(url, options = {}) {
-    const token = getToken();
     const {
         skipAuthRedirect = false,
         ...fetchOptions
     } = options;
+    const csrfToken = getCsrfToken();
 
     const res = await fetch(API_URL + url, {
         ...fetchOptions,
+        credentials: "include",
         headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: "Bearer " + token } : {}),
+            ...(isUnsafeMethod(fetchOptions.method) && csrfToken
+                ? { "X-EDUHUB-CSRF": csrfToken }
+                : {}),
             ...(options.headers || {})
         }
     });
@@ -58,7 +60,7 @@ export async function apiFetch(url, options = {}) {
     const text = await res.text();
 
     if (!res.ok) {
-        let message = text || "Request failed";
+        let message = text || "Nie udało się wykonać operacji.";
         try {
             const errorBody = JSON.parse(text);
             message = errorBody.message || errorBody.error || message;
@@ -68,7 +70,6 @@ export async function apiFetch(url, options = {}) {
 
         if (
             res.status === 401
-            && token
             && !skipAuthRedirect
             && !url.startsWith("/auth/")
         ) {
@@ -83,8 +84,8 @@ export async function apiFetch(url, options = {}) {
 
     try {
         return JSON.parse(text);
-    } catch (e) {
+    } catch (error) {
         console.error("JSON PARSE ERROR:", text);
-        throw e;
+        throw error;
     }
 }

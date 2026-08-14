@@ -8,6 +8,7 @@ import DividerBlockForm from "./forms/DividerBlockForm";
 import TaskBlockForm from "./forms/TaskBlockForm";
 import QuizBlockForm from "./forms/QuizBlockForm";
 import LanguageTaskBlockForm from "./forms/LanguageTaskBlockForm";
+import AudioBlockForm from "./forms/AudioBlockForm";
 
 export default function BlockRenderer({
                                           block,
@@ -53,6 +54,9 @@ export default function BlockRenderer({
                     setBlock={setBlock}
                 />
             );
+
+        case "AUDIO":
+            return <AudioBlockForm block={block} setBlock={setBlock} />;
 
         case "PDF":
         case "DOWNLOAD":

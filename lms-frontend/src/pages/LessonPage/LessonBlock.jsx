@@ -7,6 +7,7 @@ import LessonDownload from "./LessonDownload";
 import LessonQuote from "./LessonQuote";
 import LessonDivider from "./LessonDivider";
 import LessonQuiz from "./LessonQuiz";
+import LessonAudio from "./LessonAudio";
 
 export default function LessonBlock({
                                         block,
@@ -43,6 +44,9 @@ export default function LessonBlock({
 
         case "VIDEO":
             return <LessonVideo block={block} />;
+
+        case "AUDIO":
+            return <LessonAudio block={block} />;
 
         case "PDF":
         case "DOWNLOAD":

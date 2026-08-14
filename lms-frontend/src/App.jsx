@@ -23,6 +23,7 @@ const CourseCheckoutPage = lazy(() => import("./pages/CourseCheckoutPage"));
 const ExamsPage = lazy(() => import("./pages/ExamsPage"));
 const ExamAttemptPage = lazy(() => import("./pages/ExamAttemptPage"));
 const LearningCenterPage = lazy(() => import("./pages/LearningCenterPage"));
+const LanguageReviewPage = lazy(() => import("./pages/LanguageReviewPage"));
 const CertificatePage = lazy(() => import("./pages/CertificatePage"));
 
 const AdminPage = lazy(() => import("./pages/AdminPage"));
@@ -76,6 +77,7 @@ export default function App() {
                         <Route path="/exams" element={<ExamsPage />} />
                         <Route path="/exams/:attemptId" element={<ExamAttemptPage />} />
                         <Route path="/learning-center" element={<LearningCenterPage />} />
+                        <Route path="/language-reviews" element={<LanguageReviewPage />} />
 
                         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
                         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />

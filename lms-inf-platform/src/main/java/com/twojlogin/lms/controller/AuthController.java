@@ -3,7 +3,11 @@ package com.twojlogin.lms.controller;
 import com.twojlogin.lms.dto.LoginRequest;
 import com.twojlogin.lms.dto.RegisterRequest;
 import com.twojlogin.lms.dto.ForgotPasswordRequest;
+import com.twojlogin.lms.dto.AuthSessionDto;
+import com.twojlogin.lms.dto.AuthenticatedUserDto;
 import com.twojlogin.lms.service.AuthService;
+import com.twojlogin.lms.security.AuthCookieService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +18,11 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthCookieService cookieService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, AuthCookieService cookieService) {
         this.authService = authService;
+        this.cookieService = cookieService;
     }
 
     @PostMapping("/register")
@@ -26,9 +32,27 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody LoginRequest request) {
-        String token = authService.login(request);
-        return Map.of("token", token);
+    public AuthSessionDto login(
+            @RequestBody LoginRequest request,
+            HttpServletResponse response
+    ) {
+        AuthService.LoginResult result = authService.login(request);
+        String csrfToken = cookieService.issueSession(response, result.token());
+        return new AuthSessionDto(
+                AuthenticatedUserDto.from(result.user()),
+                csrfToken
+        );
+    }
+
+    @GetMapping("/csrf")
+    public Map<String, String> csrf(HttpServletResponse response) {
+        return Map.of("csrfToken", cookieService.refreshCsrf(response));
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(HttpServletResponse response) {
+        cookieService.clearSession(response);
     }
 
     @GetMapping("/verify-email")

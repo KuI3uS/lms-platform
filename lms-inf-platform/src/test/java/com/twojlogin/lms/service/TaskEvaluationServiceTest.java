@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 class TaskEvaluationServiceTest {
 
@@ -30,6 +31,8 @@ class TaskEvaluationServiceTest {
     private TaskAttemptRepository attemptRepository;
     private UserRepository userRepository;
     private GamificationService gamificationService;
+    private CodeExecutionService codeExecutionService;
+    private LanguageReviewService languageReviewService;
     private Authentication authentication;
     private TaskEvaluationService service;
     private User user;
@@ -50,12 +53,16 @@ class TaskEvaluationServiceTest {
         attemptRepository = mock(TaskAttemptRepository.class);
         userRepository = mock(UserRepository.class);
         gamificationService = mock(GamificationService.class);
+        codeExecutionService = mock(CodeExecutionService.class);
+        languageReviewService = mock(LanguageReviewService.class);
         authentication = mock(Authentication.class);
         service = new TaskEvaluationService(
                 blockRepository,
                 attemptRepository,
                 userRepository,
-                gamificationService
+                gamificationService,
+                codeExecutionService,
+                languageReviewService
         );
 
         user = new User();
@@ -242,6 +249,23 @@ class TaskEvaluationServiceTest {
 
         assertFalse(response.correct());
         assertEquals("INCORRECT_TEXT_ANSWER", response.diagnostics().get(0).type());
+    }
+
+    @Test
+    void delegatesJavaTaskWithHiddenTestsToTheSandboxRunner() {
+        block.setHiddenTests("<brak> => Witaj świecie");
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+        when(codeExecutionService.evaluateJava(EXPECTED, block.getHiddenTests()))
+                .thenReturn(java.util.List.of());
+
+        TaskCheckResponse response = service.check(
+                block.getId(),
+                EXPECTED,
+                authentication
+        );
+
+        assertTrue(response.correct());
+        verify(codeExecutionService).evaluateJava(EXPECTED, block.getHiddenTests());
     }
 
     @Test

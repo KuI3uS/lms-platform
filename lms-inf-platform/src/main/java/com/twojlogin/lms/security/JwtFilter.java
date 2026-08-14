@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,18 +39,17 @@ public class JwtFilter extends OncePerRequestFilter {
                 request.getMethod().equals("OPTIONS") ||
                         path.equals("/api/tutoring/book") ||
                         path.equals("/api/tutoring/available") ||
-                        path.startsWith("/api/auth/")
+                        isPublicAuthEndpoint(path)
         ) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        final String authHeader = request.getHeader("Authorization");
+        final String token = readToken(request);
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        if (token != null) {
 
             try {
-                String token = authHeader.substring(7);
                 String email = jwtService.extractEmail(token);
 
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -86,5 +86,31 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String readToken(HttpServletRequest request) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (AuthCookieService.SESSION_COOKIE.equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        // Tymczasowa zgodność dla klientów API podczas migracji na ciasteczka.
+        String authHeader = request.getHeader("Authorization");
+        return authHeader != null && authHeader.startsWith("Bearer ")
+                ? authHeader.substring(7)
+                : null;
+    }
+
+    private boolean isPublicAuthEndpoint(String path) {
+        return path.equals("/api/auth/login")
+                || path.equals("/api/auth/register")
+                || path.equals("/api/auth/forgot-password")
+                || path.equals("/api/auth/reset-password")
+                || path.equals("/api/auth/resend-verification")
+                || path.equals("/api/auth/verify-email")
+                || path.equals("/api/auth/csrf");
     }
 }

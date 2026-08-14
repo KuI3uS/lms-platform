@@ -1,15 +1,7 @@
 import { Navigate } from "react-router-dom";
-import { getPayload } from "../utils/auth";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminRoute({ children }) {
-
-    const payload = getPayload();
-
-    if (!payload) return <Navigate to="/" />;
-
-    if (payload.role !== "ADMIN") {
-        return <Navigate to="/" />;
-    }
-
-    return children;
+    const { user } = useAuth();
+    return user?.role === "ADMIN" ? children : <Navigate to="/dashboard" replace />;
 }

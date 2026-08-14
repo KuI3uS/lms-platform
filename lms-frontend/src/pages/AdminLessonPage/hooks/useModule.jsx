@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../../api/api";
+import { useFeedback } from "../../../context/FeedbackContext";
 
 export default function useModule(moduleId) {
+    const { showToast } = useFeedback();
 
     const [moduleSettings, setModuleSettings] = useState({
         name: "",
@@ -54,7 +56,7 @@ export default function useModule(moduleId) {
             body: JSON.stringify(moduleSettings)
         });
 
-        alert("Ustawienia zapisane.");
+        showToast("Ustawienia modułu zostały zapisane.", "success");
 
     }
 

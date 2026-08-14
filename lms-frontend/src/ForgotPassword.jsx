@@ -1,35 +1,29 @@
 import { useState } from "react";
 
-import { API_URL } from "./api/api";
+import { apiFetch } from "./api/api";
+import { useFeedback } from "./context/FeedbackContext";
 
 export default function ForgotPassword() {
+    const { showToast } = useFeedback();
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
 
     const submit = async () => {
         if (!email.trim()) {
-            alert("Podaj email");
+            showToast("Podaj adres email.", "warning");
             return;
         }
 
         try {
             setLoading(true);
 
-            const res = await fetch(`${API_URL}/auth/forgot-password`, {
+            await apiFetch("/auth/forgot-password", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
                 body: JSON.stringify({ email })
             });
-
-            if (!res.ok) {
-                throw new Error("Błąd wysyłania linku");
-            }
-
-            alert("Jeśli konto istnieje, link do resetu hasła został wysłany.");
+            showToast("Jeśli konto istnieje, link do resetu hasła został wysłany.", "success");
         } catch (e) {
-            alert(e.message);
+            showToast(e.message || "Nie udało się wysłać linku.", "error");
         } finally {
             setLoading(false);
         }

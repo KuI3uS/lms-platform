@@ -8,6 +8,8 @@ import com.twojlogin.lms.entity.Question;
 import com.twojlogin.lms.entity.Role;
 import com.twojlogin.lms.entity.TutoringBooking;
 import com.twojlogin.lms.entity.User;
+import com.twojlogin.lms.entity.LessonBlock;
+import com.twojlogin.lms.entity.BlockType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -86,5 +88,27 @@ class ApiDtoSecurityTest {
         assertTrue(json.contains("endTime"));
         assertFalse(json.contains("private@example.com"));
         assertFalse(json.contains("123456789"));
+    }
+
+    @Test
+    void studentLessonBlockDoesNotRevealSolutionsOrHiddenTests() throws Exception {
+        LessonBlock block = new LessonBlock();
+        block.setId(9L);
+        block.setType(BlockType.TASK);
+        block.setTitle("Ukryte sprawdzanie");
+        block.setExpectedAnswer("tajne rozwiązanie");
+        block.setHiddenTests("5 => 25");
+
+        String studentJson = objectMapper.writeValueAsString(
+                LessonBlockDto.from(block, false)
+        );
+        String adminJson = objectMapper.writeValueAsString(
+                LessonBlockDto.from(block, true)
+        );
+
+        assertFalse(studentJson.contains("tajne rozwiązanie"));
+        assertFalse(studentJson.contains("5 => 25"));
+        assertTrue(adminJson.contains("tajne rozwiązanie"));
+        assertTrue(adminJson.contains("5 => 25"));
     }
 }

@@ -12,6 +12,7 @@ import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
+import com.twojlogin.lms.repository.LanguageReviewProgressRepository;
 import com.twojlogin.lms.service.TaskEvaluationService;
 import com.twojlogin.lms.service.CourseAccessService;
 import jakarta.transaction.Transactional;
@@ -35,19 +36,22 @@ public class LessonBlockController {
     private final TaskAttemptRepository attemptRepository;
     private final TaskEvaluationService evaluationService;
     private final CourseAccessService accessService;
+    private final LanguageReviewProgressRepository reviewRepository;
 
     public LessonBlockController(
             LessonBlockRepository blockRepository,
             LessonRepository lessonRepository,
             TaskAttemptRepository attemptRepository,
             TaskEvaluationService evaluationService,
-            CourseAccessService accessService
+            CourseAccessService accessService,
+            LanguageReviewProgressRepository reviewRepository
     ) {
         this.blockRepository = blockRepository;
         this.lessonRepository = lessonRepository;
         this.attemptRepository = attemptRepository;
         this.evaluationService = evaluationService;
         this.accessService = accessService;
+        this.reviewRepository = reviewRepository;
     }
 
     @GetMapping("/lesson/{lessonId}")
@@ -155,6 +159,7 @@ public class LessonBlockController {
         Long lessonId = block.getLesson().getId();
 
         attemptRepository.deleteByBlockId(id);
+        reviewRepository.deleteByBlockId(id);
         blockRepository.delete(block);
 
         List<LessonBlock> blocks =
@@ -250,6 +255,7 @@ public class LessonBlockController {
         block.setDetailedHint(trimToEmpty(request.detailedHint()));
         block.setSolutionExplanation(trimToEmpty(request.solutionExplanation()));
         block.setLanguage(trimToEmpty(request.language()));
+        block.setHiddenTests(valueOrEmpty(request.hiddenTests()));
         block.setMediaUrl(trimToEmpty(request.mediaUrl()));
         block.setMediaType(trimToEmpty(request.mediaType()));
         block.setPublished(request.published() == null || request.published());

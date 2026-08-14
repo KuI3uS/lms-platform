@@ -5,6 +5,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import java.security.Key;
 import java.util.Date;
 
@@ -13,11 +14,21 @@ public class JwtService {
 
     private static final long TOKEN_TTL_MILLIS = 1000L * 60 * 60 * 12;
 
-    private final String SECRET = "c2VjcmV0a2x1Y3pqd3QxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTA=";
+    private final String secret;
+
+    public JwtService(@Value("${jwt.secret}") String secret) {
+        this.secret = secret;
+    }
 
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET));
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secret);
+        } catch (RuntimeException ignored) {
+            keyBytes = secret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        }
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {

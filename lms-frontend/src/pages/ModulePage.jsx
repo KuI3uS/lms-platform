@@ -15,6 +15,8 @@ import {
     getCourseCategory,
     getCourseLanguageLabel
 } from "../utils/courseTaxonomy";
+import { useAuth } from "../context/AuthContext";
+import { useFeedback } from "../context/FeedbackContext";
 
 const ROADMAP_CACHE_TTL = 60_000;
 const roadmapCache = new Map();
@@ -22,6 +24,8 @@ const roadmapCache = new Map();
 export default function ModulePage() {
     const { courseId } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const { confirm, showToast } = useFeedback();
 
     const [modules, setModules] = useState([]);
     const [course, setCourse] = useState(null);
@@ -29,14 +33,7 @@ export default function ModulePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const token = localStorage.getItem("token");
-    let role = null;
-
-    try {
-        role = token ? JSON.parse(atob(token.split(".")[1])).role : null;
-    } catch {
-        role = null;
-    }
+    const role = user?.role || null;
 
     const loadRoadmap = useCallback(async () => {
         const cached = roadmapCache.get(String(courseId));
@@ -90,7 +87,7 @@ export default function ModulePage() {
 
     const createModule = async () => {
         if (!newModule.trim()) {
-            alert("Podaj nazwę sekcji");
+            showToast("Podaj nazwę sekcji.", "warning");
             return;
         }
 
@@ -108,7 +105,7 @@ export default function ModulePage() {
     };
 
     const deleteModule = async (id) => {
-        if (!window.confirm("Usunąć sekcję?")) return;
+        if (!await confirm({ title: "Usuń sekcję", message: "Usunąć tę sekcję wraz z lekcjami?", confirmLabel: "Usuń sekcję" })) return;
 
         await apiFetch(`/modules/${id}`, {
             method: "DELETE"

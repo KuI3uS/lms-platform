@@ -79,7 +79,10 @@ class AuthServiceTest {
         when(jwtService.generateToken("student@example.com", "STUDENT"))
                 .thenReturn("jwt-token");
 
-        assertEquals("jwt-token", authService.login(request));
+        AuthService.LoginResult result = authService.login(request);
+
+        assertEquals("jwt-token", result.token());
+        assertEquals(user, result.user());
     }
 
     @Test

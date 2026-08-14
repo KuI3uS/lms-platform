@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
-import { apiFetch, logout } from "../api/api";
+import { apiFetch } from "../api/api";
+import { useAuth } from "../context/AuthContext";
 import { fetchLearningStats, invalidateLearningStats } from "../api/learningStats";
 import LeagueBadge from "./LeagueBadge";
 import {
@@ -28,19 +29,6 @@ const PAGE_TITLES = [
     ["/admin", "Strefa twórcy"]
 ];
 
-function readIdentity() {
-    try {
-        const token = localStorage.getItem("token");
-        const payload = token ? JSON.parse(atob(token.split(".")[1])) : {};
-        return {
-            email: payload.sub || payload.email || "Użytkownik",
-            role: payload.role || "STUDENT"
-        };
-    } catch {
-        return { email: "Użytkownik", role: "STUDENT" };
-    }
-}
-
 function formatExpiry(value) {
     if (!value) return "Wykonaj zadanie, aby rozpocząć serię";
     return `Wygasa ${new Intl.DateTimeFormat("pl-PL", {
@@ -55,7 +43,11 @@ function formatExpiry(value) {
 export default function Navbar({ onMenuClick }) {
     const navigate = useNavigate();
     const location = useLocation();
-    const [identity] = useState(() => readIdentity());
+    const { user, logout } = useAuth();
+    const identity = {
+        email: user?.email || "Użytkownik",
+        role: user?.role || "STUDENT"
+    };
     const [learningStats, setLearningStats] = useState({ xp: 0, level: 1, taskStreak: 0, xpMultiplier: 1, gemBalance: 0 });
     const [notifications, setNotifications] = useState({ unreadCount: 0, notifications: [] });
     const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -235,7 +227,7 @@ export default function Navbar({ onMenuClick }) {
                                 <button type="button" onClick={() => navigate("/learning-center")} className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-300 hover:bg-white/[0.06]">
                                     <BsPerson /> Mój postęp
                                 </button>
-                                <button type="button" onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-red-300 hover:bg-red-500/10">
+                                <button type="button" onClick={async () => { await logout(); window.location.href = "/login"; }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-red-300 hover:bg-red-500/10">
                                     <BsBoxArrowRight /> Wyloguj
                                 </button>
                             </div>

@@ -4,6 +4,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "../styles/tutoring-calendar.css";
 import { API_URL } from "../api/api";
+import { useFeedback } from "../context/FeedbackContext";
 
 
 import {
@@ -19,6 +20,7 @@ import {
 } from "react-icons/bs";
 
 export default function TutoringBookingPage() {
+    const { showToast } = useFeedback();
     const [availability, setAvailability] = useState([]);
     const [selectedAvailability, setSelectedAvailability] = useState(null);
     const [selectedStart, setSelectedStart] = useState("");
@@ -196,7 +198,7 @@ export default function TutoringBookingPage() {
 
     const reserve = async () => {
         if (!canReserve) {
-            alert("Uzupełnij wszystkie dane i wybierz termin");
+            showToast("Uzupełnij wszystkie dane i wybierz termin.", "warning");
             return;
         }
 
@@ -204,7 +206,7 @@ export default function TutoringBookingPage() {
         const end = new Date(selectedEnd);
 
         if (end > availabilityEnd) {
-            alert("Wybrana liczba godzin wychodzi poza dostępny termin");
+            showToast("Wybrana liczba godzin wychodzi poza dostępny termin.", "warning");
             return;
         }
 

@@ -59,6 +59,10 @@ public class LessonBlock {
 
     private String language;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String hiddenTests;
+
     /*
      * Multimedia
      */
@@ -194,6 +198,14 @@ public class LessonBlock {
 
     public void setLanguage(String language) {
         this.language = language;
+    }
+
+    public String getHiddenTests() {
+        return hiddenTests;
+    }
+
+    public void setHiddenTests(String hiddenTests) {
+        this.hiddenTests = hiddenTests;
     }
 
     public String getMediaUrl() {

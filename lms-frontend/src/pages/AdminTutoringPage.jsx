@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../api/api";
+import { useFeedback } from "../context/FeedbackContext";
 import {
     BsClock,
     BsTrash,
@@ -12,6 +13,7 @@ import {
 } from "react-icons/bs";
 
 export default function AdminTutoringPage() {
+    const { confirm, showToast } = useFeedback();
     const [terms, setTerms] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [startTime, setStartTime] = useState("");
@@ -49,12 +51,12 @@ export default function AdminTutoringPage() {
 
     const addTerm = async () => {
         if (!startTime || !endTime) {
-            alert("Podaj dostępność od-do");
+            showToast("Podaj początek i koniec dostępności.", "warning");
             return;
         }
 
         if (new Date(endTime) <= new Date(startTime)) {
-            alert("Koniec musi być później niż start");
+            showToast("Koniec musi być później niż początek.", "warning");
             return;
         }
 
@@ -77,7 +79,7 @@ export default function AdminTutoringPage() {
     };
 
     const deleteTerm = async (id) => {
-        if (!confirm("Usunąć dostępność?")) return;
+        if (!await confirm({ title: "Usuń dostępność", message: "Usunąć ten termin z kalendarza?", confirmLabel: "Usuń termin" })) return;
 
         setError("");
         try {
@@ -110,9 +112,11 @@ export default function AdminTutoringPage() {
 
     const deleteBooking = async (booking) => {
         const description = booking.topic || "rezerwacja bez tematu";
-        const accepted = window.confirm(
-            `Trwale usunąć „${description}” z ${formatDate(booking.startTime)}?\n\nTej operacji nie można cofnąć.`
-        );
+        const accepted = await confirm({
+            title: "Usuń rezerwację",
+            message: `Trwale usunąć „${description}” z ${formatDate(booking.startTime)}? Tej operacji nie można cofnąć.`,
+            confirmLabel: "Usuń rezerwację"
+        });
 
         if (!accepted) return;
 

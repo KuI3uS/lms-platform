@@ -8,8 +8,10 @@ import {
     BsTrash
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
+import { useFeedback } from "../context/FeedbackContext";
 
 export default function AdminModulesPage() {
+    const { confirm } = useFeedback();
     const [courses, setCourses] = useState([]);
     const [courseId, setCourseId] = useState("");
     const [modules, setModules] = useState([]);
@@ -110,7 +112,7 @@ export default function AdminModulesPage() {
     };
 
     const deleteModule = async (module) => {
-        if (!window.confirm(`Usunąć moduł „${module.name}”?`)) return;
+        if (!await confirm({ title: "Usuń moduł", message: `Usunąć moduł „${module.name}” razem z jego lekcjami?`, confirmLabel: "Usuń moduł" })) return;
         try {
             setError("");
             await apiFetch(`/modules/${module.id}`, { method: "DELETE" });

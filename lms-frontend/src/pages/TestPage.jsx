@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiFetch } from "../api/api";
+import { useFeedback } from "../context/FeedbackContext";
 
 export default function TestPage() {
+    const { showToast } = useFeedback();
 
     const { moduleId } = useParams();
 
@@ -35,7 +37,7 @@ export default function TestPage() {
             body: JSON.stringify(payload)
         });
 
-        alert(`Wynik: ${result.percentage}%`);
+        showToast(`Twój wynik: ${result.percentage}%`, result.percentage >= 50 ? "success" : "warning", "Test zakończony");
     };
 
     return (
