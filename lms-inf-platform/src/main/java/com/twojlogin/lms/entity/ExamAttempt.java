@@ -7,7 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "exam_attempts")
+@Table(
+        name = "exam_attempts",
+        indexes = @Index(
+                name = "idx_exam_user_course_status",
+                columnList = "user_id, course_id, status, passed"
+        )
+)
 public class ExamAttempt {
 
     @Id
@@ -28,6 +34,11 @@ public class ExamAttempt {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ExamAttemptStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private ExamType examType;
+
+    private String cefrLevel;
 
     @Column(nullable = false)
     private int durationMinutes;
@@ -86,6 +97,22 @@ public class ExamAttempt {
 
     public void setStatus(ExamAttemptStatus status) {
         this.status = status;
+    }
+
+    public ExamType getExamType() {
+        return examType == null ? ExamType.PRACTICE : examType;
+    }
+
+    public void setExamType(ExamType examType) {
+        this.examType = examType;
+    }
+
+    public String getCefrLevel() {
+        return cefrLevel;
+    }
+
+    public void setCefrLevel(String cefrLevel) {
+        this.cefrLevel = cefrLevel;
     }
 
     public int getDurationMinutes() {

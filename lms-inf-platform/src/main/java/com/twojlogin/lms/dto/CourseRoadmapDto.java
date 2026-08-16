@@ -9,12 +9,16 @@ public record CourseRoadmapDto(
         String category,
         String courseLanguage,
         String cefrLevel,
+        String cefrEndLevel,
+        String unlockedCefrLevel,
         List<ModuleItem> modules
 ) {
     public record ModuleItem(
             Long id,
             String name,
             boolean lessonsLocked,
+            String cefrLevel,
+            boolean levelUnlocked,
             List<LessonItem> lessons
     ) {
     }

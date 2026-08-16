@@ -9,6 +9,7 @@ import {
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
 import { useFeedback } from "../context/FeedbackContext";
+import { CEFR_LEVELS } from "../utils/courseTaxonomy";
 
 export default function AdminModulesPage() {
     const { confirm } = useFeedback();
@@ -16,11 +17,18 @@ export default function AdminModulesPage() {
     const [courseId, setCourseId] = useState("");
     const [modules, setModules] = useState([]);
     const [newModuleName, setNewModuleName] = useState("");
+    const [newModuleLevel, setNewModuleLevel] = useState("A1");
     const [loading, setLoading] = useState(true);
     const [savingId, setSavingId] = useState(null);
     const [error, setError] = useState("");
     const selectedCourse = courses.find((course) => String(course.id) === String(courseId));
     const isLanguageCourse = selectedCourse?.category === "LANGUAGE";
+    const availableLevels = isLanguageCourse
+        ? CEFR_LEVELS.filter((level) => (
+            CEFR_LEVELS.indexOf(level) >= CEFR_LEVELS.indexOf(selectedCourse?.cefrLevel || "A1")
+            && CEFR_LEVELS.indexOf(level) <= CEFR_LEVELS.indexOf(selectedCourse?.cefrEndLevel || selectedCourse?.cefrLevel || "A1")
+        ))
+        : [];
 
     useEffect(() => {
         let active = true;
@@ -32,6 +40,7 @@ export default function AdminModulesPage() {
                 if (list.length > 0) {
                     setLoading(true);
                     setCourseId(String(list[0].id));
+                    setNewModuleLevel(list[0].cefrLevel || "A1");
                 }
             })
             .catch((loadError) => {
@@ -82,7 +91,8 @@ export default function AdminModulesPage() {
                 method: "POST",
                 body: JSON.stringify({
                     name: newModuleName.trim(),
-                    lessonsLocked: true
+                    lessonsLocked: true,
+                    cefrLevel: isLanguageCourse ? newModuleLevel : null
                 })
             });
             setModules((current) => [...current, created]);
@@ -100,7 +110,8 @@ export default function AdminModulesPage() {
                 method: "PUT",
                 body: JSON.stringify({
                     name: module.name.trim(),
-                    lessonsLocked: module.lessonsLocked
+                    lessonsLocked: module.lessonsLocked,
+                    cefrLevel: isLanguageCourse ? module.cefrLevel : null
                 })
             });
             updateLocal(module.id, saved);
@@ -151,10 +162,12 @@ export default function AdminModulesPage() {
                 <select
                     value={courseId}
                     onChange={(event) => {
+                        const nextCourse = courses.find((item) => String(item.id) === event.target.value);
                         setLoading(true);
                         setError("");
                         setModules([]);
                         setCourseId(event.target.value);
+                        setNewModuleLevel(nextCourse?.cefrLevel || "A1");
                     }}
                     className="mt-3 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-emerald-400"
                 >
@@ -173,6 +186,18 @@ export default function AdminModulesPage() {
                         placeholder={isLanguageCourse ? "Nazwa rozdziału, np. W restauracji" : "Nazwa nowego modułu"}
                         className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-emerald-400"
                     />
+                    {isLanguageCourse && (
+                        <select
+                            value={newModuleLevel}
+                            onChange={(event) => setNewModuleLevel(event.target.value)}
+                            aria-label="Poziom CEFR nowego rozdziału"
+                            className="rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 font-black outline-none focus:border-emerald-400"
+                        >
+                            {availableLevels.map((level) => (
+                                <option key={level} value={level}>CEFR {level}</option>
+                            ))}
+                        </select>
+                    )}
                     <button
                         type="submit"
                         disabled={!courseId || !newModuleName.trim()}
@@ -208,6 +233,18 @@ export default function AdminModulesPage() {
                                         onChange={(event) => updateLocal(module.id, { name: event.target.value })}
                                         className="w-full rounded-xl border border-transparent bg-slate-950/70 px-4 py-3 text-lg font-black outline-none focus:border-emerald-400"
                                     />
+                                    {isLanguageCourse && (
+                                        <select
+                                            value={module.cefrLevel || selectedCourse?.cefrLevel || "A1"}
+                                            onChange={(event) => updateLocal(module.id, { cefrLevel: event.target.value })}
+                                            aria-label={`Poziom CEFR modułu ${module.name}`}
+                                            className="mt-3 rounded-xl border border-violet-400/20 bg-slate-950 px-3 py-2 text-sm font-black text-violet-200 outline-none focus:border-violet-400"
+                                        >
+                                            {availableLevels.map((level) => (
+                                                <option key={level} value={level}>Poziom {level}</option>
+                                            ))}
+                                        </select>
+                                    )}
                                     <label className="mt-3 flex items-center gap-3 text-sm text-slate-400">
                                         <input
                                             type="checkbox"

@@ -197,7 +197,9 @@ export default function AdminQuestionsPage() {
                     >
                         {modules.length === 0 && <option value="">Brak modułów</option>}
                         {modules.map((module) => (
-                            <option key={module.id} value={module.id}>{module.name}</option>
+                            <option key={module.id} value={module.id}>
+                                {module.cefrLevel ? `[${module.cefrLevel}] ` : ""}{module.name}
+                            </option>
                         ))}
                     </select>
                 </label>

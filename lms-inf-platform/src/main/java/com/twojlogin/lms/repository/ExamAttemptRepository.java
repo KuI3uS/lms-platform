@@ -15,6 +15,12 @@ public interface ExamAttemptRepository extends JpaRepository<ExamAttempt, Long> 
 
     List<ExamAttempt> findByUserIdOrderByStartedAtDesc(Long userId);
 
+    List<ExamAttempt> findByUserIdAndCourseIdAndStatusAndPassedTrueOrderByStartedAtDesc(
+            Long userId,
+            Long courseId,
+            ExamAttemptStatus status
+    );
+
     long countByUserIdAndStatus(Long userId, ExamAttemptStatus status);
 
     boolean existsByUserIdAndStatusAndPercentageGreaterThanEqual(

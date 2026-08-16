@@ -15,6 +15,9 @@ import java.util.List;
 import org.springframework.security.core.Authentication;
 import com.twojlogin.lms.service.CourseAccessService;
 import com.twojlogin.lms.service.CourseRoadmapService;
+import com.twojlogin.lms.util.CefrLevels;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/modules")
@@ -51,6 +54,7 @@ public class CourseModuleController {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
+        applyCefrLevel(module, course);
         module.setCourse(course);
         return CourseModuleDto.from(moduleRepository.save(module));
     }
@@ -97,7 +101,35 @@ public class CourseModuleController {
 
         module.setName(updated.getName());
         module.setLessonsLocked(updated.isLessonsLocked());
+        applyCefrLevel(
+                module,
+                module.getCourse(),
+                updated.getCefrLevel() == null
+                        ? module.getCefrLevel()
+                        : updated.getCefrLevel()
+        );
 
         return CourseModuleDto.from(moduleRepository.save(module));
+    }
+
+    private void applyCefrLevel(CourseModule module, Course course) {
+        applyCefrLevel(module, course, module.getCefrLevel());
+    }
+
+    private void applyCefrLevel(CourseModule module, Course course, String requestedLevel) {
+        if (!"LANGUAGE".equals(course.getCategory())) {
+            module.setCefrLevel(null);
+            return;
+        }
+
+        String level = CefrLevels.normalize(requestedLevel);
+        if (level == null) level = course.getCefrLevel();
+        if (!CefrLevels.isInRange(level, course.getCefrLevel(), course.getCefrEndLevel())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Poziom modułu musi mieścić się w zakresie kursu"
+            );
+        }
+        module.setCefrLevel(level);
     }
 }

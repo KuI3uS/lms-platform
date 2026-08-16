@@ -30,6 +30,7 @@ const EMPTY_COURSE = {
     category: "PROGRAMMING",
     courseLanguage: "ENGLISH",
     cefrLevel: "A1",
+    cefrEndLevel: "C2",
     level: "Podstawy",
     billingMode: "FREE",
     price: "0",
@@ -80,6 +81,7 @@ export default function AddCoursePage() {
                         category: data.category || "PROGRAMMING",
                         courseLanguage: data.courseLanguage || "ENGLISH",
                         cefrLevel: data.cefrLevel || "A1",
+                        cefrEndLevel: data.cefrEndLevel || data.cefrLevel || "A1",
                         level: data.level || "Podstawy",
                         price: data.price ?? "0",
                         billingMode: data.billingMode || (Number(data.price || 0) > 0 ? "ONE_TIME" : "FREE"),
@@ -106,10 +108,17 @@ export default function AddCoursePage() {
 
     const updateField = (event) => {
         const { name, value, type, checked } = event.target;
-        setCourse((current) => ({
-            ...current,
-            [name]: type === "checkbox" ? checked : value
-        }));
+        setCourse((current) => {
+            const updated = {
+                ...current,
+                [name]: type === "checkbox" ? checked : value
+            };
+            if (name === "cefrLevel"
+                    && CEFR_LEVELS.indexOf(updated.cefrEndLevel) < CEFR_LEVELS.indexOf(value)) {
+                updated.cefrEndLevel = value;
+            }
+            return updated;
+        });
     };
 
     const submit = async (event) => {
@@ -119,8 +128,13 @@ export default function AddCoursePage() {
             setError("Podaj nazwę kursu.");
             return;
         }
-        if (course.category === "LANGUAGE" && (!course.courseLanguage || !course.cefrLevel)) {
-            setError("Wybierz język i poziom CEFR.");
+        if (course.category === "LANGUAGE" && (
+            !course.courseLanguage
+            || !course.cefrLevel
+            || !course.cefrEndLevel
+            || CEFR_LEVELS.indexOf(course.cefrEndLevel) < CEFR_LEVELS.indexOf(course.cefrLevel)
+        )) {
+            setError("Wybierz poprawny zakres poziomów CEFR.");
             return;
         }
 
@@ -318,7 +332,7 @@ export default function AddCoursePage() {
                             />
                         </label>
 
-                        <div className={`grid gap-5 ${course.category === "LANGUAGE" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+                        <div className={`grid gap-5 ${course.category === "LANGUAGE" ? "sm:grid-cols-2 xl:grid-cols-3" : "sm:grid-cols-2"}`}>
                             {course.category === "LANGUAGE" ? (
                                 <>
                                     <label className="space-y-2">
@@ -337,7 +351,7 @@ export default function AddCoursePage() {
                                         </select>
                                     </label>
                                     <label className="space-y-2">
-                                        <span className="text-sm font-bold text-slate-300">Poziom CEFR</span>
+                                        <span className="text-sm font-bold text-slate-300">Poziom początkowy</span>
                                         <select
                                             name="cefrLevel"
                                             value={course.cefrLevel}
@@ -347,6 +361,21 @@ export default function AddCoursePage() {
                                             {CEFR_LEVELS.map((level) => (
                                                 <option key={level} value={level}>{level}</option>
                                             ))}
+                                        </select>
+                                    </label>
+                                    <label className="space-y-2">
+                                        <span className="text-sm font-bold text-slate-300">Poziom końcowy</span>
+                                        <select
+                                            name="cefrEndLevel"
+                                            value={course.cefrEndLevel}
+                                            onChange={updateField}
+                                            className={fieldClass}
+                                        >
+                                            {CEFR_LEVELS
+                                                .filter((level) => CEFR_LEVELS.indexOf(level) >= CEFR_LEVELS.indexOf(course.cefrLevel))
+                                                .map((level) => (
+                                                    <option key={level} value={level}>{level}</option>
+                                                ))}
                                         </select>
                                     </label>
                                 </>
@@ -437,7 +466,7 @@ export default function AddCoursePage() {
                                             {getCourseLanguageLabel(course.courseLanguage)}
                                         </span>
                                         <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs font-black text-cyan-200">
-                                            CEFR {course.cefrLevel}
+                                            CEFR {course.cefrLevel}{course.cefrEndLevel !== course.cefrLevel ? `–${course.cefrEndLevel}` : ""}
                                         </span>
                                     </div>
                                 )}

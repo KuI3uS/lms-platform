@@ -22,6 +22,7 @@ public class ExamService {
     private static final int DEFAULT_QUESTION_COUNT = 20;
     private static final int DEFAULT_DURATION_MINUTES = 40;
     private static final double PASSING_PERCENTAGE = 50.0;
+    private static final double LANGUAGE_PASSING_PERCENTAGE = 80.0;
     private static final int SUBMISSION_GRACE_SECONDS = 5;
 
     private final ExamAttemptRepository attemptRepository;
@@ -29,19 +30,25 @@ public class ExamService {
     private final CourseAccessService accessService;
     private final NotificationService notificationService;
     private final AchievementService achievementService;
+    private final LanguageProgressService languageProgressService;
+    private final CertificateService certificateService;
 
     public ExamService(
             ExamAttemptRepository attemptRepository,
             QuestionRepository questionRepository,
             CourseAccessService accessService,
             NotificationService notificationService,
-            AchievementService achievementService
+            AchievementService achievementService,
+            LanguageProgressService languageProgressService,
+            CertificateService certificateService
     ) {
         this.attemptRepository = attemptRepository;
         this.questionRepository = questionRepository;
         this.accessService = accessService;
         this.notificationService = notificationService;
         this.achievementService = achievementService;
+        this.languageProgressService = languageProgressService;
+        this.certificateService = certificateService;
     }
 
     @Transactional
@@ -55,14 +62,27 @@ public class ExamService {
 
         User user = accessService.currentUser(authentication);
         Course course = accessService.requireCourseAccess(request.courseId(), authentication);
-        List<Question> availableQuestions = new ArrayList<>(
-                questionRepository.findByModuleCourseId(course.getId())
-        );
+        ExamType examType = request.examType() == null ? ExamType.PRACTICE : request.examType();
+        String cefrLevel = validateLanguageExam(user, course, examType, request.cefrLevel());
+        List<Question> availableQuestions = new ArrayList<>(examType == ExamType.PRACTICE
+                ? questionRepository.findByModuleCourseId(course.getId())
+                : languageProgressService.questionsForLevel(course, cefrLevel));
 
         if (availableQuestions.isEmpty()) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Ten kurs nie ma jeszcze pytań egzaminacyjnych"
+                    examType == ExamType.PRACTICE
+                            ? "Ten kurs nie ma jeszcze pytań egzaminacyjnych"
+                            : "Ten poziom nie ma jeszcze pytań egzaminacyjnych"
+            );
+        }
+        if (examType != ExamType.PRACTICE
+                && availableQuestions.size() < LanguageProgressService.MIN_LEVEL_EXAM_QUESTIONS) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Egzamin poziomujący wymaga co najmniej "
+                            + LanguageProgressService.MIN_LEVEL_EXAM_QUESTIONS
+                            + " pytań zatwierdzonych przez administratora"
             );
         }
 
@@ -86,6 +106,8 @@ public class ExamService {
         attempt.setUser(user);
         attempt.setCourse(course);
         attempt.setStatus(ExamAttemptStatus.IN_PROGRESS);
+        attempt.setExamType(examType);
+        attempt.setCefrLevel(cefrLevel);
         attempt.setDurationMinutes(durationMinutes);
         attempt.setTotalQuestions(questionCount);
         attempt.setStartedAt(now);
@@ -171,7 +193,10 @@ public class ExamService {
                 : correct * 100.0 / attempt.getTotalQuestions();
         attempt.setCorrectAnswers(correct);
         attempt.setPercentage(Math.round(percentage * 10.0) / 10.0);
-        attempt.setPassed(percentage >= PASSING_PERCENTAGE);
+        double passingPercentage = attempt.getExamType() == ExamType.PRACTICE
+                ? PASSING_PERCENTAGE
+                : LANGUAGE_PASSING_PERCENTAGE;
+        attempt.setPassed(percentage >= passingPercentage);
         attempt.setTabSwitchCount(request == null ? 0 : Math.max(0, request.tabSwitchCount()));
         attempt.setStatus(ExamAttemptStatus.SUBMITTED);
         attempt.setSubmittedAt(LocalDateTime.now());
@@ -185,6 +210,9 @@ public class ExamService {
                         + saved.getPercentage() + "%.",
                 "/exams"
         );
+        if (saved.isPassed() && saved.getExamType() == ExamType.LEVEL_FINAL) {
+            certificateService.issueIfEligible(user, saved.getCourse());
+        }
         achievementService.evaluate(user);
         return toDto(saved, false);
     }
@@ -224,6 +252,8 @@ public class ExamService {
                 attempt.getPublicId(),
                 attempt.getCourse().getId(),
                 courseTitle(attempt.getCourse()),
+                attempt.getExamType(),
+                attempt.getCefrLevel(),
                 attempt.getStatus(),
                 attempt.getDurationMinutes(),
                 attempt.getTotalQuestions(),
@@ -240,5 +270,55 @@ public class ExamService {
 
     private String courseTitle(Course course) {
         return course.getTitle() == null ? course.getName() : course.getTitle();
+    }
+
+    private String validateLanguageExam(
+            User user,
+            Course course,
+            ExamType examType,
+            String requestedLevel
+    ) {
+        if (examType == ExamType.PRACTICE) return null;
+        if (!languageProgressService.isLanguageCourse(course)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Egzamin poziomu CEFR jest dostępny tylko w kursie językowym"
+            );
+        }
+
+        String level = com.twojlogin.lms.util.CefrLevels.normalize(requestedLevel);
+        String start = languageProgressService.startLevel(course);
+        String end = languageProgressService.endLevel(course);
+        if (!com.twojlogin.lms.util.CefrLevels.isInRange(level, start, end)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Wybierz poziom należący do tej ścieżki językowej"
+            );
+        }
+
+        if (accessService.isAdmin(user)) return level;
+        String unlocked = languageProgressService.unlockedLevel(user, course);
+        if (examType == ExamType.LEVEL_FINAL) {
+            if (!languageProgressService.isLevelUnlocked(user, course, level)) {
+                throw new ResponseStatusException(
+                        HttpStatus.LOCKED,
+                        "Ten poziom nie jest jeszcze odblokowany"
+                );
+            }
+            if (!languageProgressService.isCourseworkCompleted(user, course, level)) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Ukończ wszystkie lekcje poziomu " + level + " przed egzaminem końcowym"
+                );
+            }
+        } else if (examType == ExamType.PLACEMENT
+                && com.twojlogin.lms.util.CefrLevels.rank(level)
+                <= com.twojlogin.lms.util.CefrLevels.rank(unlocked)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ten poziom jest już odblokowany. Wybierz wyższy poziom."
+            );
+        }
+        return level;
     }
 }

@@ -9,14 +9,27 @@ import {
     BsTrash,
     BsGearFill,
     BsCodeSlash,
-    BsTranslate
+    BsTranslate,
+    BsFileText,
+    BsLightbulb,
+    BsInfoCircle,
+    BsImage,
+    BsPlayBtn,
+    BsHeadphones,
+    BsQuestionCircle
 } from "react-icons/bs";
 import {
+    CEFR_LEVELS,
     getCourseCategory,
     getCourseLanguageLabel
 } from "../utils/courseTaxonomy";
 import { useAuth } from "../context/AuthContext";
 import { useFeedback } from "../context/FeedbackContext";
+import {
+    canAccessLessonStep,
+    getActiveLessonStepIndex,
+    isLessonStepCompleted
+} from "../utils/lessonSteps";
 
 const ROADMAP_CACHE_TTL = 60_000;
 const roadmapCache = new Map();
@@ -32,6 +45,11 @@ export default function ModulePage() {
     const [newModule, setNewModule] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [stepRoadmap, setStepRoadmap] = useState({
+        lessonId: null,
+        steps: [],
+        error: ""
+    });
 
     const role = user?.role || null;
 
@@ -59,7 +77,9 @@ export default function ModulePage() {
                 title: roadmap.title,
                 category: roadmap.category,
                 courseLanguage: roadmap.courseLanguage,
-                cefrLevel: roadmap.cefrLevel
+                cefrLevel: roadmap.cefrLevel,
+                cefrEndLevel: roadmap.cefrEndLevel,
+                unlockedCefrLevel: roadmap.unlockedCefrLevel
             };
             const moduleData = roadmap.modules || [];
 
@@ -115,12 +135,65 @@ export default function ModulePage() {
         roadmapCache.delete(String(courseId));
     };
 
-    const allLessons = modules.flatMap(m => m.lessons || []);
-    const completedCount = allLessons.filter(l => l.completed).length;
+    const isLanguageCourse = getCourseCategory(course) === "LANGUAGE";
+    const allLessons = modules.flatMap(module => (module.lessons || []).map(lesson => ({
+        ...lesson,
+        moduleCefrLevel: module.cefrLevel,
+        belowCurrentLanguageLevel: isLanguageCourse && isCefrBelow(
+            module.cefrLevel,
+            course?.unlockedCefrLevel
+        )
+    })));
+    const currentLevelLesson = isLanguageCourse
+        ? allLessons.find(lesson => (
+            lesson.moduleCefrLevel === course?.unlockedCefrLevel
+            && lesson.canAccess
+            && !lesson.completed
+        ))
+        : null;
+    const activeLesson = currentLevelLesson || allLessons.find(lesson => (
+        lesson.canAccess
+        && !lesson.completed
+        && !lesson.belowCurrentLanguageLevel
+    )) || null;
+    const activeLessonId = activeLesson?.id ?? null;
+    const completedCount = allLessons.filter(lesson => (
+        lesson.completed || lesson.belowCurrentLanguageLevel
+    )).length;
     const progress = allLessons.length > 0
         ? Math.round((completedCount / allLessons.length) * 100)
         : 0;
-    const isLanguageCourse = getCourseCategory(course) === "LANGUAGE";
+
+    useEffect(() => {
+        if (!activeLessonId) return undefined;
+
+        let cancelled = false;
+
+        apiFetch(`/lesson-blocks/lesson/${activeLessonId}`)
+            .then(data => {
+                if (cancelled) return;
+                setStepRoadmap({
+                    lessonId: activeLessonId,
+                    steps: [...(data || [])].sort(
+                        (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
+                    ),
+                    error: ""
+                });
+            })
+            .catch(requestError => {
+                if (cancelled) return;
+                console.error(requestError);
+                setStepRoadmap({
+                    lessonId: activeLessonId,
+                    steps: [],
+                    error: "Nie udało się pobrać kroków tej lekcji."
+                });
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeLessonId]);
 
     if (loading) {
         return (
@@ -148,7 +221,7 @@ export default function ModulePage() {
                             {isLanguageCourse ? (
                                 <span className="inline-flex items-center gap-2">
                                     <BsTranslate />
-                                    {getCourseLanguageLabel(course?.courseLanguage)} · CEFR {course?.cefrLevel}
+                                    {getCourseLanguageLabel(course?.courseLanguage)} · CEFR {course?.cefrLevel}{course?.cefrEndLevel !== course?.cefrLevel ? `–${course?.cefrEndLevel}` : ""}
                                 </span>
                             ) : (
                                 <span className="inline-flex items-center gap-2">
@@ -179,8 +252,17 @@ export default function ModulePage() {
                             />
                         </div>
                         <p className="mt-2 text-xs text-gray-600">
-                            Ukończono {completedCount} z {allLessons.length} lekcji
+                            Zaliczono {completedCount} z {allLessons.length} lekcji lub ich odpowiedników
                         </p>
+                        {isLanguageCourse && (
+                            <button
+                                type="button"
+                                onClick={() => navigate("/exams")}
+                                className="mt-4 w-full rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-2.5 text-sm font-black text-violet-200 transition hover:bg-violet-500/20"
+                            >
+                                Egzaminy i poziomy CEFR
+                            </button>
+                        )}
                     </div>
                 </div>
             </header>
@@ -213,6 +295,10 @@ export default function ModulePage() {
                     modules.map((module, moduleIndex) => {
                         const lessons = module.lessons || [];
                         const completedLessons = lessons.filter(lesson => lesson.completed).length;
+                        const levelBelowCurrent = isLanguageCourse && isCefrBelow(
+                            module.cefrLevel,
+                            course?.unlockedCefrLevel
+                        );
                         const moduleProgress = lessons.length
                             ? Math.round((completedLessons / lessons.length) * 100)
                             : 0;
@@ -229,13 +315,15 @@ export default function ModulePage() {
                                             </div>
                                             <div>
                                                 <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">
-                                                    Etap {moduleIndex + 1}
+                                                    {isLanguageCourse ? `CEFR ${module.cefrLevel}` : `Etap ${moduleIndex + 1}`}
                                                 </p>
                                                 <h2 className="mt-1 text-xl font-black sm:text-2xl">
                                                     {module.name}
                                                 </h2>
                                                 <p className="mt-1 text-xs text-gray-500">
                                                     {lessons.length} {lessons.length === 1 ? "lekcja" : "lekcji"} · ukończono {completedLessons}
+                                                    {isLanguageCourse && !module.levelUnlocked ? " · poziom zablokowany" : ""}
+                                                    {levelBelowCurrent && completedLessons < lessons.length ? " · potwierdzony testem kwalifikacyjnym" : ""}
                                                 </p>
                                             </div>
                                         </div>
@@ -289,12 +377,18 @@ export default function ModulePage() {
                                             {lessons.map((lesson, index) => {
                                                 const offsets = [0, -64, 0, 64];
                                                 const offset = offsets[index % offsets.length];
-                                                const current = lesson.canAccess && !lesson.completed;
+                                                const current = Number(lesson.id) === Number(activeLessonId);
+                                                const currentSteps = current
+                                                    && Number(stepRoadmap.lessonId) === Number(lesson.id)
+                                                    ? stepRoadmap.steps
+                                                    : [];
+                                                const stepsLoading = current
+                                                    && Number(stepRoadmap.lessonId) !== Number(lesson.id);
 
                                                 return (
                                                     <li
                                                         key={lesson.id}
-                                                        className="flex justify-center py-2"
+                                                        className="flex flex-col items-center py-2"
                                                     >
                                                         <div
                                                             className="transition-transform duration-500 ease-out"
@@ -337,6 +431,18 @@ export default function ModulePage() {
                                                                 </span>
                                                             </button>
                                                         </div>
+
+                                                        {current && (
+                                                            <LessonSubsteps
+                                                                lesson={lesson}
+                                                                steps={currentSteps}
+                                                                loading={stepsLoading}
+                                                                error={stepRoadmap.error}
+                                                                onOpenStep={step => navigate(
+                                                                    `/lesson/${lesson.id}?step=${step.id}`
+                                                                )}
+                                                            />
+                                                        )}
                                                     </li>
                                                 );
                                             })}
@@ -350,4 +456,168 @@ export default function ModulePage() {
             </section>
         </div>
     );
+}
+
+function isCefrBelow(level, currentLevel) {
+    const levelIndex = CEFR_LEVELS.indexOf(level);
+    const currentIndex = CEFR_LEVELS.indexOf(currentLevel);
+    return levelIndex >= 0 && currentIndex >= 0 && levelIndex < currentIndex;
+}
+
+function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
+    if (loading) {
+        return (
+            <div className="lesson-step-transition mt-7 flex flex-col items-center gap-3" aria-label="Ładowanie podzadań">
+                <div className="h-3 w-36 animate-pulse rounded-full bg-white/10" />
+                {[0, 1, 2].map(item => (
+                    <div
+                        key={item}
+                        className="h-11 w-11 animate-pulse rounded-full bg-gray-800"
+                    />
+                ))}
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <p className="mt-6 max-w-xs text-center text-xs text-red-300">
+                {error}
+            </p>
+        );
+    }
+
+    if (!steps.length) return null;
+
+    const activeIndex = getActiveLessonStepIndex(steps, false);
+    const completedCount = steps.filter((_, index) => (
+        isLessonStepCompleted(steps, index, false)
+    )).length;
+    const readyToFinish = completedCount === steps.length;
+    const offsets = [-48, -18, 22, 52, 22, -18];
+
+    return (
+        <section
+            className="lesson-step-transition mt-7 w-full max-w-md"
+            aria-label={`Podzadania lekcji ${lesson.title}`}
+        >
+            <header className="mb-4 text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">
+                    Podzadania tej lekcji
+                </p>
+                <p className={`mt-1 text-xs font-bold ${
+                    readyToFinish ? "text-emerald-300" : "text-gray-500"
+                }`}>
+                    {readyToFinish
+                        ? "Wszystkie kroki gotowe — zakończ lekcję"
+                        : `${completedCount}/${steps.length} wykonanych kroków`}
+                </p>
+            </header>
+
+            <div className="relative">
+                <div
+                    aria-hidden="true"
+                    className="absolute bottom-6 left-1/2 top-5 w-px -translate-x-1/2 bg-gradient-to-b from-blue-500/40 via-white/10 to-transparent"
+                />
+
+                <ol className="relative space-y-1 py-1">
+                    {steps.map((step, index) => {
+                        const completed = isLessonStepCompleted(steps, index, false);
+                        const accessible = canAccessLessonStep(steps, index);
+                        const active = index === activeIndex;
+                        const offset = offsets[index % offsets.length];
+
+                        return (
+                            <li
+                                key={step.id}
+                                className="relative flex justify-center py-1.5"
+                                style={{ transform: `translateX(${offset}px)` }}
+                            >
+                                <button
+                                    type="button"
+                                    disabled={!accessible}
+                                    onClick={() => accessible && onOpenStep(step)}
+                                    title={`${index + 1}. ${step.title || stepTypeLabel(step.type)}`}
+                                    className="group flex w-44 items-center gap-3 text-left disabled:cursor-not-allowed"
+                                >
+                                    <span className={`relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 border-b-4 text-sm transition-all duration-200 motion-safe:group-hover:-translate-y-0.5 ${
+                                        completed
+                                            ? "border-emerald-300/70 border-b-emerald-800 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                                            : active
+                                                ? "border-cyan-200 border-b-blue-900 bg-blue-600 text-white shadow-xl shadow-blue-500/30 ring-4 ring-blue-500/15"
+                                                : accessible
+                                                    ? "border-gray-600 border-b-gray-950 bg-gray-800 text-gray-300 group-hover:border-blue-400 group-hover:text-white"
+                                                    : "border-gray-800 border-b-black bg-gray-900 text-gray-700"
+                                    }`}>
+                                        {completed
+                                            ? <BsCheckCircle size={17} />
+                                            : accessible
+                                                ? stepIcon(step.type)
+                                                : <BsLockFill size={14} />}
+                                    </span>
+
+                                    <span className="min-w-0">
+                                        <span className={`block text-[9px] font-black uppercase tracking-[0.16em] ${
+                                            active
+                                                ? "text-cyan-300"
+                                                : completed
+                                                    ? "text-emerald-400/80"
+                                                    : "text-gray-600"
+                                        }`}>
+                                            Krok {index + 1}
+                                        </span>
+                                        <span className={`mt-0.5 line-clamp-2 block text-[11px] font-bold leading-4 ${
+                                            accessible ? "text-gray-300" : "text-gray-700"
+                                        }`}>
+                                            {step.title || stepTypeLabel(step.type)}
+                                        </span>
+                                    </span>
+                                </button>
+                            </li>
+                        );
+                    })}
+                </ol>
+            </div>
+        </section>
+    );
+}
+
+function stepIcon(type) {
+    switch (type) {
+        case "TIP":
+            return <BsLightbulb />;
+        case "INFO":
+            return <BsInfoCircle />;
+        case "IMAGE":
+            return <BsImage />;
+        case "VIDEO":
+            return <BsPlayBtn />;
+        case "AUDIO":
+            return <BsHeadphones />;
+        case "EXAMPLE":
+            return <BsCodeSlash />;
+        case "TASK":
+        case "QUIZ":
+            return <BsQuestionCircle />;
+        default:
+            return <BsFileText />;
+    }
+}
+
+function stepTypeLabel(type) {
+    const labels = {
+        TEXT: "Materiał",
+        TIP: "Wskazówka",
+        WARNING: "Ostrzeżenie",
+        INFO: "Informacja",
+        SUMMARY: "Podsumowanie",
+        IMAGE: "Obraz",
+        VIDEO: "Film",
+        AUDIO: "Wymowa",
+        EXAMPLE: "Przykład",
+        TASK: "Zadanie",
+        QUIZ: "Quiz"
+    };
+
+    return labels[type] || "Krok lekcji";
 }

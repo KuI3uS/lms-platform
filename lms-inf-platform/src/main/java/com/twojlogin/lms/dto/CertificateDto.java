@@ -32,7 +32,7 @@ public record CertificateDto(
                 certificate.getIssuedAt(),
                 certificate.getCourse().getCategory(),
                 certificate.getCourse().getCourseLanguage(),
-                certificate.getCourse().getCefrLevel()
+                certificate.getCourse().getCefrEndLevel()
         );
     }
 }

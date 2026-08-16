@@ -24,7 +24,9 @@ export default function AdminLessonPage() {
 
             <section className="rounded-3xl border border-cyan-400/20 bg-cyan-400/[0.07] p-5 text-cyan-50 sm:p-6">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
-                    {moduleData.isLanguageCourse ? "Kreator językowy" : "Jak zbudować ścieżkę"}
+                    {moduleData.isLanguageCourse
+                        ? `Kreator językowy · CEFR ${moduleData.moduleSettings.cefrLevel || "A1"}`
+                        : "Jak zbudować ścieżkę"}
                 </p>
                 <h2 className="mt-2 text-xl font-black">
                     {moduleData.isLanguageCourse

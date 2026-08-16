@@ -33,7 +33,8 @@ class CourseAccessServiceTest {
                 mock(CourseModuleRepository.class),
                 mock(LessonRepository.class),
                 enrollmentRepository,
-                mock(CourseOrderRepository.class)
+                mock(CourseOrderRepository.class),
+                mock(LanguageProgressService.class)
         );
 
         user = new User();

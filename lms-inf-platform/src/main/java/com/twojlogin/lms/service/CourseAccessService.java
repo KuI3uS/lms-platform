@@ -33,6 +33,7 @@ public class CourseAccessService {
     private final LessonRepository lessonRepository;
     private final CourseEnrollmentRepository enrollmentRepository;
     private final CourseOrderRepository orderRepository;
+    private final LanguageProgressService languageProgressService;
 
     public CourseAccessService(
             UserRepository userRepository,
@@ -40,7 +41,8 @@ public class CourseAccessService {
             CourseModuleRepository moduleRepository,
             LessonRepository lessonRepository,
             CourseEnrollmentRepository enrollmentRepository,
-            CourseOrderRepository orderRepository
+            CourseOrderRepository orderRepository,
+            LanguageProgressService languageProgressService
     ) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -48,6 +50,7 @@ public class CourseAccessService {
         this.lessonRepository = lessonRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.orderRepository = orderRepository;
+        this.languageProgressService = languageProgressService;
     }
 
     public User currentUser(Authentication authentication) {
@@ -120,6 +123,7 @@ public class CourseAccessService {
                         "Moduł nie istnieje"
                 ));
         requireAccess(user, module.getCourse());
+        requireLevelAccess(user, module);
         return module;
     }
 
@@ -140,6 +144,32 @@ public class CourseAccessService {
         }
         if (!lesson.isFreePreview()) {
             requireAccess(user, lesson.getModule().getCourse());
+            requireLevelAccess(user, lesson.getModule());
+        }
+    }
+
+    public boolean hasLevelAccess(User user, CourseModule module) {
+        return isAdmin(user)
+                || !languageProgressService.isLanguageCourse(module.getCourse())
+                || languageProgressService.isLevelUnlocked(
+                        user,
+                        module.getCourse(),
+                        module.getCefrLevel()
+                );
+    }
+
+    public String unlockedCefrLevel(User user, Course course) {
+        return isAdmin(user)
+                ? languageProgressService.endLevel(course)
+                : languageProgressService.unlockedLevel(user, course);
+    }
+
+    public void requireLevelAccess(User user, CourseModule module) {
+        if (!hasLevelAccess(user, module)) {
+            throw new ResponseStatusException(
+                    HttpStatus.LOCKED,
+                    "Najpierw zdaj egzamin poprzedniego poziomu albo egzamin kwalifikacyjny"
+            );
         }
     }
 

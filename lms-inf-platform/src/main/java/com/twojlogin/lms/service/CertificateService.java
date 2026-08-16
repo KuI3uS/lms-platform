@@ -9,6 +9,9 @@ import com.twojlogin.lms.repository.CourseCertificateRepository;
 import com.twojlogin.lms.repository.LessonProgressRepository;
 import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.CourseRepository;
+import com.twojlogin.lms.repository.ExamAttemptRepository;
+import com.twojlogin.lms.entity.ExamAttemptStatus;
+import com.twojlogin.lms.entity.ExamType;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,8 @@ public class CertificateService {
     private final CourseAccessService accessService;
     private final NotificationService notificationService;
     private final CourseRepository courseRepository;
+    private final ExamAttemptRepository examAttemptRepository;
+    private final LanguageProgressService languageProgressService;
 
     public CertificateService(
             CourseCertificateRepository certificateRepository,
@@ -37,7 +42,9 @@ public class CertificateService {
             LessonProgressRepository lessonProgressRepository,
             CourseAccessService accessService,
             NotificationService notificationService,
-            CourseRepository courseRepository
+            CourseRepository courseRepository,
+            ExamAttemptRepository examAttemptRepository,
+            LanguageProgressService languageProgressService
     ) {
         this.certificateRepository = certificateRepository;
         this.lessonRepository = lessonRepository;
@@ -45,6 +52,8 @@ public class CertificateService {
         this.accessService = accessService;
         this.notificationService = notificationService;
         this.courseRepository = courseRepository;
+        this.examAttemptRepository = examAttemptRepository;
+        this.languageProgressService = languageProgressService;
     }
 
     @Transactional
@@ -53,10 +62,22 @@ public class CertificateService {
                 certificateRepository.findByUserIdAndCourseId(user.getId(), course.getId());
         if (existing.isPresent()) return existing;
 
-        long lessonCount = lessonRepository.countByModuleCourseId(course.getId());
-        long completed = lessonProgressRepository
-                .countCompletedByUserIdAndCourseId(user.getId(), course.getId());
-        if (lessonCount == 0 || completed < lessonCount) return Optional.empty();
+        if (languageProgressService.isLanguageCourse(course)) {
+            String finalLevel = languageProgressService.endLevel(course);
+            boolean finalExamPassed = examAttemptRepository
+                    .findByUserIdAndCourseIdAndStatusAndPassedTrueOrderByStartedAtDesc(
+                            user.getId(), course.getId(), ExamAttemptStatus.SUBMITTED
+                    )
+                    .stream()
+                    .anyMatch(attempt -> attempt.getExamType() == ExamType.LEVEL_FINAL
+                            && finalLevel.equals(attempt.getCefrLevel()));
+            if (!finalExamPassed) return Optional.empty();
+        } else {
+            long lessonCount = lessonRepository.countByModuleCourseId(course.getId());
+            long completed = lessonProgressRepository
+                    .countCompletedByUserIdAndCourseId(user.getId(), course.getId());
+            if (lessonCount == 0 || completed < lessonCount) return Optional.empty();
+        }
 
         CourseCertificate certificate = new CourseCertificate();
         certificate.setCertificateNumber(

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../../api/api";
+import {
+    canAccessLessonStep,
+    getActiveLessonStepIndex
+} from "../../utils/lessonSteps";
 
 import LessonHero from "./LessonHero";
 import LessonSidebar from "./LessonSidebar";
@@ -10,6 +14,8 @@ import LessonFooter from "./LessonFooter";
 export default function LessonPage() {
     const { lessonId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const requestedStepId = new URLSearchParams(location.search).get("step");
 
     const [lesson, setLesson] = useState(null);
     const [blocks, setBlocks] = useState([]);
@@ -47,18 +53,35 @@ export default function LessonPage() {
                 apiFetch(`/lesson-blocks/lesson/${lessonId}`)
             ]);
 
-            setModuleLessons(
-                [...(lessons || [])].sort(
-                    (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
-                )
+            const sortedLessons = [...(lessons || [])].sort(
+                (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
             );
+            setModuleLessons(sortedLessons);
 
             const sorted = [...lessonBlocks].sort(
                 (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
             );
 
             setBlocks(sorted);
-            setSelectedBlock(sorted[0] || null);
+
+            const lessonCompleted = Boolean(sortedLessons.find(
+                item => Number(item.id) === Number(lessonId)
+            )?.completed);
+            const requestedIndex = sorted.findIndex(
+                block => Number(block.id) === Number(requestedStepId)
+            );
+            const resumeIndex = getActiveLessonStepIndex(
+                sorted,
+                lessonCompleted
+            );
+            const initialIndex = requestedIndex >= 0
+                && canAccessLessonStep(sorted, requestedIndex)
+                ? requestedIndex
+                : resumeIndex >= 0 && resumeIndex < sorted.length
+                    ? resumeIndex
+                    : Math.max(sorted.length - 1, 0);
+
+            setSelectedBlock(sorted[initialIndex] || null);
 
             const initialAnswers = {};
             const initialResults = {};
@@ -89,7 +112,7 @@ export default function LessonPage() {
         } finally {
             setLoading(false);
         }
-    }, [lessonId]);
+    }, [lessonId, requestedStepId]);
 
     useEffect(() => {
         // Pobranie danych po zmianie identyfikatora lekcji jest właściwym użyciem efektu.
