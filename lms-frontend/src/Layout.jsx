@@ -12,11 +12,11 @@ import {
     BsInbox,
     BsPeople,
     BsPlusCircle,
-    BsRocketTakeoff,
     BsShieldLock,
     BsX,
     BsArrowRepeat
 } from "react-icons/bs";
+import skicodeLogo from "./assets/images/skicode-logo.png";
 import { apiFetch } from "./api/api";
 import { useAuth } from "./context/AuthContext";
 
@@ -74,9 +74,11 @@ export default function Layout() {
             }`}>
                 <div className="flex items-center justify-between px-4 pb-5 pt-5">
                     <Link to="/courses" onClick={closeMenu} className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-600 shadow-lg shadow-cyan-500/20">
-                            <BsRocketTakeoff size={20} />
-                        </div>
+                        <img
+                            src={skicodeLogo}
+                            alt="Logo SKI/CODE"
+                            className="h-12 w-12 shrink-0 rounded-2xl bg-white object-cover shadow-lg shadow-blue-500/15"
+                        />
                         <div>
                             <h1 className="text-lg font-black tracking-tight">EduHub</h1>
                             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300/70">Learn. Build. Grow.</p>
