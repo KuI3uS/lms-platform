@@ -9,6 +9,7 @@ import com.twojlogin.lms.repository.CourseModuleRepository;
 import com.twojlogin.lms.repository.CourseRepository;
 import com.twojlogin.lms.repository.LessonProgressRepository;
 import com.twojlogin.lms.repository.LessonRepository;
+import com.twojlogin.lms.repository.LessonBlockRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class CourseRoadmapService {
     private final CourseRepository courseRepository;
     private final CourseModuleRepository moduleRepository;
     private final LessonRepository lessonRepository;
+    private final LessonBlockRepository blockRepository;
     private final LessonProgressRepository progressRepository;
     private final CourseAccessService accessService;
 
@@ -34,12 +36,14 @@ public class CourseRoadmapService {
             CourseRepository courseRepository,
             CourseModuleRepository moduleRepository,
             LessonRepository lessonRepository,
+            LessonBlockRepository blockRepository,
             LessonProgressRepository progressRepository,
             CourseAccessService accessService
     ) {
         this.courseRepository = courseRepository;
         this.moduleRepository = moduleRepository;
         this.lessonRepository = lessonRepository;
+        this.blockRepository = blockRepository;
         this.progressRepository = progressRepository;
         this.accessService = accessService;
     }
@@ -67,6 +71,17 @@ public class CourseRoadmapService {
                         courseId
                 )
         );
+        Map<Long, Long> publishedBlockCounts = new HashMap<>();
+        if (!lessons.isEmpty()) {
+            for (Object[] row : blockRepository.countPublishedByLessonIds(
+                    lessons.stream().map(Lesson::getId).toList()
+            )) {
+                publishedBlockCounts.put(
+                        ((Number) row[0]).longValue(),
+                        ((Number) row[1]).longValue()
+                );
+            }
+        }
 
         Map<Long, List<Lesson>> lessonsByModule = new HashMap<>();
         for (Lesson lesson : lessons) {
@@ -85,6 +100,7 @@ public class CourseRoadmapService {
                         module,
                         lessonsByModule.getOrDefault(module.getId(), List.of()),
                         completedLessonIds,
+                        publishedBlockCounts,
                         admin,
                         admin
                                 || !"LANGUAGE".equals(course.getCategory())
@@ -110,6 +126,7 @@ public class CourseRoadmapService {
             CourseModule module,
             List<Lesson> lessons,
             Set<Long> completedLessonIds,
+            Map<Long, Long> publishedBlockCounts,
             boolean admin,
             boolean levelUnlocked
     ) {
@@ -124,15 +141,23 @@ public class CourseRoadmapService {
                                     || completedLessonIds.contains(
                                     lessons.get(index - 1).getId()
                             );
-                            boolean canAccess = lesson.isFreePreview()
-                                    || levelUnlocked && (unrestricted || previousCompleted);
+                            boolean hasContent = lesson.isPublished()
+                                    && publishedBlockCounts.getOrDefault(
+                                    lesson.getId(), 0L
+                            ) > 0;
+                            boolean canAccess = admin || hasContent && (
+                                    lesson.isFreePreview()
+                                            || levelUnlocked
+                                            && (unrestricted || previousCompleted)
+                            );
 
                             return new CourseRoadmapDto.LessonItem(
                                     lesson.getId(),
                                     lesson.getTitle(),
                                     lesson.getOrderIndex(),
                                     completed,
-                                    canAccess
+                                    canAccess,
+                                    hasContent
                             );
                         })
                         .toList();

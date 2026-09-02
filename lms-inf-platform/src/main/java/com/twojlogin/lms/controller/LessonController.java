@@ -96,7 +96,17 @@ public class LessonController {
                         moduleId
                 )
         );
-        boolean unrestricted = courseAccessService.isAdmin(user) || !module.isLessonsLocked();
+        boolean admin = courseAccessService.isAdmin(user);
+        boolean unrestricted = admin || !module.isLessonsLocked();
+        Map<Long, Long> publishedBlockCounts = new LinkedHashMap<>();
+        if (!lessons.isEmpty()) {
+            lessonBlockRepository.countPublishedByLessonIds(
+                    lessons.stream().map(Lesson::getId).toList()
+            ).forEach(row -> publishedBlockCounts.put(
+                    ((Number) row[0]).longValue(),
+                    ((Number) row[1]).longValue()
+            ));
+        }
 
         return java.util.stream.IntStream.range(0, lessons.size())
                 .mapToObj(index -> {
@@ -104,9 +114,13 @@ public class LessonController {
                     boolean completed = completedLessonIds.contains(lesson.getId());
                     boolean previousCompleted = index == 0
                             || completedLessonIds.contains(lessons.get(index - 1).getId());
-                    boolean canAccess = lesson.isFreePreview()
-                            || unrestricted
-                            || previousCompleted;
+                    boolean hasContent = lesson.isPublished()
+                            && publishedBlockCounts.getOrDefault(lesson.getId(), 0L) > 0;
+                    boolean canAccess = admin || hasContent && (
+                            lesson.isFreePreview()
+                                    || unrestricted
+                                    || previousCompleted
+                    );
 
                     return new LessonDto(lesson, completed, canAccess);
                 })

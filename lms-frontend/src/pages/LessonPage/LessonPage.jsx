@@ -279,13 +279,22 @@ export default function LessonPage() {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-gray-950 p-8 text-center text-red-400">
                 <p>{error}</p>
-                <button
-                    type="button"
-                    onClick={loadLesson}
-                    className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700"
-                >
-                    Spróbuj ponownie
-                </button>
+                <div className="flex flex-wrap justify-center gap-3">
+                    <button
+                        type="button"
+                        onClick={goBack}
+                        className="rounded-xl border border-white/10 bg-white/[0.04] px-5 py-3 font-bold text-gray-200 hover:bg-white/[0.08]"
+                    >
+                        Wróć do kursów
+                    </button>
+                    <button
+                        type="button"
+                        onClick={loadLesson}
+                        className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700"
+                    >
+                        Spróbuj ponownie
+                    </button>
+                </div>
             </div>
         );
     }
@@ -296,9 +305,10 @@ export default function LessonPage() {
         item => Number(item.id) === Number(lessonId)
     );
     const previousLesson = currentIndex > 0 ? moduleLessons[currentIndex - 1] : null;
-    const nextLesson = currentIndex >= 0 && currentIndex < moduleLessons.length - 1
+    const nextLessonCandidate = currentIndex >= 0 && currentIndex < moduleLessons.length - 1
         ? moduleLessons[currentIndex + 1]
         : null;
+    const nextLesson = nextLessonCandidate?.canAccess ? nextLessonCandidate : null;
     const hasTasks = blocks.some(
         block => ["TASK", "QUIZ"].includes(block.type)
     );

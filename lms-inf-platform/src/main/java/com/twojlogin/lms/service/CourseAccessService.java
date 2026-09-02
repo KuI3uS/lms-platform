@@ -12,6 +12,7 @@ import com.twojlogin.lms.repository.CourseModuleRepository;
 import com.twojlogin.lms.repository.CourseOrderRepository;
 import com.twojlogin.lms.repository.CourseRepository;
 import com.twojlogin.lms.repository.LessonRepository;
+import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -31,6 +32,7 @@ public class CourseAccessService {
     private final CourseRepository courseRepository;
     private final CourseModuleRepository moduleRepository;
     private final LessonRepository lessonRepository;
+    private final LessonBlockRepository lessonBlockRepository;
     private final CourseEnrollmentRepository enrollmentRepository;
     private final CourseOrderRepository orderRepository;
     private final LanguageProgressService languageProgressService;
@@ -40,6 +42,7 @@ public class CourseAccessService {
             CourseRepository courseRepository,
             CourseModuleRepository moduleRepository,
             LessonRepository lessonRepository,
+            LessonBlockRepository lessonBlockRepository,
             CourseEnrollmentRepository enrollmentRepository,
             CourseOrderRepository orderRepository,
             LanguageProgressService languageProgressService
@@ -48,6 +51,7 @@ public class CourseAccessService {
         this.courseRepository = courseRepository;
         this.moduleRepository = moduleRepository;
         this.lessonRepository = lessonRepository;
+        this.lessonBlockRepository = lessonBlockRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.orderRepository = orderRepository;
         this.languageProgressService = languageProgressService;
@@ -139,8 +143,18 @@ public class CourseAccessService {
     }
 
     public void requireLessonAccess(User user, Lesson lesson) {
-        if (!lesson.getModule().getCourse().isPublished() && !isAdmin(user)) {
+        if ((!lesson.getModule().getCourse().isPublished()
+                || !lesson.isPublished()) && !isAdmin(user)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lekcja nie istnieje");
+        }
+        if (!isAdmin(user)
+                && lessonBlockRepository.countByLessonIdAndPublishedTrue(
+                lesson.getId()
+        ) == 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.LOCKED,
+                    "Materiały tej lekcji są jeszcze w przygotowaniu"
+            );
         }
         if (!lesson.isFreePreview()) {
             requireAccess(user, lesson.getModule().getCourse());
