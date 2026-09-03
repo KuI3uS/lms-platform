@@ -36,6 +36,8 @@ public class CourseService {
     private static final ZoneId WARSAW_ZONE = ZoneId.of("Europe/Warsaw");
 
     private static final Set<String> COURSE_CATEGORIES = Set.of(
+            "SCHOOL",
+            "UNIVERSITY",
             "PROGRAMMING",
             "DIGITAL_SKILLS",
             "LANGUAGE"

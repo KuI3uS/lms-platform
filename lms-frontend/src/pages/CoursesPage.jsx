@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
     BsArrowClockwise,
+    BsBuildings,
     BsCheckCircle,
     BsCodeSlash,
     BsCollection,
@@ -9,9 +10,11 @@ import {
     BsHourglassSplit,
     BsLaptop,
     BsLockFill,
+    BsMortarboardFill,
     BsPencil,
     BsPlayFill,
     BsPlusCircle,
+    BsRocketTakeoff,
     BsTrash,
     BsTranslate
 } from "react-icons/bs";
@@ -22,8 +25,10 @@ import {
 } from "../utils/courseCover";
 import {
     COURSE_CATEGORIES,
+    SCHOOL_LEVELS,
     getCategoryDefinition,
     getCourseCategory,
+    getEducationLevel,
     getCourseLanguageLabel,
     getCourseLevelLabel
 } from "../utils/courseTaxonomy";
@@ -31,12 +36,16 @@ import { useAuth } from "../context/AuthContext";
 import { useFeedback } from "../context/FeedbackContext";
 
 const CATEGORY_ICONS = {
+    SCHOOL: BsMortarboardFill,
+    UNIVERSITY: BsBuildings,
     PROGRAMMING: BsCodeSlash,
     DIGITAL_SKILLS: BsLaptop,
     LANGUAGE: BsTranslate
 };
 
 const CATEGORY_STYLES = {
+    SCHOOL: "border-emerald-400/30 bg-emerald-500/10 text-emerald-200",
+    UNIVERSITY: "border-amber-400/30 bg-amber-500/10 text-amber-200",
     PROGRAMMING: "border-cyan-400/30 bg-cyan-500/10 text-cyan-200",
     DIGITAL_SKILLS: "border-blue-400/30 bg-blue-500/10 text-blue-200",
     LANGUAGE: "border-violet-400/30 bg-violet-500/10 text-violet-200"
@@ -95,6 +104,70 @@ function CourseSkeleton() {
                 </div>
                 <div className="h-12 animate-pulse rounded-2xl bg-slate-800" />
             </div>
+        </div>
+    );
+}
+
+function LearningSpaceCard({ icon: Icon, eyebrow, title, description, count, tone, onClick }) {
+    const tones = {
+        emerald: "border-emerald-400/20 from-emerald-500/15 text-emerald-200 hover:border-emerald-300/45",
+        amber: "border-amber-400/20 from-amber-500/15 text-amber-200 hover:border-amber-300/45",
+        cyan: "border-cyan-400/20 from-cyan-500/15 text-cyan-200 hover:border-cyan-300/45",
+        violet: "border-violet-400/20 from-violet-500/15 text-violet-200 hover:border-violet-300/45"
+    };
+    const courseCountLabel = count === 1
+        ? "1 kurs"
+        : count > 1 && count < 5
+            ? `${count} kursy`
+            : `${count} kursów`;
+
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`group min-w-0 rounded-3xl border bg-gradient-to-br to-white/[0.025] p-5 text-left transition duration-300 hover:-translate-y-1 hover:bg-white/[0.04] ${tones[tone]}`}
+        >
+            <div className="flex items-start justify-between gap-4">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-current/20 bg-black/20 text-xl">
+                    <Icon />
+                </span>
+                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-slate-300">
+                    {courseCountLabel}
+                </span>
+            </div>
+            <p className="mt-5 text-[10px] font-black uppercase tracking-[0.24em] opacity-70">{eyebrow}</p>
+            <h3 className="mt-1 text-xl font-black text-white">{title}</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
+        </button>
+    );
+}
+
+function SectionHeading({ icon: Icon, eyebrow, title, description, tone = "cyan" }) {
+    const iconTone = {
+        emerald: "border-emerald-400/25 bg-emerald-500/10 text-emerald-200",
+        amber: "border-amber-400/25 bg-amber-500/10 text-amber-200",
+        cyan: "border-cyan-400/25 bg-cyan-500/10 text-cyan-200",
+        violet: "border-violet-400/25 bg-violet-500/10 text-violet-200"
+    };
+
+    return (
+        <div className="mb-6 flex items-start gap-4">
+            <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl border p-3 text-2xl ${iconTone[tone]}`}>
+                <Icon />
+            </div>
+            <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 sm:text-xs">{eyebrow}</p>
+                <h3 className="mt-1 text-2xl font-black sm:text-3xl">{title}</h3>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">{description}</p>
+            </div>
+        </div>
+    );
+}
+
+function EmptyLearningArea({ message }) {
+    return (
+        <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.025] px-6 py-10 text-center text-sm text-slate-500">
+            {message}
         </div>
     );
 }
@@ -242,6 +315,7 @@ export default function CoursesPage() {
     const location = useLocation();
     const isAdmin = user?.role === "ADMIN";
     const [view, setView] = useState("catalog");
+    const [activeSchoolLevel, setActiveSchoolLevel] = useState(null);
 
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -309,12 +383,64 @@ export default function CoursesPage() {
     const averageProgress = courses.length
         ? Math.round(courses.reduce((sum, course) => sum + (course.progress || 0), 0) / courses.length)
         : 0;
-    const groupedCourses = COURSE_CATEGORIES
+    const schoolCourses = courses.filter(
+        (course) => getCourseCategory(course) === "SCHOOL"
+    );
+    const universityCourses = courses.filter(
+        (course) => getCourseCategory(course) === "UNIVERSITY"
+    );
+    const programmingCourses = courses.filter(
+        (course) => getCourseCategory(course) === "PROGRAMMING"
+    );
+    const languageCourses = courses.filter(
+        (course) => getCourseCategory(course) === "LANGUAGE"
+    );
+    const digitalCourses = courses.filter(
+        (course) => getCourseCategory(course) === "DIGITAL_SKILLS"
+    );
+    const schoolCoursesByLevel = Object.fromEntries(
+        SCHOOL_LEVELS.map((level) => [
+            level,
+            schoolCourses.filter((course) => getEducationLevel(course) === level)
+        ])
+    );
+    const displayedSchoolLevel = activeSchoolLevel
+        || SCHOOL_LEVELS.find((level) => schoolCoursesByLevel[level]?.length > 0)
+        || SCHOOL_LEVELS[0];
+    const selectedSchoolCourses = schoolCoursesByLevel[displayedSchoolLevel] || [];
+    const additionalCategories = COURSE_CATEGORIES
+        .filter((category) => ["PROGRAMMING", "LANGUAGE", "DIGITAL_SKILLS"].includes(category.value))
         .map((category) => ({
             ...category,
             courses: courses.filter((course) => getCourseCategory(course) === category.value)
         }))
         .filter((category) => category.courses.length > 0);
+
+    const scrollToSection = (id) => {
+        document.getElementById(id)?.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    };
+    const renderCourseCards = (items) => (
+        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+            {items.map((course) => (
+                <CourseCard
+                    key={course.id}
+                    course={course}
+                    isAdmin={isAdmin}
+                    deleting={deletingCourseId === course.id}
+                    onOpen={() => navigate(
+                        course.canAccess || isAdmin
+                            ? `/modules/${course.id}`
+                            : `/checkout/${course.id}`
+                    )}
+                    onEdit={() => navigate(`/admin/courses/${course.id}/edit`)}
+                    onDelete={() => deleteCourse(course)}
+                />
+            ))}
+        </div>
+    );
 
     return (
         <div className="space-y-8 text-white sm:space-y-12">
@@ -334,14 +460,15 @@ export default function CoursesPage() {
                         EDUHUB • NAUKA BEZ GRANIC
                     </p>
                     <h1 className="mt-5 text-3xl font-black leading-tight sm:text-5xl lg:text-6xl">
-                        Programowanie i języki
+                        Twoja szkoła i rozwój
                         <br className="hidden sm:block" /> w jednym miejscu.
                     </h1>
                     <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:mt-7 sm:text-xl sm:leading-9">
-                        Wybierz ścieżkę technologiczną, rozwój cyfrowy albo język od A1 do C2. Każdy kurs prowadzi krok po kroku i kończy się certyfikatem.
+                        Ucz się zgodnie ze swoją klasą, przygotuj się do egzaminów albo wybierz dodatkową ścieżkę programistyczną, akademicką lub językową.
                     </p>
 
                     <div className="mt-7 flex flex-wrap gap-2.5 text-sm font-semibold sm:mt-9 sm:gap-3">
+                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-emerald-200">Technikum klasy 1–4</span>
                         <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-cyan-200">Interaktywne lekcje</span>
                         <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-blue-200">Projekty praktyczne</span>
                         <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-violet-200">Języki A1–C2</span>
@@ -450,41 +577,133 @@ export default function CoursesPage() {
                         )}
                     </div>
                 ) : (
-                    <div className="space-y-12">
-                        {groupedCourses.map((category) => {
-                            const CategoryIcon = CATEGORY_ICONS[category.value] || BsCollection;
+                    <div className="space-y-16">
+                        <nav aria-label="Przestrzenie nauki" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            <LearningSpaceCard
+                                icon={BsMortarboardFill}
+                                eyebrow="Ścieżka szkolna"
+                                title="Technikum"
+                                description="Przedmioty uporządkowane według klasy i programu nauczania."
+                                count={schoolCourses.length}
+                                tone="emerald"
+                                onClick={() => scrollToSection("technikum")}
+                            />
+                            <LearningSpaceCard
+                                icon={BsBuildings}
+                                eyebrow="Ścieżka akademicka"
+                                title="Uczelnia"
+                                description="Osobna przestrzeń na laboratoria i materiały dla studentów."
+                                count={universityCourses.length}
+                                tone="amber"
+                                onClick={() => scrollToSection("uczelnia")}
+                            />
+                            <LearningSpaceCard
+                                icon={BsCodeSlash}
+                                eyebrow="Rozwój zawodowy"
+                                title="Programowanie"
+                                description="Java, Python, frontend i technologie wykraczające poza szkołę."
+                                count={programmingCourses.length + digitalCourses.length}
+                                tone="cyan"
+                                onClick={() => scrollToSection("dodatkowe")}
+                            />
+                            <LearningSpaceCard
+                                icon={BsTranslate}
+                                eyebrow="Języki A1–C2"
+                                title="Kursy językowe"
+                                description="Niezależne ścieżki językowe z własnym tempem nauki."
+                                count={languageCourses.length}
+                                tone="violet"
+                                onClick={() => scrollToSection("dodatkowe")}
+                            />
+                        </nav>
 
-                            return (
-                                <section key={category.value}>
-                                    <div className="mb-5 flex items-center gap-4">
-                                        <div className={`grid h-12 w-12 place-items-center rounded-2xl border text-xl ${CATEGORY_STYLES[category.value]}`}>
-                                            <CategoryIcon />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-2xl font-black sm:text-3xl">{category.title}</h3>
-                                            <p className="mt-1 text-sm text-slate-500">{category.description}</p>
-                                        </div>
-                                    </div>
-                                    <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-                                        {category.courses.map((course) => (
-                                            <CourseCard
-                                                key={course.id}
-                                                course={course}
-                                                isAdmin={isAdmin}
-                                                deleting={deletingCourseId === course.id}
-                                                onOpen={() => navigate(
-                                                    course.canAccess || isAdmin
-                                                        ? `/modules/${course.id}`
-                                                        : `/checkout/${course.id}`
-                                                )}
-                                                onEdit={() => navigate(`/admin/courses/${course.id}/edit`)}
-                                                onDelete={() => deleteCourse(course)}
-                                            />
-                                        ))}
-                                    </div>
-                                </section>
-                            );
-                        })}
+                        {(view === "catalog" || schoolCourses.length > 0 || isAdmin) && (
+                            <section id="technikum" className="scroll-mt-28">
+                                <SectionHeading
+                                    icon={BsMortarboardFill}
+                                    eyebrow="Ścieżka szkolna"
+                                    title="Technik informatyk"
+                                    description="Wybierz swoją klasę. Zobaczysz tylko przedmioty przewidziane dla danego roku nauki."
+                                    tone="emerald"
+                                />
+
+                                <div className="mb-7 grid grid-cols-2 gap-2 rounded-3xl border border-white/10 bg-black/20 p-2 sm:grid-cols-4">
+                                    {SCHOOL_LEVELS.map((level) => {
+                                        const count = schoolCoursesByLevel[level]?.length || 0;
+                                        const active = displayedSchoolLevel === level;
+                                        return (
+                                            <button
+                                                key={level}
+                                                type="button"
+                                                onClick={() => setActiveSchoolLevel(level)}
+                                                className={`rounded-2xl px-4 py-3 text-left transition ${
+                                                    active
+                                                        ? "bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/15"
+                                                        : "text-slate-400 hover:bg-white/5 hover:text-white"
+                                                }`}
+                                            >
+                                                <span className="block font-black">{level}</span>
+                                                <span className={`mt-0.5 block text-xs ${active ? "text-slate-800" : "text-slate-600"}`}>
+                                                    {count} {count === 1 ? "przedmiot" : "przedmiotów"}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {selectedSchoolCourses.length > 0
+                                    ? renderCourseCards(selectedSchoolCourses)
+                                    : <EmptyLearningArea message={`${displayedSchoolLevel} — przedmioty są jeszcze w przygotowaniu.`} />}
+                            </section>
+                        )}
+
+                        {(view === "catalog" || universityCourses.length > 0 || isAdmin) && (
+                            <section id="uczelnia" className="scroll-mt-28">
+                                <SectionHeading
+                                    icon={BsBuildings}
+                                    eyebrow="Osobna przestrzeń"
+                                    title="Uczelnia"
+                                    description="Kursy akademickie nie mieszają się z klasami technikum ani z ofertą dodatkową."
+                                    tone="amber"
+                                />
+                                {universityCourses.length > 0
+                                    ? renderCourseCards(universityCourses)
+                                    : <EmptyLearningArea message="Strefa uczelni jest przygotowana. Kursy pojawią się tutaj po ich dodaniu." />}
+                            </section>
+                        )}
+
+                        {(view === "catalog" || additionalCategories.length > 0 || isAdmin) && (
+                            <section id="dodatkowe" className="scroll-mt-28">
+                                <SectionHeading
+                                    icon={BsRocketTakeoff}
+                                    eyebrow="Rozwój ponad program"
+                                    title="Kursy dodatkowe"
+                                    description="Ścieżki programistyczne, cyfrowe i językowe pozostają dostępne niezależnie od klasy oraz uczelni."
+                                    tone="cyan"
+                                />
+                                <div className="space-y-12">
+                                    {additionalCategories.length === 0 ? (
+                                        <EmptyLearningArea message="Kursy programistyczne i językowe są jeszcze w przygotowaniu." />
+                                    ) : additionalCategories.map((category) => {
+                                        const CategoryIcon = CATEGORY_ICONS[category.value] || BsCollection;
+                                        return (
+                                            <div key={category.value}>
+                                                <div className="mb-5 flex items-center gap-3">
+                                                    <div className={`grid h-10 w-10 place-items-center rounded-xl border ${CATEGORY_STYLES[category.value]}`}>
+                                                        <CategoryIcon />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xl font-black">{category.title}</h4>
+                                                        <p className="text-xs text-slate-500">{category.description}</p>
+                                                    </div>
+                                                </div>
+                                                {renderCourseCards(category.courses)}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        )}
                     </div>
                 )}
             </section>
