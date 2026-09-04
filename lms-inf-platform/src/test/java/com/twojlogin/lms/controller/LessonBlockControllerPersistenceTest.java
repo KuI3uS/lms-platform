@@ -104,6 +104,25 @@ class LessonBlockControllerPersistenceTest {
     }
 
     @Test
+    void importsMultipleBlocksInOneOrderedBatch() {
+        Lesson lesson = createLesson();
+        LessonBlockController controller = createController();
+        LessonBlockRequest info = request("Co będzie potrzebne?", BlockType.INFO, "Komputer i zeszyt", null);
+        LessonBlockRequest quiz = request("Do czego służy BIOS?", BlockType.QUIZ, "Sprzęt\nDokumenty", "Sprzęt");
+
+        List<LessonBlockDto> saved = controller.createBulk(
+                lesson.getId(),
+                List.of(info, quiz)
+        );
+
+        assertEquals(2, saved.size());
+        assertEquals(0, saved.get(0).orderIndex());
+        assertEquals(1, saved.get(1).orderIndex());
+        assertEquals(BlockType.INFO, saved.get(0).type());
+        assertEquals(BlockType.QUIZ, saved.get(1).type());
+    }
+
+    @Test
     void createsEverySupportedBlockType() {
         Lesson lesson = createLesson();
         LessonBlockController controller = createController();
@@ -174,6 +193,33 @@ class LessonBlockControllerPersistenceTest {
         lesson.setTitle("Pierwsza lekcja");
         lesson.setOrderIndex(1);
         return lessonRepository.saveAndFlush(lesson);
+    }
+
+    private LessonBlockRequest request(
+            String title,
+            BlockType type,
+            String content,
+            String expectedAnswer
+    ) {
+        return new LessonBlockRequest(
+                title,
+                type,
+                content,
+                null,
+                type == BlockType.TASK ? content : null,
+                null,
+                expectedAnswer,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                0,
+                null
+        );
     }
 
     private LessonBlockController createController() {

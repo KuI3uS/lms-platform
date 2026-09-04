@@ -131,6 +131,48 @@ public class LessonBlockController {
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/lesson/{lessonId}/bulk")
+    public List<LessonBlockDto> createBulk(
+            @PathVariable Long lessonId,
+            @RequestBody List<LessonBlockRequest> requests
+    ) {
+        if (requests == null || requests.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Import nie zawiera żadnych bloków."
+            );
+        }
+        if (requests.size() > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Jednorazowo możesz zaimportować maksymalnie 100 bloków."
+            );
+        }
+
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
+                ));
+        Integer maxOrder = blockRepository.findMaxOrderIndexByLessonId(lessonId);
+        int firstOrder = (maxOrder == null ? -1 : maxOrder) + 1;
+
+        List<LessonBlock> blocks = new java.util.ArrayList<>(requests.size());
+        for (int index = 0; index < requests.size(); index++) {
+            LessonBlock block = new LessonBlock();
+            block.setLesson(lesson);
+            block.setOrderIndex(firstOrder + index);
+            applyRequest(block, requests.get(index), false);
+            blocks.add(block);
+        }
+
+        return blockRepository.saveAllAndFlush(blocks).stream()
+                .map(block -> LessonBlockDto.from(block, true))
+                .toList();
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public LessonBlockDto update(
             @PathVariable Long id,

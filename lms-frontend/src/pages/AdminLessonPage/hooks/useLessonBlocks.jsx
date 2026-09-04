@@ -36,6 +36,7 @@ export default function useLessonBlocks() {
 
     const [blockForms, setBlockForms] = useState({});
     const [savingByLesson, setSavingByLesson] = useState({});
+    const [importingByLesson, setImportingByLesson] = useState({});
     const [errorsByLesson, setErrorsByLesson] = useState({});
 
     async function loadBlocks(lessonId) {
@@ -128,6 +129,37 @@ export default function useLessonBlocks() {
             setSaving(lessonId, false);
         }
 
+    }
+
+    async function importBlocks(lessonId, blocks) {
+        if (!Array.isArray(blocks) || blocks.length === 0) return false;
+
+        try {
+            setImportingByLesson(prev => ({ ...prev, [lessonId]: true }));
+            clearError(lessonId);
+            const saved = await apiFetch(
+                `/lesson-blocks/lesson/${lessonId}/bulk`,
+                {
+                    method: "POST",
+                    body: JSON.stringify(blocks.map(toRequest))
+                }
+            );
+            setBlocksByLesson(prev => ({
+                ...prev,
+                [lessonId]: [...(prev[lessonId] || []), ...(saved || [])]
+            }));
+            showToast(
+                `Zaimportowano ${saved?.length || blocks.length} bloków lekcji.`,
+                "success"
+            );
+            return true;
+        } catch (error) {
+            setError(lessonId, error);
+            showToast("Nie udało się zaimportować lekcji. Sprawdź wskazane pola.", "error");
+            return false;
+        } finally {
+            setImportingByLesson(prev => ({ ...prev, [lessonId]: false }));
+        }
     }
 
     async function deleteBlock(
@@ -288,6 +320,7 @@ export default function useLessonBlocks() {
 
         blockForms,
         savingByLesson,
+        importingByLesson,
         errorsByLesson,
 
         emptyBlock,
@@ -297,6 +330,8 @@ export default function useLessonBlocks() {
         saveBlock,
 
         updateBlock,
+
+        importBlocks,
 
         deleteBlock,
 
