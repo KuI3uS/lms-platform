@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -123,6 +124,23 @@ class LessonBlockControllerPersistenceTest {
     }
 
     @Test
+    void deletesAllBlocksFromOnlyTheSelectedLesson() {
+        Lesson selectedLesson = createLesson();
+        Lesson otherLesson = createLesson("Druga lekcja", 2);
+        LessonBlockController controller = createController();
+
+        controller.create(selectedLesson.getId(), request("Pierwszy", BlockType.TEXT, "Treść", null));
+        controller.create(selectedLesson.getId(), request("Drugi", BlockType.INFO, "Treść", null));
+        controller.create(otherLesson.getId(), request("Pozostaje", BlockType.TEXT, "Treść", null));
+
+        Map<String, Integer> result = controller.deleteAllByLesson(selectedLesson.getId());
+
+        assertEquals(2, result.get("deleted"));
+        assertEquals(0, blockRepository.countByLessonId(selectedLesson.getId()));
+        assertEquals(1, blockRepository.countByLessonId(otherLesson.getId()));
+    }
+
+    @Test
     void createsEverySupportedBlockType() {
         Lesson lesson = createLesson();
         LessonBlockController controller = createController();
@@ -189,9 +207,13 @@ class LessonBlockControllerPersistenceTest {
     }
 
     private Lesson createLesson() {
+        return createLesson("Pierwsza lekcja", 1);
+    }
+
+    private Lesson createLesson(String title, int orderIndex) {
         Lesson lesson = new Lesson();
-        lesson.setTitle("Pierwsza lekcja");
-        lesson.setOrderIndex(1);
+        lesson.setTitle(title);
+        lesson.setOrderIndex(orderIndex);
         return lessonRepository.saveAndFlush(lesson);
     }
 

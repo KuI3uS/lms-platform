@@ -296,6 +296,26 @@ export function parseChatGptLesson(source) {
 }
 
 export const CHAT_GPT_LESSON_PROMPT = `Jesteś metodykiem i nauczycielem. Przygotuj kompletną lekcję do importu w EduHub.
+
+ZANIM UTWORZYSZ LEKCJĘ
+Najpierw sprawdź, czy użytkownik podał tryb wsparcia ucznia. Jeżeli go nie podał, nie generuj jeszcze lekcji. Zadaj tylko jedno krótkie pytanie:
+„Jaki tryb wsparcia zastosować: 1. samodzielny, 2. mała podpowiedź, 3. prowadzony krok po kroku?”
+
+Znaczenie trybów:
+1. Samodzielny — uczeń otrzymuje przede wszystkim opis problemu, wymagania i kryteria ukończenia. Nie pokazuj gotowego rozwiązania, gotowego kodu, szczegółowego algorytmu ani kolejności wszystkich czynności. Kod startowy ma zawierać wyłącznie niezbędny szkielet albo może być pusty.
+2. Mała podpowiedź — uczeń otrzymuje krótkie naprowadzenie na pojęcie, narzędzie lub pierwszy krok. Nie pokazuj kompletnego rozwiązania ani kodu, który wystarczy przepisać.
+3. Prowadzony krok po kroku — można podzielić nowe i trudne zagadnienie na etapy, ale uczeń nadal sam wykonuje kluczowe fragmenty. Nie wklejaj gotowego rozwiązania zadania w teorii lub przykładzie kodu.
+
+Jeżeli poziom został określony jako „średniozaawansowany” albo „zaawansowany”, automatycznie wybierz tryb 1 — samodzielny i nie zadawaj pytania o tryb. Jeżeli poziom jest „podstawowy” lub uczeń poznaje zagadnienie pierwszy raz, zapytaj o tryb, chyba że użytkownik wskazał go wprost.
+
+NIE PODAWAJ ROZWIĄZANIA UCZNIOWI
+- Nie twórz przykładu kodu rozwiązującego późniejsze zadanie przez zmianę samych nazw lub liczb.
+- Nie umieszczaj kompletnej odpowiedzi w opisie, poleceniu, wskazówce ani kodzie startowym.
+- Nie rozpisuj całego algorytmu zadania w takiej kolejności, żeby uczeń musiał go jedynie przepisać.
+- Pole „Poprawna odpowiedź” jest wymagane do automatycznego sprawdzania i może zawierać pełne rozwiązanie, ponieważ uczeń nie widzi go przed sprawdzeniem.
+- Pole „Wyjaśnienie rozwiązania (od 4. błędnej próby)” może dokładnie tłumaczyć rozwiązanie, ponieważ pojawia się dopiero po kolejnych nieudanych próbach.
+- Podpowiedzi mają zmniejszać trudność stopniowo: pierwsza wskazuje kierunek, druga konkretny brak, a dopiero późniejsze wyjaśnienie omawia rozwiązanie.
+
 Zwróć wyłącznie gotowe bloki, bez tabel, Markdown, komentarzy i dodatkowego wstępu.
 Każdy blok rozpocznij od KROK i kolejnego numeru. Nie pomijaj numerów.
 
@@ -395,7 +415,7 @@ Język
 Co pokazuje ten przykład?
 [opis]
 Kod przykładu
-[kompletny kod]
+[kod ilustrujący wyłącznie omawiane pojęcie; nie może być gotowym rozwiązaniem późniejszego zadania]
 
 ZADANIE — jest sprawdzane automatycznie, dlatego musi mieć dokładną poprawną odpowiedź
 KROK 10
@@ -408,7 +428,7 @@ Opis
 Polecenie
 [jednoznaczne polecenie]
 Kod startowy
-[kod dla ucznia]
+[pusty lub minimalny szkielet z TODO; nigdy kompletne rozwiązanie]
 Ukryte testy uruchomieniowe
 [jeden test w wierszu: wejście => oczekiwane wyjście; użyj <brak>, jeśli nie ma wejścia]
 Język
@@ -478,10 +498,13 @@ Styl
 Nie musisz używać wszystkich typów. Dobieraj je do tematu. Nie twórz fikcyjnych adresów obrazów, filmów ani plików.
 Quiz musi mieć minimum dwie unikalne odpowiedzi. Pole „Poprawna odpowiedź” ma zawierać dokładny tekst wybranej odpowiedzi.
 Lekcja ma być napisana po ludzku, prowadzić krok po kroku, łączyć teorię z praktyką, nie powtarzać treści i kończyć się quizem oraz podsumowaniem.
+Przed zwróceniem lekcji sprawdź każde zadanie: jeżeli uczeń może je wykonać przez skopiowanie wcześniejszego kodu albo instrukcji, przeprojektuj je tak, aby wymagało samodzielnego myślenia.
 
 Temat lekcji: [WPISZ TEMAT]
 Przedmiot: [WPISZ PRZEDMIOT]
 Klasa lub poziom: [WPISZ KLASĘ]
+Poziom trudności: [podstawowy, średniozaawansowany albo zaawansowany]
+Tryb wsparcia: [samodzielny, mała podpowiedź, prowadzony krok po kroku albo „zapytaj mnie”]
 Czas: [WPISZ CZAS, np. 45 minut]
 Wcześniej zrealizowane tematy: [WPISZ TEMATY albo „brak”]
 Dostępne wyposażenie: [WPISZ WYPOSAŻENIE]

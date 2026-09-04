@@ -1,4 +1,4 @@
-import { BsCollection } from "react-icons/bs";
+import { BsCollection, BsTrash } from "react-icons/bs";
 
 import BlockList from "./BlockList";
 import BlockForm from "./BlockForm/BlockForm";
@@ -21,7 +21,9 @@ export default function BlockManager({
 
         <section className="bg-gray-950 border border-gray-800 rounded-3xl p-6 space-y-6">
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                <div className="flex items-center gap-3">
 
                 <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
 
@@ -42,6 +44,24 @@ export default function BlockManager({
                     </p>
 
                 </div>
+
+                </div>
+
+                {blocks.length > 0 && (
+                    <button
+                        type="button"
+                        disabled={Boolean(lessonBlocks.deletingAllByLesson?.[lessonId])}
+                        onClick={() => lessonBlocks.deleteAllBlocks(lessonId)}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-2.5 text-sm font-black text-red-200 transition hover:border-red-300/50 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {lessonBlocks.deletingAllByLesson?.[lessonId]
+                            ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-red-200 border-t-transparent" />
+                            : <BsTrash />}
+                        {lessonBlocks.deletingAllByLesson?.[lessonId]
+                            ? "Usuwanie..."
+                            : `Usuń wszystkie (${blocks.length})`}
+                    </button>
+                )}
 
             </div>
 

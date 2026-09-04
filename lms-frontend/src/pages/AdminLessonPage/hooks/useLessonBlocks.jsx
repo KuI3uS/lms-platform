@@ -37,6 +37,7 @@ export default function useLessonBlocks() {
     const [blockForms, setBlockForms] = useState({});
     const [savingByLesson, setSavingByLesson] = useState({});
     const [importingByLesson, setImportingByLesson] = useState({});
+    const [deletingAllByLesson, setDeletingAllByLesson] = useState({});
     const [errorsByLesson, setErrorsByLesson] = useState({});
 
     async function loadBlocks(lessonId) {
@@ -182,6 +183,32 @@ export default function useLessonBlocks() {
 
     }
 
+    async function deleteAllBlocks(lessonId) {
+        const blockCount = getBlocks(lessonId).length;
+        if (blockCount === 0) return;
+
+        const accepted = await confirm({
+            title: "Usuń wszystkie bloki lekcji",
+            message: `Trwale usunąć ${blockCount} ${blockCount === 1 ? "blok" : "bloków"} z tej lekcji? Znikną również zapisane próby odpowiedzi dotyczące tych zadań i quizów.`,
+            confirmLabel: "Usuń wszystkie"
+        });
+        if (!accepted) return;
+
+        try {
+            setDeletingAllByLesson(prev => ({ ...prev, [lessonId]: true }));
+            clearError(lessonId);
+            await apiFetch(`/lesson-blocks/lesson/${lessonId}`, { method: "DELETE" });
+            setBlocksByLesson(prev => ({ ...prev, [lessonId]: [] }));
+            resetBlockForm(lessonId);
+            showToast(`Usunięto wszystkie bloki tej lekcji (${blockCount}).`, "success");
+        } catch (error) {
+            setError(lessonId, error);
+            showToast("Nie udało się usunąć bloków lekcji.", "error");
+        } finally {
+            setDeletingAllByLesson(prev => ({ ...prev, [lessonId]: false }));
+        }
+    }
+
     function editBlock(
         lessonId,
         block
@@ -321,6 +348,7 @@ export default function useLessonBlocks() {
         blockForms,
         savingByLesson,
         importingByLesson,
+        deletingAllByLesson,
         errorsByLesson,
 
         emptyBlock,
@@ -334,6 +362,8 @@ export default function useLessonBlocks() {
         importBlocks,
 
         deleteBlock,
+
+        deleteAllBlocks,
 
         editBlock,
 
