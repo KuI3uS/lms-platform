@@ -20,6 +20,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
     const [source, setSource] = useState("");
     const result = useMemo(() => parseChatGptLesson(source), [source]);
     const importing = Boolean(lessonBlocks.importingByLesson?.[lessonId]);
+    const importError = lessonBlocks.errorsByLesson?.[lessonId] || "";
 
     const copyPrompt = async () => {
         try {
@@ -124,6 +125,12 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
                                 </li>
                             ))}
                         </ol>
+                    )}
+
+                    {importError && (
+                        <div role="alert" className="rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm leading-6 text-red-200">
+                            Import nie został zapisany: {importError}
+                        </div>
                     )}
 
                     <button
