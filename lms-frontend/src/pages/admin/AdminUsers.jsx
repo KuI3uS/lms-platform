@@ -22,9 +22,13 @@ export default function AdminUsers() {
     const deleteUser = async (id, email) => {
         if (!await confirm({ title: "Usuń użytkownika", message: `Trwale usunąć konto ${email} i wszystkie jego postępy?`, confirmLabel: "Usuń konto" })) return;
 
-        await apiFetch(`/users/${id}`, { method: "DELETE" });
-        setUsers(prev => prev.filter(u => u.id !== id));
-        showToast("Konto użytkownika zostało usunięte.", "success");
+        try {
+            await apiFetch(`/users/${id}`, { method: "DELETE" });
+            setUsers(prev => prev.filter(u => u.id !== id));
+            showToast("Konto zostało usunięte. Aktywna sesja ucznia została unieważniona.", "success");
+        } catch (error) {
+            showToast(error.message || "Nie udało się usunąć konta użytkownika.", "error");
+        }
     };
 
     const changeRole = async (id, role) => {

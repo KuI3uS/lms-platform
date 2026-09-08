@@ -6,7 +6,9 @@ import com.twojlogin.lms.dto.ForgotPasswordRequest;
 import com.twojlogin.lms.dto.AuthSessionDto;
 import com.twojlogin.lms.dto.AuthenticatedUserDto;
 import com.twojlogin.lms.service.AuthService;
+import com.twojlogin.lms.service.RegistrationProtectionService;
 import com.twojlogin.lms.security.AuthCookieService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -19,15 +21,28 @@ public class AuthController {
 
     private final AuthService authService;
     private final AuthCookieService cookieService;
+    private final RegistrationProtectionService registrationProtection;
 
-    public AuthController(AuthService authService, AuthCookieService cookieService) {
+    public AuthController(
+            AuthService authService,
+            AuthCookieService cookieService,
+            RegistrationProtectionService registrationProtection
+    ) {
         this.authService = authService;
         this.cookieService = cookieService;
+        this.registrationProtection = registrationProtection;
     }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void register(@RequestBody RegisterRequest request) {
+    public void register(
+            @RequestBody RegisterRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        registrationProtection.validateRegistration(
+                request == null ? null : request.email,
+                servletRequest.getRemoteAddr()
+        );
         authService.register(request);
     }
 

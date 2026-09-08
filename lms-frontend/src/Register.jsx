@@ -28,7 +28,6 @@ export default function Register() {
             setError("Hasło musi mieć co najmniej 8 znaków.");
             return;
         }
-
         try {
             setLoading(true);
             setError("");
