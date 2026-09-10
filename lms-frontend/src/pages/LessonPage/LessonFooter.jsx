@@ -103,7 +103,7 @@ export default function LessonFooter({
                         onClick={nextLesson ? onNextLesson : onBack}
                         className="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 font-bold transition hover:bg-blue-700"
                     >
-                        {nextLesson ? "Rozpocznij następną lekcję" : "Wróć do ścieżki"}
+                        {nextLesson ? "Rozpocznij następną lekcję" : "Wróć do kursu"}
                         <BsArrowRight />
                     </button>
                 ) : (

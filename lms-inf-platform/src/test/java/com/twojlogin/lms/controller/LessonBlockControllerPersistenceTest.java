@@ -13,12 +13,15 @@ import com.twojlogin.lms.service.TaskEvaluationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 @DataJpaTest
@@ -142,10 +145,10 @@ class LessonBlockControllerPersistenceTest {
 
     @Test
     void createsEverySupportedBlockType() {
-        Lesson lesson = createLesson();
         LessonBlockController controller = createController();
 
         for (BlockType type : BlockType.values()) {
+            Lesson lesson = createLesson("Lekcja " + type, type.ordinal() + 10);
             String requiredAnswer =
                     type == BlockType.TASK || type == BlockType.QUIZ
                             ? "poprawna odpowiedź"
@@ -177,6 +180,58 @@ class LessonBlockControllerPersistenceTest {
             assertNotNull(saved.id());
             assertEquals(type.normalized(), saved.type());
         }
+    }
+
+    @Test
+    void rejectsAnEleventhBlockInOneLesson() {
+        Lesson lesson = createLesson();
+        LessonBlockController controller = createController();
+
+        for (int index = 0; index < 10; index++) {
+            controller.create(
+                    lesson.getId(),
+                    request("Blok " + index, BlockType.TEXT, "Treść", null)
+            );
+        }
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> controller.create(
+                        lesson.getId(),
+                        request("Za dużo", BlockType.TEXT, "Treść", null)
+                )
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+        assertEquals(10, blockRepository.countByLessonId(lesson.getId()));
+    }
+
+    @Test
+    void rejectsBulkImportThatWouldExceedLessonLimit() {
+        Lesson lesson = createLesson();
+        LessonBlockController controller = createController();
+
+        for (int index = 0; index < 8; index++) {
+            controller.create(
+                    lesson.getId(),
+                    request("Blok " + index, BlockType.TEXT, "Treść", null)
+            );
+        }
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> controller.createBulk(
+                        lesson.getId(),
+                        List.of(
+                                request("Pierwszy", BlockType.TEXT, "Treść", null),
+                                request("Drugi", BlockType.TEXT, "Treść", null),
+                                request("Trzeci", BlockType.TEXT, "Treść", null)
+                        )
+                )
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+        assertEquals(8, blockRepository.countByLessonId(lesson.getId()));
     }
 
     @Test

@@ -13,6 +13,7 @@ import {
     parseChatGptLesson
 } from "../../utils/chatGptLessonImport";
 import { getBlockLabel } from "./blockTypes";
+import { MAX_LESSON_BLOCKS } from "../../utils/lessonBlockLimits";
 
 export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
     const { showToast } = useFeedback();
@@ -21,6 +22,9 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
     const result = useMemo(() => parseChatGptLesson(source), [source]);
     const importing = Boolean(lessonBlocks.importingByLesson?.[lessonId]);
     const importError = lessonBlocks.errorsByLesson?.[lessonId] || "";
+    const existingCount = lessonBlocks.getBlocks(lessonId).length;
+    const remainingSlots = Math.max(0, MAX_LESSON_BLOCKS - existingCount);
+    const exceedsLessonLimit = result.blocks.length > remainingSlots;
 
     const copyPrompt = async () => {
         try {
@@ -59,7 +63,10 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
                     <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-300">Import bez API</p>
                     <h4 className="mt-2 text-xl font-black text-white">Wklej lekcję przygotowaną w ChatGPT</h4>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                        EduHub rozpozna kroki, typy bloków, treści i odpowiedzi quizów. Nic nie zostanie zapisane przed kliknięciem importu.
+                        EduHub rozpozna maksymalnie 10 spójnych kroków, zadania oraz odpowiedzi quizów. Nic nie zostanie zapisane przed kliknięciem importu.
+                    </p>
+                    <p className="mt-2 text-xs font-black uppercase tracking-wider text-cyan-300/80">
+                        Wolne miejsce: {remainingSlots}/{MAX_LESSON_BLOCKS} bloków
                     </p>
                 </div>
                 <button
@@ -96,7 +103,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
             {source.trim() && (
                 <div className="mt-5 space-y-4">
                     <div className={`rounded-2xl border p-4 ${
-                        result.errors.length > 0
+                        result.errors.length > 0 || exceedsLessonLimit
                             ? "border-red-400/25 bg-red-500/10"
                             : "border-emerald-400/25 bg-emerald-500/10"
                     }`}>
@@ -112,6 +119,11 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
                         {result.warnings.map((warning) => (
                             <p key={warning} className="mt-2 text-sm text-amber-200">{warning}</p>
                         ))}
+                        {exceedsLessonLimit && (
+                            <p className="mt-2 text-sm text-red-200">
+                                Import przekroczyłby limit lekcji. Możesz dodać jeszcze {remainingSlots} {remainingSlots === 1 ? "blok" : "bloków"}.
+                            </p>
+                        )}
                     </div>
 
                     {result.blocks.length > 0 && (
@@ -135,7 +147,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
 
                     <button
                         type="button"
-                        disabled={importing || result.blocks.length === 0 || result.errors.length > 0}
+                        disabled={importing || result.blocks.length === 0 || result.errors.length > 0 || exceedsLessonLimit}
                         onClick={importLesson}
                         className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-500 to-blue-600 px-5 py-4 font-black text-white shadow-lg shadow-violet-500/15 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
                     >

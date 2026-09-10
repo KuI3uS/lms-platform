@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiFetch } from "../../../api/api";
 import { useFeedback } from "../../../context/FeedbackContext";
+import { MAX_LESSON_BLOCKS } from "../../../utils/lessonBlockLimits";
 
 const emptyBlock = {
     id: null,
@@ -68,6 +69,13 @@ export default function useLessonBlocks() {
         }
 
         if (!validateBlock(block)) return;
+        if (getBlocks(lessonId).length >= MAX_LESSON_BLOCKS) {
+            showToast(
+                `Jedna lekcja może zawierać maksymalnie ${MAX_LESSON_BLOCKS} bloków.`,
+                "warning"
+            );
+            return;
+        }
 
         try {
             setSaving(lessonId, true);
@@ -134,6 +142,17 @@ export default function useLessonBlocks() {
 
     async function importBlocks(lessonId, blocks) {
         if (!Array.isArray(blocks) || blocks.length === 0) return false;
+
+        const currentCount = getBlocks(lessonId).length;
+        if (currentCount + blocks.length > MAX_LESSON_BLOCKS) {
+            const remaining = Math.max(0, MAX_LESSON_BLOCKS - currentCount);
+            const message = remaining > 0
+                ? `W tej lekcji zostało miejsce na ${remaining} ${remaining === 1 ? "blok" : "bloki"}.`
+                : `Ta lekcja ma już maksymalną liczbę ${MAX_LESSON_BLOCKS} bloków.`;
+            setErrorsByLesson(prev => ({ ...prev, [lessonId]: message }));
+            showToast(message, "warning");
+            return false;
+        }
 
         try {
             setImportingByLesson(prev => ({ ...prev, [lessonId]: true }));
