@@ -92,7 +92,7 @@ export default function LessonPage() {
                         ? block.lastAnswer || ""
                         : block.lastAnswer ?? block.starterCode ?? "";
 
-                    if (block.attempted && block.attemptCount !== 1) {
+                    if (block.attempted) {
                         initialResults[block.id] = {
                             correct: Boolean(block.correct),
                             attemptCount: block.attemptCount || 0,
