@@ -57,51 +57,9 @@ export default function LessonForm({
                             className={`${fieldClass} ${focus}`}
                         />
                     </Panel>
-
-                    <Panel icon={<BsCardText />} title={language ? "Cel komunikacyjny" : "Cel lekcji"} accent={accent}>
-                        <textarea
-                            value={form.theory || ""}
-                            onChange={(event) => update("theory", event.target.value)}
-                            placeholder={language
-                                ? "Po tej lekcji uczeń potrafi się przedstawić i zapytać rozmówcę o imię."
-                                : "Wyjaśnij, czego uczeń nauczy się i co będzie potrafił zrobić."}
-                            className={`${fieldClass} min-h-36 resize-y ${focus}`}
-                        />
-                    </Panel>
                 </div>
 
-                {language ? (
-                    <Panel icon={<BsChatDots />} title="Najważniejsze słowa i zdania" accent={accent}>
-                        <textarea
-                            value={form.content || ""}
-                            onChange={(event) => update("content", event.target.value)}
-                            placeholder={"Hello — Cześć\nMy name is… — Mam na imię…\nWhat is your name? — Jak masz na imię?"}
-                            className={`${fieldClass} min-h-48 resize-y ${focus}`}
-                        />
-                        <p className="mt-3 text-xs leading-5 text-slate-500">
-                            Wystarczy 5–8 nowych elementów. Kolejne przykłady i ćwiczenia dodasz w prostym edytorze pod kartą lekcji.
-                        </p>
-                    </Panel>
-                ) : (
-                    <div className="grid gap-5 xl:grid-cols-2">
-                        <Panel icon={<BsCodeSlash />} title="Krótki przykład startowy" accent={accent}>
-                            <textarea
-                                value={form.example || ""}
-                                onChange={(event) => update("example", event.target.value)}
-                                placeholder={"public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World\");\n    }\n}"}
-                                className={`${fieldClass} min-h-56 resize-y font-mono text-sm ${focus}`}
-                            />
-                        </Panel>
-                        <Panel icon={<BsCardText />} title="Dodatkowe informacje" accent={accent}>
-                            <textarea
-                                value={form.content || ""}
-                                onChange={(event) => update("content", event.target.value)}
-                                placeholder="Wymagania, potrzebne narzędzia albo krótka wskazówka organizacyjna."
-                                className={`${fieldClass} min-h-56 resize-y ${focus}`}
-                            />
-                        </Panel>
-                    </div>
-                )}
+
 
                 <Panel icon={<BsImage />} title="Grafika wprowadzająca (opcjonalnie)" accent={accent}>
                     <input
