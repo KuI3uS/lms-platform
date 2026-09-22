@@ -1006,39 +1006,59 @@ export default function useLessonBlocks() {
         /**
          * Dialog interaktywny.
          */
-        if (
-            block.type === "DIALOG"
-        ) {
+        if (block.type === "DIALOG") {
+            const dialog = parseDialogContent(block.content);
 
-            const dialog =
-                parseDialogContent(
-                    block.content
-                );
+            const characters = Array.isArray(dialog.characters)
+                ? dialog.characters
+                : [];
 
+            const turns = Array.isArray(dialog.turns)
+                ? dialog.turns
+                : [];
 
-            if (
-                dialog.turns.length < 2
-            ) {
-
-                showToast(
-                    "Dialog wymaga przynajmniej dwóch wypowiedzi.",
-                    "warning"
-                );
-
-                return false;
-            }
-
-
-            if (
-                !dialog.character1?.trim()
-                || !dialog.character2?.trim()
-            ) {
-
+            if (characters.length < 2) {
                 showToast(
                     "Dialog wymaga dwóch bohaterów.",
                     "warning"
                 );
+                return false;
+            }
 
+            const firstCharacter = characters[0];
+            const secondCharacter = characters[1];
+
+            if (
+                !firstCharacter?.name?.trim()
+                || !secondCharacter?.name?.trim()
+            ) {
+                showToast(
+                    "Podaj imiona obu bohaterów dialogu.",
+                    "warning"
+                );
+                return false;
+            }
+
+            const characterIds = characters
+                .map(character => character.id)
+                .filter(Boolean);
+
+            if (
+                !dialog.studentCharacterId
+                || !characterIds.includes(dialog.studentCharacterId)
+            ) {
+                showToast(
+                    "Wybierz postać, w którą wciela się uczeń.",
+                    "warning"
+                );
+                return false;
+            }
+
+            if (turns.length < 2) {
+                showToast(
+                    "Dialog wymaga przynajmniej dwóch wypowiedzi.",
+                    "warning"
+                );
                 return false;
             }
 

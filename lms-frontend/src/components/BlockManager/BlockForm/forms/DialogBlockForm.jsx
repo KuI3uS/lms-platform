@@ -1,4 +1,10 @@
-import { BsChatDots, BsHeadphones, BsPeople, BsPersonCheck } from "react-icons/bs";
+import {
+    BsChatDots,
+    BsHeadphones,
+    BsPeople,
+    BsPersonCheck
+} from "react-icons/bs";
+
 import {
     dialogueToEditor,
     parseDialogContent,
@@ -6,119 +12,406 @@ import {
     serializeDialogConfig
 } from "../../../../utils/languageInteractiveBlocks";
 
-const FIELD = "w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-cyan-300/50";
+const FIELD =
+    "w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-cyan-300/50";
 
-export default function DialogBlockForm({ block, setBlock }) {
+export default function DialogBlockForm({
+                                            block,
+                                            setBlock
+                                        }) {
     const config = parseDialogContent(block.content);
-    const characters = config.characters;
 
-    const saveConfig = (nextConfig, extra = {}) => setBlock((previous) => ({
-        ...previous,
-        ...extra,
-        content: serializeDialogConfig(nextConfig),
-        mediaType: "dialog",
-        language: extra.language
-            ?? (/^[a-z]{2}-[A-Z]{2}$/.test(previous.language || "") ? previous.language : "en-GB")
-    }));
+    const characters = Array.isArray(config.characters)
+        ? config.characters
+        : [];
 
-    const updateCharacter = (index, field, value) => {
-        const nextCharacters = characters.map((character, characterIndex) => (
-            characterIndex === index ? { ...character, [field]: value } : character
-        ));
-        saveConfig({ ...config, characters: nextCharacters });
+    const saveConfig = (
+        nextConfig,
+        extra = {}
+    ) => {
+        setBlock(previous => ({
+            ...previous,
+            ...extra,
+
+            content:
+                serializeDialogConfig(nextConfig),
+
+            mediaType: "dialog",
+
+            language:
+                extra.language
+                ?? (
+                    /^[a-z]{2}-[A-Z]{2}$/.test(
+                        previous.language || ""
+                    )
+                        ? previous.language
+                        : "en-GB"
+                )
+        }));
     };
 
-    const updateDialogue = (value) => {
+    const updateCharacter = (
+        index,
+        field,
+        value
+    ) => {
+        const nextCharacters =
+            characters.map(
+                (
+                    character,
+                    characterIndex
+                ) => (
+                    characterIndex === index
+                        ? {
+                            ...character,
+                            [field]: value
+                        }
+                        : character
+                )
+            );
+
         saveConfig({
             ...config,
-            turns: parseDialogueEditor(value, characters)
+            characters: nextCharacters
         });
     };
 
-    const changeStudentRole = (studentCharacterId) => {
+    const updateDialogue = value => {
         saveConfig({
             ...config,
-            studentCharacterId,
-            turns: config.turns.map((turn) => ({ ...turn, studentTurn: false }))
+
+            turns:
+                parseDialogueEditor(
+                    value,
+                    characters
+                )
         });
     };
+
+    const changeStudentRole =
+        studentCharacterId => {
+
+            saveConfig({
+                ...config,
+
+                studentCharacterId,
+
+                turns:
+                    (config.turns || [])
+                        .map(turn => ({
+                            ...turn,
+                            studentTurn: false
+                        }))
+            });
+        };
+
+    const firstCharacter =
+        characters[0] || {
+            id: "character-1",
+            name: "Emma",
+            avatar: "👩"
+        };
+
+    const secondCharacter =
+        characters[1] || {
+            id: "character-2",
+            name: "Leo",
+            avatar: "👨"
+        };
 
     return (
         <section className="space-y-6 rounded-3xl border border-cyan-500/25 bg-cyan-500/[0.08] p-5 sm:p-6">
+
             <div className="flex items-center gap-3">
-                <div className="grid h-11 w-11 place-items-center rounded-xl bg-cyan-400/15 text-xl text-cyan-200"><BsChatDots /></div>
-                <div>
-                    <h3 className="font-black">Dialog interaktywny</h3>
-                    <p className="text-sm text-gray-400">Cała scenka — nawet 60 wypowiedzi — zajmuje tylko jeden blok lekcji.</p>
+
+                <div className="grid h-11 w-11 place-items-center rounded-xl bg-cyan-400/15 text-xl text-cyan-200">
+                    <BsChatDots />
                 </div>
+
+                <div>
+                    <h3 className="font-black">
+                        Dialog interaktywny
+                    </h3>
+
+                    <p className="text-sm text-gray-400">
+                        Cała scenka — nawet 60 wypowiedzi — zajmuje tylko jeden blok lekcji.
+                    </p>
+                </div>
+
             </div>
+
 
             <div className="grid gap-4 lg:grid-cols-2">
+
                 <label className="block space-y-2">
-                    <span className="font-semibold">Tytuł dialogu</span>
-                    <input value={block.title || ""} onChange={(event) => setBlock((previous) => ({ ...previous, title: event.target.value }))} placeholder="np. Pierwsze spotkanie" className={FIELD} />
+
+                    <span className="font-semibold">
+                        Tytuł dialogu
+                    </span>
+
+                    <input
+                        value={block.title || ""}
+                        onChange={event =>
+                            setBlock(previous => ({
+                                ...previous,
+                                title: event.target.value
+                            }))
+                        }
+                        placeholder="np. Pierwsze spotkanie"
+                        className={FIELD}
+                    />
+
                 </label>
+
+
                 <label className="block space-y-2">
-                    <span className="flex items-center gap-2 font-semibold"><BsHeadphones /> Język rozmowy</span>
-                    <select value={/^[a-z]{2}-[A-Z]{2}$/.test(block.language || "") ? block.language : "en-GB"} onChange={(event) => setBlock((previous) => ({ ...previous, language: event.target.value, mediaType: "dialog" }))} className={FIELD}>
-                        <option value="en-GB">Angielski (Wielka Brytania)</option>
-                        <option value="en-US">Angielski (USA)</option>
-                        <option value="de-DE">Niemiecki</option>
-                        <option value="es-ES">Hiszpański</option>
-                        <option value="fr-FR">Francuski</option>
-                        <option value="it-IT">Włoski</option>
-                        <option value="pl-PL">Polski</option>
+
+                    <span className="flex items-center gap-2 font-semibold">
+                        <BsHeadphones />
+                        Język rozmowy
+                    </span>
+
+                    <select
+                        value={
+                            /^[a-z]{2}-[A-Z]{2}$/.test(
+                                block.language || ""
+                            )
+                                ? block.language
+                                : "en-GB"
+                        }
+                        onChange={event =>
+                            setBlock(previous => ({
+                                ...previous,
+                                language: event.target.value,
+                                mediaType: "dialog"
+                            }))
+                        }
+                        className={FIELD}
+                    >
+                        <option value="en-GB">
+                            Angielski (Wielka Brytania)
+                        </option>
+
+                        <option value="en-US">
+                            Angielski (USA)
+                        </option>
+
+                        <option value="de-DE">
+                            Niemiecki
+                        </option>
+
+                        <option value="es-ES">
+                            Hiszpański
+                        </option>
+
+                        <option value="fr-FR">
+                            Francuski
+                        </option>
+
+                        <option value="it-IT">
+                            Włoski
+                        </option>
+
+                        <option value="pl-PL">
+                            Polski
+                        </option>
                     </select>
+
                 </label>
+
             </div>
 
+
             <label className="block space-y-2">
-                <span className="font-semibold">Opis sytuacji</span>
-                <textarea value={block.description || ""} onChange={(event) => setBlock((previous) => ({ ...previous, description: event.target.value }))} placeholder="Emma rano wchodzi do kawiarni i spotyka Leo." className={`${FIELD} min-h-24`} />
+
+                <span className="font-semibold">
+                    Opis sytuacji
+                </span>
+
+                <textarea
+                    value={block.description || ""}
+                    onChange={event =>
+                        setBlock(previous => ({
+                            ...previous,
+                            description:
+                            event.target.value
+                        }))
+                    }
+                    placeholder="Emma rano wchodzi do kawiarni i spotyka Leo."
+                    className={`${FIELD} min-h-24`}
+                />
+
             </label>
+
 
             <div className="rounded-2xl border border-white/10 bg-black/20 p-4 sm:p-5">
-                <p className="mb-4 flex items-center gap-2 font-black text-white"><BsPeople /> Bohaterowie scenki</p>
+
+                <p className="mb-4 flex items-center gap-2 font-black text-white">
+                    <BsPeople />
+                    Bohaterowie scenki
+                </p>
+
                 <div className="grid gap-4 lg:grid-cols-2">
-                    {characters.map((character, index) => (
-                        <div key={character.id} className="grid grid-cols-[88px_1fr] gap-3">
-                            <label className="space-y-2">
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Avatar</span>
-                                <input value={character.avatar} onChange={(event) => updateCharacter(index, "avatar", event.target.value)} maxLength={8} className={`${FIELD} text-center text-xl`} />
-                            </label>
-                            <label className="space-y-2">
-                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Postać {index + 1}</span>
-                                <input value={character.name} onChange={(event) => updateCharacter(index, "name", event.target.value)} placeholder={index === 0 ? "Emma" : "Leo"} className={FIELD} />
-                            </label>
-                        </div>
-                    ))}
+
+                    {characters.map(
+                        (
+                            character,
+                            index
+                        ) => (
+
+                            <div
+                                key={character.id}
+                                className="grid grid-cols-[88px_1fr] gap-3"
+                            >
+
+                                <label className="space-y-2">
+
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                        Avatar
+                                    </span>
+
+                                    <input
+                                        value={
+                                            character.avatar || ""
+                                        }
+                                        onChange={event =>
+                                            updateCharacter(
+                                                index,
+                                                "avatar",
+                                                event.target.value
+                                            )
+                                        }
+                                        maxLength={8}
+                                        className={`${FIELD} text-center text-xl`}
+                                    />
+
+                                </label>
+
+
+                                <label className="space-y-2">
+
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                        Postać {index + 1}
+                                    </span>
+
+                                    <input
+                                        value={
+                                            character.name || ""
+                                        }
+                                        onChange={event =>
+                                            updateCharacter(
+                                                index,
+                                                "name",
+                                                event.target.value
+                                            )
+                                        }
+                                        placeholder={
+                                            index === 0
+                                                ? "Emma"
+                                                : "Leo"
+                                        }
+                                        className={FIELD}
+                                    />
+
+                                </label>
+
+                            </div>
+                        )
+                    )}
+
                 </div>
+
             </div>
 
-            <label className="block space-y-2">
-                <span className="flex items-center gap-2 font-semibold"><BsPersonCheck /> W którą postać wciela się uczeń?</span>
-                <select value={config.studentCharacterId} onChange={(event) => changeStudentRole(event.target.value)} className={FIELD}>
-                    {characters.map((character) => <option key={character.id} value={character.id}>{character.avatar} {character.name}</option>)}
-                </select>
-            </label>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Dialog — jedna wypowiedź w każdym wierszu</span>
+
+                <span className="flex items-center gap-2 font-semibold">
+                    <BsPersonCheck />
+                    W którą postać wciela się uczeń?
+                </span>
+
+                <select
+                    value={
+                        config.studentCharacterId
+                        || firstCharacter.id
+                        || ""
+                    }
+                    onChange={event =>
+                        changeStudentRole(
+                            event.target.value
+                        )
+                    }
+                    className={FIELD}
+                >
+                    {characters.map(character => (
+                        <option
+                            key={character.id}
+                            value={character.id}
+                        >
+                            {character.avatar}{" "}
+                            {character.name}
+                        </option>
+                    ))}
+                </select>
+
+            </label>
+
+
+            <label className="block space-y-2">
+
+                <span className="font-semibold">
+                    Dialog — jedna wypowiedź w każdym wierszu
+                </span>
+
                 <textarea
                     value={dialogueToEditor(config)}
-                    onChange={(event) => updateDialogue(event.target.value)}
-                    placeholder={`${characters[0].name}: Good morning!\n${characters[1].name}: Good morning!\n${characters[0].name}: How are you?\n${characters[1].name}: I'm good, thanks.`}
+                    onChange={event =>
+                        updateDialogue(
+                            event.target.value
+                        )
+                    }
+                    placeholder={
+                        `${firstCharacter.name}: Good morning!\n`
+                        + `${secondCharacter.name}: Good morning!\n`
+                        + `${firstCharacter.name}: How are you?\n`
+                        + `${secondCharacter.name}: I'm good, thanks.`
+                    }
                     className={`${FIELD} min-h-72 font-mono text-sm leading-7`}
                 />
+
                 <span className="block text-xs leading-5 text-slate-500">
-                    Nie ma limitu wypowiedzi. Opcjonalnie dopisz po <strong className="text-slate-300">||</strong> inne poprawne odpowiedzi i wyjaśnienie, np. <strong className="text-slate-300">Leo: I&apos;m good. || Fine, thanks. || Po „How are you?” odpowiadamy opisem samopoczucia.</strong>
+
+                    Nie ma limitu wypowiedzi.
+
+                    Opcjonalnie dopisz po{" "}
+
+                    <strong className="text-slate-300">
+                        ||
+                    </strong>{" "}
+
+                    inne poprawne odpowiedzi i wyjaśnienie.
+
                 </span>
+
             </label>
 
+
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-300/15 bg-cyan-300/[0.06] px-4 py-3 text-sm">
-                <span className="font-bold text-cyan-100">Wypowiedzi w tym bloku: {config.turns.length}</span>
-                <span className="text-cyan-200/70">Wszystkie kwestie wybranej postaci będą ćwiczone głosem lub tekstem.</span>
+
+                <span className="font-bold text-cyan-100">
+                    Wypowiedzi w tym bloku:{" "}
+                    {Array.isArray(config.turns)
+                        ? config.turns.length
+                        : 0}
+                </span>
+
+                <span className="text-cyan-200/70">
+                    Wszystkie kwestie wybranej postaci będą ćwiczone głosem lub tekstem.
+                </span>
+
             </div>
+
         </section>
     );
 }
