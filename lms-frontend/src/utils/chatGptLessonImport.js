@@ -1,4 +1,11 @@
 import { MAX_LESSON_BLOCKS } from "./lessonBlockLimits.js";
+import {
+    createEmptyDialogConfig,
+    parseDialogueEditor,
+    parseVocabularyEditor,
+    serializeDialogConfig,
+    serializeVocabularyConfig
+} from "./languageInteractiveBlocks.js";
 
 const TYPE_MAP = {
     tekst: "TEXT",
@@ -16,6 +23,12 @@ const TYPE_MAP = {
     "audio i cwiczenie wymowy": "AUDIO",
     "cwiczenie wymowy": "AUDIO",
     "cwiczenie jezykowe": "TASK",
+    dialog: "DIALOG",
+    "dialog interaktywny": "DIALOG",
+    "scenka dialogowa": "DIALOG",
+    "trening slowek": "VOCABULARY",
+    slownictwo: "VOCABULARY",
+    "cwiczenie slownictwa": "VOCABULARY",
     plik: "PDF",
     cytat: "QUOTE",
     separator: "DIVIDER"
@@ -31,6 +44,8 @@ const FIELD_ALIASES = [
     ["tytul grafiki", "title"],
     ["tytul filmu", "title"],
     ["tytul cwiczenia", "title"],
+    ["tytul dialogu", "title"],
+    ["tytul treningu", "title"],
     ["tytul przykladu", "title"],
     ["nazwa pliku", "title"],
     ["naglowek cytatu", "title"],
@@ -48,6 +63,10 @@ const FIELD_ALIASES = [
     ["odpowiedzi - kazda w nowym wierszu", "content"],
     ["odpowiedzi", "content"],
     ["tresc", "content"],
+    ["dialog", "dialog"],
+    ["slowka — jedno w wierszu", "vocabulary"],
+    ["slowka - jedno w wierszu", "vocabulary"],
+    ["slowka", "vocabulary"],
     ["opis pod grafika", "description"],
     ["opis przed filmem", "description"],
     ["krotka instrukcja", "description"],
@@ -56,6 +75,8 @@ const FIELD_ALIASES = [
     ["autor lub zrodlo", "description"],
     ["wprowadzenie (opcjonalnie)", "description"],
     ["opis", "description"],
+    ["opis sytuacji", "description"],
+    ["instrukcja dla ucznia", "description"],
     ["wprowadzenie", "description"],
     ["pytanie", "question"],
     ["odpowiedz a", "answerA"],
@@ -77,6 +98,12 @@ const FIELD_ALIASES = [
     ["ukryte testy uruchomieniowe", "hiddenTests"],
     ["jezyk", "language"],
     ["jezyk rozpoznawania", "language"],
+    ["jezyk audio", "language"],
+    ["postac 1", "character1"],
+    ["avatar postaci 1", "avatar1"],
+    ["postac 2", "character2"],
+    ["avatar postaci 2", "avatar2"],
+    ["rola ucznia", "studentCharacter"],
     ["adres obrazu", "mediaUrl"],
     ["link do filmu", "mediaUrl"],
     ["adres pliku audio (opcjonalnie)", "mediaUrl"],
@@ -342,6 +369,49 @@ function parseStep(step, warnings, errors) {
         block.mediaType = "audio";
         block.language = normalizeLanguage(fields.language, "en-US");
     }
+    if (resolved.type === "DIALOG") {
+        const config = createEmptyDialogConfig();
+        config.characters[0] = {
+            ...config.characters[0],
+            name: fields.character1 || "Emma",
+            avatar: fields.avatar1 || "👩"
+        };
+        config.characters[1] = {
+            ...config.characters[1],
+            name: fields.character2 || "Leo",
+            avatar: fields.avatar2 || "👨"
+        };
+        const requestedStudent = normalize(fields.studentCharacter);
+        const selectedStudent = config.characters.find(
+            (character) => normalize(character.name) === requestedStudent
+        );
+        config.studentCharacterId = selectedStudent?.id || config.characters[1].id;
+        config.turns = parseDialogueEditor(fields.dialog || fields.content, config.characters);
+        block.content = serializeDialogConfig(config);
+        block.language = normalizeLanguage(fields.language, "en-GB");
+        block.mediaType = "dialog";
+        if (config.turns.length < 2) {
+            errors.push(`Krok ${step.number}: dialog wymaga co najmniej dwóch wypowiedzi w formacie „Postać: wypowiedź”.`);
+        }
+    }
+    if (resolved.type === "VOCABULARY") {
+        const items = parseVocabularyEditor(fields.vocabulary || fields.content);
+        block.content = serializeVocabularyConfig({
+            version: 1,
+            kind: "vocabulary",
+            items
+        });
+        block.language = normalizeLanguage(fields.language, "en-GB");
+        block.mediaType = "vocabulary";
+        if (items.length < 1) {
+            errors.push(`Krok ${step.number}: trening słówek wymaga przynajmniej jednej pozycji.`);
+        } else if (items.length > 20) {
+            errors.push(`Krok ${step.number}: trening słówek zawiera ${items.length} pozycji, a maksymalnie może zawierać 20.`);
+        }
+        if (items.some((item) => !item.term || !item.translation)) {
+            errors.push(`Krok ${step.number}: każde słówko musi mieć zapis „słowo | tłumaczenie”.`);
+        }
+    }
     if (resolved.type === "DIVIDER") {
         const dividerStyles = { gradient: "gradient", linia: "line", line: "line", kropki: "dots", dots: "dots" };
         block.mediaType = dividerStyles[normalize(fields.mediaType)] || "gradient";
@@ -390,7 +460,57 @@ export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS) {
     return { blocks, warnings, errors };
 }
 
-export function getChatGptLessonPrompt(maxBlocks = MAX_LESSON_BLOCKS) {
+export function getChatGptLessonPrompt(maxBlocks = MAX_LESSON_BLOCKS, variant = "PROGRAMMING") {
+    const languageLesson = variant === "LANGUAGE";
+    const allowedTypes = languageLesson
+        ? "Tekst, Wskazówka, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Dialog interaktywny, Trening słówek, Zadanie, Quiz"
+        : "Tekst, Wskazówka, Ostrzeżenie, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Przykład kodu, Zadanie, Quiz, Plik, Cytat, Separator";
+    const interactiveLanguageTemplates = languageLesson ? `
+DIALOG INTERAKTYWNY — cały dialog jest jednym blokiem bez względu na liczbę wypowiedzi. Może mieć 2, 20 albo 60 wypowiedzi. Nie dziel jednej scenki na osobne bloki.
+KROK [NUMER]
+Typ bloku
+Dialog interaktywny
+Tytuł dialogu
+[tytuł]
+Opis sytuacji
+[krótki naturalny kontekst]
+Postać 1
+[imię]
+Avatar postaci 1
+[jedno emoji]
+Postać 2
+[imię]
+Avatar postaci 2
+[jedno emoji]
+Rola ucznia
+[dokładne imię postaci, której kwestie uczeń ma mówić lub wpisywać]
+Dialog
+Emma: Good morning!
+Leo: Good morning! || Morning! || „Good morning” jest neutralnym porannym powitaniem.
+Emma: How are you?
+Leo: I'm good, thanks. || Fine, thanks.; I'm fine, thank you. || Po pytaniu o samopoczucie podajemy stan i możemy podziękować.
+Język audio
+[np. en-GB]
+
+W polu Dialog każdy wiersz ma format „Postać: wypowiedź”. Dla kwestii roli ucznia możesz dopisać po znakach || alternatywne poprawne odpowiedzi oddzielone średnikami, a po kolejnych || krótkie wyjaśnienie korekty. Nie dodawaj oznaczeń A, B, C ani osobnych KROKÓW dla wypowiedzi.
+
+TRENING SŁÓWEK — cały zestaw od 1 do 20 słówek jest jednym blokiem. Uczeń najpierw widzi fiszki, a następnie sam wpisuje tłumaczenia.
+KROK [NUMER]
+Typ bloku
+Trening słówek
+Tytuł treningu
+[tytuł]
+Instrukcja dla ucznia
+[krótka instrukcja]
+Słówka — jedno w wierszu
+hello | cześć | Hello, Anna! | hej; dzień dobry
+good morning | dzień dobry | Good morning, Emma!
+bye | cześć, do widzenia | Bye, Leo! | goodbye
+Język audio
+[np. en-GB]
+
+Każdy wiersz słówka ma format „słowo lub zwrot | polskie znaczenie | przykład opcjonalny | inne uznawane odpowiedzi oddzielone średnikami”. Nie przekraczaj 20 pozycji w jednym treningu.
+` : "";
     return `Jesteś metodykiem i nauczycielem. Przygotuj kompletną lekcję do importu w EduHub.
 
 NAJWAŻNIEJSZA ZASADA LEKCJI
@@ -442,7 +562,7 @@ QUIZY
 Zwróć wyłącznie gotowe bloki, bez tabel, Markdown, komentarzy i dodatkowego wstępu.
 Każdy blok rozpocznij od KROK i kolejnego numeru. Nie pomijaj numerów.
 
-Dozwolone typy bloków: Tekst, Wskazówka, Ostrzeżenie, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Przykład kodu, Zadanie, Quiz, Plik, Cytat, Separator.
+Dozwolone typy bloków: ${allowedTypes}.
 Używaj wyłącznie pól pokazanych poniżej. Nie zmieniaj ich nazw.
 Wartość nagrody zapisuj pod polem „Punkty”. Nie używaj osobnego pola „XP”.
 
@@ -527,6 +647,8 @@ Adres pliku audio (opcjonalnie)
 [adres albo pozostaw pustą linię]
 Język rozpoznawania
 [en-US, en-GB, de-DE, es-ES, fr-FR, it-IT lub pl-PL]
+
+${interactiveLanguageTemplates}
 
 PRZYKŁAD KODU
 KROK [NUMER]

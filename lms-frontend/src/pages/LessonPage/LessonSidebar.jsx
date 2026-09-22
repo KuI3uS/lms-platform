@@ -12,7 +12,9 @@ import {
     BsPlayBtn,
     BsQuestionCircle,
     BsQuote,
-    BsHeadphones
+    BsHeadphones,
+    BsChatDots,
+    BsTranslate
 } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 
@@ -32,6 +34,10 @@ function blockIcon(type) {
             return <BsPlayBtn />;
         case "AUDIO":
             return <BsHeadphones />;
+        case "DIALOG":
+            return <BsChatDots />;
+        case "VOCABULARY":
+            return <BsTranslate />;
         case "PDF":
         case "DOWNLOAD":
             return <BsDownload />;

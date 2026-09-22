@@ -26,6 +26,10 @@ public enum BlockType {
 
     AUDIO,
 
+    DIALOG,
+
+    VOCABULARY,
+
     PDF,
 
     DOWNLOAD,

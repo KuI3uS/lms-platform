@@ -11,7 +11,9 @@ import {
     BsDownload,
     BsQuote,
     BsDashLg,
-    BsHeadphones
+    BsHeadphones,
+    BsChatDots,
+    BsTranslate
 } from "react-icons/bs";
 
 export const BLOCK_TYPES = [
@@ -96,6 +98,26 @@ export const BLOCK_TYPES = [
         iconBox: "bg-violet-400/15 text-violet-200"
     },
     {
+        value: "DIALOG",
+        label: "Dialog interaktywny",
+        description: "Scenka z wieloma wypowiedziami, odsłuchem oraz rolą ucznia.",
+        icon: <BsChatDots />,
+        surface: "bg-cyan-500/10",
+        border: "border-cyan-500/25",
+        selected: "border-cyan-300 bg-cyan-500/20 shadow-cyan-950/30",
+        iconBox: "bg-cyan-400/15 text-cyan-200"
+    },
+    {
+        value: "VOCABULARY",
+        label: "Trening słówek",
+        description: "Od 1 do 20 słów z odsłuchem i samodzielnym wpisywaniem.",
+        icon: <BsTranslate />,
+        surface: "bg-emerald-500/10",
+        border: "border-emerald-500/25",
+        selected: "border-emerald-300 bg-emerald-500/20 shadow-emerald-950/30",
+        iconBox: "bg-emerald-400/15 text-emerald-200"
+    },
+    {
         value: "EXAMPLE",
         label: "Przykład kodu",
         description: "Kod z językiem, opisem i przyciskiem kopiowania.",
@@ -162,7 +184,7 @@ export const BLOCK_TYPES_MAP = Object.fromEntries(
 );
 
 const LANGUAGE_TYPES = new Set([
-    "TEXT", "TIP", "INFO", "SUMMARY", "IMAGE", "VIDEO", "AUDIO", "TASK", "QUIZ"
+    "TEXT", "TIP", "INFO", "SUMMARY", "IMAGE", "VIDEO", "AUDIO", "DIALOG", "VOCABULARY", "TASK", "QUIZ"
 ]);
 
 const LANGUAGE_OVERRIDES = {
@@ -173,6 +195,8 @@ const LANGUAGE_OVERRIDES = {
     IMAGE: { label: "Obraz i słowo", description: "Grafika wspierająca zapamiętywanie znaczenia." },
     VIDEO: { label: "Wymowa lub film", description: "Krótki materiał do słuchania i powtarzania." },
     AUDIO: { label: "Audio i wymowa", description: "Odsłuch, nagranie mikrofonem i automatyczna powtórka." },
+    DIALOG: { label: "Dialog interaktywny", description: "Rozmowa bohaterów z rolą ucznia, odsłuchem i łagodną korektą." },
+    VOCABULARY: { label: "Trening słówek", description: "Od 1 do 20 słów w jednym bloku, z odsłuchem i pisaniem." },
     TASK: { label: "Ćwiczenie", description: "Krótka odpowiedź sprawdzana automatycznie." },
     QUIZ: { label: "Szybki quiz", description: "Jedno pytanie i natychmiastowa informacja zwrotna." }
 };

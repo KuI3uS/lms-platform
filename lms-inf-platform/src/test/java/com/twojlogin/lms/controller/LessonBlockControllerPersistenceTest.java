@@ -165,12 +165,18 @@ class LessonBlockControllerPersistenceTest {
                             ? "poprawna odpowiedź"
                             : null;
 
+            String content = switch (type) {
+                case DIALOG -> "{\"kind\":\"dialog\",\"turns\":[{\"text\":\"Hello\"},{\"text\":\"Hi\"}]}";
+                case VOCABULARY -> "{\"kind\":\"vocabulary\",\"items\":[{\"term\":\"hello\",\"translation\":\"cześć\"}]}";
+                default -> "Treść";
+            };
+
             LessonBlockDto saved = controller.create(
                     lesson.getId(),
                     new LessonBlockRequest(
                             type == BlockType.DIVIDER ? null : "Blok " + type,
                             type,
-                            "Treść",
+                            content,
                             null,
                             type == BlockType.TASK ? "Wykonaj zadanie" : null,
                             null,
@@ -191,6 +197,31 @@ class LessonBlockControllerPersistenceTest {
             assertNotNull(saved.id());
             assertEquals(type.normalized(), saved.type());
         }
+    }
+
+    @Test
+    void rejectsVocabularyBlockWithMoreThanTwentyItems() {
+        Lesson lesson = createLesson();
+        LessonBlockController controller = createController();
+        String items = IntStream.range(0, 21)
+                .mapToObj(index -> "{\"term\":\"word" + index + "\",\"translation\":\"słowo" + index + "\"}")
+                .collect(java.util.stream.Collectors.joining(","));
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> controller.create(
+                        lesson.getId(),
+                        request(
+                                "Za dużo słówek",
+                                BlockType.VOCABULARY,
+                                "{\"kind\":\"vocabulary\",\"items\":[" + items + "]}",
+                                null
+                        )
+                )
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+        assertEquals(0, blockRepository.countByLessonId(lesson.getId()));
     }
 
     @Test
