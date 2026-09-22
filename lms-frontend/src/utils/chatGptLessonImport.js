@@ -370,16 +370,16 @@ function parseStep(step, warnings, errors) {
     return block;
 }
 
-export function parseChatGptLesson(source) {
+export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS) {
     const warnings = [];
     const errors = [];
     const steps = splitSteps(source);
     if (String(source || "").trim() && steps.length === 0) {
         errors.push("Nie znaleziono kroków. Każdy blok rozpocznij od nagłówka KROK 1, KROK 2 itd.");
     }
-    if (steps.length > MAX_LESSON_BLOCKS) {
+    if (steps.length > maxBlocks) {
         errors.push(
-            `Lekcja zawiera ${steps.length} bloków. Maksymalnie można zaimportować ${MAX_LESSON_BLOCKS}; podziel materiał na dwie lekcje.`
+            `Lekcja zawiera ${steps.length} bloków. Maksymalnie można zaimportować ${maxBlocks}; podziel materiał na dwie lekcje.`
         );
     }
 
@@ -390,14 +390,15 @@ export function parseChatGptLesson(source) {
     return { blocks, warnings, errors };
 }
 
-export const CHAT_GPT_LESSON_PROMPT = `Jesteś metodykiem i nauczycielem. Przygotuj kompletną lekcję do importu w EduHub.
+export function getChatGptLessonPrompt(maxBlocks = MAX_LESSON_BLOCKS) {
+    return `Jesteś metodykiem i nauczycielem. Przygotuj kompletną lekcję do importu w EduHub.
 
 NAJWAŻNIEJSZA ZASADA LEKCJI
-- Jedna lekcja rozwija jedną konkretną umiejętność i zawiera od 6 do maksymalnie 10 bloków.
+- Jedna lekcja rozwija jedną konkretną umiejętność i zawiera od 6 do maksymalnie ${maxBlocks} bloków.
 - Najpierw zaplanuj lekcję wewnętrznie, ale nie pokazuj planu ani komentarzy. Zwróć tylko gotowe bloki.
 - Zachowaj logiczny rytm: krótkie wyjaśnienie problemu, demonstracja jednego nowego pojęcia na innym przykładzie, samodzielna praktyka o rosnącej trudności, sprawdzenie zrozumienia i krótkie podsumowanie.
 - Nie próbuj używać wszystkich dostępnych typów bloków. Każdy blok musi mieć wyraźny cel; usuń treści powtarzające to samo innymi słowami.
-- Nie dziel jednej prostej czynności na kilka sztucznych bloków. Jeżeli materiał nie mieści się w 10 blokach, zawęź cel albo zaproponuj osobną następną lekcję.
+- Nie dziel jednej prostej czynności na kilka sztucznych bloków. Jeżeli materiał nie mieści się w ${maxBlocks} blokach, zawęź cel albo zaproponuj osobną następną lekcję.
 
 SPÓJNOŚĆ Z CAŁYM KURSEM
 - Oprzyj lekcję na podanym miejscu w programie, wcześniejszych tematach i umiejętnościach ucznia.
@@ -622,7 +623,7 @@ Nie musisz używać wszystkich typów. Dobieraj je do tematu. Nie twórz fikcyjn
 Quiz musi mieć minimum dwie unikalne odpowiedzi. Pole „Poprawna odpowiedź” ma zawierać dokładny tekst wybranej odpowiedzi.
 Lekcja ma być napisana po ludzku, łączyć teorię z samodzielną praktyką, nie powtarzać treści i kończyć się krótkim podsumowaniem. Quiz dodaj tylko wtedy, gdy naprawdę sprawdza zrozumienie; maksymalnie dwa quizy w lekcji.
 Przed zwróceniem lekcji sprawdź każde zadanie: jeżeli uczeń może je wykonać przez skopiowanie wcześniejszego kodu albo instrukcji, przeprojektuj je tak, aby wymagało samodzielnego myślenia.
-Przed zwróceniem wyniku policz bloki. Jeżeli jest ich więcej niż 10, połącz lub usuń słabsze elementy. Nigdy nie zwracaj KROK 11 ani wyższego.
+Przed zwróceniem wyniku policz bloki. Jeżeli jest ich więcej niż ${maxBlocks}, połącz lub usuń słabsze elementy. Nigdy nie zwracaj KROK ${maxBlocks + 1} ani wyższego.
 
 Temat lekcji: [WPISZ TEMAT]
 Przedmiot: [WPISZ PRZEDMIOT]
@@ -635,3 +636,6 @@ Wcześniej zrealizowane tematy: [WPISZ TEMATY albo „brak”]
 Dalszy temat po tej lekcji: [WPISZ NASTĘPNY TEMAT albo „brak danych”]
 Dostępne wyposażenie: [WPISZ WYPOSAŻENIE]
 Cel lekcji: [jedna obserwowalna umiejętność, którą uczeń ma wykonać samodzielnie]`;
+}
+
+export const CHAT_GPT_LESSON_PROMPT = getChatGptLessonPrompt();

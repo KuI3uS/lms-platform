@@ -3,8 +3,12 @@ package com.twojlogin.lms.controller;
 import com.twojlogin.lms.dto.LessonBlockDto;
 import com.twojlogin.lms.dto.LessonBlockRequest;
 import com.twojlogin.lms.entity.BlockType;
+import com.twojlogin.lms.entity.Course;
+import com.twojlogin.lms.entity.CourseModule;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
+import com.twojlogin.lms.repository.CourseModuleRepository;
+import com.twojlogin.lms.repository.CourseRepository;
 import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
@@ -18,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -35,6 +40,12 @@ class LessonBlockControllerPersistenceTest {
 
     @Autowired
     private TaskAttemptRepository attemptRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @Autowired
+    private CourseModuleRepository moduleRepository;
 
     @Test
     void createsACompleteTaskBlockWithoutEntityDeserialization() {
@@ -204,6 +215,52 @@ class LessonBlockControllerPersistenceTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
         assertEquals(10, blockRepository.countByLessonId(lesson.getId()));
+    }
+
+    @Test
+    void allowsTwentyBlocksOnlyForLanguageLessons() {
+        Course course = new Course();
+        course.setName("Angielski");
+        course.setCategory("LANGUAGE");
+        course = courseRepository.saveAndFlush(course);
+
+        CourseModule module = new CourseModule();
+        module.setName("CEFR A1");
+        module.setCourse(course);
+        module = moduleRepository.saveAndFlush(module);
+
+        Lesson lesson = new Lesson();
+        lesson.setTitle("Alfabet angielski");
+        lesson.setOrderIndex(1);
+        lesson.setModule(module);
+        lesson = lessonRepository.saveAndFlush(lesson);
+        Long lessonId = lesson.getId();
+
+        LessonBlockController controller = createController();
+        List<LessonBlockRequest> requests = IntStream.range(0, 20)
+                .mapToObj(index -> request(
+                        "Krok " + (index + 1),
+                        BlockType.TEXT,
+                        "Treść",
+                        null
+                ))
+                .toList();
+
+        List<LessonBlockDto> saved = controller.createBulk(lessonId, requests);
+
+        assertEquals(20, saved.size());
+        assertEquals(20, blockRepository.countByLessonId(lessonId));
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> controller.create(
+                        lessonId,
+                        request("Krok 21", BlockType.TEXT, "Treść", null)
+                )
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+        assertEquals(20, blockRepository.countByLessonId(lessonId));
     }
 
     @Test

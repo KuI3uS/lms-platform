@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 public class LessonBlockController {
 
     private static final int MAX_BLOCKS_PER_LESSON = 10;
+    private static final int MAX_BLOCKS_PER_LANGUAGE_LESSON = 20;
 
     private final LessonBlockRepository blockRepository;
     private final LessonRepository lessonRepository;
@@ -116,7 +117,7 @@ public class LessonBlockController {
                         "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
                 ));
 
-        ensureLessonCapacity(lessonId, 1);
+        ensureLessonCapacity(lesson, 1);
 
         Integer maxOrder =
                 blockRepository.findMaxOrderIndexByLessonId(lessonId);
@@ -140,14 +141,13 @@ public class LessonBlockController {
             @PathVariable Long lessonId,
             @RequestBody List<LessonBlockRequest> requests
     ) {
-        validateImportSize(requests);
-
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
                 ));
-        ensureLessonCapacity(lessonId, requests.size());
+        validateImportSize(requests, lessonBlockLimit(lesson));
+        ensureLessonCapacity(lesson, requests.size());
         Integer maxOrder = blockRepository.findMaxOrderIndexByLessonId(lessonId);
         int firstOrder = (maxOrder == null ? -1 : maxOrder) + 1;
 
@@ -172,13 +172,12 @@ public class LessonBlockController {
             @PathVariable Long lessonId,
             @RequestBody List<LessonBlockRequest> requests
     ) {
-        validateImportSize(requests);
-
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
                 ));
+        validateImportSize(requests, lessonBlockLimit(lesson));
 
         List<LessonBlock> replacement = new java.util.ArrayList<>(requests.size());
         for (int index = 0; index < requests.size(); index++) {
@@ -201,29 +200,45 @@ public class LessonBlockController {
                 .toList();
     }
 
-    private void validateImportSize(List<LessonBlockRequest> requests) {
+    private void validateImportSize(
+            List<LessonBlockRequest> requests,
+            int maxBlocks
+    ) {
         if (requests == null || requests.isEmpty()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Import nie zawiera żadnych bloków."
             );
         }
-        if (requests.size() > MAX_BLOCKS_PER_LESSON) {
+        if (requests.size() > maxBlocks) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Jedna lekcja może zawierać maksymalnie 10 bloków."
+                    "Ta lekcja może zawierać maksymalnie " + maxBlocks + " bloków."
             );
         }
     }
 
-    private void ensureLessonCapacity(Long lessonId, int newBlocks) {
-        int currentBlocks = blockRepository.countByLessonId(lessonId);
-        if (currentBlocks + newBlocks > MAX_BLOCKS_PER_LESSON) {
+    private void ensureLessonCapacity(Lesson lesson, int newBlocks) {
+        int maxBlocks = lessonBlockLimit(lesson);
+        int currentBlocks = blockRepository.countByLessonId(lesson.getId());
+        if (currentBlocks + newBlocks > maxBlocks) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Jedna lekcja może zawierać maksymalnie 10 bloków. Usuń zbędne bloki albo podziel materiał na dwie lekcje."
+                    "Ta lekcja może zawierać maksymalnie " + maxBlocks
+                            + " bloków. Usuń zbędne bloki albo podziel materiał na dwie lekcje."
             );
         }
+    }
+
+    private int lessonBlockLimit(Lesson lesson) {
+        if (lesson.getModule() != null
+                && lesson.getModule().getCourse() != null
+                && "LANGUAGE".equalsIgnoreCase(
+                        lesson.getModule().getCourse().getCategory()
+                )) {
+            return MAX_BLOCKS_PER_LANGUAGE_LESSON;
+        }
+        return MAX_BLOCKS_PER_LESSON;
     }
 
     @Transactional
