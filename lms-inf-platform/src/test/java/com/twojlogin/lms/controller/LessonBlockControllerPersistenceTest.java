@@ -235,6 +235,35 @@ class LessonBlockControllerPersistenceTest {
     }
 
     @Test
+    void replacesExistingBlocksWithOneImportedLesson() {
+        Lesson lesson = createLesson();
+        LessonBlockController controller = createController();
+
+        for (int index = 0; index < 4; index++) {
+            controller.create(
+                    lesson.getId(),
+                    request("Stary blok " + index, BlockType.TEXT, "Stara treść", null)
+            );
+        }
+
+        List<LessonBlockDto> saved = controller.replaceAll(
+                lesson.getId(),
+                List.of(
+                        request("Nowy materiał", BlockType.TEXT, "Treść", null),
+                        request("Nowe ćwiczenie", BlockType.TASK, "Polecenie", "Odpowiedź"),
+                        request("Nowe podsumowanie", BlockType.SUMMARY, "Zapamiętaj", null)
+                )
+        );
+
+        assertEquals(3, saved.size());
+        assertEquals(3, blockRepository.countByLessonId(lesson.getId()));
+        assertEquals("Nowy materiał", saved.get(0).title());
+        assertEquals("Nowe ćwiczenie", saved.get(1).title());
+        assertEquals("Nowe podsumowanie", saved.get(2).title());
+        assertEquals(List.of(0, 1, 2), saved.stream().map(LessonBlockDto::orderIndex).toList());
+    }
+
+    @Test
     void readsHistoricalBlockTypesAsText() {
         Lesson lesson = createLesson();
 

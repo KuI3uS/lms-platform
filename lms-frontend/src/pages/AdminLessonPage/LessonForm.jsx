@@ -1,8 +1,5 @@
 import {
     BsBook,
-    BsCardText,
-    BsChatDots,
-    BsCodeSlash,
     BsEye,
     BsImage,
     BsSave,

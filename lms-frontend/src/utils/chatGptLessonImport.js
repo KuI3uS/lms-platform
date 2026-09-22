@@ -13,6 +13,9 @@ const TYPE_MAP = {
     obraz: "IMAGE",
     film: "VIDEO",
     "audio i wymowa": "AUDIO",
+    "audio i cwiczenie wymowy": "AUDIO",
+    "cwiczenie wymowy": "AUDIO",
+    "cwiczenie jezykowe": "TASK",
     plik: "PDF",
     cytat: "QUOTE",
     separator: "DIVIDER"
@@ -60,11 +63,13 @@ const FIELD_ALIASES = [
     ["odpowiedz c", "answerC"],
     ["odpowiedz d", "answerD"],
     ["poprawna odpowiedz", "correctAnswer"],
+    ["akceptowane odpowiedzi", "correctAnswer"],
+    ["pierwsza wskazowka", "hint"],
     ["wskazowka po pierwszym bledzie", "hint"],
     ["podstawowa podpowiedz (1. bledna proba)", "hint"],
     ["dokladniejsza podpowiedz", "detailedHint"],
     ["dokladniejsza podpowiedz (od 2. blednej proby)", "detailedHint"],
-    ["wyjasnienie po kolejnych probach", "solutionExplanation"],
+    ["wyjasnienie po kolejnych probach", "detailedHint"],
     ["wyjasnienie rozwiazania", "solutionExplanation"],
     ["wyjasnienie rozwiazania (od 4. blednej proby)", "solutionExplanation"],
     ["polecenie", "instruction"],
@@ -77,6 +82,7 @@ const FIELD_ALIASES = [
     ["adres pliku audio (opcjonalnie)", "mediaUrl"],
     ["adres pliku", "mediaUrl"],
     ["styl", "mediaType"],
+    ["punkty (xp)", "points"],
     ["punkty", "points"],
     ["xp", "points"],
     ["najwazniejsze informacje", "summary"],
@@ -191,6 +197,10 @@ function normalizeLanguage(value, fallback = "") {
         html: "html",
         "en-us": "en-US",
         "en-gb": "en-GB",
+        "angielski (stany zjednoczone)": "en-US",
+        "angielski (usa)": "en-US",
+        "angielski (wielka brytania)": "en-GB",
+        "angielski (brytyjski)": "en-GB",
         "de-de": "de-DE",
         "es-es": "es-ES",
         "fr-fr": "fr-FR",
@@ -203,12 +213,16 @@ function normalizeLanguage(value, fallback = "") {
 function resolveType(rawType, heading) {
     const normalizedType = normalize(rawType || heading);
     const practical = normalizedType.includes("zadanie praktyczne");
-    if (practical) return { type: "TEXT", practical: true };
+    if (practical) return { type: "TEXT", practical: true, languageExercise: false };
 
     const typeKey = Object.keys(TYPE_MAP).find(
         (key) => normalizedType === key || normalizedType.startsWith(`${key} `)
     );
-    return { type: TYPE_MAP[typeKey], practical: false };
+    return {
+        type: TYPE_MAP[typeKey],
+        practical: false,
+        languageExercise: normalizedType.startsWith("cwiczenie jezykowe")
+    };
 }
 
 function summaryContent(fields) {
@@ -306,7 +320,9 @@ function parseStep(step, warnings, errors) {
     if (resolved.type === "TASK") {
         block.instruction = fields.instruction || fields.content;
         block.expectedAnswer = fields.correctAnswer || "";
-        block.language = normalizeLanguage(fields.language, "java");
+        block.language = resolved.languageExercise
+            ? ""
+            : normalizeLanguage(fields.language, "java");
         if (!block.expectedAnswer) {
             block.type = "TEXT";
             block.content = `Zadanie\n\n${block.instruction}`.trim();

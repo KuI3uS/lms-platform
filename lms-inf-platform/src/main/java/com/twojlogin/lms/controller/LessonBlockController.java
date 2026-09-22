@@ -140,18 +140,7 @@ public class LessonBlockController {
             @PathVariable Long lessonId,
             @RequestBody List<LessonBlockRequest> requests
     ) {
-        if (requests == null || requests.isEmpty()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Import nie zawiera żadnych bloków."
-            );
-        }
-        if (requests.size() > MAX_BLOCKS_PER_LESSON) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Jedna lekcja może zawierać maksymalnie 10 bloków."
-            );
-        }
+        validateImportSize(requests);
 
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -174,6 +163,57 @@ public class LessonBlockController {
         return blockRepository.saveAllAndFlush(blocks).stream()
                 .map(block -> LessonBlockDto.from(block, true))
                 .toList();
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/lesson/{lessonId}/replace")
+    public List<LessonBlockDto> replaceAll(
+            @PathVariable Long lessonId,
+            @RequestBody List<LessonBlockRequest> requests
+    ) {
+        validateImportSize(requests);
+
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
+                ));
+
+        List<LessonBlock> replacement = new java.util.ArrayList<>(requests.size());
+        for (int index = 0; index < requests.size(); index++) {
+            LessonBlock block = new LessonBlock();
+            block.setLesson(lesson);
+            block.setOrderIndex(index);
+            applyRequest(block, requests.get(index), false);
+            replacement.add(block);
+        }
+
+        List<LessonBlock> current =
+                blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
+        attemptRepository.deleteByBlockLessonId(lessonId);
+        reviewRepository.deleteByBlockLessonId(lessonId);
+        blockRepository.deleteAll(current);
+        blockRepository.flush();
+
+        return blockRepository.saveAllAndFlush(replacement).stream()
+                .map(block -> LessonBlockDto.from(block, true))
+                .toList();
+    }
+
+    private void validateImportSize(List<LessonBlockRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Import nie zawiera żadnych bloków."
+            );
+        }
+        if (requests.size() > MAX_BLOCKS_PER_LESSON) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Jedna lekcja może zawierać maksymalnie 10 bloków."
+            );
+        }
     }
 
     private void ensureLessonCapacity(Long lessonId, int newBlocks) {
