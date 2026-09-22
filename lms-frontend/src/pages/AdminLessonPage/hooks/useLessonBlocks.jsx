@@ -1009,66 +1009,45 @@ export default function useLessonBlocks() {
         if (block.type === "DIALOG") {
             const dialog = parseDialogContent(block.content);
 
-            const characters = Array.isArray(dialog.characters)
+            const characters = Array.isArray(dialog?.characters)
                 ? dialog.characters
                 : [];
 
-            const turns = Array.isArray(dialog.turns)
+            const turns = Array.isArray(dialog?.turns)
                 ? dialog.turns
                 : [];
 
-            if (characters.length < 2) {
+            if (
+                characters.length < 2
+                || !characters[0]?.name?.trim()
+                || !characters[1]?.name?.trim()
+            ) {
                 showToast(
                     "Dialog wymaga dwóch bohaterów.",
                     "warning"
                 );
+
                 return false;
             }
-
-            const firstCharacter = characters[0];
-            const secondCharacter = characters[1];
-
-            if (
-                !firstCharacter?.name?.trim()
-                || !secondCharacter?.name?.trim()
-            ) {
-                showToast(
-                    "Podaj imiona obu bohaterów dialogu.",
-                    "warning"
-                );
-                return false;
-            }
-
-            const characterIds = characters
-                .map(character => character.id)
-                .filter(Boolean);
 
             if (
                 !dialog.studentCharacterId
-                || !characterIds.includes(dialog.studentCharacterId)
+                || !characters.some(
+                    character =>
+                        character.id === dialog.studentCharacterId
+                )
             ) {
                 showToast(
                     "Wybierz postać, w którą wciela się uczeń.",
                     "warning"
                 );
+
                 return false;
             }
 
             if (turns.length < 2) {
                 showToast(
                     "Dialog wymaga przynajmniej dwóch wypowiedzi.",
-                    "warning"
-                );
-                return false;
-            }
-
-
-            if (
-                !dialog.studentRole?.trim()
-            ) {
-
-                showToast(
-                    "Wybierz postać, w którą wciela się uczeń.",
                     "warning"
                 );
 
