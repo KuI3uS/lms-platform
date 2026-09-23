@@ -15,6 +15,7 @@ import {
     parseDialogueEditor,
     serializeDialogConfig
 } from "../../../../utils/languageInteractiveBlocks";
+import { characterVoiceGender } from "../../../../utils/dialogSpeech";
 
 const FIELD =
     "w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-cyan-300/50";
@@ -379,12 +380,10 @@ export default function DialogBlockForm({
                                 </label>
 
                                 <label className="col-span-2 space-y-2">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Preferowany głos</span>
-                                    <select value={character.voiceGender || "auto"} onChange={event => updateCharacter(index, "voiceGender", event.target.value)} className={FIELD}>
-                                        <option value="auto">Automatyczny — na podstawie postaci</option>
-                                        <option value="female">Żeński</option>
-                                        <option value="male">Męski</option>
-                                        <option value="neutral">Bez preferencji</option>
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Głos</span>
+                                    <select value={characterVoiceGender(character)} onChange={event => updateCharacter(index, "voiceGender", event.target.value)} className={FIELD}>
+                                        <option value="female">Kobieta</option>
+                                        <option value="male">Mężczyzna</option>
                                     </select>
                                 </label>
                             </div>

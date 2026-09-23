@@ -1,13 +1,14 @@
-const FEMALE_NAMES = /\b(samantha|serena|karen|moira|tessa|victoria|susan|zira|hazel|aria|jenny|sonia|libby|female)\b/i;
-const MALE_NAMES = /\b(daniel|alex|david|mark|george|guy|ryan|james|male)\b/i;
+const FEMALE_NAMES = /\b(samantha|serena|karen|moira|tessa|victoria|susan|zira|hazel|aria|jenny|sonia|libby|ava|emma|michelle|sara|flo|shelley|kathy|zosia|paulina|katja|denise|elvira|female)\b/i;
+const MALE_NAMES = /\b(daniel|alex|david|mark|george|guy|ryan|james|andrew|brian|christopher|eric|roger|thomas|tomasz|marek|conrad|alvaro|male)\b/i;
+const QUALITY_NAMES = /\b(natural|neural|premium|enhanced|online)\b/i;
 const languageKey = (value) => String(value || "en-GB").toLowerCase().replaceAll("_", "-");
 
 export function characterVoiceGender(character) {
-    if (["female", "male", "neutral"].includes(character?.voiceGender)) return character.voiceGender;
+    if (["female", "male"].includes(character?.voiceGender)) return character.voiceGender;
     // Names and emoji are only defaults for legacy fictional characters.
     if (String(character?.avatar || "").includes("👩") || /^(mia|mija|emma|sophie|olivia)$/i.test(character?.name || "")) return "female";
     if (String(character?.avatar || "").includes("👨") || /^(alex|leo|daniel|adam)$/i.test(character?.name || "")) return "male";
-    return "neutral";
+    return character?.side === "right" ? "male" : "female";
 }
 
 export function languageVoices(voices, language) {
@@ -15,17 +16,15 @@ export function languageVoices(voices, language) {
     return voices.filter((voice) => languageKey(voice.lang).split("-")[0] === base);
 }
 
-// Web Speech does not expose a gender field. Prefer known voice names, but
-// always allow a manual choice from the voices installed on the student's device.
-export function selectDialogVoice(voices, language, character, preferredURI) {
+// Web Speech has no gender or quality metadata. Use known voice names and
+// quality labels, not arbitrary defaults (which can be novelty/robot voices).
+export function selectDialogVoice(voices, language, character) {
     const candidates = languageVoices(voices, language);
-    const chosen = candidates.find((voice) => voice.voiceURI === preferredURI);
-    if (chosen) return chosen;
     const gender = characterVoiceGender(character);
-    const preferred = gender === "female" ? FEMALE_NAMES : gender === "male" ? MALE_NAMES : null;
-    return candidates.map((voice, index) => ({
+    const preferred = gender === "female" ? FEMALE_NAMES : MALE_NAMES;
+    return candidates.filter((voice) => preferred.test(voice.name)).map((voice, index) => ({
         voice, index,
-        score: (preferred?.test(voice.name) ? 100 : 0)
+        score: (QUALITY_NAMES.test(voice.name) ? 40 : 0)
             + (languageKey(voice.lang) === languageKey(language) ? 20 : 0)
             + (voice.default ? 1 : 0)
     })).sort((a, b) => b.score - a.score || a.index - b.index)[0]?.voice || null;
@@ -45,7 +44,7 @@ export function createDialogPlayer({ synthesis, Utterance, onState, startTimeout
         }
         if (notify) onState({ status: "idle", index: -1 });
     };
-    const play = (turns, characters, language, overrides = {}, singleIndex = null) => {
+    const play = (turns, characters, language, singleIndex = null) => {
         stop(false);
         if (!synthesis || !Utterance) {
             onState({ status: "unsupported", index: -1 });
@@ -66,13 +65,13 @@ export function createDialogPlayer({ synthesis, Utterance, onState, startTimeout
             }
             const turn = turns[index];
             const character = characters.find((item) => item.id === turn.speakerId) || characters[0];
-            const voice = selectDialogVoice(synthesis.getVoices(), language, character, overrides[character?.id]);
+            const voice = selectDialogVoice(synthesis.getVoices(), language, character);
             if (!voice) { fail("no-voice", index); return; }
             const utterance = new Utterance(turn.text);
             current = utterance; // Keep a reference until the utterance finishes.
             utterance.voice = voice;
             utterance.lang = voice.lang;
-            utterance.rate = 0.88;
+            utterance.rate = 1;
             onState({ status: "starting", index });
             timer = setTimeout(() => fail("blocked", index), startTimeout);
             utterance.onstart = () => {

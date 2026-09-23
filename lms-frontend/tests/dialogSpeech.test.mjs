@@ -24,9 +24,15 @@ test("Mia gets an available female voice, Alex gets a male voice", () => {
     assert.equal(selectDialogVoice(voices, "en-GB", characters[0]).name, "Serena");
     assert.equal(selectDialogVoice(voices, "en-GB", characters[1]).name, "Daniel");
     assert.equal(selectDialogVoice(voices.slice(0, 2), "en-GB", characters[0]).name, "Samantha");
-    assert.equal(selectDialogVoice(voices, "en-GB", characters[0], "samantha").name, "Samantha");
     assert.equal(selectDialogVoice(voices, "fr-FR", characters[0]), null);
-    assert.equal(selectDialogVoice(voices, "en-GB", characters[0], "missing").name, "Serena");
+});
+
+test("prefers natural voices and never substitutes a male or novelty voice for Mia", () => {
+    const natural = { name: "Microsoft Sonia Online (Natural)", lang: "en-GB", voiceURI: "sonia" };
+    assert.equal(selectDialogVoice([...voices, natural], "en-GB", characters[0]), natural);
+    assert.equal(selectDialogVoice([{ name: "Zarvox", lang: "en-GB" }, voices[0]], "en-GB", characters[0]), null);
+    assert.equal(characterVoiceGender({ side: "left", voiceGender: "neutral" }), "female");
+    assert.equal(characterVoiceGender({ side: "right" }), "male");
 });
 
 test("gender preference survives config editing and legacy Mia still works", () => {
@@ -43,6 +49,7 @@ test("plays all 60 turns sequentially with the right voices", () => {
         const utterance = utterances[index];
         assert.equal(utterance.text, turns[index].text);
         assert.equal(utterance.voice.name, index % 2 ? "Daniel" : "Serena");
+        assert.equal(utterance.rate, 1);
         utterance.onstart();
         utterance.onend();
     }
@@ -62,7 +69,7 @@ test("individual bubble stops the old queue and reads only that bubble", () => {
     const { player, utterances, states } = fixture();
     player.play(turns, characters, "en-GB");
     const oldEnd = utterances[0].onend;
-    player.play(turns, characters, "en-GB", {}, 5);
+    player.play(turns, characters, "en-GB", 5);
     oldEnd();
     utterances[1].onstart();
     utterances[1].onend();
