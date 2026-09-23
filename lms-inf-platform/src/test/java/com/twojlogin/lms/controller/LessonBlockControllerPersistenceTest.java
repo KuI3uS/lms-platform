@@ -32,6 +32,40 @@ import static org.mockito.Mockito.mock;
 @DataJpaTest
 class LessonBlockControllerPersistenceTest {
 
+    @Test
+    void importsHelloLessonThroughHttpWithDialogsAndVocabulary() throws Exception {
+        Course course = new Course();
+        course.setName("Angielski");
+        course.setCategory("LANGUAGE");
+        course = courseRepository.saveAndFlush(course);
+        CourseModule module = new CourseModule();
+        module.setName("A1");
+        module.setCourse(course);
+        module = moduleRepository.saveAndFlush(module);
+        Lesson lesson = new Lesson();
+        lesson.setTitle("Hello!");
+        lesson.setOrderIndex(1);
+        lesson.setModule(module);
+        lesson = lessonRepository.saveAndFlush(lesson);
+
+        byte[] body;
+        try (var resource = getClass().getResourceAsStream("/hello-language-import.json")) {
+            assertNotNull(resource);
+            body = resource.readAllBytes();
+        }
+        var mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders
+                .standaloneSetup(createController())
+                .setControllerAdvice(new com.twojlogin.lms.exception.GlobalExceptionHandler())
+                .build();
+        var result = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/api/lesson-blocks/lesson/{lessonId}/bulk", lesson.getId())
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andReturn();
+        assertEquals(200, result.getResponse().getStatus(), result.getResponse().getContentAsString());
+        assertEquals(17, blockRepository.countByLessonId(lesson.getId()));
+    }
+
     @Autowired
     private LessonBlockRepository blockRepository;
 

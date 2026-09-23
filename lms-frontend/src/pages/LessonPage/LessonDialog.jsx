@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     BsChatDots,
     BsCheckCircleFill,
@@ -12,28 +12,21 @@ import {
     languageAnswerScore,
     parseDialogContent
 } from "../../utils/languageInteractiveBlocks";
+import { characterVoiceGender, selectDialogVoice } from "../../utils/dialogSpeech";
+import useDialogSpeech from "./useDialogSpeech";
 
-function speak(text, language) {
-    if (!text || typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = language || "en-GB";
-    utterance.rate = 0.88;
-    window.speechSynthesis.speak(utterance);
-}
-
-function DialogueBubble({ character, text, language, muted = false, children }) {
+function DialogueBubble({ character, text, onSpeak, active = false, muted = false, children }) {
     const right = character.side === "right";
     return (
         <div className={`flex items-end gap-3 ${right ? "flex-row-reverse" : ""}`}>
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-slate-950 text-2xl shadow-lg">{character.avatar}</div>
             <div className={`max-w-[82%] ${right ? "text-right" : ""}`}>
                 <p className="mb-1 text-xs font-black uppercase tracking-[0.16em] text-slate-500">{character.name}</p>
-                <div className={`rounded-3xl border p-4 sm:p-5 ${right ? "rounded-br-md border-blue-400/20 bg-blue-500/10" : "rounded-bl-md border-cyan-400/20 bg-cyan-500/10"}`}>
+                <div aria-current={active ? "step" : undefined} className={`rounded-3xl border p-4 sm:p-5 ${active ? "ring-2 ring-cyan-300 shadow-lg shadow-cyan-500/10" : ""} ${right ? "rounded-br-md border-blue-400/20 bg-blue-500/10" : "rounded-bl-md border-cyan-400/20 bg-cyan-500/10"}`}>
                     {text && <p className={`text-base font-bold leading-7 sm:text-lg ${muted ? "text-slate-500" : "text-white"}`}>{text}</p>}
                     {children}
                     {text && !muted && (
-                        <button type="button" onClick={() => speak(text, language)} className="mt-3 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-cyan-300 hover:text-cyan-200">
+                        <button type="button" onClick={onSpeak} aria-label={`Odsłuchaj: ${character.name} — ${text}`} className="mt-3 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-cyan-300 hover:text-cyan-200">
                             <BsPlayFill /> Odsłuchaj
                         </button>
                     )}
@@ -43,10 +36,17 @@ function DialogueBubble({ character, text, language, muted = false, children }) 
     );
 }
 
-function PracticeTurn({ turn, character, coach, language, result, onResult }) {
+function PracticeTurn({ turn, character, coach, language, result, onResult, onSpeak, onStop }) {
     const [answer, setAnswer] = useState("");
     const [listening, setListening] = useState(false);
     const recognitionRef = useRef(null);
+    useEffect(() => () => {
+        const recognition = recognitionRef.current;
+        if (recognition) {
+            recognition.onstart = recognition.onend = recognition.onerror = recognition.onresult = null;
+            recognition.abort();
+        }
+    }, []);
     const Recognition = useMemo(() => (
         typeof window === "undefined"
             ? null
@@ -62,6 +62,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult }) {
     };
 
     const startListening = () => {
+        onStop();
         if (!Recognition) {
             onResult({
                 answer: "",
@@ -103,7 +104,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult }) {
     };
 
     return (
-        <DialogueBubble character={character} text={result ? turn.text : "Twoja kolej…"} language={language} muted={!result}>
+        <DialogueBubble character={character} text={result ? turn.text : "Twoja kolej…"} onSpeak={onSpeak} muted={!result}>
             {!result && (
                 <div className="mt-3 space-y-3 text-left">
                     <div className="relative">
@@ -147,6 +148,8 @@ export default function LessonDialog({ block }) {
     const config = useMemo(() => parseDialogContent(block.content), [block.content]);
     const [mode, setMode] = useState("watch");
     const [results, setResults] = useState({});
+    const { playback, voices, overrides, play, stop, chooseVoice } = useDialogSpeech(config, block.language);
+    const speaking = ["starting", "playing"].includes(playback.status);
     const charactersById = new Map(config.characters.map((character) => [character.id, character]));
     const studentCharacter = charactersById.get(config.studentCharacterId) || config.characters[1];
     const coach = config.characters.find((character) => character.id !== studentCharacter.id) || config.characters[0];
@@ -160,9 +163,36 @@ export default function LessonDialog({ block }) {
                 <h2 className="mt-3 text-2xl font-black sm:text-3xl">{block.title}</h2>
                 {block.description && <p className="mt-3 max-w-3xl leading-7 text-slate-400">{block.description}</p>}
                 <div className="mt-5 flex flex-wrap items-center gap-2">
-                    <button type="button" onClick={() => setMode("watch")} className={`rounded-xl px-4 py-2.5 text-sm font-black ${mode === "watch" ? "bg-cyan-500 text-slate-950" : "border border-white/10 bg-white/5 text-slate-300"}`}><BsHeadphones className="mr-2 inline" />Obejrzyj rozmowę</button>
-                    <button type="button" onClick={() => setMode("practice")} className={`rounded-xl px-4 py-2.5 text-sm font-black ${mode === "practice" ? "bg-blue-600 text-white" : "border border-white/10 bg-white/5 text-slate-300"}`}><BsMicFill className="mr-2 inline" />Wciel się w: {studentCharacter.avatar} {studentCharacter.name}</button>
+                    <button type="button" onClick={() => { setMode("watch"); play(); }} className={`rounded-xl px-4 py-2.5 text-sm font-black ${mode === "watch" ? "bg-cyan-500 text-slate-950" : "border border-white/10 bg-white/5 text-slate-300"}`}><BsHeadphones className="mr-2 inline" />{playback.status === "done" ? "Posłuchaj ponownie" : "Posłuchaj całej rozmowy"}</button>
+                    {speaking && <button type="button" onClick={stop} className="rounded-xl border border-white/20 px-4 py-2.5 text-sm font-black text-white"><BsStopFill className="mr-2 inline" />Zatrzymaj</button>}
+                    <button type="button" onClick={() => { stop(); setMode("practice"); }} className={`rounded-xl px-4 py-2.5 text-sm font-black ${mode === "practice" ? "bg-blue-600 text-white" : "border border-white/10 bg-white/5 text-slate-300"}`}><BsMicFill className="mr-2 inline" />Wciel się w: {studentCharacter.avatar} {studentCharacter.name}</button>
                 </div>
+                <p role="status" className="mt-3 text-sm text-cyan-100/80">
+                    {speaking ? `Wypowiedź ${playback.index + 1} z ${config.turns.length}`
+                        : playback.status === "blocked" ? "Przeglądarka wstrzymała dźwięk. Kliknij „Posłuchaj całej rozmowy”, aby rozpocząć."
+                        : playback.status === "unsupported" ? "Ta przeglądarka nie obsługuje odczytywania tekstu. Możesz nadal przeczytać dialog i wykonać ćwiczenie."
+                        : playback.status === "no-voice" ? "Brak głosu w języku tej lekcji. Dodaj głos w ustawieniach mowy urządzenia, a potem ponów odsłuch."
+                        : playback.status === "error" ? "Nie udało się odtworzyć dźwięku. Wybierz inny głos lub spróbuj ponownie."
+                        : playback.status === "done" ? "Koniec odsłuchu. Możesz teraz wcielić się w swoją postać."
+                        : "Kliknij „Posłuchaj całej rozmowy”, aby odtworzyć kwestie po kolei, lub odsłuchaj wybrany dymek."}
+                </p>
+                <details className="mt-4 rounded-xl border border-white/10 p-3 text-sm text-slate-300">
+                    <summary className="cursor-pointer font-bold">Głosy postaci</summary>
+                    <p className="mt-2 text-xs leading-5 text-slate-400">Głosy zależą od urządzenia. Dobieramy znane głosy żeńskie i męskie, ale możesz zmienić wybór i odsłuchać postać. Ustawienia zapamiętamy w tej przeglądarce.</p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        {config.characters.map((character) => {
+                            const voice = selectDialogVoice(voices, block.language, character, overrides[character.id]);
+                            const gender = characterVoiceGender(character);
+                            return <label key={character.id} className="space-y-2">
+                                <span className="block font-bold">{character.avatar} {character.name}{gender === "female" ? " — preferowany głos żeński" : gender === "male" ? " — preferowany głos męski" : ""}</span>
+                                <select aria-label={`Głos postaci ${character.name}`} value={voices.some((item) => item.voiceURI === overrides[character.id]) ? overrides[character.id] : ""} onChange={(event) => chooseVoice(character, event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-white">
+                                    <option value="">Automatycznie{voice ? `: ${voice.name}` : ""}</option>
+                                    {voices.map((item) => <option key={item.voiceURI} value={item.voiceURI}>{item.name} ({item.lang})</option>)}
+                                </select>
+                            </label>;
+                        })}
+                    </div>
+                </details>
             </div>
 
             <div className="space-y-5 p-5 sm:p-8">
@@ -185,11 +215,13 @@ export default function LessonDialog({ block }) {
                                 coach={coach}
                                 language={block.language}
                                 result={results[index]}
+                                onSpeak={() => play(index)}
+                                onStop={stop}
                                 onResult={(result) => setResults((previous) => ({ ...previous, [index]: result }))}
                             />
                         );
                     }
-                    return <DialogueBubble key={`${index}-${turn.text}`} character={character} text={turn.text} language={block.language} />;
+                    return <DialogueBubble key={`${index}-${turn.text}`} character={character} text={turn.text} onSpeak={() => play(index)} active={speaking && playback.index === index} />;
                 })}
 
                 {config.turns.length === 0 && <p className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-slate-500">Ten dialog nie ma jeszcze wypowiedzi.</p>}
