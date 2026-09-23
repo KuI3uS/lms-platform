@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createDialogPlayer } from "../../utils/dialogSpeech";
 
+// Przerwa pomiędzy kolejnymi wypowiedziami dialogu.
+// Zmień np. na 100 (szybciej) albo 600 (wolniej).
+const DIALOG_TURN_GAP_MS = 250;
+
 export default function useDialogSpeech(config, language, blockId) {
     const [playback, setPlayback] = useState({ status: "idle", index: -1, source: "natural" });
     const attempted = useRef(false);
@@ -34,14 +38,16 @@ export default function useDialogSpeech(config, language, blockId) {
         if (notify) setPlayback({ status: "idle", index: -1, source: "natural" });
     };
 
-    const playNaturalTurn = async (index, run) => {
-        setPlayback({ status: "starting", index, source: "natural" });
+    const loadNaturalTurn = async (index) => {
         const response = await fetch(`/api/lesson-blocks/${blockId}/dialog-audio/${index}`, {
             credentials: "include",
             headers: { Accept: "audio/mpeg" }
         });
         if (!response.ok) throw new Error(`natural-audio-${response.status}`);
-        const blob = await response.blob();
+        return response.blob();
+    };
+
+    const playNaturalTurn = async (index, run, blob) => {
         if (run !== generation.current) return;
         objectUrlRef.current = URL.createObjectURL(blob);
         const audio = new Audio(objectUrlRef.current);
@@ -73,10 +79,21 @@ export default function useDialogSpeech(config, language, blockId) {
             : [singleIndex];
         let played = 0;
         try {
-            for (const index of indexes) {
+            setPlayback({ status: "starting", index: indexes[0] ?? -1, source: "natural" });
+
+            // Pobieramy wszystkie wypowiedzi przed rozpoczęciem rozmowy. Dzięki temu
+            // opóźnienie sieci lub generowanie nagrania nie tworzy kilkusekundowych
+            // przerw pomiędzy postaciami.
+            const blobs = await Promise.all(indexes.map(loadNaturalTurn));
+
+            for (let position = 0; position < indexes.length; position += 1) {
+                const index = indexes[position];
                 if (run !== generation.current) return;
-                await playNaturalTurn(index, run);
+                await playNaturalTurn(index, run, blobs[position]);
                 played += 1;
+                if (position < indexes.length - 1 && DIALOG_TURN_GAP_MS > 0) {
+                    await new Promise((resolve) => setTimeout(resolve, DIALOG_TURN_GAP_MS));
+                }
             }
             if (run === generation.current) {
                 setPlayback({ status: "done", index: -1, source: "natural" });
