@@ -1,7 +1,7 @@
 import { BsHeadphones } from "react-icons/bs";
 import PronunciationTrainer from "../../components/PronunciationTrainer";
 
-export default function LessonAudio({ block }) {
+export default function LessonAudio({ block, onComplete }) {
     return (
         <section className="overflow-hidden rounded-3xl border border-violet-400/25 bg-gradient-to-br from-violet-500/10 via-gray-900 to-gray-950">
             <div className="border-b border-white/10 p-5 sm:p-8">
@@ -11,7 +11,17 @@ export default function LessonAudio({ block }) {
                 <p className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-5 text-xl font-black leading-9 text-white sm:text-2xl">{block.content}</p>
             </div>
             <div className="p-4 sm:p-8">
-                <PronunciationTrainer blockId={block.id} phrase={block.content} language={block.language} audioUrl={block.mediaUrl} />
+                <PronunciationTrainer
+                    blockId={block.id}
+                    phrase={block.content}
+                    language={block.language}
+                    audioUrl={block.mediaUrl}
+                    onReviewed={(_, score) => {
+                        if (!block.correct && score >= 65) {
+                            onComplete?.(block.id, { completedItems: 1, score });
+                        }
+                    }}
+                />
             </div>
         </section>
     );

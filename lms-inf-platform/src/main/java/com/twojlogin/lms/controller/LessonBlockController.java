@@ -5,6 +5,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import com.twojlogin.lms.dto.AnswerRequest;
+import com.twojlogin.lms.dto.InteractiveCompletionRequest;
 import com.twojlogin.lms.dto.LessonBlockDto;
 import com.twojlogin.lms.dto.LessonBlockRequest;
 import com.twojlogin.lms.dto.TaskCheckResponse;
@@ -18,6 +19,7 @@ import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
 import com.twojlogin.lms.repository.LanguageReviewProgressRepository;
 import com.twojlogin.lms.service.TaskEvaluationService;
+import com.twojlogin.lms.service.InteractiveBlockCompletionService;
 import com.twojlogin.lms.service.CourseAccessService;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
@@ -44,6 +46,7 @@ public class LessonBlockController {
     private final LessonRepository lessonRepository;
     private final TaskAttemptRepository attemptRepository;
     private final TaskEvaluationService evaluationService;
+    private final InteractiveBlockCompletionService interactiveCompletionService;
     private final CourseAccessService accessService;
     private final LanguageReviewProgressRepository reviewRepository;
 
@@ -52,6 +55,7 @@ public class LessonBlockController {
             LessonRepository lessonRepository,
             TaskAttemptRepository attemptRepository,
             TaskEvaluationService evaluationService,
+            InteractiveBlockCompletionService interactiveCompletionService,
             CourseAccessService accessService,
             LanguageReviewProgressRepository reviewRepository
     ) {
@@ -59,6 +63,7 @@ public class LessonBlockController {
         this.lessonRepository = lessonRepository;
         this.attemptRepository = attemptRepository;
         this.evaluationService = evaluationService;
+        this.interactiveCompletionService = interactiveCompletionService;
         this.accessService = accessService;
         this.reviewRepository = reviewRepository;
     }
@@ -346,6 +351,20 @@ public class LessonBlockController {
         User user = accessService.currentUser(authentication);
         accessService.requireLessonAccess(user, block.getLesson());
         return evaluationService.check(block, request.getAnswer(), user);
+    }
+
+    @PostMapping("/{id}/complete-interactive")
+    public InteractiveBlockCompletionService.CompletionResult completeInteractive(
+            @PathVariable Long id,
+            @RequestBody InteractiveCompletionRequest request,
+            Authentication authentication
+    ) {
+        LessonBlock block = blockRepository.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Nie znaleziono kroku")
+        );
+        User user = accessService.currentUser(authentication);
+        accessService.requireLessonAccess(user, block.getLesson());
+        return interactiveCompletionService.complete(block, user, request);
     }
 
     private boolean isAdmin(Authentication authentication) {

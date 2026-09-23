@@ -80,7 +80,7 @@ export default function PronunciationTrainer({
                 method: "POST",
                 body: JSON.stringify({ score: nextScore })
             });
-            onReviewed?.(review);
+            onReviewed?.(review, nextScore);
         } catch (error) {
             showToast(error.message || "Nie udało się zapisać powtórki.", "error");
         }

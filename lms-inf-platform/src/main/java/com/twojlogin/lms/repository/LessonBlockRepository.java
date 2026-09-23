@@ -44,7 +44,10 @@ public interface LessonBlockRepository extends JpaRepository<LessonBlock, Long> 
             where block.lesson.id = :lessonId
               and block.type in (
                 com.twojlogin.lms.entity.BlockType.TASK,
-                com.twojlogin.lms.entity.BlockType.QUIZ
+                com.twojlogin.lms.entity.BlockType.QUIZ,
+                com.twojlogin.lms.entity.BlockType.DIALOG,
+                com.twojlogin.lms.entity.BlockType.VOCABULARY,
+                com.twojlogin.lms.entity.BlockType.AUDIO
               )
               and block.published = true
             """)

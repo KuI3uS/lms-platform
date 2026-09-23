@@ -14,7 +14,7 @@ function speak(text, language) {
     window.speechSynthesis.speak(utterance);
 }
 
-export default function LessonVocabulary({ block }) {
+export default function LessonVocabulary({ block, onComplete }) {
     const config = useMemo(() => parseVocabularyContent(block.content), [block.content]);
     const [mode, setMode] = useState("learn");
     const [index, setIndex] = useState(0);
@@ -48,6 +48,14 @@ export default function LessonVocabulary({ block }) {
     const next = () => {
         if (index + 1 >= config.items.length) {
             setMode("finished");
+            if (!block.correct) {
+                onComplete?.(block.id, {
+                    completedItems: score.completed,
+                    score: score.completed > 0
+                        ? Math.round((score.correct / score.completed) * 100)
+                        : 0
+                });
+            }
             return;
         }
         setIndex((previous) => previous + 1);

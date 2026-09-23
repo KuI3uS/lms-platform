@@ -13,6 +13,7 @@ import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
 import com.twojlogin.lms.service.CourseAccessService;
+import com.twojlogin.lms.service.InteractiveBlockCompletionService;
 import com.twojlogin.lms.service.TaskEvaluationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -456,6 +457,7 @@ class LessonBlockControllerPersistenceTest {
                 lessonRepository,
                 attemptRepository,
                 mock(TaskEvaluationService.class),
+                mock(InteractiveBlockCompletionService.class),
                 mock(CourseAccessService.class),
                 mock(com.twojlogin.lms.repository.LanguageReviewProgressRepository.class)
         );
