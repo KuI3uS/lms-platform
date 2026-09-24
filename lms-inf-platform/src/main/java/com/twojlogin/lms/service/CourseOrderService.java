@@ -122,10 +122,13 @@ public class CourseOrderService {
             BigDecimal purchasePrice = purchaseType == CoursePurchaseType.SUBSCRIPTION
                     ? course.getMonthlyPrice()
                     : course.getPrice();
+            int effectiveDiscountPercent = purchaseType == CoursePurchaseType.SUBSCRIPTION
+                    ? 0
+                    : discountPercent == null ? 0 : discountPercent;
             BigDecimal discount = gamificationService.reserveVoucher(
                     user,
                     purchasePrice,
-                    discountPercent
+                    effectiveDiscountPercent
             );
             pending = newOrder(
                     user,
@@ -134,7 +137,7 @@ public class CourseOrderService {
                     discount,
                     purchaseType
             );
-            pending.setDiscountPercent(discountPercent);
+            pending.setDiscountPercent(effectiveDiscountPercent);
             pending = orderRepository.save(pending);
         }
 
@@ -324,12 +327,13 @@ public class CourseOrderService {
         enrollment.setSource(source);
         enrollment.setActive(true);
         enrollment.setEnrolledAt(now);
-        if (purchaseType == CoursePurchaseType.SUBSCRIPTION) {
+        if (purchaseType == CoursePurchaseType.SUBSCRIPTION
+                || purchaseType == CoursePurchaseType.THIRTY_DAYS) {
             LocalDateTime currentExpiry = enrollment.getAccessExpiresAt();
             LocalDateTime extensionStart = currentExpiry != null && currentExpiry.isAfter(now)
                     ? currentExpiry
                     : now;
-            enrollment.setAccessExpiresAt(extensionStart.plusMonths(1));
+            enrollment.setAccessExpiresAt(extensionStart.plusDays(30));
         } else {
             enrollment.setAccessExpiresAt(null);
         }
@@ -343,13 +347,17 @@ public class CourseOrderService {
         if (accessService.isFree(course)) return CoursePurchaseType.ONE_TIME;
         CoursePurchaseType purchaseType = requestedPurchaseType;
         if (purchaseType == null) {
-            purchaseType = course.getBillingMode() == CourseBillingMode.SUBSCRIPTION
-                    ? CoursePurchaseType.SUBSCRIPTION
-                    : CoursePurchaseType.ONE_TIME;
+            purchaseType = switch (course.getBillingMode()) {
+                case SUBSCRIPTION -> CoursePurchaseType.SUBSCRIPTION;
+                case MONTHLY_OPTIONS -> CoursePurchaseType.THIRTY_DAYS;
+                default -> CoursePurchaseType.ONE_TIME;
+            };
         }
-        boolean allowed = purchaseType == CoursePurchaseType.SUBSCRIPTION
-                ? course.getBillingMode().allowsSubscription()
-                : course.getBillingMode().allowsOneTime();
+        boolean allowed = switch (purchaseType) {
+            case SUBSCRIPTION -> course.getBillingMode().allowsSubscription();
+            case THIRTY_DAYS -> course.getBillingMode().allowsThirtyDays();
+            case ONE_TIME -> course.getBillingMode().allowsOneTime();
+        };
         if (!allowed) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -357,6 +365,75 @@ public class CourseOrderService {
             );
         }
         return purchaseType;
+    }
+
+    @Transactional
+    public void confirmStripePayment(
+            String reference,
+            String checkoutSessionId,
+            String subscriptionId
+    ) {
+        CourseOrder order = orderRepository.findByReference(reference)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        order.setStripeCheckoutSessionId(checkoutSessionId);
+        order.setStripeSubscriptionId(subscriptionId);
+        if (order.getStatus() != CourseOrderStatus.PAID) {
+            order.setStatus(CourseOrderStatus.PAID);
+            order.setPaidAt(now());
+            CourseEnrollment enrollment = activateEnrollment(
+                    order.getUser(), order.getCourse(), EnrollmentSource.PURCHASE, order.getPurchaseType()
+            );
+            order.setAccessUntil(enrollment.getAccessExpiresAt());
+            notificationService.create(
+                    order.getUser(), NotificationType.COURSE_ACCESS,
+                    "Płatność potwierdzona",
+                    "Odblokowaliśmy kurs „" + courseTitle(order.getCourse()) + "”.",
+                    "/modules/" + order.getCourse().getId()
+            );
+        }
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void renewStripeSubscription(String subscriptionId) {
+        CourseOrder order = orderRepository
+                .findFirstByStripeSubscriptionIdOrderByCreatedAtDesc(subscriptionId)
+                .orElse(null);
+        if (order == null || order.getStatus() != CourseOrderStatus.PAID) return;
+        CourseEnrollment enrollment = activateEnrollment(
+                order.getUser(), order.getCourse(), EnrollmentSource.PURCHASE, CoursePurchaseType.SUBSCRIPTION
+        );
+        order.setAccessUntil(enrollment.getAccessExpiresAt());
+        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void cancelStripeSubscription(String subscriptionId) {
+        CourseOrder order = orderRepository
+                .findFirstByStripeSubscriptionIdOrderByCreatedAtDesc(subscriptionId)
+                .orElse(null);
+        if (order == null) return;
+        notificationService.create(
+                order.getUser(), NotificationType.COURSE_ACCESS,
+                "Abonament został anulowany",
+                "Dostęp do kursu „" + courseTitle(order.getCourse())
+                        + "” pozostaje aktywny do końca opłaconego okresu.",
+                "/modules/" + order.getCourse().getId()
+        );
+    }
+
+    @Transactional
+    public void notifyStripePaymentFailed(String subscriptionId) {
+        CourseOrder order = orderRepository
+                .findFirstByStripeSubscriptionIdOrderByCreatedAtDesc(subscriptionId)
+                .orElse(null);
+        if (order == null) return;
+        notificationService.create(
+                order.getUser(), NotificationType.COURSE_ACCESS,
+                "Nie udało się odnowić abonamentu",
+                "Sprawdź metodę płatności za kurs „" + courseTitle(order.getCourse()) + "”.",
+                "/checkout/" + order.getCourse().getId()
+        );
     }
 
     private LocalDateTime now() {

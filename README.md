@@ -48,3 +48,41 @@ ELEVENLABS_SPEAKER_BOOST=true
 Do zmiennych należy wkleić **Voice ID**, a nie widoczną nazwę głosu. Klucza API
 nie zapisuj w repozytorium ani we frontendzie. Gdy konfiguracji brakuje albo usługa
 chwilowo nie działa, odtwarzacz automatycznie używa głosu dostępnego w przeglądarce.
+
+## Płatności 30-dniowe (Stripe Checkout)
+
+Tryb kursu `30 dni` pozwala uczniowi wybrać:
+
+- jednorazowy dostęp na 30 dni bez odnowienia,
+- abonament odnawiany automatycznie co miesiąc.
+
+Backend wymaga poniższych sekretów:
+
+```text
+STRIPE_API_KEY=...
+STRIPE_WEBHOOK_SECRET=whsec_...
+FRONTEND_URL=https://edu-hub.com.pl
+```
+
+W Stripe Dashboard włącz metody płatności: karty, Apple Pay, BLIK i Revolut Pay.
+Checkout sam pokazuje klientowi tylko metody obsługiwane dla jego urządzenia,
+waluty i rodzaju płatności. BLIK jest przeznaczony głównie do płatności
+jednorazowej i może nie pojawić się przy abonamencie.
+
+Webhook powinien wskazywać publiczny adres backendu:
+
+```text
+https://ADRES-BACKENDU/api/payments/stripe/webhook
+```
+
+Zdarzenia wymagane przez webhook:
+
+```text
+checkout.session.completed
+checkout.session.async_payment_succeeded
+invoice.paid
+invoice.payment_failed
+customer.subscription.deleted
+```
+
+Klucza API oraz sekretu webhooka nigdy nie umieszczaj we frontendzie ani w Git.
