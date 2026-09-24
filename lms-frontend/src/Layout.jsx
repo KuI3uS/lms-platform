@@ -14,7 +14,8 @@ import {
     BsPlusCircle,
     BsShieldLock,
     BsX,
-    BsArrowRepeat
+    BsArrowRepeat,
+    BsKey
 } from "react-icons/bs";
 import skicodeLogo from "./assets/images/skicode-logo.png";
 import { apiFetch } from "./api/api";
@@ -120,6 +121,10 @@ export default function Layout() {
                         <BsArrowRepeat />
                         <span>Powtórki językowe</span>
                     </NavLink>
+                    <NavLink to="/access-code" onClick={closeMenu} className={linkClass}>
+                        <BsKey />
+                        <span>Kod dostępu</span>
+                    </NavLink>
 
                     {role === "ADMIN" && (
                         <>
@@ -145,6 +150,10 @@ export default function Layout() {
                             <NavLink to="/admin/course-orders" onClick={closeMenu} className={linkClass}>
                                 <BsCreditCard />
                                 <span>Zamówienia kursów</span>
+                            </NavLink>
+                            <NavLink to="/admin/access-codes" onClick={closeMenu} className={linkClass}>
+                                <BsKey />
+                                <span>Kody dostępu</span>
                             </NavLink>
                             <NavLink to="/admin/tutoring" onClick={closeMenu} className={linkClass}>
                                 <BsCalendarCheck />
