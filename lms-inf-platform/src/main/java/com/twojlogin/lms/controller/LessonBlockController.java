@@ -38,8 +38,8 @@ import java.util.stream.Collectors;
 public class LessonBlockController {
 
     private static final int MAX_BLOCKS_PER_LESSON = 10;
-    private static final int MAX_BLOCKS_PER_LANGUAGE_LESSON = 20;
-    private static final int MAX_VOCABULARY_ITEMS = 20;
+    private static final int MAX_BLOCKS_PER_LANGUAGE_LESSON = 30;
+    private static final int MAX_VOCABULARY_ITEMS = 30;
     private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 
     private final LessonBlockRepository blockRepository;
@@ -461,7 +461,7 @@ public class LessonBlockController {
                 if (!items.isArray() || items.isEmpty() || items.size() > MAX_VOCABULARY_ITEMS) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
-                            "Trening słówek musi zawierać od 1 do 20 pozycji."
+                            "Trening słówek musi zawierać od 1 do 30 pozycji."
                     );
                 }
                 for (JsonNode item : items) {
