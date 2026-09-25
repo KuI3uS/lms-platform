@@ -228,7 +228,7 @@ const LANGUAGE_OVERRIDES = {
     VIDEO: { label: "Wymowa lub film", description: "Krótki materiał do słuchania i powtarzania." },
     AUDIO: { label: "Audio i wymowa", description: "Odsłuch, nagranie mikrofonem i automatyczna powtórka." },
     DIALOG: { label: "Dialog interaktywny", description: "Rozmowa bohaterów z rolą ucznia, odsłuchem i łagodną korektą." },
-    VOCABULARY: { label: "Trening słówek", description: "Od 1 do 20 słów w jednym bloku, z odsłuchem i pisaniem." },
+    VOCABULARY: { label: "Trening słówek", description: "Od 1 do 30 słów w jednym bloku, z odsłuchem i pisaniem." },
     SENTENCE_BUILDER: { label: "Układanie zdania", description: "Ułóż tłumaczenie z 2–6 pomieszanych kafelków." },
     WORD_LAB: { label: "Laboratorium słów", description: "Uczeń przypomina znaczenie, mówi na głos i poprawia każde słowo." },
     LISTENING: { label: "Rozpoznawanie ze słuchu", description: "Odsłuch bez podglądu odpowiedzi: litery, słowa, liczby i dyktanda." },
