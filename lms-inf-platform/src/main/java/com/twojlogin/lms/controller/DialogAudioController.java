@@ -80,7 +80,7 @@ public class DialogAudioController {
         if (!accessService.isAdmin(user) && Boolean.FALSE.equals(block.getPublished())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
-        if (block.getType() != BlockType.VOCABULARY) {
+        if (block.getType() != BlockType.VOCABULARY && block.getType() != BlockType.WORD_LAB && block.getType() != BlockType.LISTENING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ten blok nie jest treningiem słówek");
         }
 

@@ -1087,6 +1087,14 @@ export default function useLessonBlocks() {
             }
         }
 
+        if (block.type === "LISTENING") {
+            const listening = parseVocabularyContent(block.content);
+            if (listening.items.length < 1 || listening.items.length > 20) {
+                showToast("Rozpoznawanie ze słuchu musi zawierać od 1 do 20 nagrań.", "warning");
+                return false;
+            }
+        }
+
         /**
          * Trening słówek.
          */

@@ -48,6 +48,7 @@ public interface LessonBlockRepository extends JpaRepository<LessonBlock, Long> 
                 com.twojlogin.lms.entity.BlockType.DIALOG,
                 com.twojlogin.lms.entity.BlockType.VOCABULARY,
                 com.twojlogin.lms.entity.BlockType.WORD_LAB,
+                com.twojlogin.lms.entity.BlockType.LISTENING,
                 com.twojlogin.lms.entity.BlockType.SENTENCE_BUILDER,
                 com.twojlogin.lms.entity.BlockType.AUDIO
               )

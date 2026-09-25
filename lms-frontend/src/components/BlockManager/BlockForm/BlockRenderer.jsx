@@ -12,6 +12,7 @@ import AudioBlockForm from "./forms/AudioBlockForm";
 import DialogBlockForm from "./forms/DialogBlockForm";
 import VocabularyBlockForm from "./forms/VocabularyBlockForm";
 import SentenceBuilderBlockForm from "./forms/SentenceBuilderBlockForm";
+import ListeningBlockForm from "./forms/ListeningBlockForm";
 
 export default function BlockRenderer({
                                           block,
@@ -69,6 +70,9 @@ export default function BlockRenderer({
 
         case "WORD_LAB":
             return <VocabularyBlockForm block={block} setBlock={setBlock} lab />;
+
+        case "LISTENING":
+            return <ListeningBlockForm block={block} setBlock={setBlock} />;
 
         case "SENTENCE_BUILDER":
             return <SentenceBuilderBlockForm block={block} setBlock={setBlock} />;

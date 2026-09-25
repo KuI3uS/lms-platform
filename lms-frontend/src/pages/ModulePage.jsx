@@ -632,6 +632,8 @@ function stepIcon(type) {
             return <BsTranslate />;
         case "WORD_LAB":
             return <BsTranslate />;
+        case "LISTENING":
+            return <BsHeadphones />;
         case "SENTENCE_BUILDER":
             return <BsGrid3X3Gap />;
         case "EXAMPLE":
@@ -657,6 +659,7 @@ function stepTypeLabel(type) {
         DIALOG: "Dialog",
         VOCABULARY: "Słówka",
         WORD_LAB: "Laboratorium słów",
+        LISTENING: "Rozpoznawanie ze słuchu",
         SENTENCE_BUILDER: "Układanie zdania",
         EXAMPLE: "Przykład",
         TASK: "Zadanie",

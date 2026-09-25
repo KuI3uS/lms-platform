@@ -32,6 +32,8 @@ const TYPE_MAP = {
     "cwiczenie slownictwa": "VOCABULARY",
     "laboratorium slow": "WORD_LAB",
     "aktywny trening slow": "WORD_LAB",
+    "rozpoznawanie ze sluchu": "LISTENING",
+    dyktando: "LISTENING",
     "ukladanie zdania": "SENTENCE_BUILDER",
     "kafelki ze slowami": "SENTENCE_BUILDER",
     "rozsypanka wyrazowa": "SENTENCE_BUILDER",
@@ -53,6 +55,7 @@ const FIELD_ALIASES = [
     ["tytul dialogu", "title"],
     ["tytul treningu", "title"],
     ["tytul laboratorium", "title"],
+    ["tytul cwiczenia sluchowego", "title"],
     ["tytul ukladanki", "title"],
     ["tytul przykladu", "title"],
     ["nazwa pliku", "title"],
@@ -408,7 +411,7 @@ function parseStep(step, warnings, errors) {
             errors.push(`Krok ${step.number}: dialog wymaga co najmniej dwóch wypowiedzi w formacie „Postać: wypowiedź”.`);
         }
     }
-    if (resolved.type === "VOCABULARY" || resolved.type === "WORD_LAB") {
+    if (resolved.type === "VOCABULARY" || resolved.type === "WORD_LAB" || resolved.type === "LISTENING") {
         const items = parseVocabularyEditor(fields.vocabulary || fields.content);
         block.content = serializeVocabularyConfig({
             version: 1,
@@ -416,7 +419,7 @@ function parseStep(step, warnings, errors) {
             items
         });
         block.language = normalizeLanguage(fields.language, "en-GB");
-        block.mediaType = resolved.type === "WORD_LAB" ? "word-lab" : "vocabulary";
+        block.mediaType = resolved.type === "WORD_LAB" ? "word-lab" : resolved.type === "LISTENING" ? "listening" : "vocabulary";
         if (items.length < 1) {
             errors.push(`Krok ${step.number}: trening słówek wymaga przynajmniej jednej pozycji.`);
         } else if (items.length > 20) {
@@ -484,7 +487,7 @@ export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS, varian
         .filter(Boolean);
 
     if (String(source || "").trim() && errors.length === 0) {
-        const interactiveTypes = new Set(["AUDIO", "DIALOG", "VOCABULARY", "WORD_LAB", "SENTENCE_BUILDER", "TASK", "QUIZ"]);
+        const interactiveTypes = new Set(["AUDIO", "DIALOG", "VOCABULARY", "WORD_LAB", "LISTENING", "SENTENCE_BUILDER", "TASK", "QUIZ"]);
         const interactiveCount = blocks.filter((block) => interactiveTypes.has(block.type)).length;
         if (blocks.length < Math.min(10, maxBlocks)) {
             warnings.push("Ta lekcja jest krótka. Dla pełnej, zaawansowanej lekcji zalecamy co najmniej 10 zróżnicowanych bloków.");
@@ -512,7 +515,7 @@ export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS, varian
 export function getChatGptLessonPrompt(maxBlocks = MAX_LESSON_BLOCKS, variant = "PROGRAMMING") {
     const languageLesson = variant === "LANGUAGE";
     const allowedTypes = languageLesson
-        ? "Tekst, Wskazówka, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Dialog interaktywny, Trening słówek, Laboratorium słów, Układanie zdania, Zadanie, Quiz"
+        ? "Tekst, Wskazówka, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Rozpoznawanie ze słuchu, Dialog interaktywny, Trening słówek, Laboratorium słów, Układanie zdania, Zadanie, Quiz"
         : "Tekst, Wskazówka, Ostrzeżenie, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Przykład kodu, Zadanie, Quiz, Plik, Cytat, Separator";
     const interactiveLanguageTemplates = languageLesson ? `
 DIALOG INTERAKTYWNY — cały dialog jest jednym blokiem bez względu na liczbę wypowiedzi. Może mieć 2, 20 albo 60 wypowiedzi. Nie dziel jednej scenki na osobne bloki.
@@ -573,6 +576,19 @@ Słówka — jedno w wierszu
 Język audio
 [np. en-GB]
 
+ROZPOZNAWANIE ZE SŁUCHU — odpowiedź jest ukryta do czasu poprawnej próby. Używaj do alfabetu, liczb, godzin, minimal pairs, słów, krótkich zdań i dyktand.
+KROK [NUMER]
+Typ bloku
+Rozpoznawanie ze słuchu
+Tytuł ćwiczenia słuchowego
+[tytuł]
+Instrukcja dla ucznia
+Posłuchaj i wpisz to, co słyszysz.
+Słówka — jedno w wierszu
+[tekst czytany przez lektora | dokładna odpowiedź ucznia | opcjonalny kontekst | inne uznawane odpowiedzi]
+Język audio
+[np. en-GB]
+
 UKŁADANIE ZDANIA — uczeń układa tłumaczenie z 2–6 pomieszanych kafelków. Każdy wyraz oddzielony spacją jest jednym kafelkiem.
 KROK [NUMER]
 Typ bloku
@@ -594,7 +610,10 @@ METODYKA LEKCJI JĘZYKOWEJ
 - Zbuduj progresję: zrozumiały materiał wejściowy → zauważenie znaczenia lub reguły → kontrolowana praktyka → samodzielne przypomnienie → szyk zdania → wypowiedź na głos → dialog → transfer do nowej sytuacji → krótka powtórka.
 - Co najmniej 60% bloków ma wymagać działania ucznia. Dla lekcji około 45 minut twórz zwykle 12–18 bloków, w tym 7–12 bloków aktywnych. Krótszą lekcję twórz tylko wtedy, gdy użytkownik wyraźnie o nią poprosi.
 - Każdy nowy zwrot wykorzystaj co najmniej trzy razy w różnych czynnościach, np. rozpoznanie, układanie zdania i samodzielna wypowiedź. Nie powtarzaj jednak identycznego pytania ani identycznego przykładu.
-- Dobieraj zadania do celu, zamiast mechanicznie używać wszystkich typów. Pełna lekcja językowa powinna zwykle zawierać słownictwo w kontekście, jedno Laboratorium słów dla 3–8 kluczowych pozycji, minimum dwie układanki zdań, krótkie ćwiczenia mówienia oraz dialog końcowy.
+- Najpierw rozpoznaj rodzaj kompetencji. Laboratorium słów stosuj wyłącznie dla prawdziwego słownictwa mającego znaczenie lub tłumaczenie, np. „house → dom”. Nigdy nie twórz pozycji „N → litera N”, „B → litera B” ani podobnych sztucznych tłumaczeń.
+- Dla alfabetu, liczb, godzin, minimal pairs, dyktanda oraz rozpoznawania zapisu ze słuchu używaj bloku „Rozpoznawanie ze słuchu”, który ukrywa odpowiedź. Dla alfabetu buduj kolejno: poznanie pojedynczych liter → rozpoznanie ze słuchu → trudne pary → zapis usłyszanego literowania → samodzielne literowanie krótkiego słowa.
+- W lekcjach o czytaniu i wymowie stosuj kolejność: uczeń słyszy → rozpoznaje i zapisuje → widzi zapis → sam wymawia → dopiero potem otrzymuje krótką regułę. Nie zaczynaj od długiej teorii o zapisie.
+- Dobieraj zadania do celu, zamiast mechanicznie używać wszystkich typów. Laboratorium słów dodaj tylko wtedy, gdy lekcja rzeczywiście wprowadza 3–8 nowych jednostek leksykalnych.
 - Każda kwestia ucznia w dialogu musi mieć w czwartym polu po znakach || konkretne polskie zdanie do przetłumaczenia, np. „Dzień dobry!”. Nigdy nie wpisuj ogólnej instrukcji „odpowiedz po angielsku”. Dodaj naturalne alternatywy tylko wtedy, gdy naprawdę pasują do kontekstu.
 - Jedno ćwiczenie „Audio i wymowa” ma sprawdzać jedną literę, jedno słowo albo krótki naturalny zwrot — maksymalnie 5 słów. Nigdy nie każ w jednym nagraniu wymawiać całego alfabetu, długiej listy słów ani serii „A. B. C. D...”. Podziel taki materiał na kilka celowych prób i przeplataj go rozpoznawaniem znaczenia.
 - Alfabetu nie ucz jako recytacji długich zakresów. Ćwicz pojedyncze litery w parach łatwych do pomylenia, następnie rozpoznawanie ze słuchu, literowanie krótkiego imienia lub słowa i dopiero na końcu praktyczne literowanie w dialogu.
