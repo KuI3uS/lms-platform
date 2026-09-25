@@ -14,6 +14,41 @@ import {
 } from "../../utils/languageInteractiveBlocks";
 import useDialogSpeech from "./useDialogSpeech";
 
+const COMMON_POLISH_PROMPTS = new Map([
+    ["good morning", "Dzień dobry"],
+    ["good afternoon", "Dzień dobry"],
+    ["good evening", "Dobry wieczór"],
+    ["good night", "Dobranoc"],
+    ["hello", "Cześć"],
+    ["hi", "Cześć"],
+    ["how are you", "Jak się masz?"],
+    ["i'm good thanks", "Mam się dobrze, dziękuję"],
+    ["i'm good thanks and you", "Mam się dobrze, dziękuję. A ty?"],
+    ["i'm fine thanks", "U mnie dobrze, dziękuję"],
+    ["i'm fine thanks and you", "U mnie dobrze, dziękuję. A ty?"],
+    ["i'm great thanks", "U mnie świetnie, dziękuję"],
+    ["great thanks", "Świetnie, dziękuję"],
+    ["thank you", "Dziękuję"],
+    ["thanks", "Dzięki"],
+    ["and you", "A ty?"],
+    ["see you", "Do zobaczenia"],
+    ["see you later", "Do zobaczenia później"],
+    ["bye", "Cześć"],
+    ["goodbye", "Do widzenia"],
+    ["nice to meet you", "Miło cię poznać"],
+    ["nice to meet you too", "Ciebie też miło poznać"]
+]);
+
+function inferPolishPrompt(text) {
+    const normalized = String(text || "")
+        .toLocaleLowerCase()
+        .replace(/[’]/g, "'")
+        .replace(/[^a-z0-9' ]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    return COMMON_POLISH_PROMPTS.get(normalized) || "";
+}
+
 function DialogueBubble({ character, text, onSpeak, active = false, muted = false, children }) {
     const right = character.side === "right";
     return (
@@ -56,6 +91,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
             ? null
             : window.SpeechRecognition || window.webkitSpeechRecognition || null
     ), []);
+    const polishPrompt = turn.polishPrompt || inferPolishPrompt(turn.text);
 
     const evaluate = (value, source) => {
         const trimmed = String(value || "").trim();
@@ -129,10 +165,10 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
             {!result && (
                 <div className="mt-3 space-y-3 text-left">
                     <div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.07] p-3 text-sm leading-6 text-amber-50">
-                        {turn.polishPrompt ? (
-                            <><span className="font-black text-amber-300">Przetłumacz na angielski:</span>{" "}{turn.polishPrompt}</>
+                        {polishPrompt ? (
+                            <><span className="font-black text-amber-300">Powiedz po angielsku:</span>{" "}{polishPrompt}</>
                         ) : (
-                            <><span className="font-black text-amber-300">Odpowiedz po angielsku.</span>{" "}Nawiąż do poprzedniej wypowiedzi rozmówcy.</>
+                            <><span className="font-black text-amber-300">Powiedz po angielsku odpowiedź pasującą do rozmowy.</span></>
                         )}
                     </div>
                     {turn.explanation && (
@@ -157,7 +193,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
                             value={answer}
                             onChange={(event) => setAnswer(event.target.value)}
                             onKeyDown={(event) => event.key === "Enter" && evaluate(answer, "text")}
-                            placeholder={turn.polishPrompt ? "Wpisz tłumaczenie po angielsku…" : "Wpisz odpowiedź po angielsku…"}
+                            placeholder={polishPrompt ? "Wpisz to po angielsku…" : "Wpisz odpowiedź po angielsku…"}
                             className="w-full rounded-xl border border-white/10 bg-slate-950 py-3 pl-10 pr-3 text-white outline-none focus:border-blue-300/50"
                         />
                     </div>
