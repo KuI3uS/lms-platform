@@ -422,7 +422,7 @@ function parseStep(step, warnings, errors) {
         block.mediaType = resolved.type === "WORD_LAB" ? "word-lab" : resolved.type === "LISTENING" ? "listening" : "vocabulary";
         if (items.length < 1) {
             errors.push(`Krok ${step.number}: trening słówek wymaga przynajmniej jednej pozycji.`);
-        } else if (items.length > 20) {
+        } else if (items.length > 30) {
             errors.push(`Krok ${step.number}: trening słówek zawiera ${items.length} pozycji, a maksymalnie może zawierać 20.`);
         }
         if (items.some((item) => !item.term || !item.translation)) {
