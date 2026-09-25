@@ -62,7 +62,7 @@ export function parseDialogueEditor(text, characters = DEFAULT_CHARACTERS) {
             const knownCharacter = characterByName.get(speakerName.toLocaleLowerCase())
                 || characters[index % Math.max(characters.length, 1)]
                 || DEFAULT_CHARACTERS[0];
-            const [phrase = "", alternatives = "", explanation = ""] = rawPayload
+            const [phrase = "", alternatives = "", explanation = "", polishPrompt = ""] = rawPayload
                 .split("||")
                 .map((part) => part.trim());
 
@@ -74,6 +74,7 @@ export function parseDialogueEditor(text, characters = DEFAULT_CHARACTERS) {
                     .map((answer) => answer.trim())
                     .filter(Boolean),
                 explanation,
+                polishPrompt,
                 studentTurn: markedAsStudent
             };
         })
@@ -89,7 +90,8 @@ export function dialogueToEditor(config) {
         const marker = turn.studentTurn ? " [UCZEŃ]" : "";
         const additions = [
             (turn.acceptedAnswers || []).join("; "),
-            cleanText(turn.explanation)
+            cleanText(turn.explanation),
+            cleanText(turn.polishPrompt)
         ];
         while (additions.length && !additions[additions.length - 1]) additions.pop();
         return `${character.name}${marker}: ${turn.text}${additions.length ? ` || ${additions.join(" || ")}` : ""}`;
@@ -127,6 +129,7 @@ export function parseDialogContent(content) {
                     ? turn.acceptedAnswers.map(cleanText).filter(Boolean)
                     : [],
                 explanation: cleanText(turn?.explanation),
+                polishPrompt: cleanText(turn?.polishPrompt),
                 studentTurn: Boolean(turn?.studentTurn)
             })).filter((turn) => turn.text)
         };
@@ -221,6 +224,9 @@ export function languageAnswerScore(expectedAnswers, answer) {
     return Math.max(0, ...expectedAnswers.map((expectedAnswer) => {
         const expected = normalizeLanguageAnswer(expectedAnswer);
         if (!expected) return 0;
+        const compactExpected = expected.replace(/[ '\s]/g, "");
+        const compactReceived = received.replace(/[ '\s]/g, "");
+        if (compactExpected === compactReceived) return 100;
         const row = Array.from({ length: received.length + 1 }, (_, index) => index);
         for (let expectedIndex = 1; expectedIndex <= expected.length; expectedIndex++) {
             let previous = row[0];

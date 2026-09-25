@@ -467,9 +467,9 @@ export default function DialogBlockForm({
 
                     placeholder={
                         `${firstCharacter.name}: Good morning!\n`
-                        + `${secondCharacter.name}: Good morning!\n`
+                        + `${secondCharacter.name}: Good morning! || Morning! || To poranne powitanie. || Dzień dobry!\n`
                         + `${firstCharacter.name}: How are you?\n`
-                        + `${secondCharacter.name}: I'm good, thanks.`
+                        + `${secondCharacter.name}: I'm good, thanks. || Fine, thanks. || Krótko odpowiedz na pytanie. || Mam się dobrze, dziękuję.`
                     }
 
                     className={`${FIELD} min-h-72 font-mono text-sm leading-7`}
@@ -511,8 +511,8 @@ export default function DialogBlockForm({
                         ||
                     </strong>{" "}
 
-                    możesz podać inne poprawne odpowiedzi
-                    i wyjaśnienie.
+                    możesz podać kolejno: inne poprawne odpowiedzi,
+                    wyjaśnienie i polskie zdanie do przetłumaczenia.
 
                 </span>
 
