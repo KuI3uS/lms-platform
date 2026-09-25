@@ -17,7 +17,9 @@ import {
     BsImage,
     BsPlayBtn,
     BsHeadphones,
-    BsQuestionCircle
+    BsQuestionCircle,
+    BsGrid3X3Gap,
+    BsChatDots
 } from "react-icons/bs";
 import {
     CEFR_LEVELS,
@@ -624,6 +626,12 @@ function stepIcon(type) {
             return <BsPlayBtn />;
         case "AUDIO":
             return <BsHeadphones />;
+        case "DIALOG":
+            return <BsChatDots />;
+        case "VOCABULARY":
+            return <BsTranslate />;
+        case "SENTENCE_BUILDER":
+            return <BsGrid3X3Gap />;
         case "EXAMPLE":
             return <BsCodeSlash />;
         case "TASK":
@@ -644,6 +652,9 @@ function stepTypeLabel(type) {
         IMAGE: "Obraz",
         VIDEO: "Film",
         AUDIO: "Wymowa",
+        DIALOG: "Dialog",
+        VOCABULARY: "Słówka",
+        SENTENCE_BUILDER: "Układanie zdania",
         EXAMPLE: "Przykład",
         TASK: "Zadanie",
         QUIZ: "Quiz"

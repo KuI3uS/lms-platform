@@ -237,7 +237,7 @@ export default function LessonPage() {
 
     async function finishLesson() {
         const taskBlocks = blocks.filter(
-            block => ["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO"].includes(block.type)
+            block => ["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER"].includes(block.type)
         );
 
         try {
@@ -333,7 +333,7 @@ export default function LessonPage() {
         ? moduleLessons[currentIndex + 1]
         : null;
     const nextLesson = nextLessonCandidate?.canAccess ? nextLessonCandidate : null;
-    const requiredTypes = ["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO"];
+    const requiredTypes = ["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER"];
     const hasTasks = blocks.some(
         block => requiredTypes.includes(block.type)
     );

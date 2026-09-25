@@ -10,6 +10,7 @@ import {
     parseDialogContent,
     parseVocabularyContent
 } from "../../../utils/languageInteractiveBlocks";
+import { parseSentenceBuilderContent } from "../../../utils/sentenceBuilder";
 
 
 const emptyBlock = {
@@ -1118,6 +1119,18 @@ export default function useLessonBlocks() {
                     "warning"
                 );
 
+                return false;
+            }
+        }
+
+        if (block.type === "SENTENCE_BUILDER") {
+            const sentence = parseSentenceBuilderContent(block.content);
+            if (!sentence.polishSentence) {
+                showToast("Dodaj polskie zdanie do przetłumaczenia.", "warning");
+                return false;
+            }
+            if (sentence.words.length < 2 || sentence.words.length > 6) {
+                showToast("Zdanie angielskie musi zawierać od 2 do 6 kafelków.", "warning");
                 return false;
             }
         }

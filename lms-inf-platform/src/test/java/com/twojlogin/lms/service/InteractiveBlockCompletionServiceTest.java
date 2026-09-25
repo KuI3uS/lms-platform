@@ -78,6 +78,31 @@ class InteractiveBlockCompletionServiceTest {
         assertThat(result.correct()).isTrue();
     }
 
+    @Test
+    void sentenceBuilderRequiresACompletelyCorrectRetry() {
+        LessonBlock block = block(BlockType.SENTENCE_BUILDER, """
+                {"kind":"sentence-builder","polishSentence":"Dzień dobry","words":["Good","morning"]}
+                """);
+        when(repository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+
+        var wrong = service.complete(block, user, new InteractiveCompletionRequest(0, 50));
+
+        assertThat(wrong.correct()).isFalse();
+        assertThat(wrong.requiredItems()).isEqualTo(1);
+    }
+
+    @Test
+    void sentenceBuilderCompletesOnlyAtOneHundredPercent() {
+        LessonBlock block = block(BlockType.SENTENCE_BUILDER, """
+                {"kind":"sentence-builder","polishSentence":"Dzień dobry","words":["Good","morning"]}
+                """);
+        when(repository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+
+        var result = service.complete(block, user, new InteractiveCompletionRequest(1, 100));
+
+        assertThat(result.correct()).isTrue();
+    }
+
     private LessonBlock block(BlockType type, String content) {
         LessonBlock block = new LessonBlock();
         block.setType(type);

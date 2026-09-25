@@ -396,7 +396,7 @@ public class LessonBlockController {
                     "Dodaj poprawną odpowiedź do zadania."
             );
         }
-        if ((request.type() == BlockType.DIALOG || request.type() == BlockType.VOCABULARY)
+        if ((request.type() == BlockType.DIALOG || request.type() == BlockType.VOCABULARY || request.type() == BlockType.SENTENCE_BUILDER)
                 && isBlank(request.content())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -441,7 +441,7 @@ public class LessonBlockController {
     }
 
     private void validateInteractiveContent(LessonBlockRequest request) {
-        if (request.type() != BlockType.DIALOG && request.type() != BlockType.VOCABULARY) {
+        if (request.type() != BlockType.DIALOG && request.type() != BlockType.VOCABULARY && request.type() != BlockType.SENTENCE_BUILDER) {
             return;
         }
 
@@ -471,6 +471,21 @@ public class LessonBlockController {
                                 HttpStatus.BAD_REQUEST,
                                 "Każde słówko musi mieć treść i tłumaczenie."
                         );
+                    }
+                }
+            }
+            if (request.type() == BlockType.SENTENCE_BUILDER) {
+                JsonNode words = content.path("words");
+                if (content.path("polishSentence").asText("").isBlank()
+                        || !words.isArray() || words.size() < 2 || words.size() > 6) {
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Układanie zdania wymaga polskiego zdania i od 2 do 6 kafelków."
+                    );
+                }
+                for (JsonNode word : words) {
+                    if (word.asText("").isBlank()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kafelek nie może być pusty.");
                     }
                 }
             }
