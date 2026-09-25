@@ -38,6 +38,7 @@ function DialogueBubble({ character, text, onSpeak, active = false, muted = fals
 function PracticeTurn({ turn, character, coach, language, result, onResult, onSpeak, onStop }) {
     const [answer, setAnswer] = useState("");
     const [listening, setListening] = useState(false);
+    const [showHint, setShowHint] = useState(false);
     const recognitionRef = useRef(null);
     const silenceTimerRef = useRef(null);
     const maxTimerRef = useRef(null);
@@ -127,10 +128,27 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
         <DialogueBubble character={character} text={result ? turn.text : "Twoja kolej…"} onSpeak={onSpeak} muted={!result}>
             {!result && (
                 <div className="mt-3 space-y-3 text-left">
-                    {turn.polishPrompt && (
-                        <div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.07] p-3 text-sm leading-6 text-amber-50">
-                            <span className="font-black text-amber-300">Przetłumacz na angielski:</span>{" "}
-                            {turn.polishPrompt}
+                    <div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.07] p-3 text-sm leading-6 text-amber-50">
+                        {turn.polishPrompt ? (
+                            <><span className="font-black text-amber-300">Przetłumacz na angielski:</span>{" "}{turn.polishPrompt}</>
+                        ) : (
+                            <><span className="font-black text-amber-300">Odpowiedz po angielsku.</span>{" "}Nawiąż do poprzedniej wypowiedzi rozmówcy.</>
+                        )}
+                    </div>
+                    {turn.explanation && (
+                        <div>
+                            <button
+                                type="button"
+                                onClick={() => setShowHint((visible) => !visible)}
+                                className="text-xs font-black uppercase tracking-wider text-cyan-300 hover:text-cyan-200"
+                            >
+                                {showHint ? "Ukryj podpowiedź" : "Pokaż podpowiedź"}
+                            </button>
+                            {showHint && (
+                                <p className="mt-2 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.06] p-3 text-sm leading-6 text-cyan-50">
+                                    {turn.explanation}
+                                </p>
+                            )}
                         </div>
                     )}
                     <div className="relative">
@@ -139,7 +157,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
                             value={answer}
                             onChange={(event) => setAnswer(event.target.value)}
                             onKeyDown={(event) => event.key === "Enter" && evaluate(answer, "text")}
-                            placeholder="Wpisz swoją odpowiedź…"
+                            placeholder={turn.polishPrompt ? "Wpisz tłumaczenie po angielsku…" : "Wpisz odpowiedź po angielsku…"}
                             className="w-full rounded-xl border border-white/10 bg-slate-950 py-3 pl-10 pr-3 text-white outline-none focus:border-blue-300/50"
                         />
                     </div>
