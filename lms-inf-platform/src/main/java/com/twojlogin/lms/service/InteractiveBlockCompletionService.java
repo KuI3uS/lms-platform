@@ -36,6 +36,7 @@ public class InteractiveBlockCompletionService {
     ) {
         if (block.getType() != BlockType.DIALOG
                 && block.getType() != BlockType.VOCABULARY
+                && block.getType() != BlockType.WORD_LAB
                 && block.getType() != BlockType.SENTENCE_BUILDER
                 && block.getType() != BlockType.AUDIO) {
             throw new ResponseStatusException(
@@ -53,7 +54,7 @@ public class InteractiveBlockCompletionService {
                 : request.score()));
 
         boolean completed = switch (block.getType()) {
-            case DIALOG, VOCABULARY -> requiredItems > 0 && completedItems >= requiredItems;
+            case DIALOG, VOCABULARY, WORD_LAB -> requiredItems > 0 && completedItems >= requiredItems && (block.getType() != BlockType.WORD_LAB || score >= MIN_PRONUNCIATION_SCORE);
             case SENTENCE_BUILDER -> completedItems >= 1 && score == 100;
             case AUDIO -> completedItems >= 1 && score >= MIN_PRONUNCIATION_SCORE;
             default -> false;
@@ -87,7 +88,7 @@ public class InteractiveBlockCompletionService {
         if (block.getType() == BlockType.AUDIO || block.getType() == BlockType.SENTENCE_BUILDER) return 1;
         try {
             JsonNode root = OBJECT_MAPPER.readTree(block.getContent());
-            if (block.getType() == BlockType.VOCABULARY) {
+            if (block.getType() == BlockType.VOCABULARY || block.getType() == BlockType.WORD_LAB) {
                 JsonNode items = root.path("items");
                 return items.isArray() ? items.size() : 0;
             }

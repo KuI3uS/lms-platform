@@ -1079,6 +1079,14 @@ export default function useLessonBlocks() {
             }
         }
 
+        if (block.type === "WORD_LAB") {
+            const vocabulary = parseVocabularyContent(block.content);
+            if (vocabulary.items.length < 1 || vocabulary.items.length > 20) {
+                showToast("Laboratorium słów musi zawierać od 1 do 20 pozycji.", "warning");
+                return false;
+            }
+        }
+
         /**
          * Trening słówek.
          */

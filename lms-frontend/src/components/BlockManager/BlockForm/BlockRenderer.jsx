@@ -67,6 +67,9 @@ export default function BlockRenderer({
         case "VOCABULARY":
             return <VocabularyBlockForm block={block} setBlock={setBlock} />;
 
+        case "WORD_LAB":
+            return <VocabularyBlockForm block={block} setBlock={setBlock} lab />;
+
         case "SENTENCE_BUILDER":
             return <SentenceBuilderBlockForm block={block} setBlock={setBlock} />;
 

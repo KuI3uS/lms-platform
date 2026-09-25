@@ -19,7 +19,7 @@ import {
 } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 
-const ASSESSMENT_TYPES = new Set(["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER"]);
+const ASSESSMENT_TYPES = new Set(["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER", "WORD_LAB"]);
 
 function blockIcon(type) {
     switch (type) {

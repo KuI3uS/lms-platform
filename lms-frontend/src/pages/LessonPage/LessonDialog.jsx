@@ -117,7 +117,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
         recognition.lang = language || "en-GB";
         recognition.interimResults = true;
         recognition.maxAlternatives = 3;
-        recognition.continuous = false;
+        recognition.continuous = true;
         recognition.onstart = () => setListening(true);
         let latestAlternatives = [];
         let evaluated = false;
@@ -152,8 +152,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
                 .map((item) => item.transcript)
                 .filter(Boolean);
             window.clearTimeout(silenceTimerRef.current);
-            const finalResult = Array.from(event.results || []).every((result) => result.isFinal);
-            silenceTimerRef.current = window.setTimeout(() => recognition.stop(), finalResult ? 150 : 700);
+            silenceTimerRef.current = window.setTimeout(() => recognition.stop(), 1100);
         };
         recognitionRef.current = recognition;
         recognition.start();

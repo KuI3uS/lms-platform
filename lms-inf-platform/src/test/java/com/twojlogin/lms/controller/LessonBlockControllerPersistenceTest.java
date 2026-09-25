@@ -202,7 +202,7 @@ class LessonBlockControllerPersistenceTest {
 
             String content = switch (type) {
                 case DIALOG -> "{\"kind\":\"dialog\",\"turns\":[{\"text\":\"Hello\"},{\"text\":\"Hi\"}]}";
-                case VOCABULARY -> "{\"kind\":\"vocabulary\",\"items\":[{\"term\":\"hello\",\"translation\":\"cześć\"}]}";
+                case VOCABULARY, WORD_LAB -> "{\"kind\":\"vocabulary\",\"items\":[{\"term\":\"hello\",\"translation\":\"cześć\"}]}";
                 case SENTENCE_BUILDER -> "{\"kind\":\"sentence-builder\",\"polishSentence\":\"Dzień dobry\",\"words\":[\"Good\",\"morning\"]}";
                 default -> "Treść";
             };

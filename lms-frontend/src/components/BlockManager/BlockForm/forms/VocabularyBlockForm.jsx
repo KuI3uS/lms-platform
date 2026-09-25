@@ -9,7 +9,7 @@ import {
 const FIELD = "w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-emerald-300/50";
 const MAX_WORDS = 20;
 
-export default function VocabularyBlockForm({ block, setBlock }) {
+export default function VocabularyBlockForm({ block, setBlock, lab = false }) {
     const config = parseVocabularyContent(block.content);
     const count = config.items.length;
 
@@ -27,8 +27,8 @@ export default function VocabularyBlockForm({ block, setBlock }) {
             <div className="flex items-center gap-3">
                 <div className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-400/15 text-xl text-emerald-200"><BsTranslate /></div>
                 <div>
-                    <h3 className="font-black">Trening słówek</h3>
-                    <p className="text-sm text-gray-400">Uczeń poznaje słowa, odsłuchuje je i wpisuje odpowiedzi samodzielnie.</p>
+                    <h3 className="font-black">{lab ? "Laboratorium słów" : "Trening słówek"}</h3>
+                    <p className="text-sm text-gray-400">{lab ? "Uczeń przypomina znaczenie, wymawia każde słowo i musi poprawić błędy." : "Uczeń poznaje słowa, odsłuchuje je i wpisuje odpowiedzi samodzielnie."}</p>
                 </div>
             </div>
 

@@ -30,6 +30,8 @@ const TYPE_MAP = {
     "trening slowek": "VOCABULARY",
     slownictwo: "VOCABULARY",
     "cwiczenie slownictwa": "VOCABULARY",
+    "laboratorium slow": "WORD_LAB",
+    "aktywny trening slow": "WORD_LAB",
     "ukladanie zdania": "SENTENCE_BUILDER",
     "kafelki ze slowami": "SENTENCE_BUILDER",
     "rozsypanka wyrazowa": "SENTENCE_BUILDER",
@@ -50,6 +52,7 @@ const FIELD_ALIASES = [
     ["tytul cwiczenia", "title"],
     ["tytul dialogu", "title"],
     ["tytul treningu", "title"],
+    ["tytul laboratorium", "title"],
     ["tytul ukladanki", "title"],
     ["tytul przykladu", "title"],
     ["nazwa pliku", "title"],
@@ -405,7 +408,7 @@ function parseStep(step, warnings, errors) {
             errors.push(`Krok ${step.number}: dialog wymaga co najmniej dwóch wypowiedzi w formacie „Postać: wypowiedź”.`);
         }
     }
-    if (resolved.type === "VOCABULARY") {
+    if (resolved.type === "VOCABULARY" || resolved.type === "WORD_LAB") {
         const items = parseVocabularyEditor(fields.vocabulary || fields.content);
         block.content = serializeVocabularyConfig({
             version: 1,
@@ -413,7 +416,7 @@ function parseStep(step, warnings, errors) {
             items
         });
         block.language = normalizeLanguage(fields.language, "en-GB");
-        block.mediaType = "vocabulary";
+        block.mediaType = resolved.type === "WORD_LAB" ? "word-lab" : "vocabulary";
         if (items.length < 1) {
             errors.push(`Krok ${step.number}: trening słówek wymaga przynajmniej jednej pozycji.`);
         } else if (items.length > 20) {
@@ -481,7 +484,7 @@ export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS, varian
         .filter(Boolean);
 
     if (String(source || "").trim() && errors.length === 0) {
-        const interactiveTypes = new Set(["AUDIO", "DIALOG", "VOCABULARY", "SENTENCE_BUILDER", "TASK", "QUIZ"]);
+        const interactiveTypes = new Set(["AUDIO", "DIALOG", "VOCABULARY", "WORD_LAB", "SENTENCE_BUILDER", "TASK", "QUIZ"]);
         const interactiveCount = blocks.filter((block) => interactiveTypes.has(block.type)).length;
         if (blocks.length < Math.min(10, maxBlocks)) {
             warnings.push("Ta lekcja jest krótka. Dla pełnej, zaawansowanej lekcji zalecamy co najmniej 10 zróżnicowanych bloków.");
@@ -509,7 +512,7 @@ export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS, varian
 export function getChatGptLessonPrompt(maxBlocks = MAX_LESSON_BLOCKS, variant = "PROGRAMMING") {
     const languageLesson = variant === "LANGUAGE";
     const allowedTypes = languageLesson
-        ? "Tekst, Wskazówka, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Dialog interaktywny, Trening słówek, Układanie zdania, Zadanie, Quiz"
+        ? "Tekst, Wskazówka, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Dialog interaktywny, Trening słówek, Laboratorium słów, Układanie zdania, Zadanie, Quiz"
         : "Tekst, Wskazówka, Ostrzeżenie, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Przykład kodu, Zadanie, Quiz, Plik, Cytat, Separator";
     const interactiveLanguageTemplates = languageLesson ? `
 DIALOG INTERAKTYWNY — cały dialog jest jednym blokiem bez względu na liczbę wypowiedzi. Może mieć 2, 20 albo 60 wypowiedzi. Nie dziel jednej scenki na osobne bloki.
@@ -557,6 +560,19 @@ Język audio
 
 Każdy wiersz słówka ma format „słowo lub zwrot | polskie znaczenie | przykład opcjonalny | inne uznawane odpowiedzi oddzielone średnikami”. Nie przekraczaj 20 pozycji w jednym treningu.
 
+LABORATORIUM SŁÓW — używaj dla 3–8 najważniejszych słów lekcji. Uczeń musi poprawnie przypomnieć znaczenie i wymówić każde słowo; błędu nie da się pominąć.
+KROK [NUMER]
+Typ bloku
+Laboratorium słów
+Tytuł laboratorium
+[tytuł]
+Instrukcja dla ucznia
+[wyjaśnij, że każde słowo trzeba rozpoznać i powiedzieć]
+Słówka — jedno w wierszu
+[słowo | polskie znaczenie | naturalny przykład | inne poprawne znaczenia oddzielone średnikami]
+Język audio
+[np. en-GB]
+
 UKŁADANIE ZDANIA — uczeń układa tłumaczenie z 2–6 pomieszanych kafelków. Każdy wyraz oddzielony spacją jest jednym kafelkiem.
 KROK [NUMER]
 Typ bloku
@@ -578,8 +594,10 @@ METODYKA LEKCJI JĘZYKOWEJ
 - Zbuduj progresję: zrozumiały materiał wejściowy → zauważenie znaczenia lub reguły → kontrolowana praktyka → samodzielne przypomnienie → szyk zdania → wypowiedź na głos → dialog → transfer do nowej sytuacji → krótka powtórka.
 - Co najmniej 60% bloków ma wymagać działania ucznia. Dla lekcji około 45 minut twórz zwykle 12–18 bloków, w tym 7–12 bloków aktywnych. Krótszą lekcję twórz tylko wtedy, gdy użytkownik wyraźnie o nią poprosi.
 - Każdy nowy zwrot wykorzystaj co najmniej trzy razy w różnych czynnościach, np. rozpoznanie, układanie zdania i samodzielna wypowiedź. Nie powtarzaj jednak identycznego pytania ani identycznego przykładu.
-- Dobieraj zadania do celu, zamiast mechanicznie używać wszystkich typów. Pełna lekcja językowa powinna zwykle zawierać słownictwo w kontekście, minimum dwie układanki zdań, minimum dwa ćwiczenia mówienia lub wymowy oraz dialog końcowy.
+- Dobieraj zadania do celu, zamiast mechanicznie używać wszystkich typów. Pełna lekcja językowa powinna zwykle zawierać słownictwo w kontekście, jedno Laboratorium słów dla 3–8 kluczowych pozycji, minimum dwie układanki zdań, krótkie ćwiczenia mówienia oraz dialog końcowy.
 - Każda kwestia ucznia w dialogu musi mieć w czwartym polu po znakach || konkretne polskie zdanie do przetłumaczenia, np. „Dzień dobry!”. Nigdy nie wpisuj ogólnej instrukcji „odpowiedz po angielsku”. Dodaj naturalne alternatywy tylko wtedy, gdy naprawdę pasują do kontekstu.
+- Jedno ćwiczenie „Audio i wymowa” ma sprawdzać jedną literę, jedno słowo albo krótki naturalny zwrot — maksymalnie 5 słów. Nigdy nie każ w jednym nagraniu wymawiać całego alfabetu, długiej listy słów ani serii „A. B. C. D...”. Podziel taki materiał na kilka celowych prób i przeplataj go rozpoznawaniem znaczenia.
+- Alfabetu nie ucz jako recytacji długich zakresów. Ćwicz pojedyncze litery w parach łatwych do pomylenia, następnie rozpoznawanie ze słuchu, literowanie krótkiego imienia lub słowa i dopiero na końcu praktyczne literowanie w dialogu.
 - Układanka ma zawierać 2–6 sensownych kafelków. Dłuższą wypowiedź rozbij na kilka celowych ćwiczeń, a nie na przypadkowe fragmenty.
 - Dystraktory quizu mają odzwierciedlać typowe błędy ucznia, ale poprawna odpowiedź musi być jednoznaczna. Sprawdzaj znaczenie, dobór zwrotu, szyk, gramatykę i reakcję w sytuacji, a nie samą pamięć definicji.
 - Nie ucz kilku nowych reguł naraz. Wyjaśniaj krótko, przykład pokazuj w innym kontekście niż zadanie, a błędną odpowiedź wykorzystuj do konkretnej, życzliwej korekty.
@@ -726,7 +744,7 @@ Tytuł ćwiczenia
 Krótka instrukcja
 [instrukcja]
 Zwrot do wypowiedzenia
-[dokładny zwrot]
+[jedna litera, jedno słowo albo naturalny zwrot zawierający maksymalnie 5 słów]
 Adres pliku audio (opcjonalnie)
 [adres albo pozostaw pustą linię]
 Język rozpoznawania

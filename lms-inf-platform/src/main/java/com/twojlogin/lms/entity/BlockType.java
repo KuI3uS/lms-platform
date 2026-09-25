@@ -30,6 +30,8 @@ public enum BlockType {
 
     VOCABULARY,
 
+    WORD_LAB,
+
     SENTENCE_BUILDER,
 
     PDF,
