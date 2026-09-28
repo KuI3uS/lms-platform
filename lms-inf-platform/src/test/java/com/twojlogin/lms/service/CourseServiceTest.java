@@ -2,6 +2,7 @@ package com.twojlogin.lms.service;
 
 import com.twojlogin.lms.dto.CourseSummaryDto;
 import com.twojlogin.lms.entity.Course;
+import com.twojlogin.lms.entity.CourseModule;
 import com.twojlogin.lms.entity.Role;
 import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.CourseCertificateRepository;
@@ -10,6 +11,7 @@ import com.twojlogin.lms.repository.CourseModuleRepository;
 import com.twojlogin.lms.repository.CourseOrderRepository;
 import com.twojlogin.lms.repository.CourseRepository;
 import com.twojlogin.lms.repository.ExamAttemptRepository;
+import com.twojlogin.lms.repository.CourseProgressRepository;
 import com.twojlogin.lms.repository.LessonProgressRepository;
 import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.UserRepository;
@@ -55,6 +57,10 @@ class CourseServiceTest {
     private CourseCertificateRepository certificateRepository;
     @Mock
     private ExamAttemptRepository examAttemptRepository;
+    @Mock
+    private CourseProgressRepository courseProgressRepository;
+    @Mock
+    private CourseModuleDeletionService moduleDeletionService;
 
     private CourseService courseService;
 
@@ -69,7 +75,9 @@ class CourseServiceTest {
                 enrollmentRepository,
                 orderRepository,
                 certificateRepository,
-                examAttemptRepository
+                examAttemptRepository,
+                courseProgressRepository,
+                moduleDeletionService
         );
     }
 
@@ -122,6 +130,29 @@ class CourseServiceTest {
         verify(lessonProgressRepository).countCompletedByUserIdAndCourseIds(7L, courseIds);
         verify(moduleRepository, never()).countByCourseId(1L);
         verify(moduleRepository, never()).countByCourseId(2L);
+    }
+
+    @Test
+    void deleteRemovesModulesAndAllCourseRelations() {
+        CourseModule firstModule = new CourseModule();
+        firstModule.setId(11L);
+        CourseModule secondModule = new CourseModule();
+        secondModule.setId(12L);
+
+        when(courseRepository.existsById(3L)).thenReturn(true);
+        when(moduleRepository.findByCourseIdOrderByIdAsc(3L))
+                .thenReturn(List.of(firstModule, secondModule));
+
+        courseService.delete(3L);
+
+        verify(examAttemptRepository).deleteByCourseId(3L);
+        verify(certificateRepository).deleteByCourseId(3L);
+        verify(orderRepository).deleteByCourseId(3L);
+        verify(enrollmentRepository).deleteByCourseId(3L);
+        verify(courseProgressRepository).deleteByCourseId(3L);
+        verify(moduleDeletionService).delete(11L);
+        verify(moduleDeletionService).delete(12L);
+        verify(courseRepository).deleteById(3L);
     }
 
     private Course paidCourse(Long id, String name) {
