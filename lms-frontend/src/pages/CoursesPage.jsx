@@ -24,11 +24,8 @@ import {
     getGeneratedCourseCover
 } from "../utils/courseCover";
 import {
-    COURSE_CATEGORIES,
-    SCHOOL_LEVELS,
     getCategoryDefinition,
     getCourseCategory,
-    getEducationLevel,
     getCourseLanguageLabel,
     getCourseLevelLabel
 } from "../utils/courseTaxonomy";
@@ -108,7 +105,7 @@ function CourseSkeleton() {
     );
 }
 
-function LearningSpaceCard({ icon: Icon, eyebrow, title, description, count, tone, onClick }) {
+function LearningSpaceCard({ icon: Icon, eyebrow, title, description, count, tone, active, onClick }) {
     const tones = {
         emerald: "border-emerald-400/20 from-emerald-500/15 text-emerald-200 hover:border-emerald-300/45",
         amber: "border-amber-400/20 from-amber-500/15 text-amber-200 hover:border-amber-300/45",
@@ -125,7 +122,8 @@ function LearningSpaceCard({ icon: Icon, eyebrow, title, description, count, ton
         <button
             type="button"
             onClick={onClick}
-            className={`group min-w-0 rounded-3xl border bg-gradient-to-br to-white/[0.025] p-5 text-left transition duration-300 hover:-translate-y-1 hover:bg-white/[0.04] ${tones[tone]}`}
+            aria-pressed={active}
+            className={`group min-w-0 rounded-3xl border bg-gradient-to-br to-white/[0.025] p-5 text-left transition duration-300 hover:-translate-y-1 hover:bg-white/[0.04] ${tones[tone]} ${active ? "ring-2 ring-cyan-300/70 ring-offset-4 ring-offset-[#050810]" : "opacity-80 hover:opacity-100"}`}
         >
             <div className="flex items-start justify-between gap-4">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-current/20 bg-black/20 text-xl">
@@ -139,28 +137,6 @@ function LearningSpaceCard({ icon: Icon, eyebrow, title, description, count, ton
             <h3 className="mt-1 text-xl font-black text-white">{title}</h3>
             <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
         </button>
-    );
-}
-
-function SectionHeading({ icon: Icon, eyebrow, title, description, tone = "cyan" }) {
-    const iconTone = {
-        emerald: "border-emerald-400/25 bg-emerald-500/10 text-emerald-200",
-        amber: "border-amber-400/25 bg-amber-500/10 text-amber-200",
-        cyan: "border-cyan-400/25 bg-cyan-500/10 text-cyan-200",
-        violet: "border-violet-400/25 bg-violet-500/10 text-violet-200"
-    };
-
-    return (
-        <div className="mb-6 flex items-start gap-4">
-            <div className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl border p-3 text-2xl ${iconTone[tone]}`}>
-                <Icon />
-            </div>
-            <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 sm:text-xs">{eyebrow}</p>
-                <h3 className="mt-1 text-2xl font-black sm:text-3xl">{title}</h3>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">{description}</p>
-            </div>
-        </div>
     );
 }
 
@@ -315,7 +291,7 @@ export default function CoursesPage() {
     const location = useLocation();
     const isAdmin = user?.role === "ADMIN";
     const [view, setView] = useState("catalog");
-    const [activeSchoolLevel, setActiveSchoolLevel] = useState(null);
+    const [activeSection, setActiveSection] = useState("recommended");
 
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -386,42 +362,47 @@ export default function CoursesPage() {
     const schoolCourses = courses.filter(
         (course) => getCourseCategory(course) === "SCHOOL"
     );
-    const universityCourses = courses.filter(
-        (course) => getCourseCategory(course) === "UNIVERSITY"
-    );
-    const programmingCourses = courses.filter(
-        (course) => getCourseCategory(course) === "PROGRAMMING"
-    );
-    const languageCourses = courses.filter(
-        (course) => getCourseCategory(course) === "LANGUAGE"
-    );
-    const digitalCourses = courses.filter(
-        (course) => getCourseCategory(course) === "DIGITAL_SKILLS"
-    );
-    const schoolCoursesByLevel = Object.fromEntries(
-        SCHOOL_LEVELS.map((level) => [
-            level,
-            schoolCourses.filter((course) => getEducationLevel(course) === level)
-        ])
-    );
-    const displayedSchoolLevel = activeSchoolLevel
-        || SCHOOL_LEVELS.find((level) => schoolCoursesByLevel[level]?.length > 0)
-        || SCHOOL_LEVELS[0];
-    const selectedSchoolCourses = schoolCoursesByLevel[displayedSchoolLevel] || [];
-    const additionalCategories = COURSE_CATEGORIES
-        .filter((category) => ["PROGRAMMING", "LANGUAGE", "DIGITAL_SKILLS"].includes(category.value))
-        .map((category) => ({
-            ...category,
-            courses: courses.filter((course) => getCourseCategory(course) === category.value)
-        }))
-        .filter((category) => category.courses.length > 0);
-
-    const scrollToSection = (id) => {
-        document.getElementById(id)?.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
+    const isPaidCourse = (course) => typeof course.paid === "boolean"
+        ? course.paid
+        : course.billingMode !== "FREE";
+    const paidCourses = courses.filter(isPaidCourse);
+    const freeCourses = courses.filter((course) => !isPaidCourse(course));
+    const recommendedCourses = [...courses]
+        .sort((first, second) => {
+            const accessDifference = Number(second.canAccess) - Number(first.canAccess);
+            if (accessDifference !== 0) return accessDifference;
+            const progressDifference = Number(second.progress || 0) - Number(first.progress || 0);
+            if (progressDifference !== 0) return progressDifference;
+            return Number(second.lessonCount || 0) - Number(first.lessonCount || 0);
+        })
+        .slice(0, 6);
+    const courseSections = {
+        recommended: {
+            label: "Polecane",
+            eyebrow: "Dobry wybór na start",
+            description: "Najlepiej dopasowane, rozbudowane ścieżki oraz kursy, które już rozpocząłeś.",
+            items: recommendedCourses
+        },
+        paid: {
+            label: "Płatne",
+            eyebrow: "Pełne programy nauki",
+            description: "Kursy kupowane jednorazowo, na 30 dni albo w miesięcznym abonamencie.",
+            items: paidCourses
+        },
+        free: {
+            label: "Darmowe",
+            eyebrow: "Nauka bez opłat",
+            description: "Bezpłatne kursy, które możesz rozpocząć od razu.",
+            items: freeCourses
+        },
+        school: {
+            label: "Dla szkół",
+            eyebrow: "Materiały zgodne z nauką szkolną",
+            description: "Przedmioty i ścieżki uporządkowane dla uczniów według programu nauczania.",
+            items: schoolCourses
+        }
     };
+    const selectedSection = courseSections[activeSection];
     const renderCourseCards = (items) => (
         <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
             {items.map((course) => (
@@ -577,133 +558,71 @@ export default function CoursesPage() {
                         )}
                     </div>
                 ) : (
-                    <div className="space-y-16">
+                    <div className="space-y-10">
                         <nav aria-label="Przestrzenie nauki" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                             <LearningSpaceCard
-                                icon={BsMortarboardFill}
-                                eyebrow="Ścieżka szkolna"
-                                title="Technikum"
-                                description="Przedmioty uporządkowane według klasy i programu nauczania."
-                                count={schoolCourses.length}
+                                icon={BsRocketTakeoff}
+                                eyebrow="Wybrane dla Ciebie"
+                                title="Polecane"
+                                description="Najlepsze kursy na start i rozpoczęte ścieżki."
+                                count={recommendedCourses.length}
                                 tone="emerald"
-                                onClick={() => scrollToSection("technikum")}
+                                active={activeSection === "recommended"}
+                                onClick={() => setActiveSection("recommended")}
                             />
                             <LearningSpaceCard
-                                icon={BsBuildings}
-                                eyebrow="Ścieżka akademicka"
-                                title="Uczelnia"
-                                description="Osobna przestrzeń na laboratoria i materiały dla studentów."
-                                count={universityCourses.length}
+                                icon={BsLockFill}
+                                eyebrow="Oferta premium"
+                                title="Płatne"
+                                description="Pełne kursy jednorazowe i abonamentowe."
+                                count={paidCourses.length}
                                 tone="amber"
-                                onClick={() => scrollToSection("uczelnia")}
+                                active={activeSection === "paid"}
+                                onClick={() => setActiveSection("paid")}
                             />
                             <LearningSpaceCard
-                                icon={BsCodeSlash}
-                                eyebrow="Rozwój zawodowy"
-                                title="Programowanie"
-                                description="Java, Python, frontend i technologie wykraczające poza szkołę."
-                                count={programmingCourses.length + digitalCourses.length}
+                                icon={BsPlayFill}
+                                eyebrow="Bez opłat"
+                                title="Darmowe"
+                                description="Kursy dostępne od razu bez zakupu."
+                                count={freeCourses.length}
                                 tone="cyan"
-                                onClick={() => scrollToSection("dodatkowe")}
+                                active={activeSection === "free"}
+                                onClick={() => setActiveSection("free")}
                             />
                             <LearningSpaceCard
-                                icon={BsTranslate}
-                                eyebrow="Języki A1–C2"
-                                title="Kursy językowe"
-                                description="Niezależne ścieżki językowe z własnym tempem nauki."
-                                count={languageCourses.length}
+                                icon={BsMortarboardFill}
+                                eyebrow="Nauka szkolna"
+                                title="Dla szkół"
+                                description="Przedmioty uporządkowane według programu nauczania."
+                                count={schoolCourses.length}
                                 tone="violet"
-                                onClick={() => scrollToSection("dodatkowe")}
+                                active={activeSection === "school"}
+                                onClick={() => setActiveSection("school")}
                             />
                         </nav>
 
-                        {(view === "catalog" || schoolCourses.length > 0 || isAdmin) && (
-                            <section id="technikum" className="scroll-mt-28">
-                                <SectionHeading
-                                    icon={BsMortarboardFill}
-                                    eyebrow="Ścieżka szkolna"
-                                    title="Technik informatyk"
-                                    description="Wybierz swoją klasę. Zobaczysz tylko przedmioty przewidziane dla danego roku nauki."
-                                    tone="emerald"
-                                />
-
-                                <div className="mb-7 grid grid-cols-2 gap-2 rounded-3xl border border-white/10 bg-black/20 p-2 sm:grid-cols-4">
-                                    {SCHOOL_LEVELS.map((level) => {
-                                        const count = schoolCoursesByLevel[level]?.length || 0;
-                                        const active = displayedSchoolLevel === level;
-                                        return (
-                                            <button
-                                                key={level}
-                                                type="button"
-                                                onClick={() => setActiveSchoolLevel(level)}
-                                                className={`rounded-2xl px-4 py-3 text-left transition ${
-                                                    active
-                                                        ? "bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/15"
-                                                        : "text-slate-400 hover:bg-white/5 hover:text-white"
-                                                }`}
-                                            >
-                                                <span className="block font-black">{level}</span>
-                                                <span className={`mt-0.5 block text-xs ${active ? "text-slate-800" : "text-slate-600"}`}>
-                                                    {count} {count === 1 ? "przedmiot" : "przedmiotów"}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
+                        <section className="rounded-[32px] border border-white/10 bg-white/[0.025] p-5 sm:p-8">
+                            <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">
+                                {selectedSection.eyebrow}
+                            </p>
+                            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                                <div>
+                                    <h3 className="text-3xl font-black">{selectedSection.label}</h3>
+                                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+                                        {selectedSection.description}
+                                    </p>
                                 </div>
-
-                                {selectedSchoolCourses.length > 0
-                                    ? renderCourseCards(selectedSchoolCourses)
-                                    : <EmptyLearningArea message={`${displayedSchoolLevel} — przedmioty są jeszcze w przygotowaniu.`} />}
-                            </section>
-                        )}
-
-                        {(view === "catalog" || universityCourses.length > 0 || isAdmin) && (
-                            <section id="uczelnia" className="scroll-mt-28">
-                                <SectionHeading
-                                    icon={BsBuildings}
-                                    eyebrow="Osobna przestrzeń"
-                                    title="Uczelnia"
-                                    description="Kursy akademickie nie mieszają się z klasami technikum ani z ofertą dodatkową."
-                                    tone="amber"
-                                />
-                                {universityCourses.length > 0
-                                    ? renderCourseCards(universityCourses)
-                                    : <EmptyLearningArea message="Strefa uczelni jest przygotowana. Kursy pojawią się tutaj po ich dodaniu." />}
-                            </section>
-                        )}
-
-                        {(view === "catalog" || additionalCategories.length > 0 || isAdmin) && (
-                            <section id="dodatkowe" className="scroll-mt-28">
-                                <SectionHeading
-                                    icon={BsRocketTakeoff}
-                                    eyebrow="Rozwój ponad program"
-                                    title="Kursy dodatkowe"
-                                    description="Ścieżki programistyczne, cyfrowe i językowe pozostają dostępne niezależnie od klasy oraz uczelni."
-                                    tone="cyan"
-                                />
-                                <div className="space-y-12">
-                                    {additionalCategories.length === 0 ? (
-                                        <EmptyLearningArea message="Kursy programistyczne i językowe są jeszcze w przygotowaniu." />
-                                    ) : additionalCategories.map((category) => {
-                                        const CategoryIcon = CATEGORY_ICONS[category.value] || BsCollection;
-                                        return (
-                                            <div key={category.value}>
-                                                <div className="mb-5 flex items-center gap-3">
-                                                    <div className={`grid h-10 w-10 place-items-center rounded-xl border ${CATEGORY_STYLES[category.value]}`}>
-                                                        <CategoryIcon />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-xl font-black">{category.title}</h4>
-                                                        <p className="text-xs text-slate-500">{category.description}</p>
-                                                    </div>
-                                                </div>
-                                                {renderCourseCards(category.courses)}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </section>
-                        )}
+                                <span className="text-sm font-bold text-slate-500">
+                                    {selectedSection.items.length} {selectedSection.items.length === 1 ? "kurs" : "kursów"}
+                                </span>
+                            </div>
+                            <div className="mt-7">
+                                {selectedSection.items.length > 0
+                                    ? renderCourseCards(selectedSection.items)
+                                    : <EmptyLearningArea message={`W sekcji „${selectedSection.label}” nie ma jeszcze kursów.`} />}
+                            </div>
+                        </section>
                     </div>
                 )}
             </section>
