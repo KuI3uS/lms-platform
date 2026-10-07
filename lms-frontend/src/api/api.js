@@ -36,10 +36,6 @@ export async function apiFetch(url, options = {}) {
         }
     });
 
-    if (res.status === 401 || res.status === 403) {
-        throw new Error("Unauthorized");
-    }
-
     const text = await res.text();
 
     if (!res.ok) {

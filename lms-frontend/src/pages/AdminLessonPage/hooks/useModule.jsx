@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../../api/api";
 
 export default function useModule(moduleId) {
@@ -10,17 +10,7 @@ export default function useModule(moduleId) {
 
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-
-        if (!moduleId) {
-            return;
-        }
-
-        loadModule();
-
-    }, [moduleId]);
-
-    async function loadModule() {
+    const loadModule = useCallback(async () => {
 
         try {
 
@@ -39,7 +29,17 @@ export default function useModule(moduleId) {
 
         }
 
-    }
+    }, [moduleId]);
+
+    useEffect(() => {
+
+        if (!moduleId) {
+            return;
+        }
+
+        loadModule();
+
+    }, [moduleId, loadModule]);
 
     async function saveModuleSettings() {
 

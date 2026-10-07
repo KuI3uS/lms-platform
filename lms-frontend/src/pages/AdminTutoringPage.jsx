@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../api/api";
 import {
-    BsCalendarPlus,
     BsClock,
     BsTrash,
     BsCheckCircle,
@@ -19,11 +18,7 @@ export default function AdminTutoringPage() {
     const [endTime, setEndTime] = useState("");
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        load();
-    }, []);
-
-    const load = async () => {
+    const load = useCallback(async () => {
         setLoading(true);
 
         try {
@@ -43,7 +38,12 @@ export default function AdminTutoringPage() {
         }
 
         setLoading(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        const timer = window.setTimeout(load, 0);
+        return () => window.clearTimeout(timer);
+    }, [load]);
 
     const addTerm = async () => {
         if (!startTime || !endTime) {

@@ -11,7 +11,7 @@ export default function TestPage() {
 
     useEffect(() => {
         apiFetch(`/questions/module/${moduleId}`).then(setQuestions);
-    }, []);
+    }, [moduleId]);
 
     const handleAnswer = (questionId, answerId) => {
         setSelectedAnswers(prev => ({

@@ -14,7 +14,13 @@ export default function AdminSubmissionsPage() {
     const [status, setStatus] = useState("");
 
     useEffect(() => {
-        load();
+        let active = true;
+        apiFetch("/admin/submissions").then((data) => {
+            if (active) setSubmissions(data || []);
+        });
+        return () => {
+            active = false;
+        };
     }, []);
 
     const load = async () => {

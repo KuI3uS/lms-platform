@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { API_URL } from "./api/api";
+import { apiFetch } from "./api/api";
 
 export default function ResetPassword() {
     const [params] = useSearchParams();
@@ -8,36 +8,34 @@ export default function ResetPassword() {
 
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     const submit = async () => {
-        if (!password.trim()) {
-            alert("Podaj nowe hasło");
+        if (!token) {
+            setError("Link do resetu hasła jest nieprawidłowy.");
+            return;
+        }
+        if (password.length < 8) {
+            setError("Nowe hasło musi mieć co najmniej 8 znaków.");
             return;
         }
 
         try {
             setLoading(true);
+            setError("");
 
-            const res = await fetch(`${API_URL}/auth/reset-password`, {
+            await apiFetch("/auth/reset-password", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
                 body: JSON.stringify({
                     token,
                     newPassword: password
                 })
             });
 
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || "Błąd resetu hasła");
-            }
-
-            alert("Hasło zostało zmienione. Możesz się zalogować.");
+            alert("Hasło zostało zmienione. Konto jest aktywne i możesz się zalogować.");
             window.location.href = "/login";
         } catch (e) {
-            alert(e.message);
+            setError(e.message || "Nie udało się zmienić hasła.");
         } finally {
             setLoading(false);
         }
@@ -48,10 +46,18 @@ export default function ResetPassword() {
             <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl w-96 space-y-4">
                 <h1 className="text-2xl font-bold">Nowe hasło</h1>
 
+                {error && (
+                    <div role="alert" className="rounded-xl bg-red-500/15 p-3 text-sm text-red-300">
+                        {error}
+                    </div>
+                )}
+
                 <input
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     type="password"
+                    minLength={8}
+                    autoComplete="new-password"
                     placeholder="Nowe hasło"
                     className="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl"
                 />

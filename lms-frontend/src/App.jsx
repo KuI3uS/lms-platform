@@ -9,6 +9,7 @@ const Login = lazy(() => import("./Login"));
 const Register = lazy(() => import("./Register"));
 const ForgotPassword = lazy(() => import("./ForgotPassword"));
 const ResetPassword = lazy(() => import("./ResetPassword"));
+const VerifyEmail = lazy(() => import("./VerifyEmail"));
 const TutoringBookingPage = lazy(() => import("./pages/TutoringBookingPage"));
 
 const CoursesPage = lazy(() => import("./pages/CoursesPage"));
@@ -32,6 +33,10 @@ const AdminTutoringPage = lazy(() => import("./pages/AdminTutoringPage"));
 const AdminLessonPage = lazy(() => import("./pages/AdminLessonPage/AdminLessonPage.jsx"));
 const AdminSubmissionsPage = lazy(() => import("./pages/AdminSubmissionsPage"));
 const AdminCourseOrdersPage = lazy(() => import("./pages/AdminCourseOrdersPage"));
+const AdminModulesPage = lazy(() => import("./pages/AdminModulesPage"));
+const AdminQuestionsPage = lazy(() => import("./pages/AdminQuestionsPage"));
+const AdminStatisticsPage = lazy(() => import("./pages/AdminStatisticsPage"));
+const AdminSettingsPage = lazy(() => import("./pages/AdminSettingsPage"));
 
 function PageLoader() {
     return (
@@ -54,6 +59,7 @@ export default function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/tutoring-booking" element={<TutoringBookingPage />} />
                 <Route path="/certificates/:certificateNumber" element={<CertificatePage />} />
 
@@ -73,6 +79,11 @@ export default function App() {
 
                         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
                         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+                        <Route path="/admin/courses" element={<AdminRoute><CoursesPage /></AdminRoute>} />
+                        <Route path="/admin/modules" element={<AdminRoute><AdminModulesPage /></AdminRoute>} />
+                        <Route path="/admin/questions" element={<AdminRoute><AdminQuestionsPage /></AdminRoute>} />
+                        <Route path="/admin/statistics" element={<AdminRoute><AdminStatisticsPage /></AdminRoute>} />
+                        <Route path="/admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
                         <Route path="/admin/add-course" element={<AdminRoute><AddCoursePage /></AdminRoute>} />
                         <Route path="/admin/courses/:courseId/edit" element={<AdminRoute><AddCoursePage /></AdminRoute>} />
                         <Route path="/admin/add-question" element={<AdminRoute><AddQuestionPage /></AdminRoute>} />

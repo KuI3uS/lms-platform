@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../api/api";
 
 export default function AdminUsers() {
@@ -7,14 +7,15 @@ export default function AdminUsers() {
     const levels = ["1", "2", "3"];
     const groups = ["TIA", "TIB", "TIC", "TPA", "TPB", "TPC"];
 
-    useEffect(() => {
-        load();
-    }, []);
-
-    const load = async () => {
+    const load = useCallback(async () => {
         const data = await apiFetch("/users");
         setUsers(data || []);
-    };
+    }, []);
+
+    useEffect(() => {
+        const timer = window.setTimeout(load, 0);
+        return () => window.clearTimeout(timer);
+    }, [load]);
 
     const deleteUser = async (id, email) => {
         if (!window.confirm(`Na pewno usunąć użytkownika:\n${email}?`)) return;

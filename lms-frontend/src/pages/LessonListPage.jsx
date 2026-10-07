@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 
@@ -22,13 +22,7 @@ export default function LessonListPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-
-        load();
-
-    }, [moduleId]);
-
-    const load = async () => {
+    const load = useCallback(async () => {
 
         setLoading(true);
         setError(null);
@@ -104,7 +98,14 @@ export default function LessonListPage() {
 
         }
 
-    };
+    }, [moduleId]);
+
+    useEffect(() => {
+
+        const timer = window.setTimeout(load, 0);
+        return () => window.clearTimeout(timer);
+
+    }, [load]);
 
     if (loading) {
 
