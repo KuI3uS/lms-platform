@@ -11,10 +11,14 @@ import {
 import MonacoEditorBox from "../../../../pages/LessonPage/MonacoEditor";
 
 export default function TaskBlockForm({
-                                     task,
+
+                                          block: task,
+
                                           setBlock,
-                                     onSave
-                                 }) {
+
+                                          onSave
+
+                                      }) {
 
     function update(field, value) {
 
