@@ -21,7 +21,6 @@ public class AchievementService {
     private final UserAchievementRepository achievementRepository;
     private final LessonProgressRepository lessonProgressRepository;
     private final CourseModuleRepository moduleRepository;
-    private final LessonRepository lessonRepository;
     private final CourseCertificateRepository certificateRepository;
     private final ExamAttemptRepository examAttemptRepository;
     private final CourseAccessService accessService;
@@ -31,7 +30,6 @@ public class AchievementService {
             UserAchievementRepository achievementRepository,
             LessonProgressRepository lessonProgressRepository,
             CourseModuleRepository moduleRepository,
-            LessonRepository lessonRepository,
             CourseCertificateRepository certificateRepository,
             ExamAttemptRepository examAttemptRepository,
             CourseAccessService accessService,
@@ -40,7 +38,6 @@ public class AchievementService {
         this.achievementRepository = achievementRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.moduleRepository = moduleRepository;
-        this.lessonRepository = lessonRepository;
         this.certificateRepository = certificateRepository;
         this.examAttemptRepository = examAttemptRepository;
         this.accessService = accessService;
@@ -54,6 +51,7 @@ public class AchievementService {
 
     @Transactional
     public List<AchievementDto> evaluate(User user) {
+        Map<AchievementType, UserAchievement> unlocked = unlockedFor(user);
         long completedLessons = lessonProgressRepository
                 .countByUserIdAndCompletedTrue(user.getId());
         int xp = Math.toIntExact(completedLessons * XP_PER_LESSON);
@@ -63,19 +61,21 @@ public class AchievementService {
         );
         long completedModules = countCompletedModules(user.getId());
 
-        unlockWhen(user, AchievementType.FIRST_LESSON, () -> completedLessons >= 1);
-        unlockWhen(user, AchievementType.STREAK_3, () -> streak >= 3);
-        unlockWhen(user, AchievementType.STREAK_7, () -> streak >= 7);
-        unlockWhen(user, AchievementType.XP_100, () -> xp >= 100);
-        unlockWhen(user, AchievementType.XP_500, () -> xp >= 500);
-        unlockWhen(user, AchievementType.MODULE_MASTER, () -> completedModules >= 1);
+        unlockWhen(user, unlocked, AchievementType.FIRST_LESSON, () -> completedLessons >= 1);
+        unlockWhen(user, unlocked, AchievementType.STREAK_3, () -> streak >= 3);
+        unlockWhen(user, unlocked, AchievementType.STREAK_7, () -> streak >= 7);
+        unlockWhen(user, unlocked, AchievementType.XP_100, () -> xp >= 100);
+        unlockWhen(user, unlocked, AchievementType.XP_500, () -> xp >= 500);
+        unlockWhen(user, unlocked, AchievementType.MODULE_MASTER, () -> completedModules >= 1);
         unlockWhen(
                 user,
+                unlocked,
                 AchievementType.COURSE_GRADUATE,
                 () -> certificateRepository.countByUserId(user.getId()) >= 1
         );
         unlockWhen(
                 user,
+                unlocked,
                 AchievementType.PERFECT_EXAM,
                 () -> examAttemptRepository.existsByUserIdAndStatusAndPercentageGreaterThanEqual(
                         user.getId(),
@@ -84,36 +84,30 @@ public class AchievementService {
                 )
         );
 
-        Map<AchievementType, UserAchievement> unlocked = achievementRepository
-                .findByUserIdOrderByUnlockedAtAsc(user.getId())
-                .stream()
-                .collect(Collectors.toMap(UserAchievement::getType, achievement -> achievement));
+        return Arrays.stream(AchievementType.values())
+                .map(type -> toDto(type, unlocked.get(type)))
+                .toList();
+    }
 
+    @Transactional(readOnly = true)
+    public List<AchievementDto> getFor(User user) {
+        Map<AchievementType, UserAchievement> unlocked = unlockedFor(user);
         return Arrays.stream(AchievementType.values())
                 .map(type -> toDto(type, unlocked.get(type)))
                 .toList();
     }
 
     public long countCompletedModules(Long userId) {
-        return moduleRepository.findAll().stream()
-                .filter(module -> {
-                    long lessons = lessonRepository.countByModuleId(module.getId());
-                    return lessons > 0
-                            && lessonProgressRepository.countCompletedByUserIdAndModuleId(
-                                    userId,
-                                    module.getId()
-                            ) >= lessons;
-                })
-                .count();
+        return moduleRepository.countCompletedModulesByUserId(userId);
     }
 
     private void unlockWhen(
             User user,
+            Map<AchievementType, UserAchievement> unlocked,
             AchievementType type,
             BooleanSupplier condition
     ) {
-        if (achievementRepository.existsByUserIdAndType(user.getId(), type)
-                || !condition.getAsBoolean()) {
+        if (unlocked.containsKey(type) || !condition.getAsBoolean()) {
             return;
         }
 
@@ -121,9 +115,10 @@ public class AchievementService {
         achievement.setUser(user);
         achievement.setType(type);
         achievement.setUnlockedAt(LocalDateTime.now());
-        achievementRepository.save(achievement);
+        UserAchievement saved = achievementRepository.save(achievement);
+        unlocked.put(type, saved);
 
-        AchievementDto definition = toDto(type, achievement);
+        AchievementDto definition = toDto(type, saved);
         notificationService.create(
                 user,
                 NotificationType.ACHIEVEMENT,
@@ -131,6 +126,18 @@ public class AchievementService {
                 "Zdobyłeś osiągnięcie „" + definition.title() + "”.",
                 "/learning-center"
         );
+    }
+
+    private Map<AchievementType, UserAchievement> unlockedFor(User user) {
+        return achievementRepository
+                .findByUserIdOrderByUnlockedAtAsc(user.getId())
+                .stream()
+                .collect(Collectors.toMap(
+                        UserAchievement::getType,
+                        achievement -> achievement,
+                        (first, ignored) -> first,
+                        () -> new EnumMap<>(AchievementType.class)
+                ));
     }
 
     private AchievementDto toDto(

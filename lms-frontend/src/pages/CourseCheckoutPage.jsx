@@ -11,6 +11,7 @@ import {
     BsShieldCheck
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
+import { fetchLearningStats } from "../api/learningStats";
 import { getCourseCover } from "../utils/courseCover";
 import { resolveCoursePaymentUrl } from "../utils/paymentLinks";
 
@@ -58,7 +59,7 @@ export default function CourseCheckoutPage() {
         Promise.all([
             apiFetch(`/courses/${courseId}`),
             apiFetch("/course-orders/my"),
-            apiFetch("/learning-stats")
+            fetchLearningStats()
         ])
             .then(([courseData, orders, statsData]) => {
                 if (!active) return;

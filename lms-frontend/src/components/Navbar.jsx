@@ -3,6 +3,10 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, logout } from "../api/api";
 import {
+    fetchLearningStats,
+    invalidateLearningStats
+} from "../api/learningStats";
+import {
     BsBell,
     BsBoxArrowRight,
     BsFire,
@@ -43,8 +47,8 @@ export default function Navbar({ onMenuClick }) {
     useEffect(() => {
         let active = true;
 
-        const refresh = () => {
-            apiFetch("/learning-stats")
+        const refresh = ({ force = false } = {}) => {
+            fetchLearningStats({ force })
                 .then(data => {
                     if (active && data) setLearningStats(data);
                 })
@@ -64,13 +68,17 @@ export default function Navbar({ onMenuClick }) {
         refresh();
         const timer = window.setInterval(refresh, 30000);
         document.addEventListener("visibilitychange", refreshWhenVisible);
-        window.addEventListener("eduhub:stats-changed", refresh);
+        const refreshChangedStats = () => {
+            invalidateLearningStats();
+            refresh({ force: true });
+        };
+        window.addEventListener("eduhub:stats-changed", refreshChangedStats);
 
         return () => {
             active = false;
             window.clearInterval(timer);
             document.removeEventListener("visibilitychange", refreshWhenVisible);
-            window.removeEventListener("eduhub:stats-changed", refresh);
+            window.removeEventListener("eduhub:stats-changed", refreshChangedStats);
         };
     }, []);
 

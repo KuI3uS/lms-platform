@@ -47,3 +47,25 @@ body {
     color: #ffffff;
     -webkit-text-fill-color: #ffffff;
 }
+
+@keyframes lesson-step-enter {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.992);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.lesson-step-transition {
+    animation: lesson-step-enter 260ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lesson-step-transition {
+        animation: none;
+    }
+}

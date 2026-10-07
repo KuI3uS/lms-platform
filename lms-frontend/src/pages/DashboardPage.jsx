@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
+import { fetchLearningStats } from "../api/learningStats";
 import {
     getCourseCover,
     getGeneratedCourseCover
@@ -83,7 +84,7 @@ export default function DashboardPage() {
         Promise.all([
             apiFetch("/submissions/my").catch(() => []),
             apiFetch("/my-results").catch(() => []),
-            apiFetch("/learning-stats").catch(() => null)
+            fetchLearningStats().catch(() => null)
         ]).then(([submissionsData, resultsData, statsData]) => {
             if (!active) return;
             const nextSubmissions = submissionsData || [];

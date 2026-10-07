@@ -339,6 +339,10 @@ export default function LessonPage() {
                 />
 
                 <main className="mx-auto min-w-0 max-w-5xl space-y-6">
+                    <div
+                        key={selectedBlock?.id || "empty-step"}
+                        className="lesson-step-transition"
+                    >
                         <LessonBlock
                             block={selectedBlock}
                             answers={answers}
@@ -348,25 +352,26 @@ export default function LessonPage() {
                             onReset={resetTask}
                             onCheck={checkTask}
                         />
+                    </div>
 
-                        <LessonFooter
-                            onFinish={finishLesson}
-                            finishing={finishing}
-                            finishResult={finishResult}
-                            hasPreviousStep={Boolean(previousBlock)}
-                            hasNextStep={Boolean(nextBlock)}
-                            canContinue={Boolean(currentBlockCompleted)}
-                            onPreviousStep={() => previousBlock && selectBlock(previousBlock)}
-                            onNextStep={() => nextBlock && selectBlock(nextBlock)}
-                            previousLesson={previousLesson}
-                            nextLesson={nextLesson}
-                            onPreviousLesson={() => previousLesson && navigate(`/lesson/${previousLesson.id}`)}
-                            onNextLesson={() => nextLesson && navigate(`/lesson/${nextLesson.id}`)}
-                            onBack={goBack}
-                            completedAssessments={completedAssessmentCount}
-                            totalAssessments={assessmentBlocks.length}
-                            hasTasks={hasTasks}
-                        />
+                    <LessonFooter
+                        onFinish={finishLesson}
+                        finishing={finishing}
+                        finishResult={finishResult}
+                        hasPreviousStep={Boolean(previousBlock)}
+                        hasNextStep={Boolean(nextBlock)}
+                        canContinue={Boolean(currentBlockCompleted)}
+                        onPreviousStep={() => previousBlock && selectBlock(previousBlock)}
+                        onNextStep={() => nextBlock && selectBlock(nextBlock)}
+                        previousLesson={previousLesson}
+                        nextLesson={nextLesson}
+                        onPreviousLesson={() => previousLesson && navigate(`/lesson/${previousLesson.id}`)}
+                        onNextLesson={() => nextLesson && navigate(`/lesson/${nextLesson.id}`)}
+                        onBack={goBack}
+                        completedAssessments={completedAssessmentCount}
+                        totalAssessments={assessmentBlocks.length}
+                        hasTasks={hasTasks}
+                    />
                 </main>
             </div>
         </div>

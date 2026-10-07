@@ -22,7 +22,6 @@ public class LearningAnalyticsService {
     private final ExamAttemptRepository examAttemptRepository;
     private final AchievementService achievementService;
     private final CourseCertificateRepository certificateRepository;
-    private final CertificateService certificateService;
 
     public LearningAnalyticsService(
             CourseAccessService accessService,
@@ -31,8 +30,7 @@ public class LearningAnalyticsService {
             TaskAttemptRepository taskAttemptRepository,
             ExamAttemptRepository examAttemptRepository,
             AchievementService achievementService,
-            CourseCertificateRepository certificateRepository,
-            CertificateService certificateService
+            CourseCertificateRepository certificateRepository
     ) {
         this.accessService = accessService;
         this.activityRepository = activityRepository;
@@ -41,13 +39,11 @@ public class LearningAnalyticsService {
         this.examAttemptRepository = examAttemptRepository;
         this.achievementService = achievementService;
         this.certificateRepository = certificateRepository;
-        this.certificateService = certificateService;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public LearningAnalyticsDto get(Authentication authentication) {
         User user = accessService.currentUser(authentication);
-        certificateService.issueEligibleForUser(user);
         long attemptedTasks = taskAttemptRepository.countByUserId(user.getId());
         long correctTasks = taskAttemptRepository.countByUserIdAndCorrectTrue(user.getId());
         int taskAccuracy = attemptedTasks == 0
@@ -77,7 +73,7 @@ public class LearningAnalyticsService {
                                 activity.getTotalSeconds()
                         ))
                         .toList(),
-                achievementService.evaluate(user),
+                achievementService.getFor(user),
                 certificateRepository.findByUserIdOrderByIssuedAtDesc(user.getId()).stream()
                         .map(com.twojlogin.lms.dto.CertificateDto::from)
                         .toList()
