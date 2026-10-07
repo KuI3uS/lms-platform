@@ -10,6 +10,7 @@ export default function AdminLessonPage() {
     const [tasks, setTasks] = useState({});
     const [expandedLessonId, setExpandedLessonId] = useState(null);
 
+
     const [form, setForm] = useState({
         title: "",
         theory: "",
@@ -20,13 +21,36 @@ export default function AdminLessonPage() {
     const [taskForms, setTaskForms] = useState({});
     const [editingTaskId, setEditingTaskId] = useState({});
 
+
+    const [moduleSettings, setModuleSettings] = useState({
+        name: "",
+        lessonsLocked: false
+    });
     // =====================
     // LOAD
     // =====================
 
     useEffect(() => {
+        loadModule();
         loadLessons();
     }, [moduleId]);
+
+    const loadModule = async () => {
+        const data = await apiFetch(`/modules/${moduleId}`);
+        setModuleSettings({
+            name: data.name || "",
+            lessonsLocked: data.lessonsLocked || false
+        });
+    };
+
+    const saveModuleSettings = async () => {
+        await apiFetch(`/modules/${moduleId}`, {
+            method: "PUT",
+            body: JSON.stringify(moduleSettings)
+        });
+
+        alert("Zapisano ustawienia modułu");
+    };
 
     const loadLessons = async () => {
         const data = await apiFetch(`/lessons/module/${moduleId}`);
@@ -247,6 +271,25 @@ export default function AdminLessonPage() {
                     className="w-full p-2 bg-gray-700 rounded"
                 />
 
+                <label className="flex items-center gap-2 text-gray-300">
+                    <input
+                        type="checkbox"
+                        checked={moduleSettings.lessonsLocked}
+                        onChange={e =>
+                            setModuleSettings(prev => ({
+                                ...prev,
+                                lessonsLocked: e.target.checked
+                            }))
+                        }
+                    />
+                    Blokuj lekcje po kolei
+                </label>
+                <button
+                    onClick={saveModuleSettings}
+                    className="bg-blue-600 px-4 py-2 rounded"
+                >
+                    Zapisz ustawienia blokowania
+                </button>
                 <button
                     onClick={editingId ? update : create}
                     className="bg-green-600 px-4 py-2 rounded"

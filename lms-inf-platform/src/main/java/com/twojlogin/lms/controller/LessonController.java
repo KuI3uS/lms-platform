@@ -94,6 +94,9 @@ public class LessonController {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
 
+        if (!lesson.getModule().isLessonsLocked()) {
+            return true;
+        }
         if (lesson.isFreePreview()) {
             return true;
         }

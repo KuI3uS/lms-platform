@@ -9,13 +9,21 @@ public class CourseModule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String name;
+
+    private boolean lessonsLocked;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
     @JsonIgnore
     private Course course;
+
+    public boolean isLessonsLocked() {
+        return lessonsLocked;
+    }
+    public void setLessonsLocked(boolean lessonsLocked) {
+        this.lessonsLocked = lessonsLocked;
+    }
 
     public Long getId() {
         return id;
