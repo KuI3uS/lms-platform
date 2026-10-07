@@ -127,15 +127,21 @@ export default function ModulePage() {
         setNewModule("");
     };
 
-    const deleteModule = async (id) => {
-        if (!await confirm({ title: "Usuń sekcję", message: "Usunąć tę sekcję wraz z lekcjami?", confirmLabel: "Usuń sekcję" })) return;
+    const deleteModule = async (module) => {
+        if (!await confirm({
+            title: "Trwale usuń moduł",
+            message: `Czy na pewno usunąć moduł „${module.name}”? Zostaną trwale usunięte wszystkie jego lekcje, bloki, odpowiedzi, wyniki i postępy uczniów. Tej operacji nie można cofnąć.`,
+            confirmLabel: "Usuń wszystko"
+        })) return;
 
-        await apiFetch(`/modules/${id}`, {
-            method: "DELETE"
-        });
-
-        setModules(prev => prev.filter(m => m.id !== id));
-        roadmapCache.delete(String(courseId));
+        try {
+            await apiFetch(`/modules/${module.id}`, { method: "DELETE" });
+            setModules(prev => prev.filter(item => item.id !== module.id));
+            roadmapCache.delete(String(courseId));
+            showToast("Moduł i cała jego zawartość zostały usunięte.", "success");
+        } catch (deleteError) {
+            setError(deleteError.message || "Nie udało się usunąć modułu.");
+        }
     };
 
     const isLanguageCourse = getCourseCategory(course) === "LANGUAGE";
@@ -371,7 +377,7 @@ export default function ModulePage() {
                                                 <button
                                                     type="button"
                                                     aria-label={`Usuń etap ${module.name}`}
-                                                    onClick={() => deleteModule(module.id)}
+                                                    onClick={() => deleteModule(module)}
                                                     className="grid h-9 w-9 place-items-center rounded-full bg-red-500/10 text-red-300 transition hover:bg-red-500 hover:text-white"
                                                 >
                                                     <BsTrash />

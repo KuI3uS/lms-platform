@@ -9,11 +9,11 @@ import com.twojlogin.lms.repository.CourseRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import org.springframework.security.core.Authentication;
 import com.twojlogin.lms.service.CourseAccessService;
+import com.twojlogin.lms.service.CourseModuleDeletionService;
 import com.twojlogin.lms.service.CourseRoadmapService;
 import com.twojlogin.lms.util.CefrLevels;
 import org.springframework.http.HttpStatus;
@@ -27,15 +27,18 @@ public class CourseModuleController {
     private final CourseRepository courseRepository;
     private final CourseAccessService accessService;
     private final CourseRoadmapService roadmapService;
+    private final CourseModuleDeletionService deletionService;
 
     public CourseModuleController(CourseModuleRepository moduleRepository,
                                   CourseRepository courseRepository,
                                   CourseAccessService accessService,
-                                  CourseRoadmapService roadmapService) {
+                                  CourseRoadmapService roadmapService,
+                                  CourseModuleDeletionService deletionService) {
         this.moduleRepository = moduleRepository;
         this.courseRepository = courseRepository;
         this.accessService = accessService;
         this.roadmapService = roadmapService;
+        this.deletionService = deletionService;
     }
 
     @GetMapping("/course/{courseId}/roadmap")
@@ -73,16 +76,9 @@ public class CourseModuleController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        try {
-            moduleRepository.deleteById(id);
-            return ResponseEntity.ok().build();
-
-        } catch (DataIntegrityViolationException e) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Nie możesz usunąć modułu — najpierw usuń zadania");
-        }
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        deletionService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")

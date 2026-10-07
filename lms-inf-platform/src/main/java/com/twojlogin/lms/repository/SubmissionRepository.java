@@ -12,6 +12,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Modifying
     @Transactional
     void deleteByUserId(Long userId);
+    void deleteByModuleId(Long moduleId);
     List<Submission> findByUserId(Long userId);
 
 }

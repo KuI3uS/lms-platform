@@ -123,7 +123,11 @@ export default function AdminModulesPage() {
     };
 
     const deleteModule = async (module) => {
-        if (!await confirm({ title: "Usuń moduł", message: `Usunąć moduł „${module.name}” razem z jego lekcjami?`, confirmLabel: "Usuń moduł" })) return;
+        if (!await confirm({
+            title: "Trwale usuń moduł",
+            message: `Czy na pewno usunąć moduł „${module.name}”? Zostaną trwale usunięte wszystkie jego lekcje, bloki, odpowiedzi, wyniki i postępy uczniów. Tej operacji nie można cofnąć.`,
+            confirmLabel: "Usuń wszystko"
+        })) return;
         try {
             setError("");
             await apiFetch(`/modules/${module.id}`, { method: "DELETE" });
