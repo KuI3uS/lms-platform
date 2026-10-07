@@ -79,8 +79,7 @@ export default function TaskList({
 
                                         <span className="font-bold text-white">
 
-                                            {task.taskContent?.slice(0, 70) || "Bez treści"}
-
+                                            {task.title || "Bez tytułu"}
                                         </span>
 
                                     </div>
