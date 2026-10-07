@@ -147,7 +147,7 @@ export default function LessonDialog({ block }) {
     const config = useMemo(() => parseDialogContent(block.content), [block.content]);
     const [mode, setMode] = useState("watch");
     const [results, setResults] = useState({});
-    const { playback, play, stop } = useDialogSpeech(config, block.language);
+    const { playback, play, stop } = useDialogSpeech(config, block.language, block.id);
     const speaking = ["starting", "playing"].includes(playback.status);
     const charactersById = new Map(config.characters.map((character) => [character.id, character]));
     const studentCharacter = charactersById.get(config.studentCharacterId) || config.characters[1];
