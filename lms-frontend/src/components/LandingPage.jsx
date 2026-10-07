@@ -21,11 +21,10 @@
             <div className="landing-page">
                 <TutoringFloatingButton />
                 <nav>
+                    <a href="https://kui3us.github.io/portfolio/">Portfolio</a>
                     <a href="#home">Home</a>
                     <a href="#courses">Kursy</a>
-                    <a href="#how">Jak działa</a>
-                    <a href="https://kui3us.github.io/portfolio/">Portfolio</a>
-                    <a href="/tutoring-booking">Korepetycje</a>
+                    <a href="#how">Jakdziała</a>
                     <Link to="/login">Logowanie</Link>
                     <Link to="/register">Rejestracja</Link>
                 </nav>
