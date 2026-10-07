@@ -14,6 +14,8 @@ public interface TaskAttemptRepository extends JpaRepository<TaskAttempt, Long> 
 
     Optional<TaskAttempt> findByUserAndBlock(User user, LessonBlock block);
 
+    List<TaskAttempt> findByUserIdAndBlockLessonId(Long userId, Long lessonId);
+
     void deleteByBlockId(Long blockId);
 
     void deleteByBlockLessonId(Long lessonId);

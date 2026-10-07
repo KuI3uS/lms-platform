@@ -61,14 +61,28 @@ export default function LessonPage() {
             setSelectedBlock(sorted[0] || null);
 
             const initialAnswers = {};
+            const initialResults = {};
             sorted
                 .filter(block => ["TASK", "QUIZ"].includes(block.type))
                 .forEach(block => {
                     initialAnswers[block.id] = block.type === "QUIZ"
-                        ? ""
-                        : block.starterCode || "";
+                        ? block.lastAnswer || ""
+                        : block.lastAnswer ?? block.starterCode ?? "";
+
+                    if (block.attempted) {
+                        initialResults[block.id] = {
+                            correct: Boolean(block.correct),
+                            attemptCount: block.attemptCount || 0,
+                            message: block.correct
+                                ? "To ćwiczenie jest już zaliczone."
+                                : "To ćwiczenie nie jest jeszcze zaliczone. Popraw odpowiedź i sprawdź ją ponownie.",
+                            diagnostics: [],
+                            persisted: true
+                        };
+                    }
                 });
             setAnswers(initialAnswers);
+            setResults(initialResults);
         } catch (requestError) {
             console.error(requestError);
             setError(requestError.message);
@@ -137,11 +151,29 @@ export default function LessonPage() {
                 : response;
 
             setResults(previous => ({ ...previous, [blockId]: normalizedResponse }));
+            setBlocks(previous => previous.map(block => (
+                Number(block.id) === Number(blockId)
+                    ? {
+                        ...block,
+                        attempted: true,
+                        correct: normalizedResponse.correct,
+                        attemptCount: normalizedResponse.attemptCount,
+                        lastAnswer: answers[blockId] || ""
+                    }
+                    : block
+            )));
+            setSelectedBlock(previous => (
+                Number(previous?.id) === Number(blockId)
+                    ? {
+                        ...previous,
+                        attempted: true,
+                        correct: normalizedResponse.correct,
+                        attemptCount: normalizedResponse.attemptCount,
+                        lastAnswer: answers[blockId] || ""
+                    }
+                    : previous
+            ));
             window.dispatchEvent(new Event("eduhub:stats-changed"));
-
-            if (normalizedResponse.lessonCompleted) {
-                markLessonCompleted();
-            }
 
             return normalizedResponse;
         } catch (requestError) {
@@ -168,37 +200,17 @@ export default function LessonPage() {
             setFinishing(true);
             setFinishResult(null);
 
-            if (taskBlocks.length === 0) {
-                await apiFetch(`/lessons/${lessonId}/complete`, { method: "POST" });
-                markLessonCompleted();
-                window.dispatchEvent(new Event("eduhub:stats-changed"));
-                setFinishResult({
-                    success: true,
-                    message: "Lekcja została ukończona.",
-                    summary: "Postęp modułu został zaktualizowany."
-                });
-                return;
-            }
+            const incomplete = taskBlocks.filter(
+                block => !(results[block.id]?.correct || block.correct)
+            );
+            const correctCount = taskBlocks.length - incomplete.length;
 
-            const checkedResults = [];
-
-            for (const block of taskBlocks) {
-                const currentResult = results[block.id];
-                const result = currentResult?.correct
-                    ? currentResult
-                    : await checkTask(block.id);
-                checkedResults.push({ block, result });
-            }
-
-            const incorrect = checkedResults.filter(item => !item.result?.correct);
-            const correctCount = checkedResults.length - incorrect.length;
-
-            if (incorrect.length > 0) {
-                setSelectedBlock(incorrect[0].block);
+            if (incomplete.length > 0) {
+                setSelectedBlock(incomplete[0]);
                 setFinishResult({
                     success: false,
-                    message: `Popraw ${incorrect.length} ${incorrect.length === 1 ? "zadanie" : "zadania"} i spróbuj ponownie.`,
-                    summary: `Poprawne odpowiedzi: ${correctCount} / ${checkedResults.length}. Pierwsze błędne zadanie zostało otwarte.`
+                    message: `Ukończ ${incomplete.length} ${incomplete.length === 1 ? "pozostałe ćwiczenie" : "pozostałe ćwiczenia"}.`,
+                    summary: `Zaliczone ćwiczenia: ${correctCount} / ${taskBlocks.length}. Otworzyłem pierwszy nieukończony krok.`
                 });
                 return;
             }
@@ -208,8 +220,10 @@ export default function LessonPage() {
             window.dispatchEvent(new Event("eduhub:stats-changed"));
             setFinishResult({
                 success: true,
-                message: "Wszystkie odpowiedzi są poprawne. Lekcja została ukończona!",
-                summary: `Poprawne odpowiedzi: ${correctCount} / ${checkedResults.length}. Postęp modułu został zaktualizowany.`
+                message: `Lekcja ${lesson.orderIndex} została ukończona!`,
+                summary: nextLesson
+                    ? `Odblokowano kolejną lekcję: ${nextLesson.title}.`
+                    : "Ukończyłeś ostatnią lekcję w tym etapie."
             });
         } catch (requestError) {
             console.error(requestError);
@@ -262,26 +276,69 @@ export default function LessonPage() {
     const hasTasks = blocks.some(
         block => ["TASK", "QUIZ"].includes(block.type)
     );
+    const selectedBlockIndex = blocks.findIndex(
+        block => Number(block.id) === Number(selectedBlock?.id)
+    );
+    const previousBlock = selectedBlockIndex > 0
+        ? blocks[selectedBlockIndex - 1]
+        : null;
+    const nextBlock = selectedBlockIndex >= 0
+        && selectedBlockIndex < blocks.length - 1
+        ? blocks[selectedBlockIndex + 1]
+        : null;
+    const assessmentBlocks = blocks.filter(
+        block => ["TASK", "QUIZ"].includes(block.type)
+    );
+    const completedAssessmentCount = assessmentBlocks.filter(
+        block => results[block.id]?.correct || block.correct
+    ).length;
+    const currentBlockCompleted = selectedBlock
+        ? !["TASK", "QUIZ"].includes(selectedBlock.type)
+            || results[selectedBlock.id]?.correct
+            || selectedBlock.correct
+        : true;
+
+    function canAccessBlock(targetBlock) {
+        const targetIndex = blocks.findIndex(
+            block => Number(block.id) === Number(targetBlock?.id)
+        );
+        if (targetIndex <= 0) return true;
+
+        return blocks.slice(0, targetIndex).every(block => (
+            !["TASK", "QUIZ"].includes(block.type)
+            || results[block.id]?.correct
+            || block.correct
+        ));
+    }
+
+    function selectBlock(targetBlock) {
+        if (targetBlock && canAccessBlock(targetBlock)) {
+            setSelectedBlock(targetBlock);
+            setFinishResult(null);
+        }
+    }
 
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(147,51,234,0.15),transparent_35%),#030712] text-white">
             <div className="mx-auto max-w-7xl space-y-6 p-3 sm:p-6">
+                <LessonSidebar
+                    blocks={blocks}
+                    selectedBlock={selectedBlock}
+                    setSelectedBlock={selectBlock}
+                    moduleLessons={moduleLessons}
+                    currentLessonId={lessonId}
+                    results={results}
+                    canAccessBlock={canAccessBlock}
+                    lessonCompleted={Boolean(moduleLessons[currentIndex]?.completed)}
+                />
+
                 <LessonHero
                     lesson={lesson}
                     moduleLessons={moduleLessons}
                     onBack={goBack}
                 />
 
-                <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
-                    <LessonSidebar
-                        blocks={blocks}
-                        selectedBlock={selectedBlock}
-                        setSelectedBlock={setSelectedBlock}
-                        moduleLessons={moduleLessons}
-                        currentLessonId={lessonId}
-                    />
-
-                    <main className="min-w-0 space-y-6">
+                <main className="mx-auto min-w-0 max-w-5xl space-y-6">
                         <LessonBlock
                             block={selectedBlock}
                             answers={answers}
@@ -293,17 +350,24 @@ export default function LessonPage() {
                         />
 
                         <LessonFooter
-                            hasTasks={hasTasks}
                             onFinish={finishLesson}
                             finishing={finishing}
                             finishResult={finishResult}
+                            hasPreviousStep={Boolean(previousBlock)}
+                            hasNextStep={Boolean(nextBlock)}
+                            canContinue={Boolean(currentBlockCompleted)}
+                            onPreviousStep={() => previousBlock && selectBlock(previousBlock)}
+                            onNextStep={() => nextBlock && selectBlock(nextBlock)}
                             previousLesson={previousLesson}
                             nextLesson={nextLesson}
-                            onPrevious={() => previousLesson && navigate(`/lesson/${previousLesson.id}`)}
-                            onNext={() => nextLesson?.canAccess && navigate(`/lesson/${nextLesson.id}`)}
+                            onPreviousLesson={() => previousLesson && navigate(`/lesson/${previousLesson.id}`)}
+                            onNextLesson={() => nextLesson && navigate(`/lesson/${nextLesson.id}`)}
+                            onBack={goBack}
+                            completedAssessments={completedAssessmentCount}
+                            totalAssessments={assessmentBlocks.length}
+                            hasTasks={hasTasks}
                         />
-                    </main>
-                </div>
+                </main>
             </div>
         </div>
     );

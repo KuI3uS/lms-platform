@@ -2,6 +2,7 @@ package com.twojlogin.lms.dto;
 
 import com.twojlogin.lms.entity.BlockType;
 import com.twojlogin.lms.entity.LessonBlock;
+import com.twojlogin.lms.entity.TaskAttempt;
 
 public record LessonBlockDto(
         Long id,
@@ -21,9 +22,21 @@ public record LessonBlockDto(
         Boolean published,
         Integer points,
         Integer orderIndex,
-        Long lessonId
+        Long lessonId,
+        boolean attempted,
+        boolean correct,
+        int attemptCount,
+        String lastAnswer
 ) {
     public static LessonBlockDto from(LessonBlock block, boolean includeSolutions) {
+        return from(block, includeSolutions, null);
+    }
+
+    public static LessonBlockDto from(
+            LessonBlock block,
+            boolean includeSolutions,
+            TaskAttempt attempt
+    ) {
         return new LessonBlockDto(
                 block.getId(),
                 block.getTitle(),
@@ -42,7 +55,11 @@ public record LessonBlockDto(
                 block.getPublished(),
                 block.getPoints(),
                 block.getOrderIndex(),
-                block.getLesson() == null ? null : block.getLesson().getId()
+                block.getLesson() == null ? null : block.getLesson().getId(),
+                attempt != null,
+                attempt != null && attempt.isCorrect(),
+                attempt == null ? 0 : attempt.getAttemptCount(),
+                attempt == null ? null : attempt.getLastAnswer()
         );
     }
 }

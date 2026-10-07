@@ -8,7 +8,6 @@ import {
     BsPlusCircle,
     BsTrash,
     BsGearFill,
-    BsStars,
     BsCodeSlash,
     BsTranslate
 } from "react-icons/bs";
@@ -218,107 +217,147 @@ export default function ModulePage() {
                         Brak sekcji w tym kursie.
                     </div>
                 ) : (
-                    modules.map((module, moduleIndex) => (
-                        <div key={module.id} className="relative">
+                    modules.map((module, moduleIndex) => {
+                        const lessons = module.lessons || [];
+                        const completedLessons = lessons.filter(lesson => lesson.completed).length;
+                        const moduleProgress = lessons.length
+                            ? Math.round((completedLessons / lessons.length) * 100)
+                            : 0;
 
-                            <div className="flex items-center justify-between gap-4 mb-6">
-                                <div>
-                                    <p className="text-sm text-blue-400 font-semibold">
-                                        Etap {moduleIndex + 1}
-                                    </p>
+                        return (
+                            <article
+                                key={module.id}
+                                className="overflow-hidden rounded-[2rem] border border-white/10 bg-gray-900/70 shadow-2xl"
+                            >
+                                <header className="border-b border-white/10 bg-gradient-to-r from-blue-500/10 via-violet-500/10 to-cyan-500/10 p-5 sm:p-7">
+                                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="flex items-start gap-4">
+                                            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-blue-300/30 bg-blue-500/15 text-xl font-black text-blue-200">
+                                                {moduleIndex + 1}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">
+                                                    Etap {moduleIndex + 1}
+                                                </p>
+                                                <h2 className="mt-1 text-2xl font-black">
+                                                    {module.name}
+                                                </h2>
+                                                <p className="mt-2 text-sm text-gray-400">
+                                                    {lessons.length} {lessons.length === 1 ? "lekcja" : "lekcji"} · ukończono {completedLessons}
+                                                </p>
+                                            </div>
+                                        </div>
 
-                                    <h2 className="text-2xl font-black">
-                                        {module.name}
-                                    </h2>
+                                        <div className="flex items-center gap-3">
+                                            <div className="min-w-32">
+                                                <div className="mb-2 flex justify-between text-xs font-bold text-gray-400">
+                                                    <span>Postęp</span>
+                                                    <span>{moduleProgress}%</span>
+                                                </div>
+                                                <div className="h-2 overflow-hidden rounded-full bg-gray-800">
+                                                    <div
+                                                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400"
+                                                        style={{ width: `${moduleProgress}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {role === "ADMIN" && (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        aria-label={`Edytuj etap ${module.name}`}
+                                                        onClick={() => navigate(`/admin/lessons/${module.id}`)}
+                                                        className="rounded-xl bg-yellow-600/20 p-3 text-yellow-300 transition hover:bg-yellow-600 hover:text-white"
+                                                    >
+                                                        <BsGearFill />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        aria-label={`Usuń etap ${module.name}`}
+                                                        onClick={() => deleteModule(module.id)}
+                                                        className="rounded-xl bg-red-600/20 p-3 text-red-400 transition hover:bg-red-600 hover:text-white"
+                                                    >
+                                                        <BsTrash />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </header>
+
+                                <div className="p-5 sm:p-8">
+                                    {lessons.length === 0 ? (
+                                        <div className="rounded-2xl border border-dashed border-gray-700 bg-gray-950/40 p-6 text-gray-500">
+                                            Brak lekcji w tej sekcji.
+                                        </div>
+                                    ) : (
+                                        <ol className="relative mx-auto max-w-4xl space-y-5">
+                                            <div className="absolute bottom-7 left-7 top-7 w-1 -translate-x-1/2 rounded-full bg-gradient-to-b from-blue-500 via-violet-500 to-cyan-400 opacity-35" />
+
+                                            {lessons.map((lesson, index) => (
+                                                <li key={lesson.id} className="relative flex items-center gap-4 sm:gap-6">
+                                                    <div className={`z-10 grid h-14 w-14 shrink-0 place-items-center rounded-2xl border-4 font-black shadow-lg ${
+                                                        lesson.completed
+                                                            ? "border-emerald-300 bg-emerald-500 text-white"
+                                                            : lesson.canAccess
+                                                                ? "border-blue-300 bg-blue-600 text-white shadow-blue-500/20"
+                                                                : "border-gray-700 bg-gray-800 text-gray-500"
+                                                    }`}>
+                                                        {lesson.completed ? (
+                                                            <BsCheckCircle size={23} />
+                                                        ) : lesson.canAccess ? (
+                                                            index + 1
+                                                        ) : (
+                                                            <BsLockFill size={19} />
+                                                        )}
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        disabled={!lesson.canAccess}
+                                                        onClick={() => lesson.canAccess && navigate(`/lesson/${lesson.id}`)}
+                                                        className={`group min-w-0 flex-1 rounded-2xl border p-4 text-left transition sm:p-5 ${
+                                                            lesson.canAccess
+                                                                ? "border-white/10 bg-gray-950/60 hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-blue-500/[0.08]"
+                                                                : "cursor-not-allowed border-white/5 bg-gray-950/30 opacity-55"
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center justify-between gap-4">
+                                                            <div className="min-w-0">
+                                                                <p className="text-xs font-black uppercase tracking-[0.14em] text-gray-500">
+                                                                    Lekcja {lesson.orderIndex ?? index + 1}
+                                                                </p>
+                                                                <h3 className="mt-1 truncate text-lg font-black text-white">
+                                                                    {lesson.title}
+                                                                </h3>
+                                                                <p className={`mt-2 text-sm ${
+                                                                    lesson.completed
+                                                                        ? "text-emerald-300"
+                                                                        : lesson.canAccess
+                                                                            ? "text-blue-300"
+                                                                            : "text-gray-500"
+                                                                }`}>
+                                                                    {lesson.completed
+                                                                        ? "Ukończona"
+                                                                        : lesson.canAccess
+                                                                            ? "Gotowa do rozpoczęcia"
+                                                                            : "Ukończ poprzednią lekcję, aby odblokować"}
+                                                                </p>
+                                                            </div>
+                                                            {lesson.canAccess && (
+                                                                <BsArrowRight className="shrink-0 text-gray-600 transition group-hover:translate-x-1 group-hover:text-blue-300" />
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    )}
                                 </div>
-
-                                {role === "ADMIN" && (
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => navigate(`/admin/lessons/${module.id}`)}
-                                            className="bg-yellow-600/20 hover:bg-yellow-600 text-yellow-300 hover:text-white px-4 py-3 rounded-xl"
-                                        >
-                                            <BsGearFill />
-                                        </button>
-
-                                        <button
-                                            onClick={() => deleteModule(module.id)}
-                                            className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-4 py-3 rounded-xl"
-                                        >
-                                            <BsTrash />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="relative pl-8 space-y-6">
-                                <div className="absolute left-[25px] top-4 bottom-4 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-cyan-500 rounded-full opacity-40" />
-
-                                {(module.lessons || []).length === 0 ? (
-                                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-500">
-                                        Brak lekcji w tej sekcji.
-                                    </div>
-                                ) : (
-                                    module.lessons.map((lesson, index) => (
-                                        <button
-                                            key={lesson.id}
-                                            disabled={!lesson.canAccess}
-                                            onClick={() => {
-                                                if (lesson.canAccess) {
-                                                    navigate(`/lesson/${lesson.id}`);
-                                                }
-                                            }}
-                                            className={`relative w-full text-left rounded-3xl border p-5 transition group ${
-                                                lesson.canAccess
-                                                    ? "bg-gray-900 border-gray-800 hover:border-blue-500 hover:scale-[1.01]"
-                                                    : "bg-gray-900/50 border-gray-800 opacity-50 cursor-not-allowed"
-                                            }`}
-                                        >
-                                            <div className="absolute -left-[38px] top-1/2 -translate-y-1/2">
-                                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-4 ${
-                                                    lesson.completed
-                                                        ? "bg-green-500 border-green-300 text-white"
-                                                        : lesson.canAccess
-                                                            ? "bg-blue-600 border-blue-300 text-white"
-                                                            : "bg-gray-800 border-gray-700 text-gray-500"
-                                                }`}>
-                                                    {lesson.completed ? (
-                                                        <BsCheckCircle size={24} />
-                                                    ) : lesson.canAccess ? (
-                                                        <BsStars size={24} />
-                                                    ) : (
-                                                        <BsLockFill size={22} />
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="ml-8 flex items-center justify-between gap-4">
-                                                <div>
-                                                    <p className="text-xs text-gray-500 mb-1">
-                                                        Lekcja {lesson.orderIndex ?? index + 1}
-                                                    </p>
-
-                                                    <h3 className="text-lg font-bold">
-                                                        {lesson.title}
-                                                    </h3>
-
-                                                    <p className="text-sm text-gray-500 mt-1">
-                                                        {lesson.canAccess
-                                                            ? "Kliknij, aby rozpocząć naukę"
-                                                            : "Zablokowana — ukończ poprzednią lekcję"}
-                                                    </p>
-                                                </div>
-
-                                                {lesson.canAccess && (
-                                                    <BsArrowRight className="text-gray-500 group-hover:text-blue-400 transition shrink-0" />
-                                                )}
-                                            </div>
-                                        </button>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    ))
+                            </article>
+                        );
+                    })
                 )}
             </section>
         </div>

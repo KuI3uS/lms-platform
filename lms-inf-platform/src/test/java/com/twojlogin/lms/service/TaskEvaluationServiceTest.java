@@ -5,11 +5,9 @@ import com.twojlogin.lms.entity.BlockType;
 import com.twojlogin.lms.entity.GamificationProfile;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
-import com.twojlogin.lms.entity.LessonProgress;
 import com.twojlogin.lms.entity.TaskAttempt;
 import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.LessonBlockRepository;
-import com.twojlogin.lms.repository.LessonProgressRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,16 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TaskEvaluationServiceTest {
 
     private LessonBlockRepository blockRepository;
     private TaskAttemptRepository attemptRepository;
-    private LessonProgressRepository progressRepository;
     private UserRepository userRepository;
-    private ProgressRewardService rewardService;
     private GamificationService gamificationService;
     private Authentication authentication;
     private TaskEvaluationService service;
@@ -53,17 +48,13 @@ class TaskEvaluationServiceTest {
     void setUp() {
         blockRepository = mock(LessonBlockRepository.class);
         attemptRepository = mock(TaskAttemptRepository.class);
-        progressRepository = mock(LessonProgressRepository.class);
         userRepository = mock(UserRepository.class);
-        rewardService = mock(ProgressRewardService.class);
         gamificationService = mock(GamificationService.class);
         authentication = mock(Authentication.class);
         service = new TaskEvaluationService(
                 blockRepository,
                 attemptRepository,
-                progressRepository,
                 userRepository,
-                rewardService,
                 gamificationService
         );
 
@@ -183,20 +174,13 @@ class TaskEvaluationServiceTest {
     }
 
     @Test
-    void completesLessonAfterAllPublishedTasksAreCorrect() {
+    void onlyCompletesTheCheckedTaskAndLeavesLessonCompletionToTheButton() {
         when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
-        when(attemptRepository.countCorrectAssessmentsByUserAndLesson(
-                user.getId(),
-                lesson.getId()
-        ))
-                .thenReturn(1L);
-        when(progressRepository.findByUserAndLesson(user, lesson)).thenReturn(Optional.empty());
 
         TaskCheckResponse response = service.check(block.getId(), EXPECTED, authentication);
 
         assertTrue(response.correct());
-        assertTrue(response.lessonCompleted());
-        verify(progressRepository).save(any(LessonProgress.class));
+        assertFalse(response.lessonCompleted());
     }
 
     @Test
@@ -214,5 +198,66 @@ class TaskEvaluationServiceTest {
         assertEquals("INCORRECT_QUIZ_ANSWER", response.diagnostics().get(0).type());
         assertEquals("Przypomnij sobie typy liczbowe.", response.hint());
         assertFalse(response.message().contains("int"));
+    }
+
+    @Test
+    void rejectsAnUnchangedStarterTemplate() {
+        String starter = """
+                // Dane wejściowe:
+                // Przetwarzanie:
+                // Wynik:
+                """;
+        block.setStarterCode(starter);
+        block.setExpectedAnswer("""
+                // Dane wejściowe: login i hasło
+                // Przetwarzanie: porównanie danych
+                // Wynik: informacja o sukcesie albo błędzie
+                """);
+        when(attemptRepository.findByUserAndBlock(user, block))
+                .thenReturn(Optional.empty());
+
+        TaskCheckResponse response =
+                service.check(block.getId(), starter, authentication);
+
+        assertFalse(response.correct());
+        assertEquals("UNCHANGED_STARTER", response.diagnostics().get(0).type());
+    }
+
+    @Test
+    void requiresExactlyThreeCompletedCommentsForTheLoginProcessTask() {
+        block.setStarterCode("");
+        block.setExpectedAnswer("""
+                // Dane wejściowe: login i hasło
+                // Przetwarzanie: porównanie danych
+                // Wynik: informacja o sukcesie albo błędzie
+                """);
+        when(attemptRepository.findByUserAndBlock(user, block))
+                .thenReturn(Optional.empty());
+
+        TaskCheckResponse correct = service.check(
+                block.getId(),
+                """
+                // Dane wejściowe: adres e-mail i hasło użytkownika
+                // Przetwarzanie: system porównuje dane z bazą
+                // Wynik: użytkownik otrzymuje dostęp albo komunikat błędu
+                """,
+                authentication
+        );
+        TaskCheckResponse withExtraComment = service.check(
+                block.getId(),
+                """
+                // Dane wejściowe: adres e-mail i hasło użytkownika
+                // Przetwarzanie: system porównuje dane z bazą
+                // Wynik: użytkownik otrzymuje dostęp albo komunikat błędu
+                // Dodatkowo: zapis do pliku
+                """,
+                authentication
+        );
+
+        assertTrue(correct.correct());
+        assertFalse(withExtraComment.correct());
+        assertTrue(withExtraComment.diagnostics().stream().anyMatch(
+                diagnostic -> diagnostic.type().equals("INCORRECT_COMMENT_COUNT")
+        ));
     }
 }

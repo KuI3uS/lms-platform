@@ -4,13 +4,10 @@ import com.twojlogin.lms.dto.TaskCheckResponse;
 import com.twojlogin.lms.dto.TaskDiagnosticDto;
 import com.twojlogin.lms.entity.BlockType;
 import com.twojlogin.lms.entity.GamificationProfile;
-import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
-import com.twojlogin.lms.entity.LessonProgress;
 import com.twojlogin.lms.entity.TaskAttempt;
 import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.LessonBlockRepository;
-import com.twojlogin.lms.repository.LessonProgressRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -21,8 +18,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @Service
@@ -30,24 +29,18 @@ public class TaskEvaluationService {
 
     private final LessonBlockRepository blockRepository;
     private final TaskAttemptRepository attemptRepository;
-    private final LessonProgressRepository lessonProgressRepository;
     private final UserRepository userRepository;
-    private final ProgressRewardService rewardService;
     private final GamificationService gamificationService;
 
     public TaskEvaluationService(
             LessonBlockRepository blockRepository,
             TaskAttemptRepository attemptRepository,
-            LessonProgressRepository lessonProgressRepository,
             UserRepository userRepository,
-            ProgressRewardService rewardService,
             GamificationService gamificationService
     ) {
         this.blockRepository = blockRepository;
         this.attemptRepository = attemptRepository;
-        this.lessonProgressRepository = lessonProgressRepository;
         this.userRepository = userRepository;
-        this.rewardService = rewardService;
         this.gamificationService = gamificationService;
     }
 
@@ -106,11 +99,18 @@ public class TaskEvaluationService {
         String studentAnswer = answer == null ? "" : answer;
         List<TaskDiagnosticDto> diagnostics = block.getType() == BlockType.QUIZ
                 ? evaluateQuiz(studentAnswer, block.getExpectedAnswer())
-                : evaluate(
+                : isUnchangedStarter(studentAnswer, block.getStarterCode())
+                    ? List.of(new TaskDiagnosticDto(
+                        "UNCHANGED_STARTER",
+                        null,
+                        "Kod startowy nie został jeszcze uzupełniony.",
+                        "Wykonaj polecenie w przygotowanym szablonie, a następnie sprawdź rozwiązanie ponownie."
+                    ))
+                    : evaluate(
                         studentAnswer,
                         block.getExpectedAnswer(),
                         block.getLanguage()
-                );
+                    );
         boolean correct = diagnostics.isEmpty();
 
         GamificationProfile profile = gamificationService.profileForUpdate(user);
@@ -144,8 +144,6 @@ public class TaskEvaluationService {
                         : diagnostic)
                 .toList();
 
-        boolean lessonCompleted = correct && completeLessonWhenReady(user, block.getLesson());
-
         return new TaskCheckResponse(
                 correct,
                 buildMessage(block.getType(), correct, diagnostics),
@@ -156,7 +154,7 @@ public class TaskEvaluationService {
                 hintLevel >= 3 && block.getType() == BlockType.TASK
                         ? block.getExpectedAnswer()
                         : null,
-                lessonCompleted,
+                false,
                 award.xpEarned(),
                 award.multiplier(),
                 award.taskStreak(),
@@ -204,6 +202,10 @@ public class TaskEvaluationService {
                     "Uzupełnij kod zgodnie z poleceniem i spróbuj ponownie."
             ));
             return diagnostics;
+        }
+
+        if (isCommentOnlySolution(expected)) {
+            return evaluateCommentTask(student, expected);
         }
 
         addDelimiterDiagnostic(student, '{', '}', "nawiasów klamrowych", diagnostics, diagnosticKeys);
@@ -259,6 +261,111 @@ public class TaskEvaluationService {
         }
 
         return diagnostics;
+    }
+
+    private boolean isUnchangedStarter(String student, String starter) {
+        return hasText(starter) && normalize(student).equals(normalize(starter));
+    }
+
+    private boolean isCommentOnlySolution(String expected) {
+        List<String> meaningfulLines = Arrays.stream(expected.split("\\R"))
+                .map(String::trim)
+                .filter(line -> !line.isBlank())
+                .toList();
+
+        return !meaningfulLines.isEmpty()
+                && meaningfulLines.stream().allMatch(this::isCommentLine);
+    }
+
+    private List<TaskDiagnosticDto> evaluateCommentTask(
+            String student,
+            String expected
+    ) {
+        List<String> expectedComments = Arrays.stream(expected.split("\\R"))
+                .map(this::commentBody)
+                .filter(body -> !body.isBlank())
+                .toList();
+        List<String> studentComments = Arrays.stream(student.split("\\R"))
+                .map(String::trim)
+                .filter(this::isCommentLine)
+                .map(this::commentBody)
+                .filter(body -> !body.isBlank())
+                .toList();
+        List<TaskDiagnosticDto> diagnostics = new ArrayList<>();
+
+        if (studentComments.size() != expectedComments.size()) {
+            diagnostics.add(new TaskDiagnosticDto(
+                    "INCORRECT_COMMENT_COUNT",
+                    null,
+                    "Rozwiązanie powinno zawierać dokładnie "
+                            + expectedComments.size()
+                            + " komentarze, a zawiera "
+                            + studentComments.size()
+                            + ".",
+                    "Usuń dodatkowe komentarze albo dopisz brakujące tak, aby ich liczba zgadzała się z poleceniem."
+            ));
+        }
+
+        for (String expectedComment : expectedComments) {
+            String expectedLabel = commentLabel(expectedComment);
+            String normalizedLabel = normalizeCommentText(expectedLabel);
+            String matchingComment = studentComments.stream()
+                    .filter(comment -> normalizeCommentText(commentLabel(comment))
+                            .equals(normalizedLabel))
+                    .findFirst()
+                    .orElse(null);
+
+            if (matchingComment == null) {
+                diagnostics.add(new TaskDiagnosticDto(
+                        "MISSING_REQUIRED_COMMENT",
+                        null,
+                        "Brakuje wymaganego komentarza: " + expectedLabel + ".",
+                        "Dodaj komentarz zaczynający się od „// "
+                                + expectedLabel
+                                + ":” i opisz ten etap własnymi słowami."
+                ));
+                continue;
+            }
+
+            if (expectedComment.contains(":")
+                    && (!matchingComment.contains(":")
+                    || matchingComment.substring(matchingComment.indexOf(':') + 1).isBlank())) {
+                diagnostics.add(new TaskDiagnosticDto(
+                        "MISSING_REQUIRED_COMMENT",
+                        null,
+                        "Komentarz „" + expectedLabel + "” nie zawiera opisu.",
+                        "Po dwukropku dopisz krótki, konkretny opis tego etapu."
+                ));
+            }
+        }
+
+        return diagnostics;
+    }
+
+    private boolean isCommentLine(String line) {
+        String trimmed = line.trim();
+        return trimmed.startsWith("//")
+                || trimmed.startsWith("/*")
+                || trimmed.startsWith("*")
+                || trimmed.endsWith("*/");
+    }
+
+    private String commentBody(String line) {
+        return line.trim()
+                .replaceFirst("^/[/\\*]\\s*", "")
+                .replaceFirst("^\\*\\s*", "")
+                .replaceFirst("\\s*\\*/$", "")
+                .trim();
+    }
+
+    private String commentLabel(String comment) {
+        int separator = comment.indexOf(':');
+        return (separator >= 0 ? comment.substring(0, separator) : comment).trim();
+    }
+
+    private String normalizeCommentText(String value) {
+        return value.toLowerCase(Locale.ROOT)
+                .replaceAll("[^\\p{L}\\p{N}]", "");
     }
 
     private void addInvalidJavaStatementDiagnostics(
@@ -553,33 +660,4 @@ public class TaskEvaluationService {
         return value != null && !value.isBlank();
     }
 
-    private boolean completeLessonWhenReady(User user, Lesson lesson) {
-        long requiredTasks =
-                blockRepository.countRequiredAssessmentsByLessonId(
-                        lesson.getId()
-                );
-        long correctTasks =
-                attemptRepository.countCorrectAssessmentsByUserAndLesson(
-                        user.getId(),
-                        lesson.getId()
-                );
-
-        if (requiredTasks == 0 || correctTasks < requiredTasks) return false;
-
-        LessonProgress progress = lessonProgressRepository.findByUserAndLesson(user, lesson)
-                .orElseGet(LessonProgress::new);
-        boolean newlyCompleted = !progress.isCompleted();
-        progress.setUser(user);
-        progress.setLesson(lesson);
-        if (!progress.isCompleted() || progress.getCompletedAt() == null) {
-            progress.setCompletedAt(LocalDateTime.now());
-        }
-        progress.setCompleted(true);
-        lessonProgressRepository.save(progress);
-
-        if (newlyCompleted) {
-            rewardService.afterLessonCompleted(user, lesson);
-        }
-        return newlyCompleted;
-    }
 }

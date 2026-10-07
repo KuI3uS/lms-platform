@@ -7,6 +7,7 @@ import com.twojlogin.lms.dto.TaskCheckResponse;
 import com.twojlogin.lms.entity.BlockType;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
+import com.twojlogin.lms.entity.TaskAttempt;
 import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.LessonBlockRepository;
 import com.twojlogin.lms.repository.LessonRepository;
@@ -21,6 +22,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/lesson-blocks")
@@ -53,10 +57,24 @@ public class LessonBlockController {
     ) {
         accessService.requireLessonAccess(lessonId, authentication);
         boolean admin = isAdmin(authentication);
+        User user = accessService.currentUser(authentication);
+        Map<Long, TaskAttempt> attemptsByBlockId = user == null
+                ? Map.of()
+                : attemptRepository
+                    .findByUserIdAndBlockLessonId(user.getId(), lessonId)
+                    .stream()
+                    .collect(Collectors.toMap(
+                            attempt -> attempt.getBlock().getId(),
+                            Function.identity()
+                    ));
 
         return blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId).stream()
                 .filter(block -> admin || !Boolean.FALSE.equals(block.getPublished()))
-                .map(block -> LessonBlockDto.from(block, admin))
+                .map(block -> LessonBlockDto.from(
+                        block,
+                        admin,
+                        attemptsByBlockId.get(block.getId())
+                ))
                 .toList();
     }
 
@@ -67,7 +85,15 @@ public class LessonBlockController {
     ) {
         LessonBlock block = blockRepository.findById(id).orElseThrow();
         accessService.requireLessonAccess(block.getLesson().getId(), authentication);
-        return LessonBlockDto.from(block, isAdmin(authentication));
+        User user = accessService.currentUser(authentication);
+        TaskAttempt attempt = user == null
+                ? null
+                : attemptRepository.findByUserAndBlock(user, block).orElse(null);
+        return LessonBlockDto.from(
+                block,
+                isAdmin(authentication),
+                attempt
+        );
     }
 
     @Transactional
