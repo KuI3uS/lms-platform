@@ -24,15 +24,6 @@
                     <a href="#home">Home</a>
                     <a href="#courses">Kursy</a>
                     <a href="#how">Jak_działa</a>
-                    <div className="hero-actions">
-                        <Link to="/register" className="btn-outline">
-                            Rozpocznij naukę
-                        </Link>
-                        <Link to="/login" className="btn-ghost">
-                            Mam już konto
-                        </Link>
-                    </div>
-
                 </nav>
                 <header id="home" className="hero">
                     <div className="hero-content">
@@ -53,6 +44,27 @@
                             <span className="badge">Java</span>
                             <span className="badge">Spring Boot</span>
                             <span className="badge">SQL</span>
+                        </div>
+
+                        <div className="hero-platform-box">
+                            <p className="hero-platform-label">Platforma edukacyjna EduHub</p>
+
+                            <h3>Przejdź do nauki i kontynuuj kursy</h3>
+
+                            <p>
+                                Zaloguj się, aby wrócić do lekcji, zadań i swojego postępu.
+                                Nie masz konta? Rozpocznij naukę od rejestracji.
+                            </p>
+
+                            <div className="hero-actions">
+                                <Link to="/register" className="btn-primary-glow">
+                                    Rozpocznij naukę
+                                </Link>
+
+                                <Link to="/login" className="btn-secondary-glass">
+                                    Mam już konto
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </header>
