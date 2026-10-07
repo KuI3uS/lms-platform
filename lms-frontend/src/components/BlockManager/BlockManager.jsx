@@ -4,21 +4,18 @@ import BlockList from "./BlockList";
 import BlockForm from "./BlockForm";
 
 export default function BlockManager({
+
                                          lessonId,
 
-                                         blocks,
+                                         lessonBlocks,
 
-                                         block,
-                                         setBlock,
+                                         lessonTasks
 
-                                         saveBlock,
-                                         updateBlock,
-
-                                         editBlock,
-                                         deleteBlock,
-
-                                         tasks
                                      }) {
+
+    const blocks = lessonBlocks.getBlocks(lessonId);
+
+    const block = lessonBlocks.getBlockForm(lessonId);
 
     return (
 
@@ -47,22 +44,43 @@ export default function BlockManager({
             </div>
 
             <BlockList
-                blocks={blocks}
-                onEdit={editBlock}
-                onDelete={deleteBlock}
+
                 lessonId={lessonId}
+
+                blocks={blocks}
+
+                onEdit={lessonBlocks.editBlock}
+
+                onDelete={lessonBlocks.deleteBlock}
+
             />
 
             <BlockForm
+
                 lessonId={lessonId}
+
                 block={block}
-                setBlock={setBlock}
+
+                setBlock={(callback) =>
+                    lessonBlocks.setBlock(
+                        lessonId,
+                        callback
+                    )
+                }
+
+                tasks={lessonTasks.getTasks(lessonId)}
+
                 onSave={() =>
                     block.id
-                        ? updateBlock(lessonId, block.id)
-                        : saveBlock(lessonId)
+                        ? lessonBlocks.updateBlock(
+                            lessonId,
+                            block.id
+                        )
+                        : lessonBlocks.saveBlock(
+                            lessonId
+                        )
                 }
-                tasks={tasks}
+
             />
 
         </section>
