@@ -204,6 +204,47 @@ class TaskEvaluationServiceTest {
     }
 
     @Test
+    void acceptsConfiguredLanguageAnswerVariantsIgnoringCaseAndFinalPunctuation() {
+        block.setLanguage("");
+        block.setStarterCode("");
+        block.setExpectedAnswer("My name is Anna | I'm Anna");
+        when(attemptRepository.findByUserAndBlock(user, block))
+                .thenReturn(Optional.empty());
+
+        TaskCheckResponse firstVariant = service.check(
+                block.getId(),
+                "  MY NAME IS ANNA!  ",
+                authentication
+        );
+        TaskCheckResponse secondVariant = service.check(
+                block.getId(),
+                "I'm Anna.",
+                authentication
+        );
+
+        assertTrue(firstVariant.correct());
+        assertTrue(secondVariant.correct());
+    }
+
+    @Test
+    void returnsAHelpfulDiagnosticForAnIncorrectLanguageAnswer() {
+        block.setLanguage("");
+        block.setStarterCode("");
+        block.setExpectedAnswer("Good morning | Morning");
+        when(attemptRepository.findByUserAndBlock(user, block))
+                .thenReturn(Optional.empty());
+
+        TaskCheckResponse response = service.check(
+                block.getId(),
+                "Good evening",
+                authentication
+        );
+
+        assertFalse(response.correct());
+        assertEquals("INCORRECT_TEXT_ANSWER", response.diagnostics().get(0).type());
+    }
+
+    @Test
     void rejectsAnUnchangedStarterTemplate() {
         String starter = """
                 // Dane wejściowe:

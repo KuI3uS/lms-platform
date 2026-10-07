@@ -106,11 +106,13 @@ public class TaskEvaluationService {
                         "Kod startowy nie został jeszcze uzupełniony.",
                         "Wykonaj polecenie w przygotowanym szablonie, a następnie sprawdź rozwiązanie ponownie."
                     ))
-                    : evaluate(
-                        studentAnswer,
-                        block.getExpectedAnswer(),
-                        block.getLanguage()
-                    );
+                    : !hasText(block.getLanguage()) && !hasText(block.getStarterCode())
+                        ? evaluateTextAnswer(studentAnswer, block.getExpectedAnswer())
+                        : evaluate(
+                            studentAnswer,
+                            block.getExpectedAnswer(),
+                            block.getLanguage()
+                        );
         boolean correct = diagnostics.isEmpty();
 
         GamificationProfile profile = gamificationService.profileForUpdate(user);
@@ -184,6 +186,42 @@ public class TaskEvaluationService {
                 "Wybrana odpowiedź nie jest poprawna.",
                 "Wróć do materiału poprzedzającego quiz i sprawdź definicję z pytania."
         ));
+    }
+
+    private List<TaskDiagnosticDto> evaluateTextAnswer(
+            String student,
+            String expected
+    ) {
+        if (student.isBlank()) {
+            return List.of(new TaskDiagnosticDto(
+                    "EMPTY_ANSWER",
+                    null,
+                    "Najpierw wpisz odpowiedź.",
+                    "Wróć do materiału lekcji i spróbuj ułożyć krótką odpowiedź."
+            ));
+        }
+
+        String normalizedStudent = normalizeTextAnswer(student);
+        boolean matches = Arrays.stream(expected.split("\\|"))
+                .map(this::normalizeTextAnswer)
+                .filter(candidate -> !candidate.isBlank())
+                .anyMatch(normalizedStudent::equals);
+        if (matches) return List.of();
+
+        return List.of(new TaskDiagnosticDto(
+                "INCORRECT_TEXT_ANSWER",
+                null,
+                "Ta odpowiedź nie pasuje jeszcze do żadnej poprawnej wersji.",
+                "Sprawdź szyk zdania, potrzebne słowo i pisownię. Wielkość liter oraz końcowa interpunkcja nie mają znaczenia."
+        ));
+    }
+
+    private String normalizeTextAnswer(String answer) {
+        return answer
+                .trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[.!?,;:]+$", "")
+                .replaceAll("\\s+", " ");
     }
 
     private List<TaskDiagnosticDto> evaluate(

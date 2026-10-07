@@ -1,6 +1,8 @@
 package com.twojlogin.lms.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -23,11 +25,14 @@ public class UserAchievement {
     private User user;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false)
     private AchievementType type;
 
     @Column(nullable = false)
     private LocalDateTime unlockedAt;
+
+    private Boolean rewardClaimed = false;
 
     public Long getId() {
         return id;
@@ -55,5 +60,13 @@ public class UserAchievement {
 
     public void setUnlockedAt(LocalDateTime unlockedAt) {
         this.unlockedAt = unlockedAt;
+    }
+
+    public boolean isRewardClaimed() {
+        return Boolean.TRUE.equals(rewardClaimed);
+    }
+
+    public void setRewardClaimed(boolean rewardClaimed) {
+        this.rewardClaimed = rewardClaimed;
     }
 }

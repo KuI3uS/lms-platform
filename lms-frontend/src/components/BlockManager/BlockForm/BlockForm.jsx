@@ -7,7 +7,8 @@ export default function BlockForm({
                                       setBlock,
                                       onSave,
                                       saving = false,
-                                      error = ""
+                                      error = "",
+                                      variant = "PROGRAMMING"
                                   }) {
 
     return (
@@ -34,6 +35,7 @@ export default function BlockForm({
 
             <BlockTypeSelector
                 value={block.type}
+                variant={variant}
                 onChange={(type)=>
                     setBlock(prev=>({
                         ...prev,
@@ -45,6 +47,7 @@ export default function BlockForm({
             <BlockRenderer
                 block={block}
                 setBlock={setBlock}
+                variant={variant}
             />
 
             {error && (

@@ -29,9 +29,11 @@ public class GamificationService {
     public static final int GEMS_PER_COMPLETED_LESSON = 50;
     public static final int GEMS_PER_LEVEL_MILESTONE = 250;
     public static final int GEM_LEVEL_INTERVAL = 5;
+    public static final int LEVEL_UP_BOOST_PERCENT = 25;
+    public static final Duration LEVEL_UP_BOOST_DURATION = Duration.ofHours(1);
     public static final BigDecimal MINIMUM_PAYABLE_RATE = new BigDecimal("0.25");
-    public static final Duration TASK_STREAK_TTL = Duration.ofHours(24);
     private static final ZoneId WARSAW_ZONE = ZoneId.of("Europe/Warsaw");
+    private static final long MYTHIC_ENTRY_XP = 750_000L;
 
     private final GamificationProfileRepository profileRepository;
     private final LessonProgressRepository lessonProgressRepository;
@@ -198,9 +200,14 @@ public class GamificationService {
         for (int level = 1; level < targetLevel; level++) {
             long completedLevels = level - 1L;
             long advancedLevel = Math.max(0, level - 20L);
+            long legendaryLevel = Math.max(0, level - 70L);
+            long mythicLevel = Math.max(0, level - 110L);
             total += 100L
                     + completedLevels * 25L
-                    + advancedLevel * advancedLevel * 20L;
+                    + advancedLevel * advancedLevel * 20L
+                    + legendaryLevel * legendaryLevel * 50L
+                    + (level >= 110 ? MYTHIC_ENTRY_XP : 0L)
+                    + mythicLevel * mythicLevel * mythicLevel * 5_000L;
         }
         return total;
     }
@@ -250,18 +257,45 @@ public class GamificationService {
         profile.setTotalXp(Math.max(0, profile.getTotalXp() + amount));
         profile.setLevel(levelForXp(profile.getTotalXp()));
         synchronizeGemMilestones(profile, notify);
+        boolean levelUp = profile.getLevel() > previousLevel;
+        if (levelUp) {
+            activateLevelUpBoost(profile);
+        }
         profileRepository.save(profile);
 
-        if (notify && profile.getLevel() > previousLevel) {
+        if (notify && levelUp) {
             LearningLeague league = LearningLeague.forLevel(profile.getLevel());
             notificationService.create(
                     profile.getUser(),
                     NotificationType.ACHIEVEMENT,
                     "Nowy poziom: " + profile.getLevel(),
                     "Awansujesz w lidze „" + league.displayName() + "” i masz "
-                            + profile.getTotalXp() + " XP.",
+                            + profile.getTotalXp() + " XP. Przez godzinę zdobywasz +"
+                            + LEVEL_UP_BOOST_PERCENT + "% XP.",
                     "/learning-center"
             );
+        }
+    }
+
+    @Transactional
+    public long awardAchievementGems(User user, long amount) {
+        if (amount <= 0) return 0;
+        GamificationProfile profile = profileForUpdate(user);
+        addGems(profile, amount);
+        profileRepository.save(profile);
+        return profile.getGemBalance();
+    }
+
+    private void activateLevelUpBoost(GamificationProfile profile) {
+        Instant now = clock.instant();
+        Instant newExpiry = now.plus(LEVEL_UP_BOOST_DURATION);
+        profile.setXpBoostPercent(Math.max(
+                profile.getXpBoostPercent(),
+                LEVEL_UP_BOOST_PERCENT
+        ));
+        if (profile.getXpBoostExpiresAt() == null
+                || profile.getXpBoostExpiresAt().isBefore(newExpiry)) {
+            profile.setXpBoostExpiresAt(newExpiry);
         }
     }
 
@@ -358,7 +392,7 @@ public class GamificationService {
         Instant now = clock.instant();
         int effectiveStreak = effectiveTaskStreak(profile, now);
         Instant streakExpiresAt = effectiveStreak > 0
-                ? profile.getCorrectTaskStreakUpdatedAt().plus(TASK_STREAK_TTL)
+                ? streakDeadline(profile.getCorrectTaskStreakUpdatedAt())
                 : null;
         long levelStartXp = xpRequiredForLevel(profile.getLevel());
         long nextLevelXp = xpRequiredForLevel(profile.getLevel() + 1);
@@ -399,9 +433,17 @@ public class GamificationService {
                 || profile.getCorrectTaskStreakUpdatedAt() == null) {
             return 0;
         }
-        Instant expiresAt = profile.getCorrectTaskStreakUpdatedAt()
-                .plus(TASK_STREAK_TTL);
+        Instant expiresAt = streakDeadline(profile.getCorrectTaskStreakUpdatedAt());
         return now.isBefore(expiresAt) ? profile.getCorrectTaskStreak() : 0;
+    }
+
+    static Instant streakDeadline(Instant lastCorrectAnswerAt) {
+        return lastCorrectAnswerAt
+                .atZone(WARSAW_ZONE)
+                .toLocalDate()
+                .plusDays(1)
+                .atStartOfDay(WARSAW_ZONE)
+                .toInstant();
     }
 
     public record AwardResult(

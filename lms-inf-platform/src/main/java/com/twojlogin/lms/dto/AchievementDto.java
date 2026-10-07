@@ -9,6 +9,9 @@ public record AchievementDto(
         String title,
         String description,
         String icon,
+        int gemReward,
+        long progressCurrent,
+        long progressTarget,
         boolean unlocked,
         LocalDateTime unlockedAt
 ) {

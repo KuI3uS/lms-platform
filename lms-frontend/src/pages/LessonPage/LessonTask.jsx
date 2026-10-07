@@ -21,6 +21,7 @@ const DIAGNOSTIC_LABELS = {
     EMPTY_ANSWER: "Brak odpowiedzi",
     INVALID_JAVA_STATEMENT: "Niepoprawna instrukcja",
     INCORRECT_QUIZ_ANSWER: "Niepoprawna odpowiedź",
+    INCORRECT_TEXT_ANSWER: "Spróbuj jeszcze raz",
     MISSING_OUTPUT: "Brak wyniku programu",
     MISSING_SEMICOLON: "Brak średnika",
     MISSING_REQUIRED_ELEMENT: "Niepełne rozwiązanie",
@@ -74,7 +75,7 @@ export default function LessonTask({
                     </Suspense>
                 ) : (
                     <textarea
-                        className="min-h-72 w-full rounded-3xl border border-gray-700 bg-gray-950 p-6 text-gray-200 outline-none focus:border-blue-500"
+                        className="min-h-40 w-full rounded-3xl border border-gray-700 bg-gray-950 p-6 text-gray-200 outline-none focus:border-blue-500"
                         placeholder="Wpisz swoją odpowiedź..."
                         value={value}
                         onChange={(event) => onAnswerChange(block.id, event.target.value)}
@@ -128,7 +129,13 @@ export default function LessonTask({
                                     <p className={`text-lg font-black ${
                                         result.correct ? "text-emerald-200" : "text-white"
                                     }`}>
-                                        {result.correct ? "Dobra robota — kod działa" : "Sprawdź wskazane miejsca"}
+                                        {result.correct
+                                            ? isCodeTask
+                                                ? "Dobra robota — kod działa"
+                                                : "Dobra robota — odpowiedź jest poprawna"
+                                            : isCodeTask
+                                                ? "Sprawdź wskazane miejsca"
+                                                : "Spróbuj poprawić odpowiedź"}
                                     </p>
                                     {result.attemptCount > 0 && (
                                         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-slate-400">

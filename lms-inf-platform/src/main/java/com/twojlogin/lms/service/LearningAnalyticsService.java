@@ -41,7 +41,7 @@ public class LearningAnalyticsService {
         this.certificateRepository = certificateRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LearningAnalyticsDto get(Authentication authentication) {
         User user = accessService.currentUser(authentication);
         long attemptedTasks = taskAttemptRepository.countByUserId(user.getId());
@@ -73,7 +73,7 @@ public class LearningAnalyticsService {
                                 activity.getTotalSeconds()
                         ))
                         .toList(),
-                achievementService.getFor(user),
+                achievementService.evaluate(user),
                 certificateRepository.findByUserIdOrderByIssuedAtDesc(user.getId()).stream()
                         .map(com.twojlogin.lms.dto.CertificateDto::from)
                         .toList()

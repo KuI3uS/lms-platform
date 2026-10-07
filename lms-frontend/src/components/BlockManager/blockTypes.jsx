@@ -150,6 +150,28 @@ export const BLOCK_TYPES_MAP = Object.fromEntries(
     BLOCK_TYPES.map(type => [type.value, type])
 );
 
+const LANGUAGE_TYPES = new Set([
+    "TEXT", "TIP", "INFO", "SUMMARY", "IMAGE", "VIDEO", "TASK", "QUIZ"
+]);
+
+const LANGUAGE_OVERRIDES = {
+    TEXT: { label: "Materiał językowy", description: "Krótki dialog, reguła albo porcja nowych zwrotów." },
+    TIP: { label: "Wskazówka językowa", description: "Prosta podpowiedź dotycząca wymowy lub użycia." },
+    INFO: { label: "Słownictwo", description: "Nowe słowa z tłumaczeniem i przykładem." },
+    SUMMARY: { label: "Powtórka", description: "Najważniejsze zwroty do zapamiętania." },
+    IMAGE: { label: "Obraz i słowo", description: "Grafika wspierająca zapamiętywanie znaczenia." },
+    VIDEO: { label: "Wymowa lub film", description: "Krótki materiał do słuchania i powtarzania." },
+    TASK: { label: "Ćwiczenie", description: "Krótka odpowiedź sprawdzana automatycznie." },
+    QUIZ: { label: "Szybki quiz", description: "Jedno pytanie i natychmiastowa informacja zwrotna." }
+};
+
+export function getBlockTypes(variant = "PROGRAMMING") {
+    if (variant !== "LANGUAGE") return BLOCK_TYPES;
+    return BLOCK_TYPES
+        .filter((type) => LANGUAGE_TYPES.has(type.value))
+        .map((type) => ({ ...type, ...LANGUAGE_OVERRIDES[type.value] }));
+}
+
 export function getBlockType(type) {
     const normalizedType = ["THEORY", "CONTENT"].includes(type)
         ? "TEXT"

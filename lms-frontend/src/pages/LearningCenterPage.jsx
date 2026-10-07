@@ -66,8 +66,32 @@ const achievementIcons = {
     book: <BsBookHalf />,
     calendar: <BsClockHistory />,
     layers: <BsBarChartFill />,
-    stars: <BsGraphUpArrow />
+    stars: <BsGraphUpArrow />,
+    check: <BsCheckCircleFill />,
+    bolt: <BsLightningChargeFill />,
+    level: <BsGraphUpArrow />,
+    gem: <BsGem />,
+    clock: <BsClockHistory />
 };
+
+const ACHIEVEMENT_GROUPS = [
+    { key: "lessons", title: "Lekcje i rozwój", match: (type) => type === "FIRST_LESSON" || type.startsWith("LESSONS_") },
+    { key: "rhythm", title: "Regularność", match: (type) => type.startsWith("STREAK_") || type.startsWith("STUDY_") },
+    { key: "practice", title: "Praktyka i doświadczenie", match: (type) => type.startsWith("TASKS_") || type.startsWith("COMBO_") || type.startsWith("XP_") },
+    { key: "mastery", title: "Mistrzostwo", match: () => true }
+];
+
+function achievementProgress(achievement) {
+    const current = Number(achievement.progressCurrent || 0);
+    const target = Math.max(1, Number(achievement.progressTarget || 1));
+    const isTime = achievement.type.startsWith("STUDY_");
+    return {
+        percent: Math.min(100, current * 100 / target),
+        label: isTime
+            ? `${formatDuration(current)} / ${formatDuration(target)}`
+            : `${current.toLocaleString("pl-PL")} / ${target.toLocaleString("pl-PL")}`
+    };
+}
 
 export default function LearningCenterPage() {
     const navigate = useNavigate();
@@ -95,6 +119,16 @@ export default function LearningCenterPage() {
                     // Dane nadal pozostają w pamięci bieżącej strony.
                 }
                 setData(analyticsResponse);
+                fetchLearningStats({ force: true })
+                    .then((statsResponse) => {
+                        if (active) setStats(statsResponse);
+                    })
+                    .catch(() => {});
+                apiFetch("/rewards")
+                    .then((rewardResponse) => {
+                        if (active) setRewards(rewardResponse);
+                    })
+                    .catch(() => {});
             })
             .catch((loadError) => {
                 if (active) setError(loadError.message || "Nie udało się pobrać statystyk.");
@@ -229,6 +263,11 @@ export default function LearningCenterPage() {
                         <p className="mt-2 text-xs text-slate-400">
                             {stats.xpIntoLevel} / {stats.xpForNextLevel} XP do kolejnego poziomu
                         </p>
+                        {stats.xpBoostPercent > 0 && (
+                            <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-violet-400/10 px-3 py-1 text-xs font-black text-violet-200">
+                                <BsLightningChargeFill /> +{stats.xpBoostPercent}% XP aktywne
+                            </p>
+                        )}
                     </div>
 
                     <div className="rounded-3xl border border-orange-400/20 bg-orange-500/[0.08] p-6">
@@ -240,7 +279,7 @@ export default function LearningCenterPage() {
                             </p>
                         </div>
                         <p className="mt-4 text-sm leading-6 text-slate-400">
-                            5 poprawnych zadań uruchamia x2, a 10 poprawnych x3. Seria wygasa 24 godziny po ostatnim poprawnym zadaniu.
+                            5 poprawnych zadań uruchamia x2, a 10 poprawnych x3. Licznik zeruje się dokładnie o północy czasu polskiego.
                         </p>
                     </div>
 
@@ -266,7 +305,7 @@ export default function LearningCenterPage() {
                         <p className="mt-4 text-sm leading-6 text-slate-400">
                             {stats.nextLeagueLevel
                                 ? `Następna odznaka ligi od poziomu ${stats.nextLeagueLevel}.`
-                                : "Najwyższa liga i najrzadsza odznaka Pryzmatu."}
+                                : "Najwyższa, najrzadsza liga Mityczna."}
                         </p>
                     </div>
                 </section>
@@ -347,29 +386,63 @@ export default function LearningCenterPage() {
                         {data.achievements.filter((item) => item.unlocked).length}/{data.achievements.length}
                     </p>
                 </div>
-                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {data.achievements.map((achievement) => (
-                        <article
-                            key={achievement.type}
-                            className={`rounded-3xl border p-5 transition ${
-                                achievement.unlocked
-                                    ? "border-violet-400/30 bg-violet-500/10"
-                                    : "border-white/5 bg-white/[0.025] opacity-55"
-                            }`}
-                        >
-                            <div className={`grid h-12 w-12 place-items-center rounded-2xl text-xl ${
-                                achievement.unlocked
-                                    ? "bg-violet-500/20 text-violet-200"
-                                    : "bg-slate-900 text-slate-600"
-                            }`}>
-                                {achievement.unlocked
-                                    ? achievementIcons[achievement.icon] || <BsAwardFill />
-                                    : <BsLockFill />}
+                <div className="mt-7 space-y-8">
+                    {ACHIEVEMENT_GROUPS.map((group, groupIndex) => {
+                        const alreadyAssigned = ACHIEVEMENT_GROUPS
+                            .slice(0, groupIndex)
+                            .map((item) => item.match);
+                        const achievements = data.achievements.filter((achievement) =>
+                            group.match(achievement.type)
+                            && !alreadyAssigned.some((match) => match(achievement.type))
+                        );
+                        if (achievements.length === 0) return null;
+                        return (
+                            <div key={group.key}>
+                                <h3 className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-slate-500">{group.title}</h3>
+                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                                    {achievements.map((achievement) => {
+                                        const progress = achievementProgress(achievement);
+                                        return (
+                                            <article
+                                                key={achievement.type}
+                                                className={`relative overflow-hidden rounded-3xl border p-5 transition ${
+                                                    achievement.unlocked
+                                                        ? "border-violet-400/30 bg-violet-500/10"
+                                                        : "border-white/5 bg-white/[0.025]"
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className={`grid h-12 w-12 place-items-center rounded-2xl text-xl ${
+                                                        achievement.unlocked
+                                                            ? "bg-violet-500/20 text-violet-200"
+                                                            : "bg-slate-900 text-slate-600"
+                                                    }`}>
+                                                        {achievement.unlocked
+                                                            ? achievementIcons[achievement.icon] || <BsAwardFill />
+                                                            : <BsLockFill />}
+                                                    </div>
+                                                    <span className="inline-flex items-center gap-1 rounded-full border border-cyan-300/15 bg-cyan-300/[0.07] px-2.5 py-1 text-xs font-black text-cyan-200">
+                                                        <BsGem /> +{achievement.gemReward}
+                                                    </span>
+                                                </div>
+                                                <h4 className="mt-4 font-black">{achievement.title}</h4>
+                                                <p className="mt-2 min-h-12 text-sm leading-6 text-slate-500">{achievement.description}</p>
+                                                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/30">
+                                                    <div
+                                                        className={`h-full rounded-full ${achievement.unlocked ? "bg-violet-400" : "bg-slate-600"}`}
+                                                        style={{ width: `${progress.percent}%` }}
+                                                    />
+                                                </div>
+                                                <p className="mt-2 text-[11px] font-bold text-slate-600">
+                                                    {achievement.unlocked ? "Zdobyte" : progress.label}
+                                                </p>
+                                            </article>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <h3 className="mt-4 font-black">{achievement.title}</h3>
-                            <p className="mt-2 text-sm leading-6 text-slate-500">{achievement.description}</p>
-                        </article>
-                    ))}
+                        );
+                    })}
                 </div>
             </section>
 
@@ -524,13 +597,16 @@ function RewardShop({ rewards, busy, message, onPurchase }) {
 
 function LeagueRoadmap({ currentLeague }) {
     const leagues = [
-        { name: "Miedź", level: "1–4", color: "#fb923c" },
-        { name: "Srebro", level: "5–9", color: "#e2e8f0" },
-        { name: "Złoto", level: "10–14", color: "#facc15" },
-        { name: "Platyna", level: "15–24", color: "#22d3ee" },
-        { name: "Kryształ", level: "25–39", color: "#a78bfa" },
-        { name: "Diament", level: "40–59", color: "#38bdf8" },
-        { name: "Pryzmat", level: "60+", color: "#f472b6" }
+        { name: "Miedź", level: "1–10", color: "#fb923c" },
+        { name: "Srebro", level: "11–20", color: "#e2e8f0" },
+        { name: "Złoto", level: "21–30", color: "#facc15" },
+        { name: "Platyna", level: "31–40", color: "#22d3ee" },
+        { name: "Kryształ", level: "41–50", color: "#a78bfa" },
+        { name: "Diament", level: "51–60", color: "#38bdf8" },
+        { name: "Pryzmat", level: "61–70", color: "#f472b6" },
+        { name: "Legendarny I", level: "71–90", color: "#fb7185" },
+        { name: "Legendarny II", level: "91–110", color: "#ef4444" },
+        { name: "Mityczny", level: "111+", color: "#e879f9" }
     ];
 
     return (

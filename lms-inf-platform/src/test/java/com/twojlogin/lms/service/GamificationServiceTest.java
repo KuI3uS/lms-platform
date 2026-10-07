@@ -96,11 +96,9 @@ class GamificationServiceTest {
     }
 
     @Test
-    void expiresTaskStreakExactlyAfterTwentyFourHours() {
+    void expiresTaskStreakAtPolishMidnight() {
         profile.setCorrectTaskStreak(4);
-        profile.setCorrectTaskStreakUpdatedAt(
-                now.minus(GamificationService.TASK_STREAK_TTL)
-        );
+        profile.setCorrectTaskStreakUpdatedAt(Instant.parse("2026-08-10T21:59:00Z"));
         LessonBlock block = new LessonBlock();
         block.setPoints(10);
 
@@ -115,6 +113,17 @@ class GamificationServiceTest {
         assertEquals(1, result.taskStreak());
         assertEquals(1, result.multiplier());
         assertEquals(now, profile.getCorrectTaskStreakUpdatedAt());
+    }
+
+    @Test
+    void keepsTaskStreakOnlyUntilTheEndOfThePolishCalendarDay() {
+        profile.setCorrectTaskStreak(4);
+        profile.setCorrectTaskStreakUpdatedAt(Instant.parse("2026-08-11T00:05:00Z"));
+
+        GamificationService.GamificationSnapshot snapshot = service.snapshot(user);
+
+        assertEquals(4, snapshot.taskStreak());
+        assertEquals(Instant.parse("2026-08-11T22:00:00Z"), snapshot.taskStreakExpiresAt());
     }
 
     @Test
@@ -156,6 +165,8 @@ class GamificationServiceTest {
         assertTrue(result.levelUp());
         assertEquals(250, profile.getGemBalance());
         assertEquals(10, profile.getRewardedGemLevel());
+        assertEquals(25, profile.getXpBoostPercent());
+        assertEquals(now.plusSeconds(3600), profile.getXpBoostExpiresAt());
     }
 
     @Test
@@ -191,5 +202,15 @@ class GamificationServiceTest {
 
         assertTrue(levelTenStep > levelTwoCost);
         assertTrue(levelTwentyStep > levelTenStep);
+    }
+
+    @Test
+    void enteringMythicLeagueIsAnExceptionalXpMilestone() {
+        long legendaryStep = GamificationService.xpRequiredForLevel(110)
+                - GamificationService.xpRequiredForLevel(109);
+        long mythicEntryStep = GamificationService.xpRequiredForLevel(111)
+                - GamificationService.xpRequiredForLevel(110);
+
+        assertTrue(mythicEntryStep > legendaryStep * 4);
     }
 }
