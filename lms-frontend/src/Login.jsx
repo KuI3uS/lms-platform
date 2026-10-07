@@ -3,10 +3,16 @@ import { Link } from "react-router-dom";
 import { apiFetch } from "./api/api";
 
 export default function Login() {
+    const sessionExpired = new URLSearchParams(window.location.search)
+        .get("session") === "expired";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
+    const [message, setMessage] = useState(
+        sessionExpired
+            ? "Sesja wygasła. Zaloguj się ponownie — wrócisz do poprzedniej strony."
+            : ""
+    );
     const [loading, setLoading] = useState(false);
     const [resending, setResending] = useState(false);
 
@@ -26,7 +32,14 @@ export default function Login() {
             });
 
             localStorage.setItem("token", data.token);
-            window.location.href = "/courses";
+            const storedDestination = sessionStorage.getItem("eduhub:return-after-login");
+            const destination = storedDestination?.startsWith("/")
+                && !storedDestination.startsWith("//")
+                ? storedDestination
+                : "/courses";
+
+            sessionStorage.removeItem("eduhub:return-after-login");
+            window.location.href = destination;
         } catch (e) {
             setError(e.message || "Nie udało się zalogować.");
         } finally {

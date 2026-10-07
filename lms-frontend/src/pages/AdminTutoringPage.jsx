@@ -17,27 +17,29 @@ export default function AdminTutoringPage() {
     const [startTime, setStartTime] = useState("");
     const [endTime, setEndTime] = useState("");
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [savingTerm, setSavingTerm] = useState(false);
+    const [deletingBookingId, setDeletingBookingId] = useState(null);
 
     const load = useCallback(async () => {
         setLoading(true);
+        setError("");
 
         try {
-            const termsData = await apiFetch("/admin/tutoring/availability");
+            const [termsData, bookingsData] = await Promise.all([
+                apiFetch("/admin/tutoring/availability"),
+                apiFetch("/admin/tutoring/bookings")
+            ]);
             setTerms(termsData || []);
-        } catch (e) {
-            console.error("Błąd terminów:", e);
-            setTerms([]);
-        }
-
-        try {
-            const bookingsData = await apiFetch("/admin/tutoring/bookings");
             setBookings(bookingsData || []);
         } catch (e) {
-            console.error("Błąd rezerwacji:", e);
+            console.error("Błąd panelu korepetycji:", e);
+            setTerms([]);
             setBookings([]);
+            setError(e.message || "Nie udało się pobrać danych korepetycji.");
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     }, []);
 
     useEffect(() => {
@@ -56,37 +58,78 @@ export default function AdminTutoringPage() {
             return;
         }
 
-        await apiFetch("/admin/tutoring/availability", {
-            method: "POST",
-            body: JSON.stringify({ startTime, endTime })
-        });
+        setSavingTerm(true);
+        setError("");
+        try {
+            await apiFetch("/admin/tutoring/availability", {
+                method: "POST",
+                body: JSON.stringify({ startTime, endTime })
+            });
 
-        setStartTime("");
-        setEndTime("");
-        load();
+            setStartTime("");
+            setEndTime("");
+            await load();
+        } catch (e) {
+            setError(e.message || "Nie udało się dodać dostępności.");
+        } finally {
+            setSavingTerm(false);
+        }
     };
 
     const deleteTerm = async (id) => {
         if (!confirm("Usunąć dostępność?")) return;
 
-        await apiFetch(`/admin/tutoring/availability/${id}`, {
-            method: "DELETE"
-        });
-
-        load();
+        setError("");
+        try {
+            await apiFetch(`/admin/tutoring/availability/${id}`, {
+                method: "DELETE"
+            });
+            await load();
+        } catch (e) {
+            setError(e.message || "Nie udało się usunąć dostępności.");
+        }
     };
 
     const updateBookingStatus = async (id, status) => {
-        await apiFetch(`/tutoring/admin/${id}`, {
-            method: "PUT",
-            body: JSON.stringify({
-                status,
-                adminComment: "",
-                meetingLink: ""
-            })
-        });
+        setError("");
+        try {
+            await apiFetch(`/tutoring/admin/${id}`, {
+                method: "PUT",
+                body: JSON.stringify({
+                    status,
+                    adminComment: "",
+                    meetingLink: ""
+                })
+            });
 
-        load();
+            await load();
+        } catch (e) {
+            setError(e.message || "Nie udało się zmienić statusu rezerwacji.");
+        }
+    };
+
+    const deleteBooking = async (booking) => {
+        const description = booking.topic || "rezerwacja bez tematu";
+        const accepted = window.confirm(
+            `Trwale usunąć „${description}” z ${formatDate(booking.startTime)}?\n\nTej operacji nie można cofnąć.`
+        );
+
+        if (!accepted) return;
+
+        setDeletingBookingId(booking.id);
+        setError("");
+        try {
+            await apiFetch(`/admin/tutoring/bookings/${booking.id}`, {
+                method: "DELETE"
+            });
+            setBookings(current =>
+                current.filter(item => item.id !== booking.id)
+            );
+        } catch (e) {
+            setError(e.message || "Nie udało się usunąć rezerwacji.");
+        } finally {
+            setDeletingBookingId(null);
+        }
     };
 
     const formatDate = (date) =>
@@ -149,6 +192,15 @@ export default function AdminTutoringPage() {
 
             </section>
 
+            {error && (
+                <div
+                    role="alert"
+                    className="rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 font-semibold text-red-200"
+                >
+                    {error}
+                </div>
+            )}
+
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
                 <h2 className="text-xl font-bold">Dodaj dostępność</h2>
 
@@ -170,10 +222,11 @@ export default function AdminTutoringPage() {
 
                 <button
                     onClick={addTerm}
-                    className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold flex items-center gap-2"
+                    disabled={savingTerm}
+                    className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold flex items-center gap-2 disabled:cursor-wait disabled:opacity-60"
                 >
                     <BsCheckCircle />
-                    Dodaj dostępność
+                    {savingTerm ? "Dodawanie..." : "Dodaj dostępność"}
                 </button>
             </div>
 
@@ -290,6 +343,19 @@ export default function AdminTutoringPage() {
                                     >
                                         Anuluj
                                     </button>
+
+                                    {booking.status === "CANCELLED" && (
+                                        <button
+                                            onClick={() => deleteBooking(booking)}
+                                            disabled={deletingBookingId === booking.id}
+                                            className="ml-auto flex items-center gap-2 rounded-xl border border-red-500/30 bg-transparent px-4 py-2 font-semibold text-red-300 transition hover:bg-red-500/15 disabled:cursor-wait disabled:opacity-50"
+                                        >
+                                            <BsTrash />
+                                            {deletingBookingId === booking.id
+                                                ? "Usuwanie..."
+                                                : "Usuń z historii"}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
