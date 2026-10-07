@@ -151,6 +151,23 @@ export default function TaskBlockForm({
 
                 </div>
 
+                {(task.language || "java") === "java" && (
+                    <div className="space-y-2 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-4">
+                        <label className="flex items-center gap-2 font-black text-cyan-200">
+                            <BsCheckCircle /> Ukryte testy uruchomieniowe
+                        </label>
+                        <textarea
+                            value={task.hiddenTests || ""}
+                            onChange={(event) => update("hiddenTests", event.target.value)}
+                            className="min-h-36 w-full rounded-xl border border-gray-700 bg-gray-950 p-4 font-mono text-sm"
+                            placeholder={"<brak> => Hello World\\n5 => 25\\n-2 => 4"}
+                        />
+                        <p className="text-xs leading-5 text-slate-500">
+                            Jeden test w wierszu: <strong className="text-slate-300">wejście =&gt; oczekiwane wyjście</strong>. Użyj <strong className="text-slate-300">&lt;brak&gt;</strong>, gdy program nie pobiera danych. Uczeń nie zobaczy wartości testów.
+                        </p>
+                    </div>
+                )}
+
                 <div className="space-y-2">
 
                     <label className="flex items-center gap-2 text-gray-300">

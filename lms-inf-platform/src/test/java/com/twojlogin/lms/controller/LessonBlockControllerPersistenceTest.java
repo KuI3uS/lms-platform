@@ -50,6 +50,7 @@ class LessonBlockControllerPersistenceTest {
                 "java",
                 null,
                 null,
+                null,
                 true,
                 10,
                 null
@@ -76,6 +77,7 @@ class LessonBlockControllerPersistenceTest {
                         "Programowanie od absolutnych podstaw",
                         BlockType.TEXT,
                         content,
+                        null,
                         null,
                         null,
                         null,
@@ -122,6 +124,7 @@ class LessonBlockControllerPersistenceTest {
                             type == BlockType.TASK ? "Wykonaj zadanie" : null,
                             null,
                             requiredAnswer,
+                            null,
                             null,
                             null,
                             null,
@@ -179,7 +182,8 @@ class LessonBlockControllerPersistenceTest {
                 lessonRepository,
                 attemptRepository,
                 mock(TaskEvaluationService.class),
-                mock(CourseAccessService.class)
+                mock(CourseAccessService.class),
+                mock(com.twojlogin.lms.repository.LanguageReviewProgressRepository.class)
         );
     }
 }

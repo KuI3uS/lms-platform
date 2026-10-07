@@ -25,13 +25,7 @@ const ANALYTICS_STORAGE_PREFIX = "eduhub-learning-analytics";
 const analyticsCache = new Map();
 
 function analyticsCacheKey() {
-    try {
-        const token = localStorage.getItem("token");
-        const payload = token ? JSON.parse(atob(token.split(".")[1])) : {};
-        return `${ANALYTICS_STORAGE_PREFIX}:${payload.sub || payload.email || "anonymous"}`;
-    } catch {
-        return `${ANALYTICS_STORAGE_PREFIX}:anonymous`;
-    }
+    return `${ANALYTICS_STORAGE_PREFIX}:session`;
 }
 
 function getCachedAnalytics() {

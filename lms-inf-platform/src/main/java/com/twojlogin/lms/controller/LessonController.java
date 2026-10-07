@@ -35,6 +35,7 @@ public class LessonController {
     private final LessonBlockRepository lessonBlockRepository;
     private final CourseAccessService courseAccessService;
     private final ProgressRewardService rewardService;
+    private final LanguageReviewProgressRepository reviewRepository;
 
     public LessonController(
             LessonRepository lessonRepository,
@@ -44,7 +45,8 @@ public class LessonController {
             TaskAttemptRepository taskAttemptRepository,
             LessonBlockRepository lessonBlockRepository,
             CourseAccessService courseAccessService,
-            ProgressRewardService rewardService
+            ProgressRewardService rewardService,
+            LanguageReviewProgressRepository reviewRepository
     ) {
         this.lessonRepository = lessonRepository;
         this.moduleRepository = moduleRepository;
@@ -55,6 +57,7 @@ public class LessonController {
         this.lessonBlockRepository = lessonBlockRepository;
         this.courseAccessService = courseAccessService;
         this.rewardService = rewardService;
+        this.reviewRepository = reviewRepository;
     }
 
 
@@ -119,6 +122,7 @@ public class LessonController {
         lessonSubmissionRepository.deleteAll(submissions);
 
         taskAttemptRepository.deleteByBlockLessonId(id);
+        reviewRepository.deleteByBlockLessonId(id);
         lessonProgressRepository.deleteByLessonId(id);
 
         lessonRepository.deleteById(id);

@@ -15,16 +15,12 @@ import {
     BsPlayFill,
     BsStars
 } from "react-icons/bs";
+import { useAuth } from "../context/AuthContext";
 
 const CACHE_PREFIX = "eduhub-dashboard-v3";
 
 function dashboardCacheKey() {
-    try {
-        const payload = JSON.parse(atob(localStorage.getItem("token").split(".")[1]));
-        return `${CACHE_PREFIX}:${payload.sub || payload.email || "user"}`;
-    } catch {
-        return `${CACHE_PREFIX}:anonymous`;
-    }
+    return `${CACHE_PREFIX}:session`;
 }
 
 function readCache() {
@@ -54,16 +50,6 @@ function greeting() {
     return "Dobry wieczór";
 }
 
-function getIdentity() {
-    try {
-        const payload = JSON.parse(atob(localStorage.getItem("token").split(".")[1]));
-        const email = payload.sub || payload.email || "";
-        return email.split("@")[0].split(/[._-]/)[0] || "Uczniu";
-    } catch {
-        return "Uczniu";
-    }
-}
-
 function formatDate(value) {
     if (!value) return null;
     return new Intl.DateTimeFormat("pl-PL", {
@@ -89,6 +75,7 @@ function chooseCurrentCourse(courses) {
 
 export default function DashboardPage() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [cached] = useState(readCache);
     const [courses, setCourses] = useState(cached.courses || []);
     const [stats, setStats] = useState(cached.stats || null);
@@ -147,7 +134,7 @@ export default function DashboardPage() {
         <div className="app-enter mx-auto max-w-7xl space-y-6 pb-8 text-white">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">{greeting()}, {getIdentity()}</p>
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">{greeting()}, {(user?.firstName || user?.email?.split("@")[0] || "Uczniu")}</p>
                     <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Co dziś zbudujemy?</h1>
                     <p className="mt-2 text-sm text-slate-500">Mały krok, prawdziwy kod, widoczny postęp.</p>
                 </div>

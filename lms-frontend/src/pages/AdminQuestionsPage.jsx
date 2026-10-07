@@ -6,6 +6,7 @@ import {
     BsTrash
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
+import { useFeedback } from "../context/FeedbackContext";
 
 const emptyAnswers = () => [
     { content: "", correct: true },
@@ -13,6 +14,7 @@ const emptyAnswers = () => [
 ];
 
 export default function AdminQuestionsPage() {
+    const { confirm } = useFeedback();
     const [courses, setCourses] = useState([]);
     const [courseId, setCourseId] = useState("");
     const [modules, setModules] = useState([]);
@@ -132,7 +134,7 @@ export default function AdminQuestionsPage() {
     };
 
     const removeQuestion = async (question) => {
-        if (!window.confirm("Usunąć to pytanie?")) return;
+        if (!await confirm({ title: "Usuń pytanie", message: "Usunąć to pytanie i wszystkie jego odpowiedzi?", confirmLabel: "Usuń pytanie" })) return;
         try {
             setError("");
             await apiFetch(`/questions/${question.id}`, { method: "DELETE" });

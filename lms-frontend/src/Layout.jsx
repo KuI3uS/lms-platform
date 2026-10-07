@@ -14,24 +14,17 @@ import {
     BsPlusCircle,
     BsRocketTakeoff,
     BsShieldLock,
-    BsX
+    BsX,
+    BsArrowRepeat
 } from "react-icons/bs";
 import { apiFetch } from "./api/api";
+import { useAuth } from "./context/AuthContext";
 
 export default function Layout() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const location = useLocation();
-    const token = localStorage.getItem("token");
-
-    let role = "";
-    if (token) {
-        try {
-            const payload = JSON.parse(atob(token.split(".")[1]));
-            role = payload.role || "";
-        } catch (error) {
-            console.error("Token error", error);
-        }
-    }
+    const { user } = useAuth();
+    const role = user?.role || "";
 
     const isLessonPage = location.pathname.startsWith("/lesson/");
     const closeMenu = () => setMobileMenuOpen(false);
@@ -120,6 +113,10 @@ export default function Layout() {
                     <NavLink to="/learning-center" onClick={closeMenu} className={linkClass}>
                         <BsAward />
                         <span>Statystyki i nagrody</span>
+                    </NavLink>
+                    <NavLink to="/language-reviews" onClick={closeMenu} className={linkClass}>
+                        <BsArrowRepeat />
+                        <span>Powtórki językowe</span>
                     </NavLink>
 
                     {role === "ADMIN" && (

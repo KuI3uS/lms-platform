@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiFetch } from "./api/api";
+import { useFeedback } from "./context/FeedbackContext";
 
 export default function ResetPassword() {
+    const { showToast } = useFeedback();
     const [params] = useSearchParams();
     const token = params.get("token");
 
@@ -32,8 +34,8 @@ export default function ResetPassword() {
                 })
             });
 
-            alert("Hasło zostało zmienione. Konto jest aktywne i możesz się zalogować.");
-            window.location.href = "/login";
+            showToast("Hasło zostało zmienione. Możesz się teraz zalogować.", "success");
+            window.setTimeout(() => { window.location.href = "/login"; }, 900);
         } catch (e) {
             setError(e.message || "Nie udało się zmienić hasła.");
         } finally {

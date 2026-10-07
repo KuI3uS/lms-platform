@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiFetch } from "../api/api";
+import { useFeedback } from "../context/FeedbackContext";
 import {
     BsPatchQuestionFill,
     BsCheckCircle,
@@ -9,6 +10,7 @@ import {
 } from "react-icons/bs";
 
 export default function AddQuestionPage() {
+    const { showToast } = useFeedback();
 
     const [moduleId, setModuleId] = useState("");
 
@@ -70,7 +72,7 @@ export default function AddQuestionPage() {
 
         if (!moduleId.trim()) {
 
-            alert("Podaj ID modułu.");
+            showToast("Podaj ID modułu.", "warning");
 
             return;
 
@@ -78,7 +80,7 @@ export default function AddQuestionPage() {
 
         if (!content.trim()) {
 
-            alert("Podaj treść pytania.");
+            showToast("Podaj treść pytania.", "warning");
 
             return;
 
@@ -99,7 +101,7 @@ export default function AddQuestionPage() {
                 }
             );
 
-            alert("Pytanie zostało dodane.");
+            showToast("Pytanie zostało dodane.", "success");
 
             setContent("");
 
@@ -116,7 +118,7 @@ export default function AddQuestionPage() {
 
         } catch (e) {
 
-            alert(e.message);
+            showToast(e.message || "Nie udało się dodać pytania.", "error");
 
         } finally {
 

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../api/api";
+import { useFeedback } from "../../context/FeedbackContext";
 
 export default function AdminUsers() {
+    const { confirm, showToast } = useFeedback();
     const [users, setUsers] = useState([]);
 
     const levels = ["1", "2", "3"];
@@ -18,10 +20,11 @@ export default function AdminUsers() {
     }, [load]);
 
     const deleteUser = async (id, email) => {
-        if (!window.confirm(`Na pewno usunąć użytkownika:\n${email}?`)) return;
+        if (!await confirm({ title: "Usuń użytkownika", message: `Trwale usunąć konto ${email} i wszystkie jego postępy?`, confirmLabel: "Usuń konto" })) return;
 
         await apiFetch(`/users/${id}`, { method: "DELETE" });
         setUsers(prev => prev.filter(u => u.id !== id));
+        showToast("Konto użytkownika zostało usunięte.", "success");
     };
 
     const changeRole = async (id, role) => {

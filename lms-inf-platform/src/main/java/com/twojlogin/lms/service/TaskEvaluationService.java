@@ -31,17 +31,23 @@ public class TaskEvaluationService {
     private final TaskAttemptRepository attemptRepository;
     private final UserRepository userRepository;
     private final GamificationService gamificationService;
+    private final CodeExecutionService codeExecutionService;
+    private final LanguageReviewService languageReviewService;
 
     public TaskEvaluationService(
             LessonBlockRepository blockRepository,
             TaskAttemptRepository attemptRepository,
             UserRepository userRepository,
-            GamificationService gamificationService
+            GamificationService gamificationService,
+            CodeExecutionService codeExecutionService,
+            LanguageReviewService languageReviewService
     ) {
         this.blockRepository = blockRepository;
         this.attemptRepository = attemptRepository;
         this.userRepository = userRepository;
         this.gamificationService = gamificationService;
+        this.codeExecutionService = codeExecutionService;
+        this.languageReviewService = languageReviewService;
     }
 
     @Transactional
@@ -108,6 +114,12 @@ public class TaskEvaluationService {
                     ))
                     : !hasText(block.getLanguage()) && !hasText(block.getStarterCode())
                         ? evaluateTextAnswer(studentAnswer, block.getExpectedAnswer())
+                        : hasText(block.getHiddenTests())
+                                && "java".equalsIgnoreCase(block.getLanguage())
+                            ? codeExecutionService.evaluateJava(
+                                    studentAnswer,
+                                    block.getHiddenTests()
+                            )
                         : evaluate(
                             studentAnswer,
                             block.getExpectedAnswer(),
@@ -133,6 +145,7 @@ public class TaskEvaluationService {
                 correct
         );
         attemptRepository.save(attempt);
+        languageReviewService.record(user, block, correct ? 100 : 35);
 
         int hintLevel = correct ? 0 : hintLevel(attempt.getAttemptCount());
         List<TaskDiagnosticDto> visibleDiagnostics = diagnostics.stream()

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../api/api";
+import { useFeedback } from "../context/FeedbackContext";
 
 import {
     BsPersonCircle,
@@ -7,6 +8,7 @@ import {
 } from "react-icons/bs";
 
 export default function AdminSubmissionsPage() {
+    const { confirm, showToast } = useFeedback();
     const [submissions, setSubmissions] = useState([]);
     const [selected, setSelected] = useState(null);
     const [className, setClassName] = useState("");
@@ -36,7 +38,7 @@ export default function AdminSubmissionsPage() {
         setSubmissions(data || []);
     };
     const deleteSubmission = async (id) => {
-        const confirmed = window.confirm("Czy na pewno chcesz usunąć tę pracę?");
+        const confirmed = await confirm({ title: "Usuń pracę", message: "Czy na pewno chcesz trwale usunąć tę pracę ucznia?", confirmLabel: "Usuń pracę" });
         if (!confirmed) return;
 
         try {
@@ -49,7 +51,7 @@ export default function AdminSubmissionsPage() {
 
         } catch (e) {
             console.error(e);
-            alert("Nie udało się usunąć pracy");
+            showToast("Nie udało się usunąć pracy.", "error");
         }
     };
 
@@ -63,7 +65,7 @@ export default function AdminSubmissionsPage() {
             })
         });
 
-        alert("Zapisano ocenę");
+        showToast("Ocena i komentarz zostały zapisane.", "success");
         setSelected(null);
         load();
     };

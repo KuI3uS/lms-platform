@@ -10,7 +10,8 @@ import {
     BsQuestionCircle,
     BsDownload,
     BsQuote,
-    BsDashLg
+    BsDashLg,
+    BsHeadphones
 } from "react-icons/bs";
 
 export const BLOCK_TYPES = [
@@ -85,6 +86,16 @@ export const BLOCK_TYPES = [
         iconBox: "bg-rose-400/15 text-rose-200"
     },
     {
+        value: "AUDIO",
+        label: "Audio i wymowa",
+        description: "Nagranie, odsłuch lektora i ćwiczenie z mikrofonem.",
+        icon: <BsHeadphones />,
+        surface: "bg-violet-500/10",
+        border: "border-violet-500/25",
+        selected: "border-violet-300 bg-violet-500/20 shadow-violet-950/30",
+        iconBox: "bg-violet-400/15 text-violet-200"
+    },
+    {
         value: "EXAMPLE",
         label: "Przykład kodu",
         description: "Kod z językiem, opisem i przyciskiem kopiowania.",
@@ -151,7 +162,7 @@ export const BLOCK_TYPES_MAP = Object.fromEntries(
 );
 
 const LANGUAGE_TYPES = new Set([
-    "TEXT", "TIP", "INFO", "SUMMARY", "IMAGE", "VIDEO", "TASK", "QUIZ"
+    "TEXT", "TIP", "INFO", "SUMMARY", "IMAGE", "VIDEO", "AUDIO", "TASK", "QUIZ"
 ]);
 
 const LANGUAGE_OVERRIDES = {
@@ -161,6 +172,7 @@ const LANGUAGE_OVERRIDES = {
     SUMMARY: { label: "Powtórka", description: "Najważniejsze zwroty do zapamiętania." },
     IMAGE: { label: "Obraz i słowo", description: "Grafika wspierająca zapamiętywanie znaczenia." },
     VIDEO: { label: "Wymowa lub film", description: "Krótki materiał do słuchania i powtarzania." },
+    AUDIO: { label: "Audio i wymowa", description: "Odsłuch, nagranie mikrofonem i automatyczna powtórka." },
     TASK: { label: "Ćwiczenie", description: "Krótka odpowiedź sprawdzana automatycznie." },
     QUIZ: { label: "Szybki quiz", description: "Jedno pytanie i natychmiastowa informacja zwrotna." }
 };

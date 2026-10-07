@@ -1,8 +1,7 @@
-import { apiFetch, getToken } from "./api";
+import { apiFetch } from "./api";
 
 const CACHE_TTL = 15_000;
 
-let cachedToken = null;
 let cachedStats = null;
 let cachedAt = 0;
 let pendingRequest = null;
@@ -13,21 +12,17 @@ export function invalidateLearningStats() {
 }
 
 export function fetchLearningStats({ force = false } = {}) {
-    const token = getToken();
-    const sameUser = token === cachedToken;
-    const cacheIsFresh = sameUser
-        && cachedStats
+    const cacheIsFresh = cachedStats
         && Date.now() - cachedAt < CACHE_TTL;
 
     if (!force && cacheIsFresh) {
         return Promise.resolve(cachedStats);
     }
 
-    if (!force && sameUser && pendingRequest) {
+    if (!force && pendingRequest) {
         return pendingRequest;
     }
 
-    cachedToken = token;
     pendingRequest = apiFetch("/learning-stats")
         .then((stats) => {
             cachedStats = stats;

@@ -14,6 +14,7 @@ public record LessonBlockRequest(
         String detailedHint,
         String solutionExplanation,
         String language,
+        String hiddenTests,
         String mediaUrl,
         String mediaType,
         Boolean published,

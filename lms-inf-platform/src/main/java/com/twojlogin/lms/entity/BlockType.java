@@ -24,6 +24,8 @@ public enum BlockType {
 
     VIDEO,
 
+    AUDIO,
+
     PDF,
 
     DOWNLOAD,

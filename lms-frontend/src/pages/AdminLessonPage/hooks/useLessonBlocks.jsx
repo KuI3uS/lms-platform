@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiFetch } from "../../../api/api";
+import { useFeedback } from "../../../context/FeedbackContext";
 
 const emptyBlock = {
     id: null,
@@ -16,6 +17,7 @@ const emptyBlock = {
     hint: "",
     detailedHint: "",
     solutionExplanation: "",
+    hiddenTests: "",
 
     language: "java",
 
@@ -28,6 +30,7 @@ const emptyBlock = {
 };
 
 export default function useLessonBlocks() {
+    const { confirm, showToast } = useFeedback();
 
     const [blocksByLesson, setBlocksByLesson] = useState({});
 
@@ -132,7 +135,7 @@ export default function useLessonBlocks() {
         blockId
     ) {
 
-        if (!window.confirm("Usunąć blok?")) {
+        if (!await confirm({ title: "Usuń blok", message: "Usunąć ten element lekcji?", confirmLabel: "Usuń blok" })) {
             return;
         }
 
@@ -204,19 +207,24 @@ export default function useLessonBlocks() {
 
     function validateBlock(block) {
         if (block.type !== "DIVIDER" && !block.title?.trim()) {
-            alert("Podaj tytuł bloku.");
+            showToast("Podaj tytuł bloku.", "warning");
             return false;
         }
 
         if (["TEXT", "TIP", "WARNING", "INFO", "SUMMARY", "QUOTE", "EXAMPLE"]
             .includes(block.type) && !block.content?.trim()) {
-            alert("Uzupełnij treść tego bloku.");
+            showToast("Uzupełnij treść tego bloku.", "warning");
             return false;
         }
 
         if (["IMAGE", "VIDEO", "PDF", "DOWNLOAD"].includes(block.type)
             && !block.mediaUrl?.trim()) {
-            alert("Podaj prawidłowy adres materiału.");
+            showToast("Podaj prawidłowy adres materiału.", "warning");
+            return false;
+        }
+
+        if (block.type === "AUDIO" && !block.content?.trim()) {
+            showToast("Dodaj zwrot, który uczeń ma powtórzyć.", "warning");
             return false;
         }
 
@@ -227,23 +235,23 @@ export default function useLessonBlocks() {
                 .filter(Boolean);
 
             if (options.length < 2) {
-                alert("Quiz wymaga przynajmniej dwóch odpowiedzi.");
+                showToast("Quiz wymaga przynajmniej dwóch odpowiedzi.", "warning");
                 return false;
             }
             if (!block.expectedAnswer
                 || !options.includes(block.expectedAnswer)) {
-                alert("Wybierz poprawną odpowiedź quizu.");
+                showToast("Wybierz poprawną odpowiedź quizu.", "warning");
                 return false;
             }
         }
 
         if (block.type === "TASK") {
             if (!block.instruction?.trim()) {
-                alert("Dodaj polecenie do zadania.");
+                showToast("Dodaj polecenie do zadania.", "warning");
                 return false;
             }
             if (!block.expectedAnswer?.trim()) {
-                alert("Dodaj poprawną odpowiedź do zadania.");
+                showToast("Dodaj poprawną odpowiedź do zadania.", "warning");
                 return false;
             }
         }

@@ -93,7 +93,7 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public String login(LoginRequest request) {
+    public LoginResult login(LoginRequest request) {
         String email = normalizeEmail(request == null ? null : request.email);
         String password = request == null ? null : request.password;
         User user = email == null
@@ -115,7 +115,10 @@ public class AuthService {
             );
         }
 
-        return jwtService.generateToken(user.getEmail(), user.getRole().name());
+        return new LoginResult(
+                jwtService.generateToken(user.getEmail(), user.getRole().name()),
+                user
+        );
     }
 
     @Transactional
@@ -167,5 +170,8 @@ public class AuthService {
     private String normalizeEmail(String value) {
         if (value == null || value.isBlank()) return null;
         return value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    public record LoginResult(String token, User user) {
     }
 }

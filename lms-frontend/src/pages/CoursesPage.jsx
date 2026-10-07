@@ -27,6 +27,8 @@ import {
     getCourseLanguageLabel,
     getCourseLevelLabel
 } from "../utils/courseTaxonomy";
+import { useAuth } from "../context/AuthContext";
+import { useFeedback } from "../context/FeedbackContext";
 
 const CATEGORY_ICONS = {
     PROGRAMMING: BsCodeSlash,
@@ -39,18 +41,6 @@ const CATEGORY_STYLES = {
     DIGITAL_SKILLS: "border-blue-400/30 bg-blue-500/10 text-blue-200",
     LANGUAGE: "border-violet-400/30 bg-violet-500/10 text-violet-200"
 };
-
-function getRoleFromToken() {
-    const token = localStorage.getItem("token");
-
-    if (!token) return null;
-
-    try {
-        return JSON.parse(atob(token.split(".")[1])).role || null;
-    } catch {
-        return null;
-    }
-}
 
 function getErrorMessage(error) {
     try {
@@ -246,9 +236,11 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
 }
 
 export default function CoursesPage() {
+    const { user } = useAuth();
+    const { confirm } = useFeedback();
     const navigate = useNavigate();
     const location = useLocation();
-    const isAdmin = getRoleFromToken() === "ADMIN";
+    const isAdmin = user?.role === "ADMIN";
     const [view, setView] = useState("catalog");
 
     const [courses, setCourses] = useState([]);
@@ -296,7 +288,7 @@ export default function CoursesPage() {
 
     const deleteCourse = async (course) => {
         const title = course.title || course.name;
-        if (!window.confirm(`Usunąć kurs „${title}”?`)) return;
+        if (!await confirm({ title: "Usuń kurs", message: `Usunąć kurs „${title}” wraz z całą jego zawartością?`, confirmLabel: "Usuń kurs" })) return;
 
         try {
             setDeletingCourseId(course.id);
