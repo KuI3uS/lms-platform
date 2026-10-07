@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { BsArrowRepeat, BsCheckCircleFill, BsStars, BsXCircleFill } from "react-icons/bs";
 import PronunciationTrainer from "../../components/PronunciationTrainer";
-import { languageAnswerScore, parseVocabularyContent } from "../../utils/languageInteractiveBlocks";
+import { parseVocabularyContent } from "../../utils/languageInteractiveBlocks";
+import { checkVocabularyAnswer, vocabularyHint } from "../../utils/vocabularyPractice";
 
 export default function LessonWordLab({ block, onComplete }) {
     const config = useMemo(() => parseVocabularyContent(block.content), [block.content]);
@@ -9,16 +10,20 @@ export default function LessonWordLab({ block, onComplete }) {
     const [phase, setPhase] = useState("meaning");
     const [answer, setAnswer] = useState("");
     const [meaningResult, setMeaningResult] = useState(null);
+    const [failedAttempts, setFailedAttempts] = useState(0);
     const [pronunciation, setPronunciation] = useState(null);
     const [mastered, setMastered] = useState(0);
     const [finished, setFinished] = useState(false);
     const item = config.items[index];
+    const hint = vocabularyHint(item?.translation, failedAttempts);
 
     const checkMeaning = () => {
-        if (!answer.trim() || !item) return;
-        const score = languageAnswerScore([item.translation, ...(item.acceptedAnswers || [])], answer);
-        setMeaningResult({ score, accepted: score >= 82 });
-        if (score >= 82) setPhase("pronunciation");
+        if (phase !== "meaning") return;
+        const attempt = checkVocabularyAnswer(item, answer, failedAttempts);
+        if (!attempt) return;
+        setMeaningResult(attempt);
+        setFailedAttempts(attempt.failedAttempts);
+        if (attempt.accepted) setPhase("pronunciation");
     };
 
     const handlePronunciation = (_review, score) => setPronunciation(score);
@@ -37,6 +42,7 @@ export default function LessonWordLab({ block, onComplete }) {
         setPhase("meaning");
         setAnswer("");
         setMeaningResult(null);
+        setFailedAttempts(0);
         setPronunciation(null);
     };
 
@@ -45,6 +51,7 @@ export default function LessonWordLab({ block, onComplete }) {
         setPhase("meaning");
         setAnswer("");
         setMeaningResult(null);
+        setFailedAttempts(0);
         setPronunciation(null);
         setMastered(0);
         setFinished(false);
@@ -71,7 +78,7 @@ export default function LessonWordLab({ block, onComplete }) {
                             {item.example && <p className="mt-3 italic text-slate-400">{item.example}</p>}
                             <input value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={(event) => event.key === "Enter" && checkMeaning()} disabled={phase !== "meaning"} placeholder="Wpisz polskie znaczenie…" className="mt-6 w-full rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 text-lg font-bold text-white outline-none focus:border-fuchsia-300/50 disabled:opacity-60" />
                             {phase === "meaning" && <button type="button" onClick={checkMeaning} disabled={!answer.trim()} className="mt-4 w-full rounded-2xl bg-fuchsia-600 px-5 py-4 font-black text-white disabled:opacity-40">Sprawdź znaczenie</button>}
-                            {meaningResult && <div className={`mt-4 rounded-2xl border p-4 text-left ${meaningResult.accepted ? "border-emerald-400/25 bg-emerald-500/10" : "border-amber-400/25 bg-amber-500/10"}`}><p className={`flex items-center gap-2 font-black ${meaningResult.accepted ? "text-emerald-300" : "text-amber-200"}`}>{meaningResult.accepted ? <BsCheckCircleFill /> : <BsXCircleFill />}{meaningResult.accepted ? "Znaczenie opanowane" : "Spróbuj jeszcze raz"}</p>{!meaningResult.accepted && <p className="mt-2 text-sm text-slate-300">Podpowiedź: odpowiedź zaczyna się na „{item.translation.slice(0, 1)}” i ma {item.translation.length} znaków.</p>}</div>}
+                            {meaningResult && <div className={`mt-4 rounded-2xl border p-4 text-left ${meaningResult.accepted ? "border-emerald-400/25 bg-emerald-500/10" : "border-amber-400/25 bg-amber-500/10"}`}><p className={`flex items-center gap-2 font-black ${meaningResult.accepted ? "text-emerald-300" : "text-amber-200"}`}>{meaningResult.accepted ? <BsCheckCircleFill /> : <BsXCircleFill />}{meaningResult.accepted ? "Znaczenie opanowane" : "Spróbuj jeszcze raz"}</p>{!meaningResult.accepted && <><p className="mt-2 text-sm text-slate-400">Nieudane próby: {failedAttempts}.</p>{hint && <p role="status" className="mt-3 text-sm font-bold text-amber-100">Podpowiedź: {hint}</p>}</>}</div>}
                         </div>
 
                         {phase === "pronunciation" && (
