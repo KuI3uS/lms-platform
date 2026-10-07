@@ -18,10 +18,6 @@ public class Lesson {
     @JsonIgnore
     private List<LessonBlock> blocks;
 
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<Task> tasks;
-
     @Lob
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
@@ -90,14 +86,6 @@ public class Lesson {
 
     public void setModule(CourseModule module) {
         this.module = module;
-    }
-
-    public List<Task> getTasks() {
-        return tasks;
-    }
-
-    public void setTasks(List<Task> tasks) {
-        this.tasks = tasks;
     }
 
     public String getContent() {
