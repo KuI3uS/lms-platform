@@ -1,5 +1,6 @@
 package com.twojlogin.lms.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -15,7 +16,12 @@ public class Lesson {
     private boolean freePreview;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<LessonBlock> blocks;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Task> tasks;
 
     @Lob
     @Column(columnDefinition = "TEXT")
@@ -38,9 +44,6 @@ public class Lesson {
     @ManyToOne
     @JoinColumn(name = "module_id")
     private CourseModule module;
-
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Task> tasks;
 
     public Long getId() {
         return id;

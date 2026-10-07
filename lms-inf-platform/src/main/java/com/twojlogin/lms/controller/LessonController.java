@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -88,11 +89,22 @@ public class LessonController {
     }
 
     @GetMapping("/{id}")
-    public LessonDto getOne(@PathVariable Long id) {
+    public Map<String, Object> getOne(@PathVariable Long id) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
 
-        return new LessonDto(lesson);
+        return Map.of(
+                "id", lesson.getId(),
+                "title", lesson.getTitle(),
+                "theory", lesson.getTheory(),
+                "example", lesson.getExample(),
+                "content", lesson.getContent(),
+                "imageUrl", lesson.getImageUrl(),
+                "freePreview", lesson.isFreePreview(),
+                "published", lesson.isPublished(),
+                "orderIndex", lesson.getOrderIndex(),
+                "moduleId", lesson.getModule().getId()
+        );
     }
 
     @GetMapping("/{id}/access")
