@@ -10,30 +10,32 @@ import {
 } from "react-icons/bs";
 import { useFeedback } from "../../context/FeedbackContext";
 import {
-    CHAT_GPT_LESSON_PROMPT,
+    getChatGptLessonPrompt,
     parseChatGptLesson
 } from "../../utils/chatGptLessonImport";
 import { getBlockLabel } from "./blockTypes";
-import { MAX_LESSON_BLOCKS } from "../../utils/lessonBlockLimits";
 
-export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
+export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks }) {
     const { showToast } = useFeedback();
     const [open, setOpen] = useState(false);
     const [source, setSource] = useState("");
-    const result = useMemo(() => parseChatGptLesson(source), [source]);
+    const result = useMemo(
+        () => parseChatGptLesson(source, maxBlocks),
+        [source, maxBlocks]
+    );
     const importing = Boolean(lessonBlocks.importingByLesson?.[lessonId]);
     const importError = lessonBlocks.errorsByLesson?.[lessonId] || "";
     const existingCount = lessonBlocks.getBlocks(lessonId).length;
-    const remainingSlots = Math.max(0, MAX_LESSON_BLOCKS - existingCount);
+    const remainingSlots = Math.max(0, maxBlocks - existingCount);
     const exceedsLessonLimit = result.blocks.length > remainingSlots;
     const canReplace = existingCount > 0
         && result.blocks.length > 0
-        && result.blocks.length <= MAX_LESSON_BLOCKS
+        && result.blocks.length <= maxBlocks
         && result.errors.length === 0;
 
     const copyPrompt = async () => {
         try {
-            await navigator.clipboard.writeText(CHAT_GPT_LESSON_PROMPT);
+            await navigator.clipboard.writeText(getChatGptLessonPrompt(maxBlocks));
             showToast("Wzór promptu został skopiowany.", "success");
         } catch {
             showToast("Nie udało się skopiować promptu.", "error");
@@ -41,7 +43,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
     };
 
     const importLesson = async () => {
-        const imported = await lessonBlocks.importBlocks(lessonId, result.blocks);
+        const imported = await lessonBlocks.importBlocks(lessonId, result.blocks, maxBlocks);
         if (imported) {
             setSource("");
             setOpen(false);
@@ -49,7 +51,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
     };
 
     const replaceLesson = async () => {
-        const imported = await lessonBlocks.replaceBlocks(lessonId, result.blocks);
+        const imported = await lessonBlocks.replaceBlocks(lessonId, result.blocks, maxBlocks);
         if (imported) {
             setSource("");
             setOpen(false);
@@ -79,7 +81,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
                         EduHub rozpozna maksymalnie 10 spójnych kroków, zadania oraz odpowiedzi quizów. Nic nie zostanie zapisane przed kliknięciem importu.
                     </p>
                     <p className="mt-2 text-xs font-black uppercase tracking-wider text-cyan-300/80">
-                        Obecna lekcja: {existingCount}/{MAX_LESSON_BLOCKS} bloków · wolne miejsce: {remainingSlots}
+                        Obecna lekcja: {existingCount}/{maxBlocks} bloków · wolne miejsce: {remainingSlots}
                     </p>
                 </div>
                 <button

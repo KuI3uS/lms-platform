@@ -60,7 +60,7 @@ export default function useLessonBlocks() {
 
     }
 
-    async function saveBlock(lessonId) {
+    async function saveBlock(lessonId, maxBlocks = MAX_LESSON_BLOCKS) {
 
         const block = blockForms[lessonId];
 
@@ -69,9 +69,9 @@ export default function useLessonBlocks() {
         }
 
         if (!validateBlock(block)) return;
-        if (getBlocks(lessonId).length >= MAX_LESSON_BLOCKS) {
+        if (getBlocks(lessonId).length >= maxBlocks) {
             showToast(
-                `Jedna lekcja może zawierać maksymalnie ${MAX_LESSON_BLOCKS} bloków.`,
+                `Jedna lekcja może zawierać maksymalnie ${maxBlocks} bloków.`,
                 "warning"
             );
             return;
@@ -140,15 +140,15 @@ export default function useLessonBlocks() {
 
     }
 
-    async function importBlocks(lessonId, blocks) {
+    async function importBlocks(lessonId, blocks, maxBlocks = MAX_LESSON_BLOCKS) {
         if (!Array.isArray(blocks) || blocks.length === 0) return false;
 
         const currentCount = getBlocks(lessonId).length;
-        if (currentCount + blocks.length > MAX_LESSON_BLOCKS) {
-            const remaining = Math.max(0, MAX_LESSON_BLOCKS - currentCount);
+        if (currentCount + blocks.length > maxBlocks) {
+            const remaining = Math.max(0, maxBlocks - currentCount);
             const message = remaining > 0
                 ? `W tej lekcji zostało miejsce na ${remaining} ${remaining === 1 ? "blok" : "bloki"}.`
-                : `Ta lekcja ma już maksymalną liczbę ${MAX_LESSON_BLOCKS} bloków.`;
+                : `Ta lekcja ma już maksymalną liczbę ${maxBlocks} bloków.`;
             setErrorsByLesson(prev => ({ ...prev, [lessonId]: message }));
             showToast(message, "warning");
             return false;
@@ -182,10 +182,10 @@ export default function useLessonBlocks() {
         }
     }
 
-    async function replaceBlocks(lessonId, blocks) {
+    async function replaceBlocks(lessonId, blocks, maxBlocks = MAX_LESSON_BLOCKS) {
         if (!Array.isArray(blocks) || blocks.length === 0) return false;
-        if (blocks.length > MAX_LESSON_BLOCKS) {
-            const message = `Jedna lekcja może zawierać maksymalnie ${MAX_LESSON_BLOCKS} bloków.`;
+        if (blocks.length > maxBlocks) {
+            const message = `Jedna lekcja może zawierać maksymalnie ${maxBlocks} bloków.`;
             setErrorsByLesson(prev => ({ ...prev, [lessonId]: message }));
             showToast(message, "warning");
             return false;
