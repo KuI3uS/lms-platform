@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+    BsArrowRepeat,
     BsCheckCircle,
     BsClipboard,
     BsCloudArrowUp,
@@ -25,6 +26,10 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
     const existingCount = lessonBlocks.getBlocks(lessonId).length;
     const remainingSlots = Math.max(0, MAX_LESSON_BLOCKS - existingCount);
     const exceedsLessonLimit = result.blocks.length > remainingSlots;
+    const canReplace = existingCount > 0
+        && result.blocks.length > 0
+        && result.blocks.length <= MAX_LESSON_BLOCKS
+        && result.errors.length === 0;
 
     const copyPrompt = async () => {
         try {
@@ -37,6 +42,14 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
 
     const importLesson = async () => {
         const imported = await lessonBlocks.importBlocks(lessonId, result.blocks);
+        if (imported) {
+            setSource("");
+            setOpen(false);
+        }
+    };
+
+    const replaceLesson = async () => {
+        const imported = await lessonBlocks.replaceBlocks(lessonId, result.blocks);
         if (imported) {
             setSource("");
             setOpen(false);
@@ -66,7 +79,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
                         EduHub rozpozna maksymalnie 10 spójnych kroków, zadania oraz odpowiedzi quizów. Nic nie zostanie zapisane przed kliknięciem importu.
                     </p>
                     <p className="mt-2 text-xs font-black uppercase tracking-wider text-cyan-300/80">
-                        Wolne miejsce: {remainingSlots}/{MAX_LESSON_BLOCKS} bloków
+                        Obecna lekcja: {existingCount}/{MAX_LESSON_BLOCKS} bloków · wolne miejsce: {remainingSlots}
                     </p>
                 </div>
                 <button
@@ -103,7 +116,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
             {source.trim() && (
                 <div className="mt-5 space-y-4">
                     <div className={`rounded-2xl border p-4 ${
-                        result.errors.length > 0 || exceedsLessonLimit
+                        result.errors.length > 0
                             ? "border-red-400/25 bg-red-500/10"
                             : "border-emerald-400/25 bg-emerald-500/10"
                     }`}>
@@ -120,9 +133,13 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
                             <p key={warning} className="mt-2 text-sm text-amber-200">{warning}</p>
                         ))}
                         {exceedsLessonLimit && (
-                            <p className="mt-2 text-sm text-red-200">
-                                Import przekroczyłby limit lekcji. Możesz dodać jeszcze {remainingSlots} {remainingSlots === 1 ? "blok" : "bloków"}.
-                            </p>
+                            <div className="mt-3 rounded-xl border border-amber-400/25 bg-amber-500/10 p-3 text-sm leading-6 text-amber-100">
+                                <p className="font-bold">Nie można dopisać tych bloków do obecnych.</p>
+                                <p>
+                                    Wklejony materiał ma {result.blocks.length} bloków i jest poprawny, ale w lekcji istnieje już {existingCount}.
+                                    {canReplace && " Wybierz poniżej „Zastąp całą lekcję”, aby usunąć stare bloki i zapisać nowe."}
+                                </p>
+                            </div>
                         )}
                     </div>
 
@@ -145,17 +162,33 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks }) {
                         </div>
                     )}
 
-                    <button
-                        type="button"
-                        disabled={importing || result.blocks.length === 0 || result.errors.length > 0 || exceedsLessonLimit}
-                        onClick={importLesson}
-                        className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-500 to-blue-600 px-5 py-4 font-black text-white shadow-lg shadow-violet-500/15 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                        {importing
-                            ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                            : <BsCloudArrowUp />}
-                        {importing ? "Importowanie..." : `Dodaj ${result.blocks.length} bloków do lekcji`}
-                    </button>
+                    <div className={`grid gap-3 ${existingCount > 0 ? "sm:grid-cols-2" : ""}`}>
+                        <button
+                            type="button"
+                            disabled={importing || result.blocks.length === 0 || result.errors.length > 0 || exceedsLessonLimit}
+                            onClick={importLesson}
+                            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-500 to-blue-600 px-5 py-4 font-black text-white shadow-lg shadow-violet-500/15 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            {importing
+                                ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                : <BsCloudArrowUp />}
+                            {importing ? "Importowanie..." : `Dodaj ${result.blocks.length} bloków`}
+                        </button>
+
+                        {existingCount > 0 && (
+                            <button
+                                type="button"
+                                disabled={importing || !canReplace}
+                                onClick={replaceLesson}
+                                className="flex w-full items-center justify-center gap-3 rounded-2xl border border-amber-300/30 bg-amber-500/10 px-5 py-4 font-black text-amber-100 transition hover:border-amber-300/60 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                {importing
+                                    ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-amber-100 border-t-transparent" />
+                                    : <BsArrowRepeat />}
+                                {importing ? "Zapisywanie..." : `Zastąp całą lekcję (${result.blocks.length})`}
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
         </section>

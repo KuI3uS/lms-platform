@@ -182,6 +182,52 @@ export default function useLessonBlocks() {
         }
     }
 
+    async function replaceBlocks(lessonId, blocks) {
+        if (!Array.isArray(blocks) || blocks.length === 0) return false;
+        if (blocks.length > MAX_LESSON_BLOCKS) {
+            const message = `Jedna lekcja może zawierać maksymalnie ${MAX_LESSON_BLOCKS} bloków.`;
+            setErrorsByLesson(prev => ({ ...prev, [lessonId]: message }));
+            showToast(message, "warning");
+            return false;
+        }
+
+        const currentCount = getBlocks(lessonId).length;
+        const accepted = await confirm({
+            title: "Zastąp całą treść lekcji",
+            message: `Usunąć ${currentCount} ${currentCount === 1 ? "istniejący blok" : "istniejących bloków"} i zastąpić je ${blocks.length} nowymi? Znikną również zapisane próby odpowiedzi dotyczące obecnych zadań i quizów.`,
+            confirmLabel: "Zastąp bloki"
+        });
+        if (!accepted) return false;
+
+        try {
+            setImportingByLesson(prev => ({ ...prev, [lessonId]: true }));
+            clearError(lessonId);
+            const saved = await apiFetch(
+                `/lesson-blocks/lesson/${lessonId}/replace`,
+                {
+                    method: "PUT",
+                    body: JSON.stringify(blocks.map(toRequest))
+                }
+            );
+            setBlocksByLesson(prev => ({
+                ...prev,
+                [lessonId]: saved || []
+            }));
+            resetBlockForm(lessonId);
+            showToast(
+                `Zastąpiono treść lekcji. Zapisano ${saved?.length || blocks.length} bloków.`,
+                "success"
+            );
+            return true;
+        } catch (error) {
+            setError(lessonId, error);
+            showToast("Nie udało się zastąpić treści lekcji.", "error");
+            return false;
+        } finally {
+            setImportingByLesson(prev => ({ ...prev, [lessonId]: false }));
+        }
+    }
+
     async function deleteBlock(
         lessonId,
         blockId
@@ -379,6 +425,8 @@ export default function useLessonBlocks() {
         updateBlock,
 
         importBlocks,
+
+        replaceBlocks,
 
         deleteBlock,
 
