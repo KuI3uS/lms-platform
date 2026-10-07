@@ -39,6 +39,8 @@ public class CourseOrder {
     @Column(precision = 12, scale = 2)
     private BigDecimal discountAmount;
 
+    private Integer discountPercent;
+
     @Column(nullable = false, length = 3)
     private String currency;
 
@@ -110,6 +112,14 @@ public class CourseOrder {
 
     public void setDiscountAmount(BigDecimal discountAmount) {
         this.discountAmount = discountAmount;
+    }
+
+    public int getDiscountPercent() {
+        return discountPercent == null ? 0 : discountPercent;
+    }
+
+    public void setDiscountPercent(Integer discountPercent) {
+        this.discountPercent = discountPercent == null ? 0 : Math.max(0, discountPercent);
     }
 
     public String getCurrency() {

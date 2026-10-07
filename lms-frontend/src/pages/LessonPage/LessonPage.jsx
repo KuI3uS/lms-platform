@@ -215,15 +215,18 @@ export default function LessonPage() {
                 return;
             }
 
-            await apiFetch(`/lessons/${lessonId}/complete`, { method: "POST" });
+            const completion = await apiFetch(`/lessons/${lessonId}/complete`, { method: "POST" });
             markLessonCompleted();
             window.dispatchEvent(new Event("eduhub:stats-changed"));
+            const rewardSummary = completion.newlyCompleted
+                ? `Zdobywasz +${completion.gemsEarned} klejnotów i +${completion.xpEarned} XP.`
+                : "Ta lekcja była już ukończona — nagroda nie jest naliczana drugi raz.";
             setFinishResult({
                 success: true,
                 message: `Lekcja ${lesson.orderIndex} została ukończona!`,
-                summary: nextLesson
+                summary: `${rewardSummary} ${nextLesson
                     ? `Odblokowano kolejną lekcję: ${nextLesson.title}.`
-                    : "Ukończyłeś ostatnią lekcję w tym etapie."
+                    : "Ukończyłeś ostatnią lekcję w tym etapie."}`
             });
         } catch (requestError) {
             console.error(requestError);

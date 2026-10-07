@@ -14,6 +14,8 @@ public interface GamificationProfileRepository
 
     Optional<GamificationProfile> findByUserId(Long userId);
 
+    void deleteByUserId(Long userId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select profile

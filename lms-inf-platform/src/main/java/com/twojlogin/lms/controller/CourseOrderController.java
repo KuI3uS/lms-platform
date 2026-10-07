@@ -29,7 +29,7 @@ public class CourseOrderController {
     ) {
         return orderService.create(
                 courseId,
-                request == null ? null : request.requestedDiscount(),
+                request == null ? null : request.discountPercent(),
                 request == null ? null : request.purchaseType(),
                 authentication
         );

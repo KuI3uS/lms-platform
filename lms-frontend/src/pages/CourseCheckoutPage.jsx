@@ -6,6 +6,7 @@ import {
     BsCheckCircleFill,
     BsClipboardCheck,
     BsCreditCard,
+    BsGem,
     BsHourglassSplit,
     BsLockFill,
     BsShieldCheck
@@ -29,7 +30,7 @@ export default function CourseCheckoutPage() {
     const [order, setOrder] = useState(null);
     const [learningStats, setLearningStats] = useState(null);
     const [purchaseType, setPurchaseType] = useState("ONE_TIME");
-    const [applyReward, setApplyReward] = useState(false);
+    const [selectedDiscountPercent, setSelectedDiscountPercent] = useState(0);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -46,12 +47,12 @@ export default function CourseCheckoutPage() {
     const selectedPrice = purchaseType === "SUBSCRIPTION"
         ? Number(course?.monthlyPrice || 0)
         : Number(course?.price || 0);
-    const availableReward = useMemo(() => {
-        const balance = Number(learningStats?.discountBalance || 0);
-        const courseLimit = selectedPrice * 0.2;
-        return Math.floor(Math.min(balance, courseLimit) / 50) * 50;
-    }, [selectedPrice, learningStats]);
-    const previewDiscount = applyReward ? availableReward : 0;
+    const voucherOptions = useMemo(() => [
+        { percent: 5, count: Number(learningStats?.voucher5Count || 0) },
+        { percent: 10, count: Number(learningStats?.voucher10Count || 0) },
+        { percent: 20, count: Number(learningStats?.voucher20Count || 0) }
+    ], [learningStats]);
+    const previewDiscount = selectedPrice * selectedDiscountPercent / 100;
     const amountDue = order?.amount ?? Math.max(
         0,
         selectedPrice - previewDiscount
@@ -76,6 +77,7 @@ export default function CourseCheckoutPage() {
                 setCourse(courseData);
                 setOrder(pendingOrder);
                 setPurchaseType(initialPurchaseType);
+                setSelectedDiscountPercent(Number(pendingOrder?.discountPercent || 0));
                 setLearningStats(statsData);
             })
             .catch((loadError) => {
@@ -116,7 +118,7 @@ export default function CourseCheckoutPage() {
             const created = await apiFetch(`/course-orders/course/${courseId}`, {
                 method: "POST",
                 body: JSON.stringify({
-                    requestedDiscount: applyReward ? availableReward : 0,
+                    discountPercent: selectedDiscountPercent,
                     purchaseType
                 })
             });
@@ -203,11 +205,11 @@ export default function CourseCheckoutPage() {
                         <div className="mb-6">
                             <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Wybierz dostęp</p>
                             <div className="mt-3 grid grid-cols-2 gap-2">
-                                <button type="button" onClick={() => { setPurchaseType("ONE_TIME"); setApplyReward(false); }} className={`rounded-xl border p-3 text-left transition ${purchaseType === "ONE_TIME" ? "border-cyan-300 bg-cyan-300/10" : "border-white/10 bg-black/20"}`}>
+                                <button type="button" onClick={() => { setPurchaseType("ONE_TIME"); setSelectedDiscountPercent(0); }} className={`rounded-xl border p-3 text-left transition ${purchaseType === "ONE_TIME" ? "border-cyan-300 bg-cyan-300/10" : "border-white/10 bg-black/20"}`}>
                                     <span className="block text-sm font-black">Na stałe</span>
                                     <span className="mt-1 block text-xs text-slate-500">{formatPrice(course.price)}</span>
                                 </button>
-                                <button type="button" onClick={() => { setPurchaseType("SUBSCRIPTION"); setApplyReward(false); }} className={`rounded-xl border p-3 text-left transition ${purchaseType === "SUBSCRIPTION" ? "border-violet-300 bg-violet-300/10" : "border-white/10 bg-black/20"}`}>
+                                <button type="button" onClick={() => { setPurchaseType("SUBSCRIPTION"); setSelectedDiscountPercent(0); }} className={`rounded-xl border p-3 text-left transition ${purchaseType === "SUBSCRIPTION" ? "border-violet-300 bg-violet-300/10" : "border-white/10 bg-black/20"}`}>
                                     <span className="block text-sm font-black">Na miesiąc</span>
                                     <span className="mt-1 block text-xs text-slate-500">{formatPrice(course.monthlyPrice)} / mies.</span>
                                 </button>
@@ -306,24 +308,38 @@ export default function CourseCheckoutPage() {
                         </div>
                     ) : (
                         <div className="mt-7 space-y-4">
-                            {availableReward > 0 && (
-                                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                                    <input
-                                        type="checkbox"
-                                        checked={applyReward}
-                                        onChange={(event) => setApplyReward(event.target.checked)}
-                                        className="mt-1"
-                                    />
-                                    <span>
-                                        <span className="block font-black text-emerald-200">
-                                            Użyj {formatPrice(availableReward)} z portfela nagród
-                                        </span>
-                                        <span className="mt-1 block text-xs leading-5 text-slate-400">
-                                            Limit bezpieczeństwa to 20% ceny kursu. Niewykorzystana kwota pozostanie na koncie.
-                                        </span>
-                                    </span>
-                                </label>
-                            )}
+                            <div className="rounded-2xl border border-cyan-400/15 bg-cyan-400/[0.055] p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 font-black text-cyan-100">
+                                        <BsGem className="text-cyan-300" /> Kupon za klejnoty
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-500">wybierz jeden</span>
+                                </div>
+                                <div className="mt-3 grid grid-cols-4 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedDiscountPercent(0)}
+                                        className={`rounded-xl border px-2 py-3 text-xs font-black transition ${selectedDiscountPercent === 0 ? "border-white/30 bg-white/10 text-white" : "border-white/[0.07] text-slate-500"}`}
+                                    >
+                                        Bez kuponu
+                                    </button>
+                                    {voucherOptions.map((voucher) => (
+                                        <button
+                                            key={voucher.percent}
+                                            type="button"
+                                            disabled={voucher.count <= 0}
+                                            onClick={() => setSelectedDiscountPercent(voucher.percent)}
+                                            className={`rounded-xl border px-2 py-3 text-xs font-black transition ${selectedDiscountPercent === voucher.percent ? "border-cyan-300 bg-cyan-300/15 text-cyan-100" : "border-white/[0.07] text-slate-400"} disabled:cursor-not-allowed disabled:opacity-35`}
+                                        >
+                                            −{voucher.percent}%
+                                            <span className="mt-1 block text-[10px] font-bold opacity-70">masz {voucher.count}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="mt-3 text-xs leading-5 text-slate-500">
+                                    Kupon zostanie pobrany po utworzeniu zamówienia. Platforma zawsze chroni minimum 25% ceny bazowej.
+                                </p>
+                            </div>
                             <button
                                 type="button"
                                 disabled={busy}

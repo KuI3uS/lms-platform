@@ -43,6 +43,33 @@ public class GamificationProfile {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal discountBalance = BigDecimal.ZERO;
 
+    private Long gemBalance = 0L;
+
+    private Long totalGemsEarned = 0L;
+
+    private Integer rewardedGemLevel = 0;
+
+    private Boolean gemEconomyInitialized = false;
+
+    private Integer voucher5Count = 0;
+
+    private Integer voucher10Count = 0;
+
+    private Integer voucher20Count = 0;
+
+    private Integer xpBoostPercent = 0;
+
+    private Instant xpBoostExpiresAt;
+
+    @Column(length = 60)
+    private String equippedOutfit = "OUTFIT_CORE";
+
+    @Column(length = 60)
+    private String equippedAccessory = "ACCESSORY_NONE";
+
+    @Column(length = 60)
+    private String equippedAura = "AURA_NONE";
+
     @Version
     private long version;
 
@@ -112,5 +139,101 @@ public class GamificationProfile {
 
     public void setDiscountBalance(BigDecimal discountBalance) {
         this.discountBalance = discountBalance;
+    }
+
+    public long getGemBalance() {
+        return gemBalance == null ? 0 : gemBalance;
+    }
+
+    public void setGemBalance(long gemBalance) {
+        this.gemBalance = Math.max(0, gemBalance);
+    }
+
+    public long getTotalGemsEarned() {
+        return totalGemsEarned == null ? 0 : totalGemsEarned;
+    }
+
+    public void setTotalGemsEarned(long totalGemsEarned) {
+        this.totalGemsEarned = Math.max(0, totalGemsEarned);
+    }
+
+    public int getRewardedGemLevel() {
+        return rewardedGemLevel == null ? 0 : rewardedGemLevel;
+    }
+
+    public void setRewardedGemLevel(int rewardedGemLevel) {
+        this.rewardedGemLevel = Math.max(0, rewardedGemLevel);
+    }
+
+    public boolean isGemEconomyInitialized() {
+        return Boolean.TRUE.equals(gemEconomyInitialized);
+    }
+
+    public void setGemEconomyInitialized(boolean gemEconomyInitialized) {
+        this.gemEconomyInitialized = gemEconomyInitialized;
+    }
+
+    public int getVoucher5Count() {
+        return voucher5Count == null ? 0 : voucher5Count;
+    }
+
+    public void setVoucher5Count(int voucher5Count) {
+        this.voucher5Count = Math.max(0, voucher5Count);
+    }
+
+    public int getVoucher10Count() {
+        return voucher10Count == null ? 0 : voucher10Count;
+    }
+
+    public void setVoucher10Count(int voucher10Count) {
+        this.voucher10Count = Math.max(0, voucher10Count);
+    }
+
+    public int getVoucher20Count() {
+        return voucher20Count == null ? 0 : voucher20Count;
+    }
+
+    public void setVoucher20Count(int voucher20Count) {
+        this.voucher20Count = Math.max(0, voucher20Count);
+    }
+
+    public int getXpBoostPercent() {
+        return xpBoostPercent == null ? 0 : xpBoostPercent;
+    }
+
+    public void setXpBoostPercent(int xpBoostPercent) {
+        this.xpBoostPercent = Math.max(0, xpBoostPercent);
+    }
+
+    public Instant getXpBoostExpiresAt() {
+        return xpBoostExpiresAt;
+    }
+
+    public void setXpBoostExpiresAt(Instant xpBoostExpiresAt) {
+        this.xpBoostExpiresAt = xpBoostExpiresAt;
+    }
+
+    public String getEquippedOutfit() {
+        return equippedOutfit == null ? "OUTFIT_CORE" : equippedOutfit;
+    }
+
+    public void setEquippedOutfit(String equippedOutfit) {
+        this.equippedOutfit = equippedOutfit;
+    }
+
+    public String getEquippedAccessory() {
+        return equippedAccessory == null ? "ACCESSORY_NONE" : equippedAccessory;
+    }
+
+    public void setEquippedAccessory(String equippedAccessory) {
+        this.equippedAccessory = equippedAccessory;
+    }
+
+    public String getEquippedAura() {
+        return equippedAura == null ? "AURA_NONE" : equippedAura;
+    }
+
+    public void setEquippedAura(String equippedAura) {
+        this.equippedAura = equippedAura;
     }
 }

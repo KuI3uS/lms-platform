@@ -10,9 +10,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import com.twojlogin.lms.service.CourseAccessService;
+import com.twojlogin.lms.service.GamificationService;
 import com.twojlogin.lms.service.ProgressRewardService;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -225,13 +227,20 @@ public class LessonController {
         progress.setCompleted(true);
 
         lessonProgressRepository.save(progress);
+        GamificationService.AwardResult award = null;
         if (newlyCompleted) {
-            rewardService.afterLessonCompleted(user, lesson);
+            award = rewardService.afterLessonCompleted(user, lesson);
         }
 
-        return Map.of(
-                "completed", true,
-                "lessonId", lesson.getId()
-        );
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("completed", true);
+        response.put("lessonId", lesson.getId());
+        response.put("newlyCompleted", newlyCompleted);
+        response.put("xpEarned", award == null ? 0 : award.xpEarned());
+        response.put("gemsEarned", award == null ? 0 : award.gemsEarned());
+        response.put("gemBalance", award == null ? null : award.gemBalance());
+        response.put("level", award == null ? null : award.level());
+        response.put("levelUp", award != null && award.levelUp());
+        return response;
     }
 }

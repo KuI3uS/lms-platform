@@ -55,9 +55,22 @@ public class LearningStatsService {
                 stats.xpMultiplier(),
                 stats.taskStreakExpiresAt(),
                 completedLessons,
-                stats.discountBalance(),
-                stats.nextRewardLevel(),
-                stats.nextRewardAmount()
+                stats.gemBalance(),
+                stats.totalGemsEarned(),
+                stats.nextGemRewardLevel(),
+                stats.nextGemRewardAmount(),
+                stats.voucher5Count(),
+                stats.voucher10Count(),
+                stats.voucher20Count(),
+                stats.xpBoostPercent(),
+                stats.xpBoostExpiresAt(),
+                stats.leagueName(),
+                stats.leagueColor(),
+                stats.leagueSymbol(),
+                stats.nextLeagueLevel(),
+                stats.equippedOutfit(),
+                stats.equippedAccessory(),
+                stats.equippedAura()
         );
     }
 

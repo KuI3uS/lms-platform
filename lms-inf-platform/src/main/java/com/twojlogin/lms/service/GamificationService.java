@@ -9,9 +9,11 @@ import com.twojlogin.lms.repository.GamificationProfileRepository;
 import com.twojlogin.lms.repository.LessonProgressRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
 import com.twojlogin.lms.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,9 +26,10 @@ import java.time.ZoneId;
 public class GamificationService {
 
     public static final int LESSON_COMPLETION_XP = 20;
-    public static final BigDecimal REWARD_PER_MILESTONE = new BigDecimal("50.00");
-    public static final int REWARD_LEVEL_INTERVAL = 10;
-    public static final BigDecimal MAX_COURSE_DISCOUNT_RATE = new BigDecimal("0.20");
+    public static final int GEMS_PER_COMPLETED_LESSON = 50;
+    public static final int GEMS_PER_LEVEL_MILESTONE = 250;
+    public static final int GEM_LEVEL_INTERVAL = 5;
+    public static final BigDecimal MINIMUM_PAYABLE_RATE = new BigDecimal("0.25");
     public static final Duration TASK_STREAK_TTL = Duration.ofHours(24);
     private static final ZoneId WARSAW_ZONE = ZoneId.of("Europe/Warsaw");
 
@@ -73,13 +76,16 @@ public class GamificationService {
 
     @Transactional
     public GamificationProfile profileForUpdate(User user) {
-        return profileRepository.findByUserIdForUpdate(user.getId())
+        GamificationProfile profile = profileRepository.findByUserIdForUpdate(user.getId())
                 .orElseGet(() -> {
                     User lockedUser = userRepository.findByIdForUpdate(user.getId())
                             .orElseThrow();
                     return profileRepository.findByUserIdForUpdate(user.getId())
                             .orElseGet(() -> initializeProfile(lockedUser));
                 });
+        initializeGemEconomy(profile);
+        expireBoostIfNeeded(profile);
+        return profile;
     }
 
     @Transactional
@@ -91,14 +97,14 @@ public class GamificationService {
             boolean correct
     ) {
         if (previouslyCorrect || attempt.getXpAwarded() > 0) {
-            return currentResult(profile, 0, false);
+            return currentResult(profile, 0, false, 0);
         }
 
         if (!correct) {
             profile.setCorrectTaskStreak(0);
             profile.setCorrectTaskStreakUpdatedAt(null);
             profileRepository.save(profile);
-            return currentResult(profile, 0, false);
+            return currentResult(profile, 0, false, 0);
         }
 
         Instant now = clock.instant();
@@ -107,7 +113,7 @@ public class GamificationService {
         int baseXp = block.getPoints() == null || block.getPoints() <= 0
                 ? 10
                 : Math.min(block.getPoints(), 1000);
-        int awardedXp = baseXp * multiplier;
+        int awardedXp = applyXpBoost(profile, baseXp * multiplier);
         int previousLevel = profile.getLevel();
 
         profile.setCorrectTaskStreak(streak);
@@ -119,64 +125,64 @@ public class GamificationService {
         attempt.setXpAwarded(awardedXp);
         addXp(profile, awardedXp, true);
 
-        return currentResult(profile, awardedXp, profile.getLevel() > previousLevel);
+        return currentResult(profile, awardedXp, profile.getLevel() > previousLevel, 0);
     }
 
     @Transactional
     public AwardResult awardLessonCompletion(User user) {
         GamificationProfile profile = profileForUpdate(user);
         int previousLevel = profile.getLevel();
-        addXp(profile, LESSON_COMPLETION_XP, true);
+        int awardedXp = applyXpBoost(profile, LESSON_COMPLETION_XP);
+        addGems(profile, GEMS_PER_COMPLETED_LESSON);
+        addXp(profile, awardedXp, true);
         return currentResult(
                 profile,
-                LESSON_COMPLETION_XP,
-                profile.getLevel() > previousLevel
+                awardedXp,
+                profile.getLevel() > previousLevel,
+                GEMS_PER_COMPLETED_LESSON
         );
     }
 
     @Transactional
     public GamificationSnapshot snapshot(User user) {
-        GamificationProfile profile = profileRepository.findByUserId(user.getId())
-                .orElseGet(() -> profileForUpdate(user));
+        GamificationProfile profile = profileForUpdate(user);
         return snapshot(profile);
     }
 
     @Transactional
-    public BigDecimal reserveDiscount(
+    public BigDecimal reserveVoucher(
             User user,
             BigDecimal coursePrice,
-            BigDecimal requestedDiscount
+            Integer discountPercent
     ) {
-        if (requestedDiscount == null
-                || requestedDiscount.signum() <= 0
-                || coursePrice == null
-                || coursePrice.signum() <= 0) {
+        if (discountPercent == null || discountPercent == 0) {
             return BigDecimal.ZERO.setScale(2);
+        }
+        if (coursePrice == null || coursePrice.signum() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kuponu nie można użyć do bezpłatnego kursu");
+        }
+        if (discountPercent != 5 && discountPercent != 10 && discountPercent != 20) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nieprawidłowy kupon zniżkowy");
         }
 
         GamificationProfile profile = profileForUpdate(user);
-        BigDecimal requested = floorToRewardStep(requestedDiscount);
-        BigDecimal maximumForCourse = floorToRewardStep(
-                coursePrice.multiply(MAX_COURSE_DISCOUNT_RATE)
-        );
-        BigDecimal discount = requested
-                .min(profile.getDiscountBalance())
-                .min(maximumForCourse);
-
-        if (discount.signum() <= 0) {
-            return BigDecimal.ZERO.setScale(2);
-        }
-
-        profile.setDiscountBalance(profile.getDiscountBalance().subtract(discount));
+        decrementVoucher(profile, discountPercent);
+        BigDecimal discount = coursePrice
+                .multiply(BigDecimal.valueOf(discountPercent))
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal maximumDiscount = coursePrice
+                .multiply(BigDecimal.ONE.subtract(MINIMUM_PAYABLE_RATE))
+                .setScale(2, RoundingMode.DOWN);
+        discount = discount.min(maximumDiscount);
         profileRepository.save(profile);
-        return discount.setScale(2);
+        return discount;
     }
 
     @Transactional
-    public void refundDiscount(User user, BigDecimal discount) {
-        if (discount == null || discount.signum() <= 0) return;
+    public void refundVoucher(User user, Integer discountPercent) {
+        if (discountPercent == null || discountPercent == 0) return;
         GamificationProfile profile = profileForUpdate(user);
-        profile.setDiscountBalance(profile.getDiscountBalance().add(discount));
+        incrementVoucher(profile, discountPercent);
         profileRepository.save(profile);
     }
 
@@ -208,83 +214,132 @@ public class GamificationService {
     }
 
     private GamificationProfile initializeProfile(User user) {
-        long historicalLessonXp =
-                lessonProgressRepository.countByUserIdAndCompletedTrue(user.getId())
-                        * LESSON_COMPLETION_XP;
-        long historicalTaskXp =
-                taskAttemptRepository.sumHistoricalBaseXpByUserId(user.getId());
+        long completedLessons = lessonProgressRepository
+                .countByUserIdAndCompletedTrue(user.getId());
+        long historicalLessonXp = completedLessons * LESSON_COMPLETION_XP;
+        long historicalTaskXp = taskAttemptRepository
+                .sumHistoricalBaseXpByUserId(user.getId());
 
         GamificationProfile profile = new GamificationProfile();
         profile.setUser(user);
         profile.setTotalXp(historicalLessonXp + historicalTaskXp);
         profile.setLevel(levelForXp(profile.getTotalXp()));
         profile.setDiscountBalance(BigDecimal.ZERO.setScale(2));
-        synchronizeRewards(profile, false);
+        profile.setGemBalance(completedLessons * GEMS_PER_COMPLETED_LESSON);
+        profile.setTotalGemsEarned(profile.getGemBalance());
+        profile.setGemEconomyInitialized(true);
+        synchronizeGemMilestones(profile, false);
         return profileRepository.saveAndFlush(profile);
     }
 
-    private void addXp(
-            GamificationProfile profile,
-            int amount,
-            boolean notify
-    ) {
+    private void initializeGemEconomy(GamificationProfile profile) {
+        if (profile.isGemEconomyInitialized()) return;
+        long completedLessons = lessonProgressRepository
+                .countByUserIdAndCompletedTrue(profile.getUser().getId());
+        long retroactiveLessonGems = completedLessons * GEMS_PER_COMPLETED_LESSON;
+        profile.setGemBalance(profile.getGemBalance() + retroactiveLessonGems);
+        profile.setTotalGemsEarned(profile.getTotalGemsEarned() + retroactiveLessonGems);
+        profile.setDiscountBalance(BigDecimal.ZERO.setScale(2));
+        profile.setGemEconomyInitialized(true);
+        synchronizeGemMilestones(profile, false);
+        profileRepository.save(profile);
+    }
+
+    private void addXp(GamificationProfile profile, int amount, boolean notify) {
         int previousLevel = profile.getLevel();
         profile.setTotalXp(Math.max(0, profile.getTotalXp() + amount));
         profile.setLevel(levelForXp(profile.getTotalXp()));
-        synchronizeRewards(profile, notify);
+        synchronizeGemMilestones(profile, notify);
         profileRepository.save(profile);
 
         if (notify && profile.getLevel() > previousLevel) {
+            LearningLeague league = LearningLeague.forLevel(profile.getLevel());
             notificationService.create(
                     profile.getUser(),
                     NotificationType.ACHIEVEMENT,
                     "Nowy poziom: " + profile.getLevel(),
-                    "Zdobywasz coraz trudniejsze poziomy. Aktualnie masz "
+                    "Awansujesz w lidze „" + league.displayName() + "” i masz "
                             + profile.getTotalXp() + " XP.",
                     "/learning-center"
             );
         }
     }
 
-    private void synchronizeRewards(
-            GamificationProfile profile,
-            boolean notify
-    ) {
-        int earnedMilestones = profile.getLevel() / REWARD_LEVEL_INTERVAL;
-        int newMilestones = earnedMilestones - profile.getRewardedMilestone();
+    private void synchronizeGemMilestones(GamificationProfile profile, boolean notify) {
+        int targetRewardedLevel = profile.getLevel() / GEM_LEVEL_INTERVAL * GEM_LEVEL_INTERVAL;
+        int previousRewardedLevel = profile.getRewardedGemLevel();
+        int newMilestones = (targetRewardedLevel - previousRewardedLevel) / GEM_LEVEL_INTERVAL;
         if (newMilestones <= 0) return;
 
-        BigDecimal reward = REWARD_PER_MILESTONE
-                .multiply(BigDecimal.valueOf(newMilestones));
-        profile.setDiscountBalance(profile.getDiscountBalance().add(reward));
-        profile.setRewardedMilestone(earnedMilestones);
-
+        long reward = (long) newMilestones * GEMS_PER_LEVEL_MILESTONE;
+        addGems(profile, reward);
+        profile.setRewardedGemLevel(targetRewardedLevel);
         if (notify) {
             notificationService.create(
                     profile.getUser(),
                     NotificationType.ACHIEVEMENT,
-                    "Nagroda za poziom",
-                    "Otrzymujesz " + reward.setScale(0, RoundingMode.UNNECESSARY)
-                            + " zł zniżki na wybrany kurs.",
-                    "/courses"
+                    "Premia ligowa: +" + reward + " klejnotów",
+                    "Za osiągnięcie poziomu " + targetRewardedLevel
+                            + " otrzymujesz premię do sklepu nagród.",
+                    "/learning-center"
             );
         }
     }
 
-    private BigDecimal floorToRewardStep(BigDecimal value) {
-        if (value == null || value.signum() <= 0) {
-            return BigDecimal.ZERO.setScale(2);
+    private void addGems(GamificationProfile profile, long amount) {
+        profile.setGemBalance(profile.getGemBalance() + amount);
+        profile.setTotalGemsEarned(profile.getTotalGemsEarned() + amount);
+    }
+
+    private int applyXpBoost(GamificationProfile profile, int baseXp) {
+        expireBoostIfNeeded(profile);
+        return Math.max(0, Math.round(baseXp * (100 + profile.getXpBoostPercent()) / 100f));
+    }
+
+    private void expireBoostIfNeeded(GamificationProfile profile) {
+        if (profile.getXpBoostExpiresAt() != null
+                && !clock.instant().isBefore(profile.getXpBoostExpiresAt())) {
+            profile.setXpBoostPercent(0);
+            profile.setXpBoostExpiresAt(null);
+            profileRepository.save(profile);
         }
-        return value
-                .divide(REWARD_PER_MILESTONE, 0, RoundingMode.FLOOR)
-                .multiply(REWARD_PER_MILESTONE)
-                .setScale(2);
+    }
+
+    private void decrementVoucher(GamificationProfile profile, int percent) {
+        int count = voucherCount(profile, percent);
+        if (count <= 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Nie masz kuponu " + percent + "%");
+        }
+        setVoucherCount(profile, percent, count - 1);
+    }
+
+    private void incrementVoucher(GamificationProfile profile, int percent) {
+        setVoucherCount(profile, percent, voucherCount(profile, percent) + 1);
+    }
+
+    private int voucherCount(GamificationProfile profile, int percent) {
+        return switch (percent) {
+            case 5 -> profile.getVoucher5Count();
+            case 10 -> profile.getVoucher10Count();
+            case 20 -> profile.getVoucher20Count();
+            default -> 0;
+        };
+    }
+
+    private void setVoucherCount(GamificationProfile profile, int percent, int count) {
+        switch (percent) {
+            case 5 -> profile.setVoucher5Count(count);
+            case 10 -> profile.setVoucher10Count(count);
+            case 20 -> profile.setVoucher20Count(count);
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nieprawidłowy kupon");
+        }
     }
 
     private AwardResult currentResult(
             GamificationProfile profile,
             int xpEarned,
-            boolean levelUp
+            boolean levelUp,
+            int gemsEarned
     ) {
         int effectiveStreak = effectiveTaskStreak(profile, clock.instant());
         return new AwardResult(
@@ -292,7 +347,10 @@ public class GamificationService {
                 multiplierFor(effectiveStreak),
                 effectiveStreak,
                 profile.getLevel(),
-                levelUp
+                levelUp,
+                gemsEarned,
+                profile.getGemBalance(),
+                profile.getXpBoostPercent()
         );
     }
 
@@ -304,9 +362,7 @@ public class GamificationService {
                 : null;
         long levelStartXp = xpRequiredForLevel(profile.getLevel());
         long nextLevelXp = xpRequiredForLevel(profile.getLevel() + 1);
-        int nextRewardLevel =
-                (profile.getLevel() / REWARD_LEVEL_INTERVAL + 1)
-                        * REWARD_LEVEL_INTERVAL;
+        LearningLeague league = LearningLeague.forLevel(profile.getLevel());
 
         return new GamificationSnapshot(
                 profile.getTotalXp(),
@@ -319,10 +375,27 @@ public class GamificationService {
                 profile.getBestCorrectTaskStreak(),
                 multiplierFor(effectiveStreak),
                 streakExpiresAt,
-                profile.getDiscountBalance(),
-                nextRewardLevel,
-                REWARD_PER_MILESTONE
+                profile.getGemBalance(),
+                profile.getTotalGemsEarned(),
+                nextGemRewardLevel(profile.getLevel()),
+                GEMS_PER_LEVEL_MILESTONE,
+                profile.getVoucher5Count(),
+                profile.getVoucher10Count(),
+                profile.getVoucher20Count(),
+                profile.getXpBoostPercent(),
+                profile.getXpBoostExpiresAt(),
+                league.displayName(),
+                league.color(),
+                league.symbol(),
+                league.nextLevel(),
+                profile.getEquippedOutfit(),
+                profile.getEquippedAccessory(),
+                profile.getEquippedAura()
         );
+    }
+
+    private int nextGemRewardLevel(int level) {
+        return (level / GEM_LEVEL_INTERVAL + 1) * GEM_LEVEL_INTERVAL;
     }
 
     private int effectiveTaskStreak(GamificationProfile profile, Instant now) {
@@ -340,7 +413,10 @@ public class GamificationService {
             int multiplier,
             int taskStreak,
             int level,
-            boolean levelUp
+            boolean levelUp,
+            int gemsEarned,
+            long gemBalance,
+            int xpBoostPercent
     ) {
     }
 
@@ -355,9 +431,22 @@ public class GamificationService {
             int bestTaskStreak,
             int xpMultiplier,
             Instant taskStreakExpiresAt,
-            BigDecimal discountBalance,
-            int nextRewardLevel,
-            BigDecimal nextRewardAmount
+            long gemBalance,
+            long totalGemsEarned,
+            int nextGemRewardLevel,
+            int nextGemRewardAmount,
+            int voucher5Count,
+            int voucher10Count,
+            int voucher20Count,
+            int xpBoostPercent,
+            Instant xpBoostExpiresAt,
+            String leagueName,
+            String leagueColor,
+            String leagueSymbol,
+            Integer nextLeagueLevel,
+            String equippedOutfit,
+            String equippedAccessory,
+            String equippedAura
     ) {
     }
 }

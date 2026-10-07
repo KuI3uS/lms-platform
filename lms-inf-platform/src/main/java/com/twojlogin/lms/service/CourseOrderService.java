@@ -50,7 +50,7 @@ public class CourseOrderService {
     @Transactional
     public CourseOrderDto create(
             Long courseId,
-            BigDecimal requestedDiscount,
+            Integer discountPercent,
             CoursePurchaseType requestedPurchaseType,
             Authentication authentication
     ) {
@@ -122,18 +122,20 @@ public class CourseOrderService {
             BigDecimal purchasePrice = purchaseType == CoursePurchaseType.SUBSCRIPTION
                     ? course.getMonthlyPrice()
                     : course.getPrice();
-            BigDecimal discount = gamificationService.reserveDiscount(
+            BigDecimal discount = gamificationService.reserveVoucher(
                     user,
                     purchasePrice,
-                    requestedDiscount
+                    discountPercent
             );
-            pending = orderRepository.save(newOrder(
+            pending = newOrder(
                     user,
                     course,
                     purchasePrice,
                     discount,
                     purchaseType
-            ));
+            );
+            pending.setDiscountPercent(discountPercent);
+            pending = orderRepository.save(pending);
         }
 
         return CourseOrderDto.from(pending, true);
@@ -220,9 +222,9 @@ public class CourseOrderService {
         if (order.getStatus() == CourseOrderStatus.CANCELLED) {
             return CourseOrderDto.from(order, false);
         }
-        gamificationService.refundDiscount(
+        gamificationService.refundVoucher(
                 order.getUser(),
-                order.getDiscountAmount()
+                order.getDiscountPercent()
         );
         order.setStatus(CourseOrderStatus.CANCELLED);
         return CourseOrderDto.from(orderRepository.save(order), false);
@@ -298,6 +300,7 @@ public class CourseOrderService {
                 : discountAmount.max(BigDecimal.ZERO).min(original);
         order.setOriginalAmount(original);
         order.setDiscountAmount(discount);
+        order.setDiscountPercent(0);
         order.setAmount(original.subtract(discount));
         order.setCurrency("PLN");
         order.setStatus(CourseOrderStatus.PENDING);

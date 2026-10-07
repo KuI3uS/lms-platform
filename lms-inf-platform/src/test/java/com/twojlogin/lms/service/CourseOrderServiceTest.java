@@ -23,6 +23,7 @@ class CourseOrderServiceTest {
     private CourseOrderRepository orderRepository;
     private CourseEnrollmentRepository enrollmentRepository;
     private CourseAccessService accessService;
+    private GamificationService gamificationService;
     private CourseOrderService service;
     private Course course;
     private User student;
@@ -35,7 +36,7 @@ class CourseOrderServiceTest {
         enrollmentRepository = mock(CourseEnrollmentRepository.class);
         accessService = mock(CourseAccessService.class);
         NotificationService notificationService = mock(NotificationService.class);
-        GamificationService gamificationService = mock(GamificationService.class);
+        gamificationService = mock(GamificationService.class);
         authentication = mock(Authentication.class);
 
         service = new CourseOrderService(
@@ -69,7 +70,7 @@ class CourseOrderServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(enrollmentRepository.save(any(CourseEnrollment.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        when(gamificationService.reserveDiscount(any(), any(), any()))
+        when(gamificationService.reserveVoucher(any(), any(), any()))
                 .thenReturn(BigDecimal.ZERO.setScale(2));
     }
 
@@ -83,7 +84,7 @@ class CourseOrderServiceTest {
 
         CourseOrderDto result = service.create(
                 5L,
-                BigDecimal.ZERO,
+                0,
                 CoursePurchaseType.SUBSCRIPTION,
                 authentication
         );
@@ -91,6 +92,32 @@ class CourseOrderServiceTest {
         assertEquals(CoursePurchaseType.SUBSCRIPTION, result.purchaseType());
         assertEquals(new BigDecimal("129.00"), result.amount());
         assertEquals("https://payments.example/monthly", result.paymentUrl());
+    }
+
+    @Test
+    void reservesGemVoucherAndPersistsItsPercentage() {
+        when(orderRepository
+                .findFirstByUserIdAndCourseIdAndStatusAndPurchaseTypeOrderByCreatedAtDesc(
+                        7L, 5L, CourseOrderStatus.PENDING, CoursePurchaseType.SUBSCRIPTION
+                ))
+                .thenReturn(Optional.empty());
+        when(gamificationService.reserveVoucher(
+                student,
+                new BigDecimal("129.00"),
+                10
+        )).thenReturn(new BigDecimal("12.90"));
+
+        CourseOrderDto result = service.create(
+                5L,
+                10,
+                CoursePurchaseType.SUBSCRIPTION,
+                authentication
+        );
+
+        assertEquals(10, result.discountPercent());
+        assertEquals(new BigDecimal("12.90"), result.discountAmount());
+        assertEquals(new BigDecimal("116.10"), result.amount());
+        assertEquals(null, result.paymentUrl());
     }
 
     @Test
