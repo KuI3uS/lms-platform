@@ -3,10 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
     BsArrowLeft,
     BsBookHalf,
+    BsBuildings,
     BsCheckCircle,
     BsCodeSlash,
     BsCollection,
     BsLaptop,
+    BsMortarboard,
     BsSave,
     BsTranslate
 } from "react-icons/bs";
@@ -20,6 +22,8 @@ import {
     CEFR_LEVELS,
     COURSE_CATEGORIES,
     COURSE_LANGUAGES,
+    SCHOOL_LEVELS,
+    UNIVERSITY_LEVELS,
     getCourseLanguageLabel
 } from "../utils/courseTaxonomy";
 
@@ -116,6 +120,16 @@ export default function AddCoursePage() {
             if (name === "cefrLevel"
                     && CEFR_LEVELS.indexOf(updated.cefrEndLevel) < CEFR_LEVELS.indexOf(value)) {
                 updated.cefrEndLevel = value;
+            }
+            if (name === "category") {
+                if (value === "SCHOOL" && !SCHOOL_LEVELS.includes(updated.level)) {
+                    updated.level = SCHOOL_LEVELS[0];
+                } else if (value === "UNIVERSITY" && !UNIVERSITY_LEVELS.includes(updated.level)) {
+                    updated.level = UNIVERSITY_LEVELS[0];
+                } else if (!["SCHOOL", "UNIVERSITY"].includes(value)
+                        && [...SCHOOL_LEVELS, ...UNIVERSITY_LEVELS].includes(updated.level)) {
+                    updated.level = "Podstawy";
+                }
             }
             return updated;
         });
@@ -222,10 +236,14 @@ export default function AddCoursePage() {
                             <p className="mt-1 text-xs leading-5 text-slate-500">
                                 Kategoria decyduje, w której części katalogu pojawi się kurs i jak będzie wyglądał certyfikat.
                             </p>
-                            <div className="mt-3 grid gap-3 md:grid-cols-3">
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                                 {COURSE_CATEGORIES.map((category) => {
                                     const Icon = category.value === "LANGUAGE"
                                         ? BsTranslate
+                                        : category.value === "SCHOOL"
+                                            ? BsMortarboard
+                                            : category.value === "UNIVERSITY"
+                                                ? BsBuildings
                                         : category.value === "DIGITAL_SKILLS"
                                             ? BsLaptop
                                             : BsCodeSlash;
@@ -379,6 +397,34 @@ export default function AddCoursePage() {
                                         </select>
                                     </label>
                                 </>
+                            ) : course.category === "SCHOOL" ? (
+                                <label className="space-y-2">
+                                    <span className="text-sm font-bold text-slate-300">Klasa</span>
+                                    <select
+                                        name="level"
+                                        value={course.level}
+                                        onChange={updateField}
+                                        className={fieldClass}
+                                    >
+                                        {SCHOOL_LEVELS.map((level) => (
+                                            <option key={level} value={level}>{level}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                            ) : course.category === "UNIVERSITY" ? (
+                                <label className="space-y-2">
+                                    <span className="text-sm font-bold text-slate-300">Poziom studiów</span>
+                                    <select
+                                        name="level"
+                                        value={course.level}
+                                        onChange={updateField}
+                                        className={fieldClass}
+                                    >
+                                        {UNIVERSITY_LEVELS.map((level) => (
+                                            <option key={level} value={level}>{level}</option>
+                                        ))}
+                                    </select>
+                                </label>
                             ) : (
                                 <label className="space-y-2">
                                     <span className="text-sm font-bold text-slate-300">Poziom</span>
@@ -458,7 +504,13 @@ export default function AddCoursePage() {
                                     {course.title || course.name || "Nazwa kursu"}
                                 </h2>
                                 <p className="mt-2 text-sm text-slate-500">
-                                    {course.category === "LANGUAGE" ? "Ścieżka językowa" : course.level}
+                                    {course.category === "LANGUAGE"
+                                        ? "Ścieżka językowa"
+                                        : course.category === "SCHOOL"
+                                            ? `Technikum · ${course.level}`
+                                            : course.category === "UNIVERSITY"
+                                                ? `Uczelnia · ${course.level}`
+                                                : course.level}
                                 </p>
                                 {course.category === "LANGUAGE" && (
                                     <div className="mt-3 flex flex-wrap gap-2">
