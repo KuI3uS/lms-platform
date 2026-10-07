@@ -17,6 +17,16 @@ public class Task {
 
     private Integer orderIndex;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String starterCode;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String hint;
+    private String language;
+    private String type;
+
 
     @ManyToOne
     @JoinColumn(name = "lesson_id")
@@ -60,5 +70,41 @@ public class Task {
 
     public void setLesson(Lesson lesson) {
         this.lesson = lesson;
+    }
+
+    public String getStarterCode() {
+        return starterCode;
+    }
+
+    public void setStarterCode(String starterCode) {
+        this.starterCode = starterCode;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getHint() {
+        return hint;
+    }
+
+    public void setHint(String hint) {
+        this.hint = hint;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

@@ -38,6 +38,11 @@ public class TaskController {
         int nextOrder = taskRepository.countByLessonId(lessonId);
         task.setOrderIndex(nextOrder);
 
+        task.setType(task.getType() == null ? "TEXT" : task.getType());
+        task.setLanguage(task.getLanguage());
+        task.setStarterCode(task.getStarterCode());
+        task.setHint(task.getHint());
+
         task.setLesson(lesson);
         return taskRepository.save(task);
     }
@@ -65,6 +70,12 @@ public class TaskController {
 
         task.setTaskContent(updated.getTaskContent());
         task.setExpectedAnswer(updated.getExpectedAnswer());
+        task.setStarterCode(updated.getStarterCode());
+        task.setHint(updated.getHint());
+        task.setLanguage(updated.getLanguage());
+        task.setType(updated.getType());
+        task.setOrderIndex(updated.getOrderIndex());
+
 
         return taskRepository.save(task);
     }

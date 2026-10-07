@@ -11,11 +11,17 @@ export default function AdminLessonPage() {
     const [expandedLessonId, setExpandedLessonId] = useState(null);
 
 
-    const [form, setForm] = useState({
+    const emptyLessonForm = {
         title: "",
         theory: "",
-        example: ""
-    });
+        example: "",
+        content: "",
+        imageUrl: "",
+        published: true,
+        freePreview: false
+    };
+
+    const [form, setForm] = useState(emptyLessonForm);
 
     const [editingId, setEditingId] = useState(null);
     const [taskForms, setTaskForms] = useState({});
@@ -95,6 +101,8 @@ export default function AdminLessonPage() {
 
         setLessons(prev => [...prev, lesson]);
         resetLessonForm();
+
+
     };
 
     const startEdit = (l) => {
@@ -122,7 +130,7 @@ export default function AdminLessonPage() {
     };
 
     const resetLessonForm = () => {
-        setForm({ title: "", theory: "", example: "" });
+        setForm(emptyLessonForm);
     };
 
     // =====================
@@ -141,7 +149,11 @@ export default function AdminLessonPage() {
             method: "POST",
             body: JSON.stringify({
                 taskContent: form.taskContent,
-                expectedAnswer: form.expectedAnswer || ""
+                expectedAnswer: form.expectedAnswer || "",
+                starterCode: form.starterCode || "",
+                hint: form.hint || "",
+                language: form.language || "java",
+                type: form.type || "TEXT"
             })
         });
 
@@ -149,7 +161,14 @@ export default function AdminLessonPage() {
 
         setTaskForms(prev => ({
             ...prev,
-            [lessonId]: { taskContent: "", expectedAnswer: "" }
+            [lessonId]: {
+                taskContent: "",
+                expectedAnswer: "",
+                starterCode: "",
+                hint: "",
+                language: "java",
+                type: "TEXT"
+            }
         }));
     };
 
@@ -187,7 +206,14 @@ export default function AdminLessonPage() {
 
         setTaskForms(prev => ({
             ...prev,
-            [lessonId]: { taskContent: "", expectedAnswer: "" }
+            [lessonId]: {
+                taskContent: "",
+                expectedAnswer: "",
+                starterCode: "",
+                hint: "",
+                language: "java",
+                type: "TEXT"
+            }
         }));
     };
 
@@ -270,6 +296,38 @@ export default function AdminLessonPage() {
                     onChange={e => setForm({...form, example: e.target.value})}
                     className="w-full p-2 bg-gray-700 rounded"
                 />
+
+                <textarea
+                    placeholder="Dodatkowa treść / długi opis lekcji"
+                    value={form.content || ""}
+                    onChange={e => setForm({...form, content: e.target.value})}
+                    className="w-full p-2 bg-gray-700 rounded min-h-40"
+                />
+
+                <input
+                    placeholder="URL obrazka lekcji"
+                    value={form.imageUrl || ""}
+                    onChange={e => setForm({...form, imageUrl: e.target.value})}
+                    className="w-full p-2 bg-gray-700 rounded"
+                />
+
+                <label className="flex items-center gap-2 text-gray-300">
+                    <input
+                        type="checkbox"
+                        checked={form.published || false}
+                        onChange={e => setForm({...form, published: e.target.checked})}
+                    />
+                    Opublikowana
+                </label>
+
+                <label className="flex items-center gap-2 text-gray-300">
+                    <input
+                        type="checkbox"
+                        checked={form.freePreview || false}
+                        onChange={e => setForm({...form, freePreview: e.target.checked})}
+                    />
+                    Darmowy podgląd
+                </label>
 
                 <label className="flex items-center gap-2 text-gray-300">
                     <input
@@ -363,6 +421,59 @@ export default function AdminLessonPage() {
                                         [l.id]: {
                                             ...prev[l.id],
                                             expectedAnswer: e.target.value
+                                        }
+                                    }))}
+                                    className="w-full p-2 bg-gray-700 rounded"
+                                />
+                                <select
+                                    value={taskForms[l.id]?.type || "TEXT"}
+                                    onChange={e => setTaskForms(prev => ({
+                                        ...prev,
+                                        [l.id]: {
+                                            ...prev[l.id],
+                                            type: e.target.value
+                                        }
+                                    }))}
+                                    className="w-full p-2 bg-gray-700 rounded"
+                                >
+                                    <option value="TEXT">Zadanie tekstowe</option>
+                                    <option value="CODE">Zadanie kodowe</option>
+                                </select>
+
+                                <input
+                                    placeholder="Język, np. java"
+                                    value={taskForms[l.id]?.language || "java"}
+                                    onChange={e => setTaskForms(prev => ({
+                                        ...prev,
+                                        [l.id]: {
+                                            ...prev[l.id],
+                                            language: e.target.value
+                                        }
+                                    }))}
+                                    className="w-full p-2 bg-gray-700 rounded"
+                                />
+
+                                <textarea
+                                    placeholder="Kod startowy dla ucznia"
+                                    value={taskForms[l.id]?.starterCode || ""}
+                                    onChange={e => setTaskForms(prev => ({
+                                        ...prev,
+                                        [l.id]: {
+                                            ...prev[l.id],
+                                            starterCode: e.target.value
+                                        }
+                                    }))}
+                                    className="w-full p-2 bg-gray-700 rounded font-mono min-h-32"
+                                />
+
+                                <textarea
+                                    placeholder="Podpowiedź"
+                                    value={taskForms[l.id]?.hint || ""}
+                                    onChange={e => setTaskForms(prev => ({
+                                        ...prev,
+                                        [l.id]: {
+                                            ...prev[l.id],
+                                            hint: e.target.value
                                         }
                                     }))}
                                     className="w-full p-2 bg-gray-700 rounded"
