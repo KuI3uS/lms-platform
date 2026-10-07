@@ -21,10 +21,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final AuthCookieService cookieService;
 
-    public JwtFilter(JwtService jwtService, UserDetailsService userDetailsService) {
+    public JwtFilter(
+            JwtService jwtService,
+            UserDetailsService userDetailsService,
+            AuthCookieService cookieService
+    ) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.cookieService = cookieService;
     }
 
     @Override
@@ -82,6 +88,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
             } catch (Exception e) {
                 SecurityContextHolder.clearContext();
+                cookieService.clearSession(response);
             }
         }
 

@@ -42,7 +42,7 @@ export default function Layout() {
             }
         };
         heartbeat();
-        const timer = window.setInterval(heartbeat, 60000);
+        const timer = window.setInterval(heartbeat, 15000);
         document.addEventListener("visibilitychange", heartbeat);
         return () => {
             window.clearInterval(timer);

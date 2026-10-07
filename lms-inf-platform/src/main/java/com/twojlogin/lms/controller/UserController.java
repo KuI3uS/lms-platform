@@ -19,11 +19,16 @@ import com.twojlogin.lms.repository.ExamAttemptRepository;
 import com.twojlogin.lms.repository.GamificationProfileRepository;
 import com.twojlogin.lms.repository.LanguageReviewProgressRepository;
 import com.twojlogin.lms.repository.TutoringBookingRepository;
+import com.twojlogin.lms.repository.LessonSubmissionRepository;
+import com.twojlogin.lms.repository.PasswordResetTokenRepository;
+import com.twojlogin.lms.repository.CourseProgressRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.twojlogin.lms.entity.User;
 import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import com.twojlogin.lms.entity.SchoolClass;
 import com.twojlogin.lms.util.ClassNameNormalizer;
 
@@ -48,6 +53,9 @@ public class UserController {
     private final TutoringBookingRepository tutoringBookingRepository;
     private final GamificationProfileRepository gamificationProfileRepository;
     private final LanguageReviewProgressRepository reviewRepository;
+    private final LessonSubmissionRepository lessonSubmissionRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final CourseProgressRepository courseProgressRepository;
 
     public UserController(UserRepository userRepository,
                           SubmissionRepository submissionRepository,
@@ -63,7 +71,10 @@ public class UserController {
                           ExamAttemptRepository examAttemptRepository,
                           TutoringBookingRepository tutoringBookingRepository,
                           GamificationProfileRepository gamificationProfileRepository,
-                          LanguageReviewProgressRepository reviewRepository) {
+                          LanguageReviewProgressRepository reviewRepository,
+                          LessonSubmissionRepository lessonSubmissionRepository,
+                          PasswordResetTokenRepository passwordResetTokenRepository,
+                          CourseProgressRepository courseProgressRepository) {
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
         this.schoolClassRepository = schoolClassRepository;
@@ -79,6 +90,9 @@ public class UserController {
         this.tutoringBookingRepository = tutoringBookingRepository;
         this.gamificationProfileRepository = gamificationProfileRepository;
         this.reviewRepository = reviewRepository;
+        this.lessonSubmissionRepository = lessonSubmissionRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.courseProgressRepository = courseProgressRepository;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -101,6 +115,13 @@ public class UserController {
     @DeleteMapping("/users/{id}")
     @Transactional
     public void deleteUser(@PathVariable Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Konto użytkownika nie istnieje."
+            );
+        }
+        lessonSubmissionRepository.deleteByUserId(id);
         submissionRepository.deleteByUserId(id);
         taskAttemptRepository.deleteByUserId(id);
         reviewRepository.deleteByUserId(id);
@@ -113,9 +134,12 @@ public class UserController {
         orderRepository.clearConfirmedBy(id);
         orderRepository.deleteByUserId(id);
         enrollmentRepository.deleteByUserId(id);
+        courseProgressRepository.deleteByUserId(id);
         gamificationProfileRepository.deleteByUserId(id);
+        passwordResetTokenRepository.deleteByUserId(id);
         tutoringBookingRepository.clearStudent(id);
         userRepository.deleteById(id);
+        userRepository.flush();
     }
 
     @PreAuthorize("hasRole('ADMIN')")

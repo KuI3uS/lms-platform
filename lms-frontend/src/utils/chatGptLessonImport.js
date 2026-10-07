@@ -152,6 +152,16 @@ function fieldsFromLines(lines) {
         }
         const field = readField(line);
         if (field) {
+            const fieldAlreadyFilled = Object.prototype.hasOwnProperty.call(fields, field.key)
+                && Boolean(fields[field.key]?.trim());
+            if (fieldAlreadyFilled) {
+                if (activeKey) {
+                    fields[activeKey] = fields[activeKey]
+                        ? `${fields[activeKey]}\n${line}`
+                        : line;
+                }
+                return;
+            }
             activeKey = field.key;
             fields[activeKey] = field.inlineValue;
             return;
@@ -295,6 +305,9 @@ function parseStep(step, warnings, errors) {
 
     if (resolved.type !== "DIVIDER" && !block.title?.trim()) {
         errors.push(`Krok ${step.number}: blok wymaga tytułu zgodnego z formularzem EduHub.`);
+    }
+    if (block.title?.trim().length > 255) {
+        errors.push(`Krok ${step.number}: tytuł ma ${block.title.trim().length} znaków, a maksymalny limit wynosi 255.`);
     }
 
     if (["IMAGE", "VIDEO", "PDF"].includes(resolved.type) && !block.mediaUrl?.trim()) {
