@@ -57,6 +57,27 @@ export default function TutoringBookingPage() {
         }
     };
 
+    const getPaymentLink = (price) => {
+        if (price === 80) {
+            return "https://checkout.revolut.com/pay/334e96d4-687b-46d9-8f1b-b5452be7d555";
+        }
+
+        if (price === 160) {
+            return "https://checkout.revolut.com/pay/213d3279-941b-463d-9e73-8dbef67ae8ad";
+        }
+        return "error";
+    };
+
+    const getQrImage = (price) => {
+
+        if (price === 80) return "/images/80zl.png";
+
+        if (price === 160) return "/images/160zl.png";
+
+        return "error";
+
+    };
+
     const updateForm = (field, value) => {
         setForm(prev => ({
             ...prev,
@@ -211,14 +232,14 @@ export default function TutoringBookingPage() {
 
                         <div className="flex justify-center">
                             <img
-                                src="/images/80zl.png"
+                                src={getQrImage(booking.price)}
                                 alt="Kod QR płatności Revolut"
                                 className="max-w-xs rounded-2xl border border-gray-700"
                             />
                         </div>
 
                         <a
-                            href="https://checkout.revolut.com/pay/334e96d4-687b-46d9-8f1b-b5452be7d555"
+                            href={getPaymentLink(booking.price)}
                             target="_blank"
                             rel="noreferrer"
                             className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold inline-block"

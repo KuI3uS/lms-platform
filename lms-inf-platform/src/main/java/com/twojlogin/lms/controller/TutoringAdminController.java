@@ -2,7 +2,9 @@ package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.AvailabilityRequest;
 import com.twojlogin.lms.entity.TutoringAvailability;
+import com.twojlogin.lms.entity.TutoringBooking;
 import com.twojlogin.lms.repository.TutoringAvailabilityRepository;
+import com.twojlogin.lms.repository.TutoringBookingRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +16,11 @@ import java.util.List;
 public class TutoringAdminController {
 
     private final TutoringAvailabilityRepository availabilityRepository;
+    private final TutoringBookingRepository bookingRepository;
 
-    public TutoringAdminController(TutoringAvailabilityRepository availabilityRepository) {
+    public TutoringAdminController(TutoringAvailabilityRepository availabilityRepository, TutoringBookingRepository bookingRepository) {
         this.availabilityRepository = availabilityRepository;
+        this.bookingRepository = bookingRepository;
     }
 
     @PostMapping("/availability")
@@ -40,5 +44,10 @@ public class TutoringAdminController {
     @DeleteMapping("/availability/{id}")
     public void delete(@PathVariable Long id) {
         availabilityRepository.deleteById(id);
+    }
+
+    @GetMapping("/bookings")
+    public List<TutoringBooking> bookings() {
+        return bookingRepository.findAllByOrderByStartTimeAsc();
     }
 }
