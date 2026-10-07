@@ -216,6 +216,28 @@ public class LessonBlockController {
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/lesson/{lessonId}")
+    public Map<String, Integer> deleteAllByLesson(@PathVariable Long lessonId) {
+        if (!lessonRepository.existsById(lessonId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
+            );
+        }
+
+        List<LessonBlock> blocks =
+                blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
+
+        attemptRepository.deleteByBlockLessonId(lessonId);
+        reviewRepository.deleteByBlockLessonId(lessonId);
+        blockRepository.deleteAll(blocks);
+        blockRepository.flush();
+
+        return Map.of("deleted", blocks.size());
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/lesson/{lessonId}/reorder")
     public void reorder(
             @PathVariable Long lessonId,
