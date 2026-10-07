@@ -14,6 +14,7 @@ import com.twojlogin.lms.repository.CourseEnrollmentRepository;
 import com.twojlogin.lms.repository.CourseOrderRepository;
 import com.twojlogin.lms.repository.CourseCertificateRepository;
 import com.twojlogin.lms.repository.ExamAttemptRepository;
+import com.twojlogin.lms.repository.CourseProgressRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -67,6 +68,8 @@ public class CourseService {
     private final CourseOrderRepository orderRepository;
     private final CourseCertificateRepository certificateRepository;
     private final ExamAttemptRepository examAttemptRepository;
+    private final CourseProgressRepository courseProgressRepository;
+    private final CourseModuleDeletionService moduleDeletionService;
 
     public CourseService(
             CourseRepository courseRepository,
@@ -77,7 +80,9 @@ public class CourseService {
             CourseEnrollmentRepository enrollmentRepository,
             CourseOrderRepository orderRepository,
             CourseCertificateRepository certificateRepository,
-            ExamAttemptRepository examAttemptRepository
+            ExamAttemptRepository examAttemptRepository,
+            CourseProgressRepository courseProgressRepository,
+            CourseModuleDeletionService moduleDeletionService
     ) {
         this.courseRepository = courseRepository;
         this.moduleRepository = moduleRepository;
@@ -88,6 +93,8 @@ public class CourseService {
         this.orderRepository = orderRepository;
         this.certificateRepository = certificateRepository;
         this.examAttemptRepository = examAttemptRepository;
+        this.courseProgressRepository = courseProgressRepository;
+        this.moduleDeletionService = moduleDeletionService;
     }
 
     @Transactional(readOnly = true)
@@ -155,6 +162,11 @@ public class CourseService {
         certificateRepository.deleteByCourseId(id);
         orderRepository.deleteByCourseId(id);
         enrollmentRepository.deleteByCourseId(id);
+        courseProgressRepository.deleteByCourseId(id);
+        moduleRepository.findByCourseIdOrderByIdAsc(id).stream()
+                .map(module -> module.getId())
+                .toList()
+                .forEach(moduleDeletionService::delete);
         courseRepository.deleteById(id);
     }
 
