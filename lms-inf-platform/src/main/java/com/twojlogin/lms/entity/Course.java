@@ -2,6 +2,7 @@ package com.twojlogin.lms.entity;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -11,8 +12,16 @@ public class Course {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
 
+    private String title;
+    @Column(length = 5000)
+    private String description;
+    private BigDecimal price;
+    private boolean published;
+    private String thumbnailUrl;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
+    
     private List<CourseModule> modules;
 
 
@@ -38,5 +47,37 @@ public class Course {
 
     public void setModules(List<CourseModule> modules) {
         this.modules = modules;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public boolean isPublished() {
+        return published;
+    }
+
+    public void setPublished(boolean published) {
+        this.published = published;
     }
 }

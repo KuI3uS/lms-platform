@@ -11,6 +11,11 @@ public class Lesson {
     private Long id;
 
     private String title;
+    @Column(length = 10000)
+    private String content;
+    private Integer position;
+    private boolean freePreview;
+
 
     @Column(length = 5000)
     private String theory;
@@ -81,5 +86,29 @@ public class Lesson {
 
     public void setTasks(List<Task> tasks) {
         this.tasks = tasks;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Integer getPosition() {
+        return position;
+    }
+
+    public void setPosition(Integer position) {
+        this.position = position;
+    }
+
+    public boolean isFreePreview() {
+        return freePreview;
+    }
+
+    public void setFreePreview(boolean freePreview) {
+        this.freePreview = freePreview;
     }
 }

@@ -2,12 +2,19 @@ package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.entity.CourseModule;
 import com.twojlogin.lms.entity.Lesson;
+import com.twojlogin.lms.entity.LessonProgress;
+import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.repository.CourseModuleRepository;
+import com.twojlogin.lms.repository.LessonProgressRepository;
 import com.twojlogin.lms.repository.LessonRepository;
+import com.twojlogin.lms.repository.UserRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/lessons")
@@ -16,11 +23,21 @@ public class LessonController {
     private final LessonRepository lessonRepository;
     private final CourseModuleRepository moduleRepository;
 
-    public LessonController(LessonRepository lessonRepository,
-                            CourseModuleRepository moduleRepository) {
+    private final LessonProgressRepository lessonProgressRepository;
+    private final UserRepository userRepository;
+
+    public LessonController(
+            LessonRepository lessonRepository,
+            CourseModuleRepository moduleRepository,
+            LessonProgressRepository lessonProgressRepository,
+            UserRepository userRepository
+    ) {
         this.lessonRepository = lessonRepository;
         this.moduleRepository = moduleRepository;
+        this.lessonProgressRepository = lessonProgressRepository;
+        this.userRepository = userRepository;
     }
+
 
     // CREATE
     @PreAuthorize("hasRole('ADMIN')")
@@ -69,5 +86,58 @@ public class LessonController {
     public Lesson getOne(@PathVariable Long id) {
         return lessonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
+    }
+
+    @GetMapping("/{id}/access")
+    public boolean canAccessLesson(@PathVariable Long id, Authentication authentication) {
+
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+        if (lesson.isFreePreview()) {
+            return true;
+        }
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow();
+
+        Optional<Lesson> previousLesson =
+                lessonRepository.findFirstByModuleIdAndOrderIndexLessThanOrderByOrderIndexDesc(
+                        lesson.getModule().getId(),
+                        lesson.getOrderIndex()
+                );
+        if (previousLesson.isEmpty()) {
+            return true;
+        }
+        return lessonProgressRepository.existsByUserAndLessonAndCompletedTrue(
+                user,
+                previousLesson.get()
+        );
+    }
+
+    @PostMapping("/{id}/complete")
+    public LessonProgress completeLesson(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow();
+
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow();
+
+        LessonProgress progress = lessonProgressRepository
+                .findByUserAndLesson(user, lesson)
+                .orElse(new LessonProgress());
+
+        progress.setUser(user);
+        progress.setLesson(lesson);
+        progress.setCompleted(true);
+        progress.setCompletedAt(LocalDateTime.now());
+
+        return lessonProgressRepository.save(progress);
     }
 }
