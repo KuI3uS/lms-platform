@@ -30,6 +30,10 @@ public interface CourseOrderRepository extends JpaRepository<CourseOrder, Long> 
 
     List<CourseOrder> findAllByOrderByCreatedAtDesc();
 
+    Optional<CourseOrder> findByReference(String reference);
+
+    Optional<CourseOrder> findFirstByStripeSubscriptionIdOrderByCreatedAtDesc(String subscriptionId);
+
     @Query("""
             select distinct courseOrder.course.id
             from CourseOrder courseOrder

@@ -95,7 +95,7 @@ class CourseOrderServiceTest {
     }
 
     @Test
-    void reservesGemVoucherAndPersistsItsPercentage() {
+    void ignoresGemVoucherForRecurringSubscription() {
         when(orderRepository
                 .findFirstByUserIdAndCourseIdAndStatusAndPurchaseTypeOrderByCreatedAtDesc(
                         7L, 5L, CourseOrderStatus.PENDING, CoursePurchaseType.SUBSCRIPTION
@@ -114,10 +114,29 @@ class CourseOrderServiceTest {
                 authentication
         );
 
-        assertEquals(10, result.discountPercent());
-        assertEquals(new BigDecimal("12.90"), result.discountAmount());
-        assertEquals(new BigDecimal("116.10"), result.amount());
-        assertEquals(null, result.paymentUrl());
+        assertEquals(0, result.discountPercent());
+        assertEquals(BigDecimal.ZERO.setScale(2), result.discountAmount());
+        assertEquals(new BigDecimal("129.00"), result.amount());
+        assertEquals("https://payments.example/monthly", result.paymentUrl());
+        verify(gamificationService).reserveVoucher(student, new BigDecimal("129.00"), 0);
+    }
+
+    @Test
+    void createsNonRenewingThirtyDayOrderFromMonthlyOptions() {
+        course.setBillingMode(CourseBillingMode.MONTHLY_OPTIONS);
+        course.setPrice(new BigDecimal("79.00"));
+        when(orderRepository
+                .findFirstByUserIdAndCourseIdAndStatusAndPurchaseTypeOrderByCreatedAtDesc(
+                        7L, 5L, CourseOrderStatus.PENDING, CoursePurchaseType.THIRTY_DAYS
+                ))
+                .thenReturn(Optional.empty());
+
+        CourseOrderDto result = service.create(
+                5L, 0, CoursePurchaseType.THIRTY_DAYS, authentication
+        );
+
+        assertEquals(CoursePurchaseType.THIRTY_DAYS, result.purchaseType());
+        assertEquals(new BigDecimal("79.00"), result.amount());
     }
 
     @Test

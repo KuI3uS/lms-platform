@@ -160,10 +160,10 @@ export default function AddCoursePage() {
                 method: isEditing ? "PUT" : "POST",
                 body: JSON.stringify({
                     ...course,
-                    price: ["ONE_TIME", "FLEXIBLE"].includes(course.billingMode)
+                    price: ["ONE_TIME", "FLEXIBLE", "MONTHLY_OPTIONS"].includes(course.billingMode)
                         ? Number(course.price || 0)
                         : 0,
-                    monthlyPrice: ["SUBSCRIPTION", "FLEXIBLE"].includes(course.billingMode)
+                    monthlyPrice: ["SUBSCRIPTION", "FLEXIBLE", "MONTHLY_OPTIONS"].includes(course.billingMode)
                         ? Number(course.monthlyPrice || 0)
                         : 0
                 })
@@ -307,12 +307,13 @@ export default function AddCoursePage() {
                         <fieldset>
                             <legend className="text-sm font-bold text-slate-300">Sposób dostępu do kursu</legend>
                             <p className="mt-1 text-xs leading-5 text-slate-500">Możesz udostępnić kurs bezpłatnie, jednorazowo, w abonamencie lub dać uczniowi wybór.</p>
-                            <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                            <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
                                 {[
                                     ["FREE", "Bezpłatny", "Dostęp bez płatności"],
                                     ["ONE_TIME", "Jednorazowo", "Dostęp bezterminowy"],
                                     ["SUBSCRIPTION", "Abonament", "Dostęp na miesiąc"],
-                                    ["FLEXIBLE", "Wybór", "Obie opcje płatności"]
+                                    ["FLEXIBLE", "Wybór", "Bezterminowo lub abonament"],
+                                    ["MONTHLY_OPTIONS", "30 dni", "Z odnowieniem lub bez"]
                                 ].map(([value, label, description]) => (
                                     <label key={value} className={`cursor-pointer rounded-xl border p-3 transition ${course.billingMode === value ? "border-cyan-300 bg-cyan-300/10" : "border-white/10 bg-black/20 hover:border-white/20"}`}>
                                         <input className="sr-only" type="radio" name="billingMode" value={value} checked={course.billingMode === value} onChange={updateField} />
@@ -441,13 +442,13 @@ export default function AddCoursePage() {
                                 </label>
                             )}
 
-                            {(course.billingMode === "ONE_TIME" || course.billingMode === "FLEXIBLE") && (
+                            {(course.billingMode === "ONE_TIME" || course.billingMode === "FLEXIBLE" || course.billingMode === "MONTHLY_OPTIONS") && (
                                 <label className="space-y-2">
-                                    <span className="text-sm font-bold text-slate-300">Cena jednorazowa (zł)</span>
+                                    <span className="text-sm font-bold text-slate-300">{course.billingMode === "MONTHLY_OPTIONS" ? "Cena za 30 dni bez odnowienia (zł)" : "Cena jednorazowa (zł)"}</span>
                                     <input name="price" type="number" min="0.01" step="0.01" value={course.price} onChange={updateField} className={fieldClass} />
                                 </label>
                             )}
-                            {(course.billingMode === "SUBSCRIPTION" || course.billingMode === "FLEXIBLE") && (
+                            {(course.billingMode === "SUBSCRIPTION" || course.billingMode === "FLEXIBLE" || course.billingMode === "MONTHLY_OPTIONS") && (
                                 <label className="space-y-2">
                                     <span className="text-sm font-bold text-slate-300">Cena miesięczna (zł)</span>
                                     <input name="monthlyPrice" type="number" min="0.01" step="0.01" value={course.monthlyPrice} onChange={updateField} className={fieldClass} />

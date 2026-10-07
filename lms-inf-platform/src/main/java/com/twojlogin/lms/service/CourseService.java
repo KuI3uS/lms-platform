@@ -331,7 +331,7 @@ public class CourseService {
                             ? CourseBillingMode.SUBSCRIPTION
                             : CourseBillingMode.FREE;
         }
-        if (!billingMode.allowsOneTime()) price = BigDecimal.ZERO;
+        if (!billingMode.allowsOneTime() && !billingMode.allowsThirtyDays()) price = BigDecimal.ZERO;
         if (!billingMode.allowsSubscription()) monthlyPrice = BigDecimal.ZERO;
         validatePrices(billingMode, price, monthlyPrice);
 
@@ -400,6 +400,7 @@ public class CourseService {
             case ONE_TIME -> oneTimeValid;
             case SUBSCRIPTION -> monthlyValid;
             case FLEXIBLE -> oneTimeValid && monthlyValid;
+            case MONTHLY_OPTIONS -> oneTimeValid && monthlyValid;
         };
         if (!valid) {
             throw new ResponseStatusException(

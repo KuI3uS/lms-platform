@@ -73,7 +73,11 @@ export default function CourseCheckoutPage() {
                         && item.status === "PENDING"
                 ) || null;
                 const initialPurchaseType = pendingOrder?.purchaseType
-                    || (courseData.billingMode === "SUBSCRIPTION" ? "SUBSCRIPTION" : "ONE_TIME");
+                    || (courseData.billingMode === "SUBSCRIPTION"
+                        ? "SUBSCRIPTION"
+                        : courseData.billingMode === "MONTHLY_OPTIONS"
+                            ? "THIRTY_DAYS"
+                            : "ONE_TIME");
                 setCourse(courseData);
                 setOrder(pendingOrder);
                 setPurchaseType(initialPurchaseType);
@@ -128,15 +132,20 @@ export default function CourseCheckoutPage() {
                 navigate(`/modules/${courseId}`, { replace: true });
                 return;
             }
-            const createdPaymentUrl = resolveCoursePaymentUrl(course, created);
-            if (createdPaymentUrl) {
-                window.open(createdPaymentUrl, "_blank", "noopener,noreferrer");
+            if (course?.billingMode === "MONTHLY_OPTIONS") {
+                await openStripeCheckout(created.id);
             }
         } catch (purchaseError) {
             setError(purchaseError.message || "Nie udało się utworzyć zamówienia.");
         } finally {
             setBusy(false);
         }
+    };
+
+    const openStripeCheckout = async (orderId) => {
+        const checkout = await apiFetch(`/payments/stripe/checkout/${orderId}`, { method: "POST" });
+        if (!checkout?.url) throw new Error("Nie udało się utworzyć bezpiecznej płatności.");
+        window.location.assign(checkout.url);
     };
 
     const copyPaymentLink = async () => {
@@ -192,8 +201,8 @@ export default function CourseCheckoutPage() {
                     <div className="grid gap-4 p-6 sm:grid-cols-3 sm:p-8">
                         <Info
                             icon={<BsLockFill />}
-                            title={purchaseType === "SUBSCRIPTION" ? "Dostęp miesięczny" : "Dostęp na stałe"}
-                            text={purchaseType === "SUBSCRIPTION" ? "Miesiąc od zatwierdzenia płatności." : "Kurs zostaje w Twojej bibliotece."}
+                            title={purchaseType === "SUBSCRIPTION" ? "Abonament 30-dniowy" : purchaseType === "THIRTY_DAYS" ? "Dostęp na 30 dni" : "Dostęp na stałe"}
+                            text={purchaseType === "SUBSCRIPTION" ? "Odnawia się automatycznie co miesiąc." : purchaseType === "THIRTY_DAYS" ? "Jedna płatność bez automatycznego odnowienia." : "Kurs zostaje w Twojej bibliotece."}
                         />
                         <Info icon={<BsShieldCheck />} title="Bezpieczna aktywacja" text="Dostęp nadaje backend po potwierdzeniu." />
                         <Info icon={<BsCheckCircleFill />} title="Pełna zawartość" text="Lekcje, egzaminy i certyfikat." />
@@ -201,16 +210,16 @@ export default function CourseCheckoutPage() {
                 </section>
 
                 <aside className="h-fit rounded-[30px] border border-cyan-500/20 bg-slate-900/80 p-6 shadow-2xl shadow-cyan-950/20 sm:p-7">
-                    {course?.billingMode === "FLEXIBLE" && !order && !course?.canAccess && (
+                    {["FLEXIBLE", "MONTHLY_OPTIONS"].includes(course?.billingMode) && !order && !course?.canAccess && (
                         <div className="mb-6">
                             <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Wybierz dostęp</p>
                             <div className="mt-3 grid grid-cols-2 gap-2">
-                                <button type="button" onClick={() => { setPurchaseType("ONE_TIME"); setSelectedDiscountPercent(0); }} className={`rounded-xl border p-3 text-left transition ${purchaseType === "ONE_TIME" ? "border-cyan-300 bg-cyan-300/10" : "border-white/10 bg-black/20"}`}>
-                                    <span className="block text-sm font-black">Na stałe</span>
+                                <button type="button" onClick={() => { setPurchaseType(course.billingMode === "MONTHLY_OPTIONS" ? "THIRTY_DAYS" : "ONE_TIME"); setSelectedDiscountPercent(0); }} className={`rounded-xl border p-3 text-left transition ${["ONE_TIME", "THIRTY_DAYS"].includes(purchaseType) ? "border-cyan-300 bg-cyan-300/10" : "border-white/10 bg-black/20"}`}>
+                                    <span className="block text-sm font-black">{course.billingMode === "MONTHLY_OPTIONS" ? "30 dni bez odnowienia" : "Na stałe"}</span>
                                     <span className="mt-1 block text-xs text-slate-500">{formatPrice(course.price)}</span>
                                 </button>
                                 <button type="button" onClick={() => { setPurchaseType("SUBSCRIPTION"); setSelectedDiscountPercent(0); }} className={`rounded-xl border p-3 text-left transition ${purchaseType === "SUBSCRIPTION" ? "border-violet-300 bg-violet-300/10" : "border-white/10 bg-black/20"}`}>
-                                    <span className="block text-sm font-black">Na miesiąc</span>
+                                    <span className="block text-sm font-black">Abonament 30 dni</span>
                                     <span className="mt-1 block text-xs text-slate-500">{formatPrice(course.monthlyPrice)} / mies.</span>
                                 </button>
                             </div>
@@ -218,8 +227,9 @@ export default function CourseCheckoutPage() {
                     )}
                     <p className="text-sm font-bold text-slate-400">Do zapłaty</p>
                     <p className="mt-2 text-4xl font-black text-white">{formatPrice(amountDue)}</p>
-                    {purchaseType === "SUBSCRIPTION" && <p className="mt-1 text-xs font-bold text-violet-300">za 1 miesiąc dostępu</p>}
-                    {Number(order?.discountAmount || previewDiscount) > 0 && (
+                    {purchaseType === "SUBSCRIPTION" && <p className="mt-1 text-xs font-bold text-violet-300">odnawiane automatycznie co miesiąc</p>}
+                    {purchaseType === "THIRTY_DAYS" && <p className="mt-1 text-xs font-bold text-cyan-300">jedna płatność, bez odnowienia</p>}
+                    {purchaseType !== "SUBSCRIPTION" && Number(order?.discountAmount || previewDiscount) > 0 && (
                         <div className="mt-3 flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-2 text-sm">
                             <span className="text-slate-400">
                                 Cena przed nagrodą: {formatPrice(order?.originalAmount ?? selectedPrice)}
@@ -262,7 +272,11 @@ export default function CourseCheckoutPage() {
                                 <p className="text-xs uppercase tracking-wider text-slate-500">Numer zamówienia</p>
                                 <p className="mt-1 break-all font-mono font-bold text-cyan-300">{order.reference}</p>
                             </div>
-                            {paymentUrl ? (
+                            {course?.billingMode === "MONTHLY_OPTIONS" ? (
+                                <button type="button" disabled={busy} onClick={async () => { try { setBusy(true); setError(""); await openStripeCheckout(order.id); } catch (paymentError) { setError(paymentError.message); } finally { setBusy(false); } }} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-blue-600 px-5 py-4 font-black disabled:opacity-60">
+                                    <BsCreditCard /> Wznów bezpieczną płatność
+                                </button>
+                            ) : paymentUrl ? (
                                 <>
                                     <div className="rounded-3xl border border-white/10 bg-white p-4">
                                         <QRCodeSVG
@@ -308,7 +322,7 @@ export default function CourseCheckoutPage() {
                         </div>
                     ) : (
                         <div className="mt-7 space-y-4">
-                            <div className="rounded-2xl border border-cyan-400/15 bg-cyan-400/[0.055] p-4">
+                            {purchaseType !== "SUBSCRIPTION" && <div className="rounded-2xl border border-cyan-400/15 bg-cyan-400/[0.055] p-4">
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-2 font-black text-cyan-100">
                                         <BsGem className="text-cyan-300" /> Kupon za klejnoty
@@ -339,7 +353,7 @@ export default function CourseCheckoutPage() {
                                 <p className="mt-3 text-xs leading-5 text-slate-500">
                                     Kupon zostanie pobrany po utworzeniu zamówienia. Platforma zawsze chroni minimum 25% ceny bazowej.
                                 </p>
-                            </div>
+                            </div>}
                             <button
                                 type="button"
                                 disabled={busy}
@@ -349,7 +363,7 @@ export default function CourseCheckoutPage() {
                                 {busy
                                     ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                     : <BsCreditCard />}
-                                {busy ? "Tworzenie zamówienia..." : purchaseType === "SUBSCRIPTION" ? "Wykup miesiąc" : "Kup kurs na stałe"}
+                                {busy ? "Tworzenie płatności..." : purchaseType === "SUBSCRIPTION" ? "Włącz abonament" : purchaseType === "THIRTY_DAYS" ? "Kup dostęp na 30 dni" : "Kup kurs na stałe"}
                             </button>
                         </div>
                     )}

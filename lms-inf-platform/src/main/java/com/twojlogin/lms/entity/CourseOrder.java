@@ -58,6 +58,12 @@ public class CourseOrder {
 
     private LocalDateTime accessUntil;
 
+    @Column(unique = true, length = 255)
+    private String stripeCheckoutSessionId;
+
+    @Column(length = 255)
+    private String stripeSubscriptionId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "confirmed_by_id")
     private User confirmedBy;
@@ -169,6 +175,11 @@ public class CourseOrder {
     public void setAccessUntil(LocalDateTime accessUntil) {
         this.accessUntil = accessUntil;
     }
+
+    public String getStripeCheckoutSessionId() { return stripeCheckoutSessionId; }
+    public void setStripeCheckoutSessionId(String value) { this.stripeCheckoutSessionId = value; }
+    public String getStripeSubscriptionId() { return stripeSubscriptionId; }
+    public void setStripeSubscriptionId(String value) { this.stripeSubscriptionId = value; }
 
     public User getConfirmedBy() {
         return confirmedBy;
