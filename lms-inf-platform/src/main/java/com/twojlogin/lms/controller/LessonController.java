@@ -65,8 +65,9 @@ public class LessonController {
     public void delete(@PathVariable Long id) {
 
         List<LessonSubmission> submissions = lessonSubmissionRepository.findByLessonId(id);
-
         lessonSubmissionRepository.deleteAll(submissions);
+
+        lessonProgressRepository.deleteByLessonId(id);
 
         lessonRepository.deleteById(id);
     }
