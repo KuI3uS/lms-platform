@@ -489,13 +489,13 @@ Rola ucznia
 [dokładne imię postaci, której kwestie uczeń ma mówić lub wpisywać]
 Dialog
 Emma: Good morning!
-Leo: Good morning! || Morning! || „Good morning” jest neutralnym porannym powitaniem.
+Leo: Good morning! || Morning! || „Good morning” jest neutralnym porannym powitaniem. || Dzień dobry!
 Emma: How are you?
-Leo: I'm good, thanks. || Fine, thanks.; I'm fine, thank you. || Po pytaniu o samopoczucie podajemy stan i możemy podziękować.
+Leo: I'm good, thanks. || Fine, thanks.; I'm fine, thank you. || Po pytaniu o samopoczucie podajemy stan i możemy podziękować. || Mam się dobrze, dziękuję.
 Język audio
 [np. en-GB]
 
-W polu Dialog każdy wiersz ma format „Postać: wypowiedź”. Dla kwestii roli ucznia możesz dopisać po znakach || alternatywne poprawne odpowiedzi oddzielone średnikami, a po kolejnych || krótkie wyjaśnienie korekty. Nie dodawaj oznaczeń A, B, C ani osobnych KROKÓW dla wypowiedzi.
+W polu Dialog każdy wiersz ma format „Postać: wypowiedź”. Dla kwestii roli ucznia dopisz po znakach || kolejno: alternatywne poprawne odpowiedzi oddzielone średnikami, krótkie wyjaśnienie korekty oraz polskie zdanie, które uczeń ma przetłumaczyć na angielski. Nie dodawaj oznaczeń A, B, C ani osobnych KROKÓW dla wypowiedzi.
 
 TRENING SŁÓWEK — cały zestaw od 1 do 20 słówek jest jednym blokiem. Uczeń najpierw widzi fiszki, a następnie sam wpisuje tłumaczenia.
 KROK [NUMER]

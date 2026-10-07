@@ -24,7 +24,7 @@ function DialogueBubble({ character, text, onSpeak, active = false, muted = fals
                 <div aria-current={active ? "step" : undefined} className={`rounded-3xl border p-4 sm:p-5 ${active ? "ring-2 ring-cyan-300 shadow-lg shadow-cyan-500/10" : ""} ${right ? "rounded-br-md border-blue-400/20 bg-blue-500/10" : "rounded-bl-md border-cyan-400/20 bg-cyan-500/10"}`}>
                     {text && <p className={`text-base font-bold leading-7 sm:text-lg ${muted ? "text-slate-500" : "text-white"}`}>{text}</p>}
                     {children}
-                    {text && !muted && (
+                    {text && !muted && onSpeak && (
                         <button type="button" onClick={onSpeak} aria-label={`Odsłuchaj: ${character.name} — ${text}`} className="mt-3 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-cyan-300 hover:text-cyan-200">
                             <BsPlayFill /> Odsłuchaj
                         </button>
@@ -39,7 +39,11 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
     const [answer, setAnswer] = useState("");
     const [listening, setListening] = useState(false);
     const recognitionRef = useRef(null);
+    const silenceTimerRef = useRef(null);
+    const maxTimerRef = useRef(null);
     useEffect(() => () => {
+        window.clearTimeout(silenceTimerRef.current);
+        window.clearTimeout(maxTimerRef.current);
         const recognition = recognitionRef.current;
         if (recognition) {
             recognition.onstart = recognition.onend = recognition.onerror = recognition.onresult = null;
@@ -74,11 +78,28 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
         }
         const recognition = new Recognition();
         recognition.lang = language || "en-GB";
-        recognition.interimResults = false;
+        recognition.interimResults = true;
         recognition.maxAlternatives = 3;
         recognition.continuous = false;
         recognition.onstart = () => setListening(true);
-        recognition.onend = () => setListening(false);
+        let latestAlternatives = [];
+        let evaluated = false;
+        const evaluateAlternatives = () => {
+            if (evaluated || latestAlternatives.length === 0) return;
+            evaluated = true;
+            const expectedAnswers = [turn.text, ...(turn.acceptedAnswers || [])];
+            const best = latestAlternatives
+                .map((transcript) => ({ transcript, score: languageAnswerScore(expectedAnswers, transcript) }))
+                .sort((first, second) => second.score - first.score)[0] || { transcript: "", score: 0 };
+            setAnswer(best.transcript);
+            onResult({ answer: best.transcript, score: best.score, source: "voice", accepted: best.score >= 70 });
+        };
+        recognition.onend = () => {
+            window.clearTimeout(silenceTimerRef.current);
+            window.clearTimeout(maxTimerRef.current);
+            setListening(false);
+            evaluateAlternatives();
+        };
         recognition.onerror = () => {
             setListening(false);
             onResult({
@@ -90,22 +111,28 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
             });
         };
         recognition.onresult = (event) => {
-            const alternatives = Array.from(event.results?.[0] || []).map((item) => item.transcript);
-            const expectedAnswers = [turn.text, ...(turn.acceptedAnswers || [])];
-            const best = alternatives
-                .map((transcript) => ({ transcript, score: languageAnswerScore(expectedAnswers, transcript) }))
-                .sort((first, second) => second.score - first.score)[0] || { transcript: "", score: 0 };
-            setAnswer(best.transcript);
-            onResult({ answer: best.transcript, score: best.score, source: "voice", accepted: best.score >= 70 });
+            latestAlternatives = Array.from(event.results?.[event.results.length - 1] || [])
+                .map((item) => item.transcript)
+                .filter(Boolean);
+            window.clearTimeout(silenceTimerRef.current);
+            const finalResult = Array.from(event.results || []).every((result) => result.isFinal);
+            silenceTimerRef.current = window.setTimeout(() => recognition.stop(), finalResult ? 150 : 700);
         };
         recognitionRef.current = recognition;
         recognition.start();
+        maxTimerRef.current = window.setTimeout(() => recognition.stop(), 8000);
     };
 
     return (
         <DialogueBubble character={character} text={result ? turn.text : "Twoja kolej…"} onSpeak={onSpeak} muted={!result}>
             {!result && (
                 <div className="mt-3 space-y-3 text-left">
+                    {turn.polishPrompt && (
+                        <div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.07] p-3 text-sm leading-6 text-amber-50">
+                            <span className="font-black text-amber-300">Przetłumacz na angielski:</span>{" "}
+                            {turn.polishPrompt}
+                        </div>
+                    )}
                     <div className="relative">
                         <BsKeyboard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                         <input
@@ -154,6 +181,12 @@ export default function LessonDialog({ block, onComplete }) {
     const coach = config.characters.find((character) => character.id !== studentCharacter.id) || config.characters[0];
     const studentTurns = config.turns.filter((turn) => turn.studentTurn || turn.speakerId === studentCharacter.id);
     const completed = studentTurns.filter((turn) => results[config.turns.indexOf(turn)]).length;
+    const activeStudentTurnIndex = config.turns.findIndex((turn, index) => (
+        (turn.studentTurn || turn.speakerId === studentCharacter.id) && !results[index]
+    ));
+    const visibleThroughIndex = activeStudentTurnIndex === -1
+        ? config.turns.length - 1
+        : activeStudentTurnIndex;
 
     const recordResult = (index, result) => {
         const nextResults = { ...results, [index]: result };
@@ -202,6 +235,7 @@ export default function LessonDialog({ block, onComplete }) {
                 )}
 
                 {config.turns.map((turn, index) => {
+                    if (mode === "practice" && index > visibleThroughIndex) return null;
                     const character = charactersById.get(turn.speakerId) || config.characters[index % 2];
                     const studentTurn = turn.studentTurn || turn.speakerId === studentCharacter.id;
                     if (mode === "practice" && studentTurn) {
@@ -219,7 +253,7 @@ export default function LessonDialog({ block, onComplete }) {
                             />
                         );
                     }
-                    return <DialogueBubble key={`${index}-${turn.text}`} character={character} text={turn.text} onSpeak={() => play(index)} active={speaking && playback.index === index} />;
+                    return <DialogueBubble key={`${index}-${turn.text}`} character={character} text={turn.text} onSpeak={mode === "watch" ? undefined : () => play(index)} active={speaking && playback.index === index} />;
                 })}
 
                 {config.turns.length === 0 && <p className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-slate-500">Ten dialog nie ma jeszcze wypowiedzi.</p>}

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     BsMicFill,
     BsPlayFill,
@@ -40,6 +40,9 @@ function pronunciationScore(target, transcript) {
     const expected = normalize(target);
     const received = normalize(transcript);
     if (!expected || !received) return 0;
+    const compactExpected = expected.replace(/[ '\s]/g, "");
+    const compactReceived = received.replace(/[ '\s]/g, "");
+    if (compactExpected === compactReceived) return 100;
     return Math.max(0, Math.round(
         (1 - distance(expected, received) / Math.max(expected.length, received.length)) * 100
     ));
@@ -55,6 +58,8 @@ export default function PronunciationTrainer({
                                               }) {
     const { showToast } = useFeedback();
     const recognitionRef = useRef(null);
+    const silenceTimerRef = useRef(null);
+    const maxTimerRef = useRef(null);
     const [listening, setListening] = useState(false);
     const [transcript, setTranscript] = useState("");
     const [score, setScore] = useState(null);
@@ -63,6 +68,18 @@ export default function PronunciationTrainer({
             ? null
             : window.SpeechRecognition || window.webkitSpeechRecognition || null
     ), []);
+
+    const clearRecognitionTimers = () => {
+        window.clearTimeout(silenceTimerRef.current);
+        window.clearTimeout(maxTimerRef.current);
+        silenceTimerRef.current = null;
+        maxTimerRef.current = null;
+    };
+
+    useEffect(() => () => {
+        clearRecognitionTimers();
+        recognitionRef.current?.abort();
+    }, []);
 
     const speak = () => {
         if (!phrase || !("speechSynthesis" in window)) return;
@@ -93,11 +110,25 @@ export default function PronunciationTrainer({
         }
         const recognition = new Recognition();
         recognition.lang = language || "en-US";
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 3;
         recognition.continuous = false;
         recognition.onstart = () => setListening(true);
-        recognition.onend = () => setListening(false);
+        let latestTranscript = "";
+        let evaluated = false;
+        const evaluateTranscript = () => {
+            if (evaluated || !latestTranscript.trim()) return;
+            evaluated = true;
+            const nextScore = pronunciationScore(phrase, latestTranscript);
+            setTranscript(latestTranscript);
+            setScore(nextScore);
+            saveScore(nextScore);
+        };
+        recognition.onend = () => {
+            clearRecognitionTimers();
+            setListening(false);
+            evaluateTranscript();
+        };
         recognition.onerror = (event) => {
             setListening(false);
             const denied = ["not-allowed", "service-not-allowed"].includes(event.error);
@@ -109,17 +140,23 @@ export default function PronunciationTrainer({
             );
         };
         recognition.onresult = (event) => {
-            const spoken = event.results?.[0]?.[0]?.transcript || "";
-            const nextScore = pronunciationScore(phrase, spoken);
-            setTranscript(spoken);
-            setScore(nextScore);
-            saveScore(nextScore);
+            latestTranscript = Array.from(event.results || [])
+                .map((result) => result?.[0]?.transcript || "")
+                .join(" ")
+                .trim();
+            window.clearTimeout(silenceTimerRef.current);
+            const finalResult = Array.from(event.results || []).every((result) => result.isFinal);
+            silenceTimerRef.current = window.setTimeout(() => recognition.stop(), finalResult ? 150 : 700);
         };
         recognitionRef.current = recognition;
         recognition.start();
+        maxTimerRef.current = window.setTimeout(() => recognition.stop(), 8000);
     };
 
-    const stop = () => recognitionRef.current?.stop();
+    const stop = () => {
+        clearRecognitionTimers();
+        recognitionRef.current?.stop();
+    };
 
     return (
         <div className={`rounded-3xl border border-violet-400/20 bg-violet-500/[0.07] ${compact ? "p-4" : "p-5 sm:p-7"}`}>
