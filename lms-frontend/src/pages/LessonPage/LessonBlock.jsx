@@ -8,6 +8,8 @@ import LessonQuote from "./LessonQuote";
 import LessonDivider from "./LessonDivider";
 import LessonQuiz from "./LessonQuiz";
 import LessonAudio from "./LessonAudio";
+import LessonDialog from "./LessonDialog";
+import LessonVocabulary from "./LessonVocabulary";
 
 export default function LessonBlock({
                                         block,
@@ -47,6 +49,12 @@ export default function LessonBlock({
 
         case "AUDIO":
             return <LessonAudio block={block} />;
+
+        case "DIALOG":
+            return <LessonDialog block={block} />;
+
+        case "VOCABULARY":
+            return <LessonVocabulary block={block} />;
 
         case "PDF":
         case "DOWNLOAD":

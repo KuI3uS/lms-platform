@@ -1,5 +1,9 @@
 package com.twojlogin.lms.controller;
 
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.twojlogin.lms.dto.AnswerRequest;
 import com.twojlogin.lms.dto.LessonBlockDto;
 import com.twojlogin.lms.dto.LessonBlockRequest;
@@ -33,6 +37,8 @@ public class LessonBlockController {
 
     private static final int MAX_BLOCKS_PER_LESSON = 10;
     private static final int MAX_BLOCKS_PER_LANGUAGE_LESSON = 20;
+    private static final int MAX_VOCABULARY_ITEMS = 20;
+    private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 
     private final LessonBlockRepository blockRepository;
     private final LessonRepository lessonRepository;
@@ -371,6 +377,14 @@ public class LessonBlockController {
                     "Dodaj poprawną odpowiedź do zadania."
             );
         }
+        if ((request.type() == BlockType.DIALOG || request.type() == BlockType.VOCABULARY)
+                && isBlank(request.content())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Uzupełnij zawartość interaktywnego bloku."
+            );
+        }
+        validateInteractiveContent(request);
 
         /*
          * Produkcyjna baza powstawała przez kilka wersji aplikacji. W części
@@ -405,6 +419,48 @@ public class LessonBlockController {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private void validateInteractiveContent(LessonBlockRequest request) {
+        if (request.type() != BlockType.DIALOG && request.type() != BlockType.VOCABULARY) {
+            return;
+        }
+
+        try {
+            JsonNode content = OBJECT_MAPPER.readTree(request.content());
+            if (request.type() == BlockType.DIALOG) {
+                JsonNode turns = content.path("turns");
+                if (!turns.isArray() || turns.size() < 2) {
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Dialog wymaga przynajmniej dwóch wypowiedzi."
+                    );
+                }
+            }
+            if (request.type() == BlockType.VOCABULARY) {
+                JsonNode items = content.path("items");
+                if (!items.isArray() || items.isEmpty() || items.size() > MAX_VOCABULARY_ITEMS) {
+                    throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Trening słówek musi zawierać od 1 do 20 pozycji."
+                    );
+                }
+                for (JsonNode item : items) {
+                    if (item.path("term").asText("").isBlank()
+                            || item.path("translation").asText("").isBlank()) {
+                        throw new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Każde słówko musi mieć treść i tłumaczenie."
+                        );
+                    }
+                }
+            }
+        } catch (JacksonException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Interaktywny blok ma nieprawidłowy format danych."
+            );
+        }
     }
 
     private String trimToEmpty(String value) {

@@ -39,7 +39,11 @@ export default function BlockForm({
                 onChange={(type)=>
                     setBlock(prev=>({
                         ...prev,
-                        type
+                        type,
+                        language: ["AUDIO", "DIALOG", "VOCABULARY"].includes(type)
+                            && !/^[a-z]{2}-[A-Z]{2}$/.test(prev.language || "")
+                                ? "en-GB"
+                                : prev.language
                     }))
                 }
             />

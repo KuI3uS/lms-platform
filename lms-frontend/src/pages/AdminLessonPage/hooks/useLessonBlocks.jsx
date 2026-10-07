@@ -2,6 +2,10 @@ import { useState } from "react";
 import { apiFetch } from "../../../api/api";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { MAX_LESSON_BLOCKS } from "../../../utils/lessonBlockLimits";
+import {
+    parseDialogContent,
+    parseVocabularyContent
+} from "../../../utils/languageInteractiveBlocks";
 
 const emptyBlock = {
     id: null,
@@ -350,6 +354,26 @@ export default function useLessonBlocks() {
         if (block.type === "AUDIO" && !block.content?.trim()) {
             showToast("Dodaj zwrot, który uczeń ma powtórzyć.", "warning");
             return false;
+        }
+
+        if (block.type === "DIALOG") {
+            const dialog = parseDialogContent(block.content);
+            if (dialog.turns.length < 2) {
+                showToast("Dialog wymaga przynajmniej dwóch wypowiedzi.", "warning");
+                return false;
+            }
+        }
+
+        if (block.type === "VOCABULARY") {
+            const vocabulary = parseVocabularyContent(block.content);
+            if (vocabulary.items.length < 1 || vocabulary.items.some((item) => !item.term || !item.translation)) {
+                showToast("Dodaj przynajmniej jedno słówko wraz z tłumaczeniem.", "warning");
+                return false;
+            }
+            if (vocabulary.items.length > 20) {
+                showToast("Jeden trening może zawierać maksymalnie 20 słówek.", "warning");
+                return false;
+            }
         }
 
         if (block.type === "QUIZ") {

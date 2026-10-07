@@ -89,6 +89,7 @@ export default function BlockManager({
                 lessonId={lessonId}
                 lessonBlocks={lessonBlocks}
                 maxBlocks={maxBlocks}
+                variant={variant}
             />
 
             {blockLimitReached ? (

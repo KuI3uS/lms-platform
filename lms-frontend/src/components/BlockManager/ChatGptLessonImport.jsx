@@ -15,7 +15,7 @@ import {
 } from "../../utils/chatGptLessonImport";
 import { getBlockLabel } from "./blockTypes";
 
-export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks }) {
+export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks, variant = "PROGRAMMING" }) {
     const { showToast } = useFeedback();
     const [open, setOpen] = useState(false);
     const [source, setSource] = useState("");
@@ -35,7 +35,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks 
 
     const copyPrompt = async () => {
         try {
-            await navigator.clipboard.writeText(getChatGptLessonPrompt(maxBlocks));
+            await navigator.clipboard.writeText(getChatGptLessonPrompt(maxBlocks, variant));
             showToast("Wzór promptu został skopiowany.", "success");
         } catch {
             showToast("Nie udało się skopiować promptu.", "error");
@@ -78,7 +78,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks 
                     <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-300">Import bez API</p>
                     <h4 className="mt-2 text-xl font-black text-white">Wklej lekcję przygotowaną w ChatGPT</h4>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                        EduHub rozpozna maksymalnie 10 spójnych kroków, zadania oraz odpowiedzi quizów. Nic nie zostanie zapisane przed kliknięciem importu.
+                        EduHub rozpozna maksymalnie {maxBlocks} spójnych kroków, zadania oraz odpowiedzi quizów. Jeden dialog lub trening słówek może zawierać wiele wewnętrznych elementów. Nic nie zostanie zapisane przed kliknięciem importu.
                     </p>
                     <p className="mt-2 text-xs font-black uppercase tracking-wider text-cyan-300/80">
                         Obecna lekcja: {existingCount}/{maxBlocks} bloków · wolne miejsce: {remainingSlots}

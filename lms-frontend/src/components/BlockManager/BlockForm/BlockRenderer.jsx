@@ -9,6 +9,8 @@ import TaskBlockForm from "./forms/TaskBlockForm";
 import QuizBlockForm from "./forms/QuizBlockForm";
 import LanguageTaskBlockForm from "./forms/LanguageTaskBlockForm";
 import AudioBlockForm from "./forms/AudioBlockForm";
+import DialogBlockForm from "./forms/DialogBlockForm";
+import VocabularyBlockForm from "./forms/VocabularyBlockForm";
 
 export default function BlockRenderer({
                                           block,
@@ -57,6 +59,12 @@ export default function BlockRenderer({
 
         case "AUDIO":
             return <AudioBlockForm block={block} setBlock={setBlock} />;
+
+        case "DIALOG":
+            return <DialogBlockForm block={block} setBlock={setBlock} />;
+
+        case "VOCABULARY":
+            return <VocabularyBlockForm block={block} setBlock={setBlock} />;
 
         case "PDF":
         case "DOWNLOAD":
