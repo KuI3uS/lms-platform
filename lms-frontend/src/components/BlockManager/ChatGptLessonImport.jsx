@@ -15,6 +15,7 @@ import {
 } from "../../utils/chatGptLessonImport";
 import { getBlockLabel } from "./blockTypes";
 import { DEFAULT_EXERCISE_XP, getBlockBaseXp } from "../../utils/lessonBlockRewards";
+import { cleanChatGptText } from "../../utils/chatGptReferences";
 
 export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks, variant = "PROGRAMMING" }) {
     const { showToast } = useFeedback();
@@ -113,7 +114,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                 <span className="sr-only">Treść lekcji z ChatGPT</span>
                 <textarea
                     value={source}
-                    onChange={(event) => setSource(event.target.value)}
+                    onChange={(event) => setSource(cleanChatGptText(event.target.value))}
                     rows={14}
                     placeholder="Wklej tutaj tekst rozpoczynający się od KROK 1..."
                     className="w-full resize-y rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-4 font-mono text-sm leading-6 text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10"

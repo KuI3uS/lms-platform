@@ -8,6 +8,7 @@ import {
 } from "./languageInteractiveBlocks.js";
 import { createSentenceBuilderConfig, serializeSentenceBuilderConfig } from "./sentenceBuilder.js";
 import { DEFAULT_EXERCISE_XP, getBlockBaseXp, REWARDED_BLOCK_TYPES } from "./lessonBlockRewards.js";
+import { cleanChatGptText } from "./chatGptReferences.js";
 
 const TYPE_MAP = {
     tekst: "TEXT",
@@ -481,10 +482,11 @@ function parseStep(step, warnings, errors) {
 }
 
 export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS, variant = "PROGRAMMING") {
+    const cleanSource = cleanChatGptText(source);
     const warnings = [];
     const errors = [];
-    const steps = splitSteps(source);
-    if (String(source || "").trim() && steps.length === 0) {
+    const steps = splitSteps(cleanSource);
+    if (cleanSource.trim() && steps.length === 0) {
         errors.push("Nie znaleziono kroków. Każdy blok rozpocznij od nagłówka KROK 1, KROK 2 itd.");
     }
     if (steps.length > maxBlocks) {
@@ -497,7 +499,7 @@ export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS, varian
         .map((step) => parseStep(step, warnings, errors))
         .filter(Boolean);
 
-    if (String(source || "").trim() && errors.length === 0) {
+    if (cleanSource.trim() && errors.length === 0) {
         const interactiveCount = blocks.filter((block) => REWARDED_BLOCK_TYPES.has(block.type)).length;
         if (blocks.length < Math.min(10, maxBlocks)) {
             warnings.push("Ta lekcja jest krótka. Dla pełnej, zaawansowanej lekcji zalecamy co najmniej 10 zróżnicowanych bloków.");
@@ -707,6 +709,7 @@ QUIZY
 - Zmieniaj pozycję poprawnej odpowiedzi między pytaniami; nie umieszczaj jej stale jako pierwszej. EduHub dodatkowo uporządkuje odpowiedzi podczas importu.
 
 Zwróć wyłącznie gotowe bloki, bez tabel, Markdown, komentarzy i dodatkowego wstępu.
+Nie dodawaj technicznych znaczników odwołań ChatGPT, takich jak :chatgpt-content-reference{index="0"} lub :contentReference[oaicite:0]{index=0}. Zwróć samą treść lekcji.
 Każdy blok rozpocznij od KROK i kolejnego numeru. Nie pomijaj numerów.
 
 Dozwolone typy bloków: ${allowedTypes}.

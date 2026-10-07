@@ -11,6 +11,7 @@ import {
     parseVocabularyContent
 } from "../../../utils/languageInteractiveBlocks";
 import { parseSentenceBuilderContent } from "../../../utils/sentenceBuilder";
+import { cleanChatGptBlock } from "../../../utils/chatGptReferences";
 
 
 const emptyBlock = {
@@ -121,7 +122,7 @@ export default function useLessonBlocks() {
 
         setBlocksByLesson(prev => ({
             ...prev,
-            [lessonId]: data || []
+            [lessonId]: (data || []).map(cleanChatGptBlock)
         }));
 
         if (!blockForms[lessonId]) {
@@ -856,9 +857,7 @@ export default function useLessonBlocks() {
         setBlockForms(prev => ({
             ...prev,
 
-            [lessonId]: {
-                ...block
-            }
+            [lessonId]: cleanChatGptBlock(block)
         }));
     }
 
@@ -892,12 +891,12 @@ export default function useLessonBlocks() {
             ...prev,
 
             [lessonId]:
-                typeof callback === "function"
+                cleanChatGptBlock(typeof callback === "function"
                     ? callback(
                         prev[lessonId]
                         || { ...emptyBlock }
                     )
-                    : callback
+                    : callback)
         }));
     }
 
@@ -1242,9 +1241,7 @@ export default function useLessonBlocks() {
      */
     function toRequest(block) {
 
-        const request = {
-            ...block
-        };
+        const request = cleanChatGptBlock(block);
 
 
         delete request.id;

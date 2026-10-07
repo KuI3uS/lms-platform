@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../../api/api";
 import { useFeedback } from "../../context/FeedbackContext";
+import { cleanChatGptBlock } from "../../utils/chatGptReferences";
 import {
     canAccessLessonStep,
     getActiveLessonStepIndex
@@ -60,7 +61,7 @@ export default function LessonPage() {
             );
             setModuleLessons(sortedLessons);
 
-            const sorted = [...lessonBlocks].sort(
+            const sorted = lessonBlocks.map(cleanChatGptBlock).sort(
                 (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
             );
 
