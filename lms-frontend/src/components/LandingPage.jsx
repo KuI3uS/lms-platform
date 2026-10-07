@@ -14,10 +14,12 @@
     } from "react-icons/bs";
 
     import "../styles/landing.css";
+    import TutoringFloatingButton from "../components/TutoringFloatingButton";
 
     export default function LandingPage() {
         return (
             <div className="landing-page">
+                <TutoringFloatingButton />
                 <nav>
                     <a href="#home">Home</a>
                     <a href="#courses">Kursy</a>
@@ -292,6 +294,7 @@
                     </section>
                 </main>
 
+
                 <footer>
                     <p>
                         © 2025 Jakub Marcinkowski ·
@@ -301,5 +304,6 @@
                     </p>
                 </footer>
             </div>
+
         );
     }

@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+
+
 import {
     BsCalendarCheck,
     BsClock,
@@ -19,6 +24,7 @@ export default function TutoringBookingPage() {
     const [selectedStart, setSelectedStart] = useState("");
     const [hours, setHours] = useState(1);
     const [blockedBookings, setBlockedBookings] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(new Date());
 
     const [form, setForm] = useState({
         name: "",
@@ -36,6 +42,21 @@ export default function TutoringBookingPage() {
     useEffect(() => {
         loadAvailability();
     }, []);
+
+    const sameDay = (a, b) => {
+        const d1 = new Date(a);
+        const d2 = new Date(b);
+
+        return (
+            d1.getFullYear() === d2.getFullYear() &&
+            d1.getMonth() === d2.getMonth() &&
+            d1.getDate() === d2.getDate()
+        );
+    };
+
+    const availabilityForSelectedDate = availability.filter(term =>
+        sameDay(term.startTime, selectedDate)
+    );
 
     const loadAvailability = async () => {
         try {
@@ -335,34 +356,57 @@ export default function TutoringBookingPage() {
                             </div>
                         ) : (
                             <div className="grid gap-4">
-                                {availability.map(term => {
-                                    const active = selectedAvailability?.id === term.id;
+                                <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+                                    <Calendar
+                                        onChange={setSelectedDate}
+                                        value={selectedDate}
+                                        tileClassName={({ date }) => {
+                                            const hasTerm = availability.some(term => sameDay(term.startTime, date));
+                                            return hasTerm ? "has-availability" : "";
+                                        }}
+                                    />
+                                </div>
 
-                                    return (
-                                        <button
-                                            key={term.id}
-                                            onClick={() => {
-                                                setSelectedAvailability(term);
-                                                setSelectedStart("");
-                                                setHours(1);
-                                            }}
-                                            className={`text-left bg-gray-900 border rounded-2xl p-5 transition ${
-                                                active
-                                                    ? "border-blue-500 bg-blue-600/10"
-                                                    : "border-gray-800 hover:border-blue-600/60"
-                                            }`}
-                                        >
-                                            <h3 className="text-lg font-semibold">
-                                                {formatDate(term.startTime)}
-                                            </h3>
+                                <h2 className="text-2xl font-bold mt-6">
+                                    Dostępne godziny: {formatDate(selectedDate)}
+                                </h2>
 
-                                            <p className="text-gray-400 flex items-center gap-2 mt-2">
-                                                <BsClock />
-                                                {formatTime(term.startTime)}–{formatTime(term.endTime)}
-                                            </p>
-                                        </button>
-                                    );
-                                })}
+                                {availabilityForSelectedDate.length === 0 ? (
+                                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">
+                                        Brak dostępnych godzin w tym dniu.
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-4">
+                                        {availabilityForSelectedDate.map(term => {
+                                            const active = selectedAvailability?.id === term.id;
+
+                                            return (
+                                                <button
+                                                    key={term.id}
+                                                    onClick={() => {
+                                                        setSelectedAvailability(term);
+                                                        setSelectedStart("");
+                                                        setHours(1);
+                                                    }}
+                                                    className={`text-left bg-gray-900 border rounded-2xl p-5 transition ${
+                                                        active
+                                                            ? "border-blue-500 bg-blue-600/10"
+                                                            : "border-gray-800 hover:border-blue-600/60"
+                                                    }`}
+                                                >
+                                                    <h3 className="text-lg font-semibold">
+                                                        {formatDate(term.startTime)}
+                                                    </h3>
+
+                                                    <p className="text-gray-400 flex items-center gap-2 mt-2">
+                                                        <BsClock />
+                                                        {formatTime(term.startTime)}–{formatTime(term.endTime)}
+                                                    </p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
