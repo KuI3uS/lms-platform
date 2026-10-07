@@ -65,9 +65,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/questions/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/questions/**").hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.GET, "/api/tutoring/available").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/tutoring/book").permitAll()
-
                         // STUDENT ACTIONS
                         .requestMatchers(HttpMethod.POST, "/api/tasks/*/check").authenticated()
                         .requestMatchers("/api/lesson-submit/**").authenticated()
@@ -76,14 +73,22 @@ public class SecurityConfig {
                         .requestMatchers("/api/my-results").authenticated()
                         .requestMatchers("/api/me").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/tutoring/**").authenticated()
 
                         // ADMIN ONLY
+
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/submissions/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/tutoring/**").hasRole("ADMIN")
 
+                        .requestMatchers(HttpMethod.GET, "/api/tutoring/available").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/tutoring/book").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/tutoring/my").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/tutoring/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/tutoring/admin/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
+
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) ->
