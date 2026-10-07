@@ -239,38 +239,14 @@ export default function LandingPage() {
                         </div>
                     </div>
                 </section>
-
-                <section id="contact" className="section">
-                    <div className="container">
-                        <h2 className="section-title">Kontakt</h2>
-
-                        <div className="contact-cta">
-
-                            <a
-                                href="https://github.com/KuI3uS"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="btn-ghost"
-                            >
-                                <BsGithub /> GitHub
-                            </a>
-
-                            <a
-                                href="https://linkedin.com/in/jakubmarcinkowski"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="btn-ghost"
-                            >
-                                <BsLinkedin /> LinkedIn
-                            </a>
-                        </div>
-                    </div>
-                </section>
             </main>
 
             <footer>
                 <p>
-                    © 2026 Jakub Marcinkowski · EduHub
+                    © 2025 Jakub Marcinkowski ·
+                    <a href="https://github.com/KuI3uS" target="_blank"><i className="fab fa-github"></i></a> ·
+                    <a href="https://linkedin.com/in/jakubmarcinkowski" target="_blank"><i
+                        className="fab fa-linkedin"></i></a>
                 </p>
             </footer>
         </div>
