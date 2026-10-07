@@ -24,6 +24,7 @@ export default function LandingPage() {
                 <a href="#portfolio">Portfolio</a>
                 <a href="#contact">Kontakt</a>
                 <Link to="/login">Logowanie</Link>
+                <Link to="/register">Rejestracja</Link>
             </nav>
 
             <header id="home" className="hero">
@@ -46,16 +47,6 @@ export default function LandingPage() {
                         <span className="badge">Spring Boot</span>
                         <span className="badge">SQL</span>
                     </div>
-
-                    <div className="hero-scroll">
-                        <Link to="/register" className="btn-outline">
-                            Rozpocznij naukę
-                        </Link>
-
-                        <Link to="/login" className="btn-ghost">
-                            Zaloguj się
-                        </Link>
-                    </div>
                 </div>
             </header>
 
@@ -73,9 +64,6 @@ export default function LandingPage() {
                                         Systemy operacyjne, Linux, sieci komputerowe,
                                         administracja i podstawy infrastruktury IT.
                                     </p>
-                                    <Link to="/register" className="btn-outline">
-                                        Rozpocznij
-                                    </Link>
                                 </div>
                             </div>
 
@@ -87,9 +75,6 @@ export default function LandingPage() {
                                         Programowanie, Java, backend, Spring Boot,
                                         REST API, Git i praca z bazą danych.
                                     </p>
-                                    <Link to="/register" className="btn-outline">
-                                        Rozpocznij
-                                    </Link>
                                 </div>
                             </div>
 
@@ -101,9 +86,6 @@ export default function LandingPage() {
                                         Aplikacje internetowe, frontend, JavaScript,
                                         projektowanie UI i nowoczesny web development.
                                     </p>
-                                    <Link to="/register" className="btn-outline">
-                                        Rozpocznij
-                                    </Link>
                                 </div>
                             </div>
                         </div>
@@ -339,13 +321,6 @@ export default function LandingPage() {
                         </p>
 
                         <div className="contact-cta">
-                            <Link to="/register" className="btn-outline">
-                                Załóż konto
-                            </Link>
-
-                            <Link to="/login" className="btn-ghost">
-                                Zaloguj się
-                            </Link>
 
                             <a
                                 href="https://github.com/KuI3uS"
