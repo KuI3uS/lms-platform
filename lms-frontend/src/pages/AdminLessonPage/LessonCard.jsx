@@ -22,9 +22,7 @@ export default function LessonCard({
 
                                        onDelete,
 
-                                       lessonBlocks,
-
-                                       lessonTasks
+                                       lessonBlocks
 
                                    }) {
 
@@ -301,8 +299,6 @@ export default function LessonCard({
                             lessonId={lesson.id}
 
                             lessonBlocks={lessonBlocks}
-
-                            lessonTasks={lessonTasks}
 
                         />
 

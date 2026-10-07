@@ -10,8 +10,7 @@ import QuizBlockForm from "./forms/QuizBlockForm";
 
 export default function BlockRenderer({
                                           block,
-                                          setBlock,
-                                          tasks
+                                          setBlock
                                       }) {
 
     switch (block.type) {
@@ -75,7 +74,6 @@ export default function BlockRenderer({
                 <TaskBlockForm
                     block={block}
                     setBlock={setBlock}
-                    tasks={tasks}
                 />
             );
 

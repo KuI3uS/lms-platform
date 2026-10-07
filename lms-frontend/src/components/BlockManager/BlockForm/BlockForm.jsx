@@ -6,7 +6,6 @@ export default function BlockForm({
                                       block,
                                       setBlock,
                                       onSave,
-                                      tasks = [],
                                       saving = false,
                                       error = ""
                                   }) {
@@ -46,7 +45,6 @@ export default function BlockForm({
             <BlockRenderer
                 block={block}
                 setBlock={setBlock}
-                tasks={tasks}
             />
 
             {error && (

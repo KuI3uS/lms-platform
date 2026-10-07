@@ -7,9 +7,7 @@ export default function BlockManager({
 
                                          lessonId,
 
-                                         lessonBlocks,
-
-                                         lessonTasks
+                                         lessonBlocks
 
                                      }) {
 
@@ -68,7 +66,6 @@ export default function BlockManager({
                     )
                 }
 
-                tasks={lessonTasks.getTasks(lessonId)}
                 saving={Boolean(lessonBlocks.savingByLesson[lessonId])}
                 error={lessonBlocks.errorsByLesson[lessonId] || ""}
 

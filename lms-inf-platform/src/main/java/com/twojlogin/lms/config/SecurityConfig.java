@@ -51,6 +51,7 @@ public class SecurityConfig {
                         // AUTH
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/certificates/verify/**").permitAll()
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
