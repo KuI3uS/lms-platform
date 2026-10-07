@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+root=$(git rev-parse --show-toplevel)
+scanner="$root/.tools/gitleaks"
+if [ ! -x "$scanner" ]; then
+  echo 'Brak skanera sekretów. Uruchom: sh scripts/install-gitleaks.sh' >&2
+  exit 1
+fi
+
+exec "$scanner" git --pre-commit --staged --redact --no-banner \
+  --ignore-gitleaks-allow --max-archive-depth 2 --config "$root/.gitleaks.toml" "$root"

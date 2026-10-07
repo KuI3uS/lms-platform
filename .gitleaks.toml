@@ -1,0 +1,29 @@
+title = "LMS secret protection"
+
+[extend]
+useDefault = true
+
+# SMTP app passwords can have low entropy, so check these assignments regardless
+# of randomness. Keep the built-in rules for other providers and private keys.
+[[rules]]
+id = "lms-mail-password"
+description = "Hardcoded SMTP password"
+regex = '''(?im)(?:spring\.mail\.password|MAIL_PASSWORD|SMTP_PASSWORD)[ \t]*[=:][ \t]*["']?([^\r\n"']+)'''
+secretGroup = 1
+keywords = ["spring.mail.password", "MAIL_PASSWORD", "SMTP_PASSWORD"]
+
+[[rules.allowlists]]
+description = "Environment references and empty documentation placeholders"
+regexTarget = "secret"
+regexes = [
+  '''^\$\{[A-Z][A-Z0-9_]*:?\}[ \t]*$''',
+  '''^\.\.\.[ \t]*$''',
+  '''^[ \t]*$''',
+]
+
+[[rules.allowlists]]
+description = "Dummy password used only by localhost SMTP in backend tests"
+condition = "AND"
+paths = ['''^lms-inf-platform/src/test/resources/application\.properties$''']
+regexTarget = "secret"
+regexes = ['''^test$''']

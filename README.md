@@ -1,5 +1,37 @@
 # lms-platform
 
+## Hasła i ochrona repozytorium
+
+Hasła poczty i bazy danych oraz klucze API ustawiaj wyłącznie w zmiennych
+środowiska backendu. Konfiguracja poczty odczytuje `MAIL_USERNAME` i
+`MAIL_PASSWORD`. Pliki `.env` i `.env.*` są ignorowane przez Git; przykłady
+z końcówką `.example` mogą zawierać tylko puste pola lub nazwy zmiennych.
+
+Włącz lokalne sprawdzanie zmian przed commitem:
+
+```sh
+sh scripts/install-gitleaks.sh
+git config core.hooksPath .githooks
+```
+
+Skaner Gitleaks sprawdza dodawane zmiany, w tym hasła SMTP, i ukrywa wartości
+sekretów w wynikach. GitHub sprawdza całą historię pod kątem haseł SMTP oraz
+wszystkie nowe zmiany pod kątem pozostałych sekretów, przy każdym pushu
+i zgłoszeniu zmian. Starsza historia zawiera także dawny klucz JWT; jeżeli
+jest nadal używany jako `JWT_SECRET`, trzeba go zmienić w hostingu backendu.
+Skan nie zastępuje unieważnienia ujawnionego hasła
+ani ochrony przed pushem w ustawieniach GitHub.
+
+Jeżeli hasło aplikacji Gmail wyciekło, usuń stare hasło w ustawieniach konta Google
+(`Bezpieczeństwo → Hasła aplikacji`), wygeneruj nowe i ustaw je jako
+`MAIL_PASSWORD` w panelu hostingu backendu. Następnie sprawdź wysyłanie wiadomości.
+Nie wklejaj nowego hasła do kodu, dokumentacji ani czatu.
+
+Po oczyszczeniu historii używaj świeżych klonów na innych komputerach i w
+automatyzacjach. Połączenie starej historii z nową może przywrócić wyciek.
+GitHub może nadal przechowywać stare commity w pamięci podręcznej; samo
+przepisanie historii nie unieważnia hasła i nie czyści cudzych kopii repozytorium.
+
 ## Ochrona rejestracji
 
 Rejestracja jest chroniona przez blokadę jednorazowych domen email oraz limity prób:
