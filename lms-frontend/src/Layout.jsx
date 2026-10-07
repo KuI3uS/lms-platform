@@ -92,6 +92,11 @@ export default function Layout() {
                                 <BsInbox />
                                 <span>Prace uczniów</span>
                             </NavLink>
+
+                            <NavLink to="/admin/tutoring" className={linkClass}>
+                                <BsCalendarCheck />
+                                <span>Terminy korepetycji</span>
+                            </NavLink>
                         </>
                     )}
                 </nav>
