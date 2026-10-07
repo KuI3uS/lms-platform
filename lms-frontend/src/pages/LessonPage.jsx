@@ -11,11 +11,26 @@ export default function LessonPage() {
     const [results, setResults] = useState({});
     const [error, setError] = useState(null);
 
+    const [moduleLessons, setModuleLessons] = useState([]);
+
     useEffect(() => {
         if (!lessonId) return;
 
         apiFetch(`/lessons/${lessonId}`)
-            .then(setLesson)
+            .then(async (data) => {
+                setLesson(data);
+
+                const lessons = await apiFetch(`/lessons/module/${data.module.id}`);
+
+                const lessonsWithAccess = await Promise.all(
+                    (lessons || []).map(async (l) => {
+                        const canAccess = await apiFetch(`/lessons/${l.id}/access`);
+                        return { ...l, canAccess };
+                    })
+                );
+
+                setModuleLessons(lessonsWithAccess);
+            })
             .catch(e => {
                 console.error("LESSON ERROR:", e);
                 setError(e.message);
@@ -91,86 +106,125 @@ export default function LessonPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 text-white">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-8 text-white">
 
-            <h1 className="text-3xl font-bold">
-                {lesson.title}
-            </h1>
+            <div className="max-w-4xl space-y-8">
 
-            <div className="bg-gray-800 p-5 rounded space-y-4">
-                <div>
-                    <h2 className="text-blue-400 font-semibold mb-2">
-                        Wytłumaczenie
-                    </h2>
-                    <p className="whitespace-pre-line text-gray-300">
-                        {lesson.theory || "BRAK TEORII"}
-                    </p>
-                </div>
+                <h1 className="text-3xl font-bold">
+                    {lesson.title}
+                </h1>
 
-                <div>
-                    <h2 className="text-green-400 font-semibold mb-2">
-                        Przykład
-                    </h2>
-                    <pre className="bg-gray-900 p-4 rounded text-green-400 whitespace-pre-wrap">
-                        {lesson.example || "BRAK PRZYKŁADU"}
-                    </pre>
-                </div>
-            </div>
-
-            <div className="space-y-5">
-                {tasks.length === 0 && (
-                    <p className="text-gray-400">Brak zadań w tej lekcji.</p>
-                )}
-
-                {tasks.map((task, index) => (
-                    <div key={task.id} className="bg-gray-800 p-5 rounded space-y-3">
-
-                        <h3 className="text-yellow-400 font-semibold">
-                            Zadanie {index + 1}
-                        </h3>
-
-                        <p className="text-gray-300 whitespace-pre-line">
-                            {task.taskContent}
+                <div className="bg-gray-800 p-5 rounded space-y-4">
+                    <div>
+                        <h2 className="text-blue-400 font-semibold mb-2">
+                            Wytłumaczenie
+                        </h2>
+                        <p className="whitespace-pre-line text-gray-300">
+                            {lesson.theory || "BRAK TEORII"}
                         </p>
-
-                        <textarea
-                            className="w-full bg-gray-900 p-3 rounded text-green-400 font-mono"
-                            rows={5}
-                            placeholder="Wpisz odpowiedź..."
-                            value={answers[task.id] || ""}
-                            onChange={(e) =>
-                                setAnswers(prev => ({
-                                    ...prev,
-                                    [task.id]: e.target.value
-                                }))
-                            }
-                        />
-
-                        <button
-                            onClick={() => check(task.id)}
-                            className="bg-blue-600 px-4 py-2 rounded"
-                        >
-                            Sprawdź
-                        </button>
-
-                        {results[task.id] !== undefined && (
-                            <p className={results[task.id] ? "text-green-400" : "text-red-400"}>
-                                {results[task.id] ? "Poprawna odpowiedź" : "Błędna odpowiedź"}
-                            </p>
-                        )}
-
                     </div>
 
-                ))}
-                {tasks.length > 0 && (
-                    <button
-                        onClick={submitAll}
-                        className="bg-purple-600 px-6 py-3 rounded font-semibold"
-                    >
-                        Wyślij wszystkie zadania do nauczyciela
-                    </button>
-                )}
+                    <div>
+                        <h2 className="text-green-400 font-semibold mb-2">
+                            Przykład
+                        </h2>
+                        <pre className="bg-gray-900 p-4 rounded text-green-400 whitespace-pre-wrap">
+                        {lesson.example || "BRAK PRZYKŁADU"}
+                    </pre>
+                    </div>
+                </div>
+
+                <div className="space-y-5">
+                    {tasks.length === 0 && (
+                        <p className="text-gray-400">Brak zadań w tej lekcji.</p>
+                    )}
+
+                    {tasks.map((task, index) => (
+                        <div key={task.id} className="bg-gray-800 p-5 rounded space-y-3">
+
+                            <h3 className="text-yellow-400 font-semibold">
+                                Zadanie {index + 1}
+                            </h3>
+
+                            <p className="text-gray-300 whitespace-pre-line">
+                                {task.taskContent}
+                            </p>
+
+                            <textarea
+                                className="w-full bg-gray-900 p-3 rounded text-green-400 font-mono"
+                                rows={5}
+                                placeholder="Wpisz odpowiedź..."
+                                value={answers[task.id] || ""}
+                                onChange={(e) =>
+                                    setAnswers(prev => ({
+                                        ...prev,
+                                        [task.id]: e.target.value
+                                    }))
+                                }
+                            />
+
+                            <button
+                                onClick={() => check(task.id)}
+                                className="bg-blue-600 px-4 py-2 rounded"
+                            >
+                                Sprawdź
+                            </button>
+
+                            {results[task.id] !== undefined && (
+                                <p className={results[task.id] ? "text-green-400" : "text-red-400"}>
+                                    {results[task.id] ? "Poprawna odpowiedź" : "Błędna odpowiedź"}
+                                </p>
+                            )}
+                        </div>
+                    ))}
+
+                    {tasks.length > 0 && (
+                        <button
+                            onClick={submitAll}
+                            className="bg-purple-600 px-6 py-3 rounded font-semibold"
+                        >
+                            Wyślij wszystkie zadania do nauczyciela
+                        </button>
+                    )}
+                </div>
             </div>
+
+            <aside className="hidden xl:block sticky top-8 h-fit bg-gray-900 border border-gray-800 rounded-2xl p-5">
+                <h2 className="text-lg font-bold mb-4">Plan lekcji</h2>
+
+                <div className="space-y-2">
+                    {moduleLessons.map((l, index) => {
+                        const active = Number(lessonId) === l.id;
+
+                        return (
+                            <button
+                                key={l.id}
+                                disabled={!l.canAccess}
+                                onClick={() => {
+                                    if (l.canAccess) {
+                                        window.location.href = `/lesson/${l.id}`;
+                                    }
+                                }}
+                                className={`w-full text-left p-3 rounded-xl border transition ${
+                                    active
+                                        ? "bg-blue-600/20 border-blue-500 text-blue-300"
+                                        : l.canAccess
+                                            ? "bg-gray-800 border-gray-700 hover:border-blue-500"
+                                            : "bg-gray-800/50 border-gray-800 opacity-50 cursor-not-allowed"
+                                }`}
+                            >
+                                <div className="text-sm text-gray-400">
+                                    Lekcja {l.orderIndex ?? index + 1}
+                                </div>
+
+                                <div className="font-semibold">
+                                    {l.canAccess ? l.title : `🔒 ${l.title}`}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </aside>
         </div>
     );
 }

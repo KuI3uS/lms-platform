@@ -25,6 +25,7 @@ public class CourseModuleController {
     }
 
     @PostMapping("/course/{courseId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public CourseModule create(@PathVariable Long courseId,
                                @RequestBody CourseModule module) {
 
