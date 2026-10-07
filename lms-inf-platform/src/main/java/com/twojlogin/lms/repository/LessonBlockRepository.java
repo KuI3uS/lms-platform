@@ -20,6 +20,4 @@ public interface LessonBlockRepository extends JpaRepository<LessonBlock, Long> 
     List<LessonBlock> findByLessonIdOrderByOrderIndexAsc(Long lessonId);
 
     int countByLessonId(Long lessonId);
-
-    List<LessonBlock> findByTaskId(Long taskId);
 }

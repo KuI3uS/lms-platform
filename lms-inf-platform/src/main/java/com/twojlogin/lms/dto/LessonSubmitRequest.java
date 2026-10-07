@@ -1,5 +1,7 @@
 package com.twojlogin.lms.dto;
 
+import com.twojlogin.lms.entity.LessonSubmissionAnswer;
+
 import java.util.List;
 
 public class LessonSubmitRequest {
@@ -7,7 +9,7 @@ public class LessonSubmitRequest {
     private Long lessonId;
     private String studentEmail;
     private String lessonTitle;
-    private List<TaskAnswerDto> answers;
+    private List<LessonSubmissionAnswer> answers;
 
     public Long getLessonId() {
         return lessonId;
@@ -33,11 +35,11 @@ public class LessonSubmitRequest {
         this.lessonTitle = lessonTitle;
     }
 
-    public List<TaskAnswerDto> getAnswers() {
+    public List<LessonSubmissionAnswer> getAnswers() {
         return answers;
     }
 
-    public void setAnswers(List<TaskAnswerDto> answers) {
+    public void setAnswers(List<LessonSubmissionAnswer> answers) {
         this.answers = answers;
     }
 }

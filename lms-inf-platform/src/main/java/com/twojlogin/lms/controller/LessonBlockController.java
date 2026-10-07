@@ -1,5 +1,6 @@
 package com.twojlogin.lms.controller;
 
+import com.twojlogin.lms.dto.AnswerRequest;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.repository.LessonBlockRepository;
@@ -8,7 +9,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/lesson-blocks")
@@ -45,7 +48,12 @@ public class LessonBlockController {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow();
 
-        Integer maxOrder = blockRepository.findMaxOrderIndexByLessonId(lessonId);
+        Integer maxOrder =
+                blockRepository.findMaxOrderIndexByLessonId(lessonId);
+
+        if (maxOrder == null) {
+            maxOrder = -1;
+        }
 
         block.setLesson(lesson);
         block.setOrderIndex(maxOrder + 1);
@@ -71,24 +79,29 @@ public class LessonBlockController {
         LessonBlock block = blockRepository.findById(id)
                 .orElseThrow();
 
-        // Podstawowe informacje
+        if (updated.getPublished() == null) {
+            updated.setPublished(true);
+        }
+
+        if (updated.getPoints() == null) {
+            updated.setPoints(0);
+        }
+
         block.setTitle(updated.getTitle());
         block.setType(updated.getType());
+
         block.setContent(updated.getContent());
         block.setDescription(updated.getDescription());
         block.setInstruction(updated.getInstruction());
 
-        // Kod
         block.setStarterCode(updated.getStarterCode());
         block.setExpectedAnswer(updated.getExpectedAnswer());
         block.setHint(updated.getHint());
         block.setLanguage(updated.getLanguage());
 
-        // Multimedia
         block.setMediaUrl(updated.getMediaUrl());
         block.setMediaType(updated.getMediaType());
 
-        // Ustawienia
         block.setOrderIndex(updated.getOrderIndex());
         block.setPublished(updated.getPublished());
         block.setPoints(updated.getPoints());
@@ -136,8 +149,94 @@ public class LessonBlockController {
             if (index >= 0) {
                 block.setOrderIndex(index);
             }
+
         }
 
         blockRepository.saveAll(blocks);
     }
+
+    @PostMapping("/{id}/check")
+    public Map<String, Object> check(
+            @PathVariable Long id,
+            @RequestBody AnswerRequest request
+    ) {
+
+        LessonBlock block = blockRepository.findById(id)
+                .orElseThrow();
+
+        if (request.getAnswer() == null) {
+
+            return Map.of(
+                    "correct", false,
+                    "message", "Brak odpowiedzi."
+            );
+
+        }
+
+        if (block.getExpectedAnswer() == null
+                || block.getExpectedAnswer().isBlank()) {
+
+            return Map.of(
+                    "correct", false,
+                    "message", "Brak zdefiniowanej poprawnej odpowiedzi."
+            );
+
+        }
+
+        String student =
+                normalize(request.getAnswer());
+
+        String expected =
+                block.getExpectedAnswer();
+
+        String[] requiredParts =
+                expected.split("\\n");
+
+        List<String> missing =
+                new ArrayList<>();
+
+        for (String part : requiredParts) {
+
+            if (part == null || part.isBlank()) {
+                continue;
+            }
+
+            String normalized =
+                    normalize(part);
+
+            if (!student.contains(normalized)) {
+                missing.add(part.trim());
+            }
+
+        }
+
+        if (missing.isEmpty()) {
+
+            return Map.of(
+                    "correct", true,
+                    "message", "Poprawna odpowiedź."
+            );
+
+        }
+
+        return Map.of(
+                "correct", false,
+                "message", "Brakuje wymaganych elementów.",
+                "missing", missing
+        );
+    }
+
+    private String normalize(String code) {
+
+        if (code == null) {
+            return "";
+        }
+
+        return code
+                .trim()
+                .replaceAll("\\s+", "")
+                .replace("'", "\"")
+                .toLowerCase();
+    }
+
 }
