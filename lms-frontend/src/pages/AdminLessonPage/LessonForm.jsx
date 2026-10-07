@@ -3,8 +3,9 @@ import {
     BsCardText,
     BsCodeSlash,
     BsImage,
-    BsCheckCircle,
-    BsEye
+    BsStars,
+    BsLightningChargeFill,
+    BsSave
 } from "react-icons/bs";
 
 export default function LessonForm({
@@ -17,203 +18,684 @@ export default function LessonForm({
 
     return (
 
-        <section className="bg-gray-900 border border-gray-800 rounded-3xl p-6 space-y-6">
+        <section
+            className="
+                relative
+                overflow-hidden
+                rounded-[40px]
+                border
+                border-cyan-500/20
+                bg-gradient-to-br
+                from-slate-950
+                via-[#081325]
+                to-cyan-950
+                p-10
+            "
+        >
 
-            <div>
+            {/* BACKGROUND */}
 
-                <h2 className="text-2xl font-bold">
-                    {editingId ? "Edycja lekcji" : "Nowa lekcja"}
-                </h2>
+            <div
+                className="
+                    absolute
+                    -top-28
+                    -right-28
+                    w-[420px]
+                    h-[420px]
+                    rounded-full
+                    bg-cyan-500/10
+                    blur-3xl
+                "
+            />
 
-                <p className="text-gray-400 mt-1">
-                    Utwórz lekcję. Jej zawartość dodasz później za pomocą bloków.
-                </p>
+            <div
+                className="
+                    absolute
+                    -bottom-28
+                    -left-28
+                    w-[380px]
+                    h-[380px]
+                    rounded-full
+                    bg-blue-600/10
+                    blur-3xl
+                "
+            />
 
-            </div>
+            <div className="relative z-10 space-y-10">
 
-            {/* Nazwa */}
+                {/* ================================================= */}
 
-            <div className="space-y-2">
+                {/* HERO */}
 
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                {/* ================================================= */}
 
-                    <BsBook />
+                <div>
 
-                    Tytuł lekcji
+                    <div
+                        className="
+                            inline-flex
+                            items-center
+                            gap-2
+                            rounded-full
+                            border
+                            border-cyan-500/20
+                            bg-cyan-500/10
+                            px-5
+                            py-2
+                            text-cyan-300
+                            font-semibold
+                        "
+                    >
 
-                </label>
+                        <BsStars />
 
-                <input
-                    value={form.title || ""}
-                    onChange={(e) =>
-                        setForm({
-                            ...form,
-                            title: e.target.value
-                        })
-                    }
-                    placeholder="np. Czym jest programowanie?"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
-                />
+                        EDUHUB 2026
 
-            </div>
+                    </div>
 
-            {/* Opis */}
+                    <h1
+                        className="
+                            mt-8
+                            text-5xl
+                            font-black
+                        "
+                    >
 
-            <div className="space-y-2">
+                        {editingId
+                            ? "Edytuj lekcję"
+                            : "Nowa lekcja"}
 
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                    </h1>
 
-                    <BsCardText />
+                    <p
+                        className="
+                            mt-6
+                            max-w-3xl
+                            text-lg
+                            leading-8
+                            text-gray-300
+                        "
+                    >
 
-                    Krótki opis lekcji
+                        Twórz profesjonalne lekcje,
+                        dodawaj teorię,
+                        przykłady,
+                        zadania,
+                        quizy,
+                        multimedia
+                        oraz projekty.
 
-                </label>
+                    </p>
 
-                <textarea
-                    value={form.theory || ""}
-                    onChange={(e) =>
-                        setForm({
-                            ...form,
-                            theory: e.target.value
-                        })
-                    }
-                    placeholder="Opis lekcji wyświetlany na początku..."
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 min-h-32"
-                />
+                </div>
 
-            </div>
+                {/* ================================================= */}
 
-            {/* Przykład */}
+                {/* TYTUŁ LEKCJI */}
 
-            <div className="space-y-2">
+                {/* ================================================= */}
 
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                <div
+                    className="
+                        rounded-3xl
+                        border
+                        border-white/10
+                        bg-white/[0.04]
+                        backdrop-blur-xl
+                        p-7
+                    "
+                >
 
-                    <BsCodeSlash />
+                    <label
+                        className="
+                            flex
+                            items-center
+                            gap-3
+                            text-cyan-300
+                            font-semibold
+                            mb-5
+                        "
+                    >
 
-                    Przykład startowy (opcjonalnie)
+                        <BsBook size={20} />
 
-                </label>
+                        Tytuł lekcji
 
-                <textarea
-                    value={form.example || ""}
-                    onChange={(e) =>
-                        setForm({
-                            ...form,
-                            example: e.target.value
-                        })
-                    }
-                    placeholder="Kod startowy..."
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 min-h-52 font-mono"
-                />
-
-            </div>
-
-            {/* Dodatkowy opis */}
-
-            <div className="space-y-2">
-
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
-
-                    <BsCardText />
-
-                    Dodatkowe informacje
-
-                </label>
-
-                <textarea
-                    value={form.content || ""}
-                    onChange={(e) =>
-                        setForm({
-                            ...form,
-                            content: e.target.value
-                        })
-                    }
-                    placeholder="Opcjonalna treść..."
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 min-h-40"
-                />
-
-            </div>
-
-            {/* Obraz */}
-
-            <div className="space-y-2">
-
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
-
-                    <BsImage />
-
-                    Miniatura lekcji
-
-                </label>
-
-                <input
-                    value={form.imageUrl || ""}
-                    onChange={(e) =>
-                        setForm({
-                            ...form,
-                            imageUrl: e.target.value
-                        })
-                    }
-                    placeholder="https://..."
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
-                />
-
-            </div>
-
-            {/* Opcje */}
-
-            <div className="grid md:grid-cols-2 gap-4">
-
-                <label className="flex items-center gap-3 bg-gray-800 rounded-xl p-4 cursor-pointer">
+                    </label>
 
                     <input
-                        type="checkbox"
-                        checked={form.published ?? true}
+                        value={form.title || ""}
                         onChange={(e) =>
                             setForm({
                                 ...form,
-                                published: e.target.checked
+                                title: e.target.value
                             })
                         }
+                        placeholder="np. Czym jest programowanie?"
+                        className="
+                            w-full
+                            rounded-2xl
+                            border
+                            border-white/10
+                            bg-black/20
+                            px-5
+                            py-4
+                            outline-none
+                            focus:border-cyan-500
+                            transition
+                        "
                     />
+                    {/* ================================================= */}
 
-                    <BsCheckCircle />
+                    {/* OPIS LEKCJI */}
 
-                    Opublikowana
+                    {/* ================================================= */}
 
-                </label>
+                    <div
+                        className="
+                        rounded-3xl
+                        border
+                        border-white/10
+                        bg-white/[0.04]
+                        backdrop-blur-xl
+                        p-7
+                    "
+                    >
 
-                <label className="flex items-center gap-3 bg-gray-800 rounded-xl p-4 cursor-pointer">
+                        <label
+                            className="
+                            flex
+                            items-center
+                            gap-3
+                            text-cyan-300
+                            font-semibold
+                            mb-5
+                        "
+                        >
 
-                    <input
-                        type="checkbox"
-                        checked={form.freePreview ?? false}
-                        onChange={(e) =>
-                            setForm({
-                                ...form,
-                                freePreview: e.target.checked
-                            })
+                            <BsCardText size={20} />
+
+                            Opis lekcji
+
+                        </label>
+
+                        <textarea
+
+                            value={form.theory || ""}
+
+                            onChange={(e) =>
+                                setForm({
+                                    ...form,
+                                    theory: e.target.value
+                                })
+                            }
+
+                            placeholder="Wyjaśnij czego użytkownik nauczy się w tej lekcji..."
+
+                            className="
+                            w-full
+                            min-h-44
+                            rounded-2xl
+                            border
+                            border-white/10
+                            bg-black/20
+                            px-5
+                            py-4
+                            resize-none
+                            outline-none
+                            focus:border-cyan-500
+                            transition
+                        "
+
+                        />
+
+                    </div>
+
+                    {/* ================================================= */}
+
+                    {/* PRZYKŁAD KODU */}
+
+                    {/* ================================================= */}
+
+                    <div
+                        className="
+                        rounded-3xl
+                        border
+                        border-white/10
+                        bg-white/[0.04]
+                        backdrop-blur-xl
+                        p-7
+                    "
+                    >
+
+                        <label
+                            className="
+                            flex
+                            items-center
+                            gap-3
+                            text-cyan-300
+                            font-semibold
+                            mb-5
+                        "
+                        >
+
+                            <BsCodeSlash size={20} />
+
+                            Przykład kodu
+
+                        </label>
+
+                        <textarea
+
+                            value={form.example || ""}
+
+                            onChange={(e) =>
+                                setForm({
+                                    ...form,
+                                    example: e.target.value
+                                })
+                            }
+
+                            placeholder={`public class Main {
+
+    public static void main(String[] args) {
+
+        System.out.println("Hello World");
+
+    }
+
+}`}
+
+                            className="
+                            w-full
+                            min-h-72
+                            rounded-2xl
+                            border
+                            border-white/10
+                            bg-black/30
+                            px-5
+                            py-4
+                            font-mono
+                            text-[15px]
+                            resize-none
+                            outline-none
+                            focus:border-cyan-500
+                            transition
+                        "
+
+                        />
+
+                    </div>
+
+                    {/* ================================================= */}
+
+                    {/* DODATKOWE INFORMACJE */}
+
+                    {/* ================================================= */}
+
+                    <div
+                        className="
+                        rounded-3xl
+                        border
+                        border-white/10
+                        bg-white/[0.04]
+                        backdrop-blur-xl
+                        p-7
+                    "
+                    >
+
+                        <label
+                            className="
+                            flex
+                            items-center
+                            gap-3
+                            text-cyan-300
+                            font-semibold
+                            mb-5
+                        "
+                        >
+
+                            <BsCardText size={20} />
+
+                            Dodatkowe informacje
+
+                        </label>
+
+                        <textarea
+
+                            value={form.content || ""}
+
+                            onChange={(e) =>
+                                setForm({
+                                    ...form,
+                                    content: e.target.value
+                                })
+                            }
+
+                            placeholder="Tutaj możesz dodać dodatkowe wskazówki, materiały lub informacje dla kursanta..."
+
+                            className="
+                            w-full
+                            min-h-56
+                            rounded-2xl
+                            border
+                            border-white/10
+                            bg-black/20
+                            px-5
+                            py-4
+                            resize-none
+                            outline-none
+                            focus:border-cyan-500
+                            transition
+                        "
+
+                        />
+
+                    </div>
+                    {/* ================================================= */}
+
+                    {/* MINIATURA */}
+
+                    {/* ================================================= */}
+
+                    <div
+                        className="
+                        rounded-3xl
+                        border
+                        border-white/10
+                        bg-white/[0.04]
+                        backdrop-blur-xl
+                        p-7
+                    "
+                    >
+
+                        <label
+                            className="
+                            flex
+                            items-center
+                            gap-3
+                            text-cyan-300
+                            font-semibold
+                            mb-5
+                        "
+                        >
+
+                            <BsImage size={20} />
+
+                            Miniatura lekcji
+
+                        </label>
+
+                        <input
+
+                            value={form.imageUrl || ""}
+
+                            onChange={(e) =>
+                                setForm({
+                                    ...form,
+                                    imageUrl: e.target.value
+                                })
+                            }
+
+                            placeholder="https://..."
+
+                            className="
+                            w-full
+                            rounded-2xl
+                            border
+                            border-white/10
+                            bg-black/20
+                            px-5
+                            py-4
+                            outline-none
+                            focus:border-cyan-500
+                            transition
+                        "
+
+                        />
+
+                        {form.imageUrl && (
+
+                            <img
+                                src={form.imageUrl}
+                                alt="Preview"
+                                className="
+                                mt-6
+                                w-full
+                                max-h-80
+                                rounded-2xl
+                                object-cover
+                                border
+                                border-white/10
+                            "
+                            />
+
+                        )}
+
+                    </div>
+
+                    {/* ================================================= */}
+
+                    {/* USTAWIENIA */}
+
+                    {/* ================================================= */}
+
+                    <div className="grid lg:grid-cols-2 gap-6">
+
+                        <div
+                            className="
+                            rounded-3xl
+                            border
+                            border-white/10
+                            bg-white/[0.04]
+                            backdrop-blur-xl
+                            p-6
+                        "
+                        >
+
+                            <div className="flex justify-between items-center">
+
+                                <div>
+
+                                    <h3 className="font-bold text-lg">
+
+                                        Opublikowana
+
+                                    </h3>
+
+                                    <p className="text-gray-400 mt-2">
+
+                                        Lekcja będzie widoczna dla użytkowników.
+
+                                    </p>
+
+                                </div>
+
+                                <button
+
+                                    type="button"
+
+                                    onClick={() =>
+                                        setForm({
+                                            ...form,
+                                            published: !form.published
+                                        })
+                                    }
+
+                                    className={`
+                                    relative
+                                    w-20
+                                    h-11
+                                    rounded-full
+                                    transition
+
+                                    ${
+                                        form.published
+                                            ? "bg-cyan-500"
+                                            : "bg-gray-700"
+                                    }
+                                `}
+
+                                >
+
+                                <span
+                                    className={`
+                                        absolute
+                                        top-1
+                                        w-9
+                                        h-9
+                                        rounded-full
+                                        bg-white
+                                        transition
+
+                                        ${
+                                        form.published
+                                            ? "left-10"
+                                            : "left-1"
+                                    }
+                                    `}
+                                />
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div
+                            className="
+                            rounded-3xl
+                            border
+                            border-white/10
+                            bg-white/[0.04]
+                            backdrop-blur-xl
+                            p-6
+                        "
+                        >
+
+                            <div className="flex justify-between items-center">
+
+                                <div>
+
+                                    <h3 className="font-bold text-lg">
+
+                                        Darmowy podgląd
+
+                                    </h3>
+
+                                    <p className="text-gray-400 mt-2">
+
+                                        Lekcja będzie dostępna bez zakupu kursu.
+
+                                    </p>
+
+                                </div>
+
+                                <button
+
+                                    type="button"
+
+                                    onClick={() =>
+                                        setForm({
+                                            ...form,
+                                            freePreview: !form.freePreview
+                                        })
+                                    }
+
+                                    className={`
+                                    relative
+                                    w-20
+                                    h-11
+                                    rounded-full
+                                    transition
+
+                                    ${
+                                        form.freePreview
+                                            ? "bg-cyan-500"
+                                            : "bg-gray-700"
+                                    }
+                                `}
+
+                                >
+
+                                <span
+                                    className={`
+                                        absolute
+                                        top-1
+                                        w-9
+                                        h-9
+                                        rounded-full
+                                        bg-white
+                                        transition
+
+                                        ${
+                                        form.freePreview
+                                            ? "left-10"
+                                            : "left-1"
+                                    }
+                                    `}
+                                />
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {/* ================================================= */}
+
+                    {/* SAVE */}
+
+                    {/* ================================================= */}
+
+                    <button
+
+                        onClick={editingId ? onUpdate : onCreate}
+
+                        className="
+                        w-full
+                        rounded-2xl
+                        bg-gradient-to-r
+                        from-cyan-500
+                        to-blue-600
+                        py-5
+                        text-lg
+                        font-bold
+                        flex
+                        items-center
+                        justify-center
+                        gap-3
+                        hover:scale-[1.01]
+                        transition
+                        shadow-[0_20px_60px_rgba(6,182,212,0.25)]
+                    "
+
+                    >
+
+                        <BsSave size={22} />
+
+                        {
+
+                            editingId
+
+                                ? "Zapisz lekcję"
+
+                                : "Utwórz lekcję"
+
                         }
-                    />
 
-                    <BsEye />
+                        <BsLightningChargeFill size={20} />
 
-                    Darmowy podgląd
+                    </button>
 
-                </label>
+                </div>
 
             </div>
-
-            <button
-                onClick={editingId ? onUpdate : onCreate}
-                className="w-full bg-green-600 hover:bg-green-700 rounded-xl py-3 font-bold transition"
-            >
-                {editingId ? "Zapisz zmiany" : "Utwórz lekcję"}
-            </button>
 
         </section>
 
-    );
+);
 
 }

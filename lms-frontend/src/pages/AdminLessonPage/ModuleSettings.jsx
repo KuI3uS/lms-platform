@@ -1,111 +1,312 @@
 import {
+    BsCollection,
     BsLockFill,
     BsUnlockFill,
-    BsCollection,
-    BsSave
+    BsSave,
+    BsStars,
+    BsLightningChargeFill
 } from "react-icons/bs";
 
 export default function ModuleSettings({
+
                                            moduleSettings,
                                            setModuleSettings,
                                            onSave
+
                                        }) {
 
     return (
 
-        <section className="bg-gray-900 border border-gray-800 rounded-3xl p-6 space-y-6">
+        <section
+            className="
+                relative
+                overflow-hidden
+                rounded-[36px]
+                border
+                border-cyan-500/20
+                bg-gradient-to-br
+                from-slate-950
+                via-[#081325]
+                to-cyan-950
+                p-8
+            "
+        >
 
-            <div className="flex justify-between items-center">
+            <div className="
+                absolute
+                -right-20
+                -top-20
+                w-80
+                h-80
+                rounded-full
+                bg-cyan-500/10
+                blur-3xl
+            "/>
 
-                <div>
+            <div className="relative z-10 space-y-8">
 
-                    <h2 className="text-2xl font-bold">
-                        Ustawienia modułu
-                    </h2>
+                {/* HEADER */}
 
-                    <p className="text-gray-400 mt-1">
-                        Zarządzaj nazwą modułu oraz sposobem odblokowywania lekcji.
-                    </p>
+                <div className="flex justify-between items-center">
 
-                </div>
+                    <div>
 
-                <div className="text-4xl text-blue-500">
+                        <div className="
+                            inline-flex
+                            items-center
+                            gap-2
+                            rounded-full
+                            bg-cyan-500/10
+                            border
+                            border-cyan-500/20
+                            px-5
+                            py-2
+                            text-cyan-300
+                            font-semibold
+                        ">
 
-                    {moduleSettings.lessonsLocked
-                        ? <BsLockFill />
-                        : <BsUnlockFill />
-                    }
+                            <BsStars />
 
-                </div>
+                            EDUHUB 2026
 
-            </div>
+                        </div>
 
-            {/* Nazwa modułu */}
+                        <h2 className="text-4xl font-black mt-6">
 
-            <div className="space-y-2">
+                            Ustawienia modułu
 
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                        </h2>
 
-                    <BsCollection />
+                        <p className="text-gray-400 mt-4 max-w-2xl">
 
-                    Nazwa modułu
+                            Skonfiguruj nazwę modułu oraz sposób
+                            odblokowywania kolejnych lekcji.
 
-                </label>
+                        </p>
 
-                <input
-                    value={moduleSettings.name || ""}
-                    onChange={(e) =>
-                        setModuleSettings(prev => ({
-                            ...prev,
-                            name: e.target.value
-                        }))
-                    }
-                    placeholder="Np. Wprowadzenie do programowania"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
-                />
-
-            </div>
-
-            {/* Blokowanie lekcji */}
-
-            <label className="flex items-center justify-between bg-gray-800 rounded-xl p-4 cursor-pointer">
-
-                <div>
-
-                    <div className="font-semibold">
-                        Blokuj lekcje po kolei
                     </div>
 
-                    <div className="text-sm text-gray-400 mt-1">
-                        Użytkownik odblokuje następną lekcję dopiero po ukończeniu poprzedniej.
+                    <div
+                        className={`
+                            w-20
+                            h-20
+                            rounded-3xl
+                            flex
+                            items-center
+                            justify-center
+                            text-3xl
+
+                            ${
+                            moduleSettings.lessonsLocked
+                                ? "bg-orange-500/10 text-orange-300"
+                                : "bg-green-500/10 text-green-300"
+                        }
+                        `}
+                    >
+
+                        {
+
+                            moduleSettings.lessonsLocked
+                                ? <BsLockFill/>
+                                : <BsUnlockFill/>
+
+                        }
+
                     </div>
 
                 </div>
 
-                <input
-                    type="checkbox"
-                    checked={moduleSettings.lessonsLocked}
-                    onChange={(e) =>
-                        setModuleSettings(prev => ({
-                            ...prev,
-                            lessonsLocked: e.target.checked
-                        }))
-                    }
-                    className="w-5 h-5"
-                />
+                {/* NAME */}
 
-            </label>
+                <div
+                    className="
+                        rounded-3xl
+                        border
+                        border-white/10
+                        bg-white/[0.04]
+                        backdrop-blur-xl
+                        p-6
+                    "
+                >
 
-            <button
-                onClick={onSave}
-                className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl py-3 font-bold flex items-center justify-center gap-2 transition"
-            >
+                    <label
+                        className="
+                            flex
+                            items-center
+                            gap-3
+                            text-cyan-300
+                            font-semibold
+                            mb-5
+                        "
+                    >
 
-                <BsSave />
+                        <BsCollection/>
 
-                Zapisz ustawienia
+                        Nazwa modułu
 
-            </button>
+                    </label>
+
+                    <input
+
+                        value={moduleSettings.name || ""}
+
+                        onChange={(e)=>
+
+                            setModuleSettings(prev=>({
+
+                                ...prev,
+
+                                name:e.target.value
+
+                            }))
+
+                        }
+
+                        placeholder="np. Java Podstawy"
+
+                        className="
+                            w-full
+                            rounded-2xl
+                            border
+                            border-white/10
+                            bg-black/20
+                            px-5
+                            py-4
+                            outline-none
+                            focus:border-cyan-500
+                            transition
+                        "
+
+                    />
+
+                </div>
+
+                {/* LOCK */}
+
+                <div
+                    className="
+                        rounded-3xl
+                        border
+                        border-white/10
+                        bg-white/[0.04]
+                        backdrop-blur-xl
+                        p-6
+                    "
+                >
+
+                    <div className="flex justify-between items-center">
+
+                        <div>
+
+                            <div className="font-bold text-xl">
+
+                                Blokowanie lekcji
+
+                            </div>
+
+                            <p className="text-gray-400 mt-2">
+
+                                Następna lekcja odblokuje się
+                                dopiero po ukończeniu poprzedniej.
+
+                            </p>
+
+                        </div>
+
+                        <button
+
+                            type="button"
+
+                            onClick={()=>
+
+                                setModuleSettings(prev=>({
+
+                                    ...prev,
+
+                                    lessonsLocked: !prev.lessonsLocked
+
+                                }))
+
+                            }
+
+                            className={`
+                                relative
+                                w-20
+                                h-11
+                                rounded-full
+                                transition
+
+                                ${
+                                moduleSettings.lessonsLocked
+
+                                    ? "bg-cyan-500"
+
+                                    : "bg-gray-700"
+                            }
+                            `}
+                        >
+
+                            <span
+                                className={`
+                                    absolute
+                                    top-1
+                                    w-9
+                                    h-9
+                                    rounded-full
+                                    bg-white
+                                    transition-all
+
+                                    ${
+                                    moduleSettings.lessonsLocked
+
+                                        ? "left-10"
+
+                                        : "left-1"
+                                }
+                                `}
+                            />
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                {/* SAVE */}
+
+                <button
+
+                    onClick={onSave}
+
+                    className="
+                        w-full
+                        rounded-2xl
+                        bg-gradient-to-r
+                        from-cyan-500
+                        to-blue-600
+                        py-5
+                        font-bold
+                        text-lg
+                        flex
+                        justify-center
+                        items-center
+                        gap-3
+                        hover:scale-[1.01]
+                        transition
+                        shadow-[0_20px_60px_rgba(6,182,212,0.25)]
+                    "
+
+                >
+
+                    <BsSave/>
+
+                    Zapisz ustawienia modułu
+
+                    <BsLightningChargeFill/>
+
+                </button>
+
+            </div>
 
         </section>
 
