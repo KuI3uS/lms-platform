@@ -29,6 +29,15 @@ export default function ResultsPage() {
                         }`}>
                             Wynik: {r.percentage}%
                         </p>
+
+                        <div className="w-full bg-gray-700 rounded-full h-3 mt-3">
+                            <div
+                                className={`h-3 rounded-full ${
+                                    r.percentage >= 50 ? "bg-green-500" : "bg-red-500"
+                                }`}
+                                style={{ width: `${r.percentage}%` }}
+                            />
+                        </div>
                     </div>
                 ))}
             </div>
