@@ -35,7 +35,6 @@ export default function App() {
     return (
         <Routes>
 
-            <Route path="/" element={<LandingPage />} />
             {/* ===== PUBLIC ===== */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
