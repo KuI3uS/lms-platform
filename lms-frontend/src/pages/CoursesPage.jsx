@@ -3,146 +3,177 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import {
     BsBook,
-    BsPencil,
+    BsPlayFill,
+    BsLockFill,
+    BsPatchCheckFill,
     BsTrash,
-    BsCheck2,
-    BsX
+    BsPencil
 } from "react-icons/bs";
 
 export default function CoursesPage() {
-    const [courses, setCourses] = useState([]);
-    const [editingId, setEditingId] = useState(null);
-    const [newName, setNewName] = useState("");
 
+    const [courses, setCourses] = useState([]);
     const navigate = useNavigate();
 
     const token = localStorage.getItem("token");
-    const role = token ? JSON.parse(atob(token.split(".")[1])).role : null;
+    const role = token
+        ? JSON.parse(atob(token.split(".")[1])).role
+        : null;
 
-    const load = () => {
+    useEffect(() => {
         apiFetch("/courses").then(setCourses);
-    };
-
-    useEffect(load, []);
+    }, []);
 
     const deleteCourse = async (id) => {
-        if (!window.confirm("Na pewno usunąć kurs?")) return;
+
+        if (!window.confirm("Usunąć kurs?"))
+            return;
 
         await apiFetch(`/courses/${id}`, {
             method: "DELETE"
         });
 
-        load();
-    };
-
-    const updateCourse = async (id) => {
-        if (!newName.trim()) {
-            alert("Nazwa kursu nie może być pusta");
-            return;
-        }
-
-        await apiFetch(`/courses/${id}`, {
-            method: "PUT",
-            body: JSON.stringify({ name: newName })
-        });
-
-        setEditingId(null);
-        setNewName("");
-        load();
-    };
-
-    const cancelEdit = () => {
-        setEditingId(null);
-        setNewName("");
+        setCourses(prev => prev.filter(c => c.id !== id));
     };
 
     return (
-        <div className="max-w-6xl space-y-6">
+        <div className="space-y-10 text-white">
+
+            <section className="rounded-3xl overflow-hidden relative">
+
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 opacity-90" />
+
+                <div className="relative p-12">
+
+                    <h1 className="text-5xl font-black mb-4">
+                        Nauka Programowania
+                    </h1>
+
+                    <p className="text-xl text-blue-100 max-w-2xl">
+                        Ucz się od podstaw aż do poziomu zawodowego.
+                        Każdy kurs zawiera teorię, zadania,
+                        projekty oraz przygotowanie do egzaminów INF.02,
+                        INF.03 i matury.
+                    </p>
+
+                </div>
+
+            </section>
+
             <div>
-                <h1 className="text-3xl font-bold">Kursy</h1>
-                <p className="text-gray-400 mt-1">
-                    Wybierz kurs, aby przejść do modułów.
-                </p>
-            </div>
 
-            <div className="grid gap-4">
-                {courses.map(c => (
-                    <div
-                        key={c.id}
-                        className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex justify-between items-center hover:border-gray-700 transition"
-                    >
-                        {editingId === c.id ? (
-                            <div className="flex items-center gap-3 w-full">
-                                <input
-                                    value={newName}
-                                    onChange={(e) => setNewName(e.target.value)}
-                                    className="bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 flex-1 outline-none focus:border-blue-500"
-                                    autoFocus
-                                />
+                <h2 className="text-3xl font-bold mb-6">
+                    Dostępne ścieżki
+                </h2>
 
-                                <button
-                                    onClick={() => updateCourse(c.id)}
-                                    className="bg-green-600 hover:bg-green-700 p-3 rounded-xl"
-                                    title="Zapisz"
-                                >
-                                    <BsCheck2 />
-                                </button>
+                <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-8">
 
-                                <button
-                                    onClick={cancelEdit}
-                                    className="bg-gray-700 hover:bg-gray-600 p-3 rounded-xl"
-                                    title="Anuluj"
-                                >
-                                    <BsX />
-                                </button>
-                            </div>
-                        ) : (
-                            <>
-                                <div
-                                    onClick={() => navigate(`/modules/${c.id}`)}
-                                    className="cursor-pointer flex items-center gap-4 flex-1"
-                                >
-                                    <div className="w-11 h-11 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center">
-                                        <BsBook size={20} />
+                    {courses.map(course => (
+
+                        <div
+                            key={course.id}
+                            className="rounded-3xl bg-gradient-to-b from-gray-900 to-gray-950 border border-gray-800 hover:border-blue-500 transition overflow-hidden"
+                        >
+
+                            <img
+                                src={course.thumbnailUrl}
+                                alt=""
+                                className="w-full h-52 object-cover"
+                            />
+
+                            <div className="p-6 space-y-5">
+
+                                <div className="flex justify-between">
+
+                                    <span className="bg-blue-600 px-3 py-1 rounded-full text-sm">
+                                        10 lekcji GRATIS
+                                    </span>
+
+                                    <span className="text-green-400">
+                                        NOWOŚĆ
+                                    </span>
+
+                                </div>
+
+                                <div>
+
+                                    <h2 className="text-2xl font-bold">
+                                        {course.title || course.name}
+                                    </h2>
+
+                                    <p className="text-gray-400 mt-2 line-clamp-3">
+                                        {course.description}
+                                    </p>
+
+                                </div>
+
+                                <div>
+
+                                    <div className="flex justify-between text-sm text-gray-400 mb-2">
+                                        <span>Postęp</span>
+                                        <span>0%</span>
                                     </div>
 
-                                    <div>
-                                        <h2 className="font-semibold text-lg">
-                                            {c.name}
-                                        </h2>
-                                        <p className="text-sm text-gray-500">
-                                            Kliknij, aby zobaczyć moduły
-                                        </p>
+                                    <div className="h-3 rounded-full bg-gray-800">
+
+                                        <div
+                                            className="h-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400"
+                                            style={{ width: "0%" }}
+                                        />
+
                                     </div>
+
+                                </div>
+
+                                <div className="flex gap-3">
+
+                                    <button
+                                        onClick={() => navigate(`/modules/${course.id}`)}
+                                        className="flex-1 bg-blue-600 hover:bg-blue-700 rounded-xl py-3 font-bold flex justify-center items-center gap-2"
+                                    >
+                                        <BsPlayFill />
+                                        Kontynuuj
+                                    </button>
+
+                                    <button
+                                        className="bg-gray-800 hover:bg-gray-700 rounded-xl px-4"
+                                    >
+                                        <BsBook />
+                                    </button>
+
                                 </div>
 
                                 {role === "ADMIN" && (
-                                    <div className="flex gap-2">
+
+                                    <div className="flex gap-2 pt-3 border-t border-gray-800">
+
                                         <button
-                                            onClick={() => {
-                                                setEditingId(c.id);
-                                                setNewName(c.name);
-                                            }}
-                                            className="bg-gray-800 hover:bg-gray-700 p-3 rounded-xl text-gray-300"
-                                            title="Edytuj"
+                                            className="flex-1 bg-yellow-600 rounded-xl py-2"
                                         >
-                                            <BsPencil />
+                                            <BsPencil className="mx-auto"/>
                                         </button>
 
                                         <button
-                                            onClick={() => deleteCourse(c.id)}
-                                            className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white p-3 rounded-xl"
-                                            title="Usuń"
+                                            onClick={() => deleteCourse(course.id)}
+                                            className="flex-1 bg-red-600 rounded-xl py-2"
                                         >
-                                            <BsTrash />
+                                            <BsTrash className="mx-auto"/>
                                         </button>
+
                                     </div>
+
                                 )}
-                            </>
-                        )}
-                    </div>
-                ))}
+
+                            </div>
+
+                        </div>
+
+                    ))}
+
+                </div>
+
             </div>
+
         </div>
     );
 }

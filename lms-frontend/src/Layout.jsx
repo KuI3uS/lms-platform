@@ -1,6 +1,5 @@
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import { BsCalendarCheck } from "react-icons/bs";
 import {
     BsGrid1X2,
     BsBook,
@@ -8,7 +7,9 @@ import {
     BsShieldLock,
     BsPeople,
     BsPlusCircle,
-    BsInbox
+    BsInbox,
+    BsCalendarCheck,
+    BsRocketTakeoff
 } from "react-icons/bs";
 
 export default function Layout() {
@@ -20,7 +21,7 @@ export default function Layout() {
     if (token) {
         try {
             const payload = JSON.parse(atob(token.split(".")[1]));
-            role = payload.role;
+            role = payload.role || "";
             email = payload.sub || payload.email || "";
         } catch (e) {
             console.error("Token error", e);
@@ -31,10 +32,10 @@ export default function Layout() {
     const isLessonPage = location.pathname.startsWith("/lesson/");
 
     const linkClass = ({ isActive }) =>
-        `flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
+        `flex items-center gap-3 px-4 py-3 rounded-2xl transition font-bold ${
             isActive
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-600/20"
+                : "text-gray-400 hover:bg-white/5 hover:text-white"
         }`;
 
     if (isLessonPage) {
@@ -44,27 +45,36 @@ export default function Layout() {
             </div>
         );
     }
+
     return (
-        <div className="flex h-screen bg-gray-950 text-white">
-            <aside className="w-72 bg-gray-900 border-r border-gray-800 flex flex-col">
-                <div className="p-6 border-b border-gray-800">
-                    <Link to="/courses">
-                        <h1 className="text-2xl font-bold">LMS Panel</h1>
-                        <p className="text-sm text-gray-400 mt-1">
-                            Rola: {role || "USER"}
-                        </p>
+        <div className="flex h-screen bg-gray-950 text-white overflow-hidden">
+            <aside className="w-80 bg-gray-950 border-r border-white/10 flex flex-col">
+                <div className="p-6 border-b border-white/10">
+                    <Link to="/courses" className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                            <BsRocketTakeoff size={24} />
+                        </div>
+
+                        <div>
+                            <h1 className="text-2xl font-black">
+                                EduHub
+                            </h1>
+                            <p className="text-xs text-gray-500">
+                                Nauka programowania
+                            </p>
+                        </div>
                     </Link>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                     <NavLink to="/dashboard" className={linkClass}>
                         <BsGrid1X2 />
-                        <span>Dashboard</span>
+                        <span>Start</span>
                     </NavLink>
 
                     <NavLink to="/courses" className={linkClass}>
                         <BsBook />
-                        <span>Kursy</span>
+                        <span>Ścieżki nauki</span>
                     </NavLink>
 
                     <NavLink to="/results" className={linkClass}>
@@ -74,13 +84,13 @@ export default function Layout() {
 
                     {role === "ADMIN" && (
                         <>
-                            <div className="pt-6 pb-2 px-4 text-xs uppercase tracking-wider text-gray-500">
+                            <div className="pt-6 pb-2 px-4 text-xs uppercase tracking-wider text-gray-600 font-bold">
                                 Administracja
                             </div>
 
                             <NavLink to="/admin" className={linkClass}>
                                 <BsShieldLock />
-                                <span>Panel Admina</span>
+                                <span>Panel admina</span>
                             </NavLink>
 
                             <NavLink to="/admin/users" className={linkClass}>
@@ -100,17 +110,24 @@ export default function Layout() {
 
                             <NavLink to="/admin/tutoring" className={linkClass}>
                                 <BsCalendarCheck />
-                                <span>Terminy korepetycji</span>
+                                <span>Korepetycje</span>
                             </NavLink>
                         </>
                     )}
                 </nav>
 
-                <div className="p-4 border-t border-gray-800">
-                    <div className="bg-gray-800 rounded-xl p-4">
-                        <p className="text-xs text-gray-400 mb-1">Zalogowano jako</p>
-                        <p className="text-sm font-semibold break-all">
+                <div className="p-4 border-t border-white/10">
+                    <div className="rounded-3xl bg-gradient-to-br from-blue-600/20 to-purple-600/10 border border-blue-500/20 p-5">
+                        <p className="text-xs text-gray-400 mb-1">
+                            Zalogowano jako
+                        </p>
+
+                        <p className="text-sm font-bold break-all">
                             {email || "Brak danych"}
+                        </p>
+
+                        <p className="text-xs text-blue-300 mt-2">
+                            {role || "USER"}
                         </p>
                     </div>
                 </div>
@@ -119,7 +136,7 @@ export default function Layout() {
             <div className="flex-1 flex flex-col min-w-0">
                 <Navbar />
 
-                <main className="flex-1 overflow-auto p-8 bg-gray-950">
+                <main className="flex-1 overflow-auto p-8 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.18),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(147,51,234,0.12),transparent_35%),#030712]">
                     <Outlet />
                 </main>
             </div>

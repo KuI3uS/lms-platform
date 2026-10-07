@@ -12,7 +12,6 @@ public class Lesson {
     private Long id;
 
     private String title;
-    private Integer position;
     private boolean freePreview;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -107,14 +106,6 @@ public class Lesson {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public Integer getPosition() {
-        return position;
-    }
-
-    public void setPosition(Integer position) {
-        this.position = position;
     }
 
     public boolean isFreePreview() {
