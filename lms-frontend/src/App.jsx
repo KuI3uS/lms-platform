@@ -34,6 +34,7 @@ import TutoringPage from "./pages/TutoringPage";
 
 import AdminTutoringPage from "./pages/AdminTutoringPage";
 
+
 export default function App() {
     return (
         <Routes>
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/tutoring-booking" element={<TutoringBookingPage />} />
 
 
 
