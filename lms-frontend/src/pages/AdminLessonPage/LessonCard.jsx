@@ -99,14 +99,6 @@ export default function LessonCard({
 
                     />
 
-                    <TaskManager
-
-                        lessonId={lesson.id}
-
-                        lessonTasks={lessonTasks}
-
-                    />
-
                 </div>
 
             )}
