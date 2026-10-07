@@ -38,6 +38,7 @@ function normalizeCharacter(character, fallback, index) {
         id: cleanText(character?.id) || fallback.id,
         name: cleanText(character?.name) || fallback.name,
         avatar: cleanText(character?.avatar) || fallback.avatar,
+        voiceGender: ["female", "male", "neutral"].includes(character?.voiceGender) ? character.voiceGender : "auto",
         side: character?.side === "right" || index === 1 ? "right" : "left"
     };
 }

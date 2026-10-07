@@ -1,5 +1,4 @@
 import {
-    useEffect,
     useState
 } from "react";
 
@@ -44,6 +43,7 @@ export default function DialogBlockForm({
      */
     const [dialogueDraft, setDialogueDraft] =
         useState(() => dialogueToEditor(config));
+    const [draftSource, setDraftSource] = useState(block.content);
 
 
     /*
@@ -53,14 +53,15 @@ export default function DialogBlockForm({
      * Podczas normalnego pisania block.content się nie zmienia,
      * dopóki użytkownik nie opuści textarea.
      */
-    useEffect(() => {
+    if (draftSource !== block.content) {
         const parsed =
             parseDialogContent(block.content);
 
         setDialogueDraft(
             dialogueToEditor(parsed)
         );
-    }, [block.content]);
+        setDraftSource(block.content);
+    }
 
 
     const saveConfig = (
@@ -377,6 +378,15 @@ export default function DialogBlockForm({
 
                                 </label>
 
+                                <label className="col-span-2 space-y-2">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Preferowany głos</span>
+                                    <select value={character.voiceGender || "auto"} onChange={event => updateCharacter(index, "voiceGender", event.target.value)} className={FIELD}>
+                                        <option value="auto">Automatyczny — na podstawie postaci</option>
+                                        <option value="female">Żeński</option>
+                                        <option value="male">Męski</option>
+                                        <option value="neutral">Bez preferencji</option>
+                                    </select>
+                                </label>
                             </div>
                         )
                     )}
