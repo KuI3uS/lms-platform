@@ -48,6 +48,11 @@ function pronunciationScore(target, transcript) {
     ));
 }
 
+function recordingLimit(phrase) {
+    const units = normalize(phrase).split(" ").filter(Boolean).length;
+    return Math.min(20000, Math.max(7000, 3500 + units * 1100));
+}
+
 export default function PronunciationTrainer({
                                                   blockId,
                                                   phrase,
@@ -91,7 +96,10 @@ export default function PronunciationTrainer({
     };
 
     const saveScore = async (nextScore) => {
-        if (!blockId) return;
+        if (!blockId) {
+            onReviewed?.(null, nextScore);
+            return;
+        }
         try {
             const review = await apiFetch(`/language-reviews/${blockId}`, {
                 method: "POST",
@@ -112,7 +120,10 @@ export default function PronunciationTrainer({
         recognition.lang = language || "en-US";
         recognition.interimResults = true;
         recognition.maxAlternatives = 3;
-        recognition.continuous = false;
+        // Safari/Chrome potrafią uznać krótką pauzę między literami za koniec
+        // wypowiedzi. Tryb ciągły pozwala zebrać wszystkie fragmenty, a własny
+        // licznik ciszy kończy próbę wtedy, gdy uczeń faktycznie przestał mówić.
+        recognition.continuous = true;
         recognition.onstart = () => setListening(true);
         let latestTranscript = "";
         let evaluated = false;
@@ -145,12 +156,11 @@ export default function PronunciationTrainer({
                 .join(" ")
                 .trim();
             window.clearTimeout(silenceTimerRef.current);
-            const finalResult = Array.from(event.results || []).every((result) => result.isFinal);
-            silenceTimerRef.current = window.setTimeout(() => recognition.stop(), finalResult ? 150 : 700);
+            silenceTimerRef.current = window.setTimeout(() => recognition.stop(), 1100);
         };
         recognitionRef.current = recognition;
         recognition.start();
-        maxTimerRef.current = window.setTimeout(() => recognition.stop(), 8000);
+        maxTimerRef.current = window.setTimeout(() => recognition.stop(), recordingLimit(phrase));
     };
 
     const stop = () => {
@@ -177,7 +187,7 @@ export default function PronunciationTrainer({
             </div>
 
             {listening && (
-                <p className="mt-4 flex items-center gap-2 text-sm font-bold text-violet-200"><BsSoundwave className="animate-pulse" /> Słucham…</p>
+                <p className="mt-4 flex items-center gap-2 text-sm font-bold text-violet-200"><BsSoundwave className="animate-pulse" /> Słucham… Nagranie zakończy się automatycznie po krótkiej ciszy.</p>
             )}
             {score !== null && (
                 <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">

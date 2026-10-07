@@ -630,6 +630,8 @@ function stepIcon(type) {
             return <BsChatDots />;
         case "VOCABULARY":
             return <BsTranslate />;
+        case "WORD_LAB":
+            return <BsTranslate />;
         case "SENTENCE_BUILDER":
             return <BsGrid3X3Gap />;
         case "EXAMPLE":
@@ -654,6 +656,7 @@ function stepTypeLabel(type) {
         AUDIO: "Wymowa",
         DIALOG: "Dialog",
         VOCABULARY: "Słówka",
+        WORD_LAB: "Laboratorium słów",
         SENTENCE_BUILDER: "Układanie zdania",
         EXAMPLE: "Przykład",
         TASK: "Zadanie",

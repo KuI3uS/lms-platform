@@ -1,4 +1,4 @@
-const ASSESSMENT_TYPES = new Set(["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER"]);
+const ASSESSMENT_TYPES = new Set(["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER", "WORD_LAB"]);
 
 export function isAssessmentStep(step) {
     return ASSESSMENT_TYPES.has(step?.type);

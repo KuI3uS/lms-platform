@@ -14,7 +14,8 @@ import {
     BsHeadphones,
     BsChatDots,
     BsTranslate,
-    BsGrid3X3Gap
+    BsGrid3X3Gap,
+    BsStars
 } from "react-icons/bs";
 
 export const BLOCK_TYPES = [
@@ -129,6 +130,16 @@ export const BLOCK_TYPES = [
         iconBox: "bg-amber-400/15 text-amber-200"
     },
     {
+        value: "WORD_LAB",
+        label: "Laboratorium słów",
+        description: "Znaczenie, aktywne przypominanie, wymowa i poprawka każdego słowa.",
+        icon: <BsStars />,
+        surface: "bg-fuchsia-500/10",
+        border: "border-fuchsia-500/25",
+        selected: "border-fuchsia-300 bg-fuchsia-500/20 shadow-fuchsia-950/30",
+        iconBox: "bg-fuchsia-400/15 text-fuchsia-200"
+    },
+    {
         value: "EXAMPLE",
         label: "Przykład kodu",
         description: "Kod z językiem, opisem i przyciskiem kopiowania.",
@@ -195,7 +206,7 @@ export const BLOCK_TYPES_MAP = Object.fromEntries(
 );
 
 const LANGUAGE_TYPES = new Set([
-    "TEXT", "TIP", "INFO", "SUMMARY", "IMAGE", "VIDEO", "AUDIO", "DIALOG", "VOCABULARY", "SENTENCE_BUILDER", "TASK", "QUIZ"
+    "TEXT", "TIP", "INFO", "SUMMARY", "IMAGE", "VIDEO", "AUDIO", "DIALOG", "VOCABULARY", "SENTENCE_BUILDER", "WORD_LAB", "TASK", "QUIZ"
 ]);
 
 const LANGUAGE_OVERRIDES = {
@@ -209,6 +220,7 @@ const LANGUAGE_OVERRIDES = {
     DIALOG: { label: "Dialog interaktywny", description: "Rozmowa bohaterów z rolą ucznia, odsłuchem i łagodną korektą." },
     VOCABULARY: { label: "Trening słówek", description: "Od 1 do 20 słów w jednym bloku, z odsłuchem i pisaniem." },
     SENTENCE_BUILDER: { label: "Układanie zdania", description: "Ułóż tłumaczenie z 2–6 pomieszanych kafelków." },
+    WORD_LAB: { label: "Laboratorium słów", description: "Uczeń przypomina znaczenie, mówi na głos i poprawia każde słowo." },
     TASK: { label: "Ćwiczenie", description: "Krótka odpowiedź sprawdzana automatycznie." },
     QUIZ: { label: "Szybki quiz", description: "Jedno pytanie i natychmiastowa informacja zwrotna." }
 };

@@ -396,7 +396,7 @@ public class LessonBlockController {
                     "Dodaj poprawną odpowiedź do zadania."
             );
         }
-        if ((request.type() == BlockType.DIALOG || request.type() == BlockType.VOCABULARY || request.type() == BlockType.SENTENCE_BUILDER)
+        if ((request.type() == BlockType.DIALOG || request.type() == BlockType.VOCABULARY || request.type() == BlockType.WORD_LAB || request.type() == BlockType.SENTENCE_BUILDER)
                 && isBlank(request.content())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -441,7 +441,7 @@ public class LessonBlockController {
     }
 
     private void validateInteractiveContent(LessonBlockRequest request) {
-        if (request.type() != BlockType.DIALOG && request.type() != BlockType.VOCABULARY && request.type() != BlockType.SENTENCE_BUILDER) {
+        if (request.type() != BlockType.DIALOG && request.type() != BlockType.VOCABULARY && request.type() != BlockType.WORD_LAB && request.type() != BlockType.SENTENCE_BUILDER) {
             return;
         }
 
@@ -456,7 +456,7 @@ public class LessonBlockController {
                     );
                 }
             }
-            if (request.type() == BlockType.VOCABULARY) {
+            if (request.type() == BlockType.VOCABULARY || request.type() == BlockType.WORD_LAB) {
                 JsonNode items = content.path("items");
                 if (!items.isArray() || items.isEmpty() || items.size() > MAX_VOCABULARY_ITEMS) {
                     throw new ResponseStatusException(
