@@ -1,4 +1,9 @@
 import {
+    useEffect,
+    useState
+} from "react";
+
+import {
     BsChatDots,
     BsHeadphones,
     BsPeople,
@@ -19,11 +24,44 @@ export default function DialogBlockForm({
                                             block,
                                             setBlock
                                         }) {
-    const config = parseDialogContent(block.content);
+    const config = parseDialogContent(
+        block.content
+    );
 
     const characters = Array.isArray(config.characters)
         ? config.characters
         : [];
+
+    /*
+     * WAŻNE:
+     *
+     * Nie możemy generować tekstu textarea z config
+     * przy każdym naciśnięciu klawisza.
+     *
+     * Inaczej Enter tworzy pustą linię,
+     * parser ją usuwa i textarea natychmiast
+     * wraca do poprzedniej wartości.
+     */
+    const [dialogueDraft, setDialogueDraft] =
+        useState(() => dialogueToEditor(config));
+
+
+    /*
+     * Jeśli wczytamy inny dialog / edytujemy istniejący blok,
+     * aktualizujemy zawartość edytora.
+     *
+     * Podczas normalnego pisania block.content się nie zmienia,
+     * dopóki użytkownik nie opuści textarea.
+     */
+    useEffect(() => {
+        const parsed =
+            parseDialogContent(block.content);
+
+        setDialogueDraft(
+            dialogueToEditor(parsed)
+        );
+    }, [block.content]);
+
 
     const saveConfig = (
         nextConfig,
@@ -49,6 +87,7 @@ export default function DialogBlockForm({
                 )
         }));
     };
+
 
     const updateCharacter = (
         index,
@@ -76,17 +115,34 @@ export default function DialogBlockForm({
         });
     };
 
-    const updateDialogue = value => {
+
+    /*
+     * Tutaj TYLKO zapisujemy tekst lokalnie.
+     *
+     * Dzięki temu Enter pozostaje w textarea.
+     */
+    const updateDialogueDraft = value => {
+        setDialogueDraft(value);
+    };
+
+
+    /*
+     * Dopiero po opuszczeniu textarea
+     * parsujemy cały dialog.
+     */
+    const saveDialogue = () => {
+        const turns =
+            parseDialogueEditor(
+                dialogueDraft,
+                characters
+            );
+
         saveConfig({
             ...config,
-
-            turns:
-                parseDialogueEditor(
-                    value,
-                    characters
-                )
+            turns
         });
     };
+
 
     const changeStudentRole =
         studentCharacterId => {
@@ -105,6 +161,7 @@ export default function DialogBlockForm({
             });
         };
 
+
     const firstCharacter =
         characters[0] || {
             id: "character-1",
@@ -112,12 +169,14 @@ export default function DialogBlockForm({
             avatar: "👩"
         };
 
+
     const secondCharacter =
         characters[1] || {
             id: "character-2",
             name: "Leo",
             avatar: "👨"
         };
+
 
     return (
         <section className="space-y-6 rounded-3xl border border-cyan-500/25 bg-cyan-500/[0.08] p-5 sm:p-6">
@@ -188,6 +247,7 @@ export default function DialogBlockForm({
                         }
                         className={FIELD}
                     >
+
                         <option value="en-GB">
                             Angielski (Wielka Brytania)
                         </option>
@@ -215,6 +275,7 @@ export default function DialogBlockForm({
                         <option value="pl-PL">
                             Polski
                         </option>
+
                     </select>
 
                 </label>
@@ -250,6 +311,7 @@ export default function DialogBlockForm({
                     <BsPeople />
                     Bohaterowie scenki
                 </p>
+
 
                 <div className="grid gap-4 lg:grid-cols-2">
 
@@ -344,7 +406,9 @@ export default function DialogBlockForm({
                     }
                     className={FIELD}
                 >
+
                     {characters.map(character => (
+
                         <option
                             key={character.id}
                             value={character.id}
@@ -352,7 +416,9 @@ export default function DialogBlockForm({
                             {character.avatar}{" "}
                             {character.name}
                         </option>
+
                     ))}
+
                 </select>
 
             </label>
@@ -364,33 +430,80 @@ export default function DialogBlockForm({
                     Dialog — jedna wypowiedź w każdym wierszu
                 </span>
 
+
                 <textarea
-                    value={dialogueToEditor(config)}
+
+                    /*
+                     * KLUCZOWA ZMIANA:
+                     *
+                     * Nie:
+                     *
+                     * value={dialogueToEditor(config)}
+                     *
+                     * tylko lokalny draft.
+                     */
+                    value={dialogueDraft}
+
                     onChange={event =>
-                        updateDialogue(
+                        updateDialogueDraft(
                             event.target.value
                         )
                     }
+
+                    /*
+                     * Dopiero tutaj zapisujemy
+                     * tekst do struktury dialogu.
+                     */
+                    onBlur={saveDialogue}
+
                     placeholder={
                         `${firstCharacter.name}: Good morning!\n`
                         + `${secondCharacter.name}: Good morning!\n`
                         + `${firstCharacter.name}: How are you?\n`
                         + `${secondCharacter.name}: I'm good, thanks.`
                     }
+
                     className={`${FIELD} min-h-72 font-mono text-sm leading-7`}
                 />
 
+
                 <span className="block text-xs leading-5 text-slate-500">
 
-                    Nie ma limitu wypowiedzi.
+                    Każda wypowiedź musi znajdować się
+                    w osobnym wierszu.
 
-                    Opcjonalnie dopisz po{" "}
+                    Format:{" "}
+
+                    <strong className="text-slate-300">
+                        Postać: wypowiedź
+                    </strong>
+
+                    <br />
+
+                    Przykład:
+
+                    <br />
+
+                    <strong className="text-slate-300">
+                        Emma: Good morning!
+                    </strong>
+
+                    <br />
+
+                    <strong className="text-slate-300">
+                        Leo: Good morning!
+                    </strong>
+
+                    <br />
+
+                    Opcjonalnie po{" "}
 
                     <strong className="text-slate-300">
                         ||
                     </strong>{" "}
 
-                    inne poprawne odpowiedzi i wyjaśnienie.
+                    możesz podać inne poprawne odpowiedzi
+                    i wyjaśnienie.
 
                 </span>
 
@@ -401,9 +514,11 @@ export default function DialogBlockForm({
 
                 <span className="font-bold text-cyan-100">
                     Wypowiedzi w tym bloku:{" "}
-                    {Array.isArray(config.turns)
-                        ? config.turns.length
-                        : 0}
+                    {
+                        Array.isArray(config.turns)
+                            ? config.turns.length
+                            : 0
+                    }
                 </span>
 
                 <span className="text-cyan-200/70">
