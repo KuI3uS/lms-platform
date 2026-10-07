@@ -20,8 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -53,7 +55,6 @@ public class CourseService {
     private final LessonRepository lessonRepository;
     private final LessonProgressRepository lessonProgressRepository;
     private final UserRepository userRepository;
-    private final CourseAccessService accessService;
     private final CourseEnrollmentRepository enrollmentRepository;
     private final CourseOrderRepository orderRepository;
     private final CourseCertificateRepository certificateRepository;
@@ -65,7 +66,6 @@ public class CourseService {
             LessonRepository lessonRepository,
             LessonProgressRepository lessonProgressRepository,
             UserRepository userRepository,
-            CourseAccessService accessService,
             CourseEnrollmentRepository enrollmentRepository,
             CourseOrderRepository orderRepository,
             CourseCertificateRepository certificateRepository,
@@ -76,7 +76,6 @@ public class CourseService {
         this.lessonRepository = lessonRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.userRepository = userRepository;
-        this.accessService = accessService;
         this.enrollmentRepository = enrollmentRepository;
         this.orderRepository = orderRepository;
         this.certificateRepository = certificateRepository;
@@ -86,13 +85,12 @@ public class CourseService {
     @Transactional(readOnly = true)
     public List<CourseSummaryDto> getAll(Authentication authentication) {
         User user = getCurrentUser(authentication);
-        List<Course> courses = isAdmin(authentication)
+        boolean admin = isAdmin(authentication);
+        List<Course> courses = admin
                 ? courseRepository.findAllByOrderByIdAsc()
                 : courseRepository.findByPublishedTrueOrderByIdAsc();
 
-        return courses.stream()
-                .map(course -> toSummary(course, user, isAdmin(authentication)))
-                .toList();
+        return summarize(courses, user, admin);
     }
 
     @Transactional(readOnly = true)
@@ -101,13 +99,12 @@ public class CourseService {
         boolean admin = isAdmin(authentication);
         List<Course> courses = admin
                 ? courseRepository.findAllByOrderByIdAsc()
-                : courseRepository.findByPublishedTrueOrderByIdAsc().stream()
-                        .filter(course -> accessService.hasAccess(user, course))
-                        .toList();
+                : courseRepository.findByPublishedTrueOrderByIdAsc();
+        List<CourseSummaryDto> summaries = summarize(courses, user, admin);
 
-        return courses.stream()
-                .map(course -> toSummary(course, user, admin))
-                .toList();
+        return admin
+                ? summaries
+                : summaries.stream().filter(CourseSummaryDto::canAccess).toList();
     }
 
     @Transactional(readOnly = true)
@@ -119,7 +116,7 @@ public class CourseService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Kurs nie istnieje");
         }
 
-        return toSummary(course, user, isAdmin(authentication));
+        return summarize(List.of(course), user, isAdmin(authentication)).get(0);
     }
 
     @Transactional
@@ -128,7 +125,7 @@ public class CourseService {
         Course course = new Course();
         applyRequest(course, request);
 
-        return toSummary(courseRepository.save(course), user, true);
+        return summarize(List.of(courseRepository.save(course)), user, true).get(0);
     }
 
     @Transactional
@@ -137,7 +134,7 @@ public class CourseService {
         Course course = findCourse(id);
         applyRequest(course, request);
 
-        return toSummary(courseRepository.save(course), user, true);
+        return summarize(List.of(courseRepository.save(course)), user, true).get(0);
     }
 
     @Transactional
@@ -178,18 +175,74 @@ public class CourseService {
                 .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
-    private CourseSummaryDto toSummary(Course course, User user, boolean admin) {
-        long moduleCount = moduleRepository.countByCourseId(course.getId());
-        long lessonCount = lessonRepository.countByModuleCourseId(course.getId());
-        long completedLessonCount = lessonProgressRepository
-                .countCompletedByUserIdAndCourseId(user.getId(), course.getId());
+    private List<CourseSummaryDto> summarize(
+            List<Course> courses,
+            User user,
+            boolean admin
+    ) {
+        if (courses.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> courseIds = courses.stream().map(Course::getId).toList();
+        Map<Long, Long> moduleCounts = toCountMap(
+                moduleRepository.countByCourseIds(courseIds)
+        );
+        Map<Long, Long> lessonCounts = toCountMap(
+                lessonRepository.countByCourseIds(courseIds)
+        );
+        Map<Long, Long> completedLessonCounts = toCountMap(
+                lessonProgressRepository.countCompletedByUserIdAndCourseIds(
+                        user.getId(),
+                        courseIds
+                )
+        );
+        Set<Long> activeCourseIds = admin
+                ? Set.of()
+                : Set.copyOf(enrollmentRepository.findActiveCourseIdsByUserId(user.getId()));
+        Set<Long> pendingCourseIds = admin
+                ? Set.of()
+                : Set.copyOf(orderRepository.findPendingCourseIdsByUserId(user.getId()));
+
+        return courses.stream()
+                .map(course -> toSummary(
+                        course,
+                        admin,
+                        moduleCounts.getOrDefault(course.getId(), 0L),
+                        lessonCounts.getOrDefault(course.getId(), 0L),
+                        completedLessonCounts.getOrDefault(course.getId(), 0L),
+                        activeCourseIds,
+                        pendingCourseIds
+                ))
+                .toList();
+    }
+
+    private CourseSummaryDto toSummary(
+            Course course,
+            boolean admin,
+            long moduleCount,
+            long lessonCount,
+            long completedLessonCount,
+            Set<Long> activeCourseIds,
+            Set<Long> pendingCourseIds
+    ) {
         int progress = lessonCount == 0
                 ? 0
                 : (int) Math.round(completedLessonCount * 100.0 / lessonCount);
 
-        String accessStatus = accessService.accessStatus(user, course);
-        boolean canAccess = accessService.hasAccess(user, course);
-        boolean paid = !accessService.isFree(course);
+        boolean paid = course.getPrice() != null
+                && course.getPrice().compareTo(BigDecimal.ZERO) > 0;
+        boolean active = activeCourseIds.contains(course.getId());
+        String accessStatus = admin
+                ? "ADMIN"
+                : !paid
+                        ? "FREE"
+                        : active
+                                ? "ACTIVE"
+                                : pendingCourseIds.contains(course.getId())
+                                        ? "PENDING"
+                                        : "LOCKED";
+        boolean canAccess = admin || !paid || active;
 
         return new CourseSummaryDto(
                 course.getId(),
@@ -213,6 +266,17 @@ public class CourseService {
                 course.getCourseLanguage(),
                 course.getCefrLevel()
         );
+    }
+
+    private Map<Long, Long> toCountMap(List<Object[]> rows) {
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : rows) {
+            counts.put(
+                    ((Number) row[0]).longValue(),
+                    ((Number) row[1]).longValue()
+            );
+        }
+        return counts;
     }
 
     private void applyRequest(Course course, CourseRequest request) {

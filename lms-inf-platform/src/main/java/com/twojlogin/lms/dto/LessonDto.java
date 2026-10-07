@@ -12,6 +12,7 @@ public class LessonDto {
     public Integer orderIndex;
     public Long moduleId;
     public boolean completed;
+    public boolean canAccess;
 
     public LessonDto(com.twojlogin.lms.entity.Lesson lesson) {
         this.id = lesson.getId();
@@ -29,5 +30,14 @@ public class LessonDto {
     public LessonDto(com.twojlogin.lms.entity.Lesson lesson, boolean completed) {
         this(lesson);
         this.completed = completed;
+    }
+
+    public LessonDto(
+            com.twojlogin.lms.entity.Lesson lesson,
+            boolean completed,
+            boolean canAccess
+    ) {
+        this(lesson, completed);
+        this.canAccess = canAccess;
     }
 }

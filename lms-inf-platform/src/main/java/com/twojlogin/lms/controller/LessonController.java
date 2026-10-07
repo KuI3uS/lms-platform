@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/lessons")
@@ -74,15 +75,35 @@ public class LessonController {
             @PathVariable Long moduleId,
             Authentication authentication
     ) {
-        courseAccessService.requireModuleAccess(moduleId, authentication);
-        User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow();
+        User user = courseAccessService.currentUser(authentication);
+        CourseModule module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Moduł nie istnieje"
+                ));
+        courseAccessService.requireAccess(user, module.getCourse());
 
-        return lessonRepository.findByModuleIdOrderByOrderIndexAsc(moduleId).stream()
-                .map(lesson -> new LessonDto(
-                        lesson,
-                        lessonProgressRepository.existsByUserAndLessonAndCompletedTrue(user, lesson)
-                ))
+        List<Lesson> lessons = lessonRepository.findByModuleIdOrderByOrderIndexAsc(moduleId);
+        Set<Long> completedLessonIds = Set.copyOf(
+                lessonProgressRepository.findCompletedLessonIdsByUserIdAndModuleId(
+                        user.getId(),
+                        moduleId
+                )
+        );
+        boolean unrestricted = courseAccessService.isAdmin(user) || !module.isLessonsLocked();
+
+        return java.util.stream.IntStream.range(0, lessons.size())
+                .mapToObj(index -> {
+                    Lesson lesson = lessons.get(index);
+                    boolean completed = completedLessonIds.contains(lesson.getId());
+                    boolean previousCompleted = index == 0
+                            || completedLessonIds.contains(lessons.get(index - 1).getId());
+                    boolean canAccess = lesson.isFreePreview()
+                            || unrestricted
+                            || previousCompleted;
+
+                    return new LessonDto(lesson, completed, canAccess);
+                })
                 .toList();
     }
 

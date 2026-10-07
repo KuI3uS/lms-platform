@@ -46,6 +46,31 @@ public interface LessonProgressRepository extends JpaRepository<LessonProgress, 
     );
 
     @Query("""
+            select progress.lesson.module.course.id, count(progress)
+            from LessonProgress progress
+            where progress.user.id = :userId
+              and progress.lesson.module.course.id in :courseIds
+              and progress.completed = true
+            group by progress.lesson.module.course.id
+            """)
+    List<Object[]> countCompletedByUserIdAndCourseIds(
+            @Param("userId") Long userId,
+            @Param("courseIds") List<Long> courseIds
+    );
+
+    @Query("""
+            select progress.lesson.id
+            from LessonProgress progress
+            where progress.user.id = :userId
+              and progress.lesson.module.id = :moduleId
+              and progress.completed = true
+            """)
+    List<Long> findCompletedLessonIdsByUserIdAndModuleId(
+            @Param("userId") Long userId,
+            @Param("moduleId") Long moduleId
+    );
+
+    @Query("""
             select count(progress)
             from LessonProgress progress
             where progress.user.id = :userId

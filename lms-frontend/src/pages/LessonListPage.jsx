@@ -46,36 +46,9 @@ export default function LessonListPage() {
 
             }
 
-            const withAccess = await Promise.all(
-
-                (lessonsData || []).map(async lesson => {
-
-                    try {
-
-                        const canAccess =
-                            await apiFetch(`/lessons/${lesson.id}/access`);
-
-                        return {
-                            ...lesson,
-                            canAccess
-                        };
-
-                    } catch {
-
-                        return {
-                            ...lesson,
-                            canAccess: false
-                        };
-
-                    }
-
-                })
-
-            );
-
             setLessons(
 
-                [...withAccess].sort(
+                [...(lessonsData || [])].sort(
 
                     (a, b) =>
                         (a.orderIndex ?? 0) -

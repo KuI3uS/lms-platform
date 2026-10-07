@@ -5,6 +5,10 @@ import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
+@Table(
+        name = "lesson",
+        indexes = @Index(name = "idx_lesson_module", columnList = "module_id")
+)
 public class Lesson {
 
     @Id
