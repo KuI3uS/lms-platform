@@ -59,11 +59,16 @@ body {
 }
 
 .native-code-editor {
-    caret-color: #38bdf8;
+    caret-color: #67e8f9 !important;
     color: #e2e8f0;
     -webkit-text-fill-color: #e2e8f0;
     user-select: text;
     -webkit-user-select: text;
+}
+
+.native-code-editor:focus {
+    caret-color: #ffffff !important;
+    box-shadow: inset 3px 0 0 rgba(103, 232, 249, 0.75);
 }
 
 .native-code-editor::selection {

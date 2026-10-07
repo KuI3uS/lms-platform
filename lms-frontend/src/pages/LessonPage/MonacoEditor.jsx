@@ -1,5 +1,5 @@
 import Editor from "@monaco-editor/react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     BsCodeSlash,
     BsTerminal,
@@ -55,12 +55,30 @@ function EditorHeader({ language, native }) {
 
 function NativeCodeEditor({ value, language, onChange }) {
     const gutterRef = useRef(null);
+    const editorRef = useRef(null);
+    const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
     const lineCount = Math.max(12, value.split("\n").length);
 
     function synchronizeScroll(event) {
         if (gutterRef.current) {
             gutterRef.current.scrollTop = event.currentTarget.scrollTop;
         }
+    }
+
+    function updateCursorPosition(target = editorRef.current) {
+        if (!target) return;
+
+        const beforeCursor = target.value.slice(0, target.selectionStart ?? 0);
+        const lines = beforeCursor.split("\n");
+        setCursorPosition({
+            line: lines.length,
+            column: (lines.at(-1)?.length || 0) + 1
+        });
+    }
+
+    function handleChange(event) {
+        onChange(event.target.value);
+        updateCursorPosition(event.target);
     }
 
     return (
@@ -80,17 +98,27 @@ function NativeCodeEditor({ value, language, onChange }) {
                 </div>
 
                 <textarea
+                    ref={editorRef}
                     aria-label="Edytor kodu"
-                    className="native-code-editor h-full min-w-0 flex-1 resize-none overflow-auto whitespace-pre bg-transparent px-5 py-6 text-[17px] leading-7 outline-none"
-                    style={{ fontFamily: CODE_FONT, tabSize: 4 }}
+                    className="native-code-editor h-full min-w-0 flex-1 resize-none overflow-auto whitespace-pre bg-transparent px-5 py-6 pb-14 text-[17px] leading-7 outline-none focus:bg-cyan-400/[0.025]"
+                    style={{ fontFamily: CODE_FONT, tabSize: 4, caretColor: "#67e8f9" }}
                     value={value}
-                    onChange={(event) => onChange(event.target.value)}
+                    onChange={handleChange}
+                    onSelect={(event) => updateCursorPosition(event.currentTarget)}
+                    onClick={(event) => updateCursorPosition(event.currentTarget)}
+                    onKeyUp={(event) => updateCursorPosition(event.currentTarget)}
+                    onFocus={(event) => updateCursorPosition(event.currentTarget)}
                     onScroll={synchronizeScroll}
                     wrap="off"
                     spellCheck={false}
                     autoCapitalize="off"
                     autoCorrect="off"
                 />
+
+                <div className="pointer-events-none absolute bottom-0 right-0 flex items-center gap-3 rounded-tl-xl border-l border-t border-cyan-300/20 bg-[#07101f]/95 px-4 py-2 font-mono text-xs text-cyan-200 shadow-lg">
+                    <span className="h-4 w-[3px] animate-pulse rounded-full bg-cyan-200 shadow-[0_0_10px_rgba(103,232,249,.9)]" />
+                    Wiersz {cursorPosition.line}, kolumna {cursorPosition.column}
+                </div>
             </div>
         </section>
     );
@@ -228,13 +256,13 @@ export default function MonacoEditorBox({
                      */
                     editContext: false,
 
-                    cursorBlinking: "blink",
+                    cursorBlinking: "solid",
 
                     cursorSmoothCaretAnimation: "off",
 
                     cursorStyle: "line",
 
-                    cursorWidth: 3,
+                    cursorWidth: 4,
 
                     scrollBeyondLastLine: false,
 
