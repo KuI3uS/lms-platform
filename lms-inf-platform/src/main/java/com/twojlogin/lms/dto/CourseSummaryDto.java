@@ -28,6 +28,7 @@ public record CourseSummaryDto(
         LocalDateTime accessExpiresAt,
         String category,
         String courseLanguage,
-        String cefrLevel
+        String cefrLevel,
+        String cefrEndLevel
 ) {
 }

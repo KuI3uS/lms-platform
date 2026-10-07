@@ -9,6 +9,8 @@ public record ExamAttemptDto(
         String id,
         Long courseId,
         String courseTitle,
+        com.twojlogin.lms.entity.ExamType examType,
+        String cefrLevel,
         ExamAttemptStatus status,
         int durationMinutes,
         int totalQuestions,

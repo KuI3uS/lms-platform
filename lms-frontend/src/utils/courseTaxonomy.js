@@ -53,7 +53,9 @@ export function getCourseLanguageLabel(language) {
 
 export function getCourseLevelLabel(course) {
     if (getCourseCategory(course) === "LANGUAGE") {
-        return course?.cefrLevel || "A1";
+        const start = course?.cefrLevel || "A1";
+        const end = course?.cefrEndLevel || start;
+        return start === end ? start : `${start}–${end}`;
     }
     return course?.level || "Podstawy";
 }

@@ -170,7 +170,7 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
                 {category === "LANGUAGE" && (
                     <div className="flex items-center gap-2 text-sm font-bold text-violet-200">
                         <BsTranslate />
-                        {getCourseLanguageLabel(course.courseLanguage)} · poziom {course.cefrLevel || "A1"}
+                        {getCourseLanguageLabel(course.courseLanguage)} · poziomy {getCourseLevelLabel(course)}
                     </div>
                 )}
 

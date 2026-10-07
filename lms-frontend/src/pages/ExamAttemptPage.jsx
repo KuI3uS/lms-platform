@@ -140,6 +140,17 @@ export default function ExamAttemptPage() {
                 <p className="mt-3 text-lg text-slate-400">
                     {attempt.correctAnswers} z {attempt.totalQuestions} poprawnych odpowiedzi
                 </p>
+                {attempt.examType !== "PRACTICE" && attempt.cefrLevel && (
+                    <p className={`mx-auto mt-5 max-w-xl rounded-2xl px-5 py-4 font-bold ${attempt.passed ? "bg-emerald-500/10 text-emerald-200" : "bg-amber-500/10 text-amber-200"}`}>
+                        {attempt.passed
+                            ? attempt.examType === "PLACEMENT"
+                                ? `Poziom ${attempt.cefrLevel} został odblokowany. Możesz rozpocząć naukę od tego miejsca.`
+                                : attempt.cefrLevel === "C2"
+                                    ? "Egzamin C2 został zaliczony. Ukończyłeś całą ścieżkę językową."
+                                    : `Egzamin poziomu ${attempt.cefrLevel} został zaliczony. Następny poziom jest już dostępny.`
+                            : "Do zaliczenia egzaminu poziomu potrzeba co najmniej 80%. Możesz spróbować ponownie z nowym zestawem pytań."}
+                    </p>
+                )}
                 <button
                     type="button"
                     onClick={() => navigate("/exams")}

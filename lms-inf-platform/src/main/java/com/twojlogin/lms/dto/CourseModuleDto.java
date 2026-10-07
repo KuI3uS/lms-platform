@@ -6,14 +6,16 @@ public record CourseModuleDto(
         Long id,
         String name,
         boolean lessonsLocked,
-        Long courseId
+        Long courseId,
+        String cefrLevel
 ) {
     public static CourseModuleDto from(CourseModule module) {
         return new CourseModuleDto(
                 module.getId(),
                 module.getName(),
                 module.isLessonsLocked(),
-                module.getCourse() == null ? null : module.getCourse().getId()
+                module.getCourse() == null ? null : module.getCourse().getId(),
+                module.getCefrLevel()
         );
     }
 }

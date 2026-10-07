@@ -17,6 +17,8 @@ public class CourseModule {
 
     private boolean lessonsLocked;
 
+    private String cefrLevel;
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     @JsonIgnore
@@ -51,5 +53,13 @@ public class CourseModule {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public String getCefrLevel() {
+        return cefrLevel == null && course != null ? course.getCefrLevel() : cefrLevel;
+    }
+
+    public void setCefrLevel(String cefrLevel) {
+        this.cefrLevel = cefrLevel;
     }
 }

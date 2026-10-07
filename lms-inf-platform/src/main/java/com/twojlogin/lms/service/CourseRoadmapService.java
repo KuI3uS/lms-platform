@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.twojlogin.lms.util.CefrLevels;
 
 @Service
 public class CourseRoadmapService {
@@ -76,12 +77,19 @@ public class CourseRoadmapService {
         }
 
         boolean admin = accessService.isAdmin(user);
+        String unlockedCefrLevel = "LANGUAGE".equals(course.getCategory())
+                ? accessService.unlockedCefrLevel(user, course)
+                : null;
         List<CourseRoadmapDto.ModuleItem> moduleItems = modules.stream()
                 .map(module -> toModuleItem(
                         module,
                         lessonsByModule.getOrDefault(module.getId(), List.of()),
                         completedLessonIds,
+                        admin,
                         admin
+                                || !"LANGUAGE".equals(course.getCategory())
+                                || CefrLevels.rank(module.getCefrLevel())
+                                <= CefrLevels.rank(unlockedCefrLevel)
                 ))
                 .toList();
 
@@ -92,6 +100,8 @@ public class CourseRoadmapService {
                 course.getCategory(),
                 course.getCourseLanguage(),
                 course.getCefrLevel(),
+                course.getCefrEndLevel(),
+                unlockedCefrLevel,
                 moduleItems
         );
     }
@@ -100,7 +110,8 @@ public class CourseRoadmapService {
             CourseModule module,
             List<Lesson> lessons,
             Set<Long> completedLessonIds,
-            boolean admin
+            boolean admin,
+            boolean levelUnlocked
     ) {
         boolean unrestricted = admin || !module.isLessonsLocked();
         List<CourseRoadmapDto.LessonItem> lessonItems =
@@ -114,8 +125,7 @@ public class CourseRoadmapService {
                                     lessons.get(index - 1).getId()
                             );
                             boolean canAccess = lesson.isFreePreview()
-                                    || unrestricted
-                                    || previousCompleted;
+                                    || levelUnlocked && (unrestricted || previousCompleted);
 
                             return new CourseRoadmapDto.LessonItem(
                                     lesson.getId(),
@@ -131,6 +141,8 @@ public class CourseRoadmapService {
                 module.getId(),
                 module.getName(),
                 module.isLessonsLocked(),
+                module.getCefrLevel(),
+                levelUnlocked,
                 lessonItems
         );
     }

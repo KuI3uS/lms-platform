@@ -17,6 +17,7 @@ public record CourseRequest(
         String monthlyPaymentUrl,
         String category,
         String courseLanguage,
-        String cefrLevel
+        String cefrLevel,
+        String cefrEndLevel
 ) {
 }

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import com.twojlogin.lms.util.CefrLevels;
 
 @Service
 public class CourseService {
@@ -275,7 +276,8 @@ public class CourseService {
                 accessibleCourses.get(course.getId()),
                 course.getCategory(),
                 course.getCourseLanguage(),
-                course.getCefrLevel()
+                course.getCefrLevel(),
+                course.getCefrEndLevel()
         );
     }
 
@@ -358,21 +360,29 @@ public class CourseService {
         if ("LANGUAGE".equals(category)) {
             String language = uppercase(request.courseLanguage());
             String cefrLevel = uppercase(request.cefrLevel());
+            String cefrEndLevel = uppercase(request.cefrEndLevel());
+            if (cefrEndLevel == null) {
+                cefrEndLevel = cefrLevel;
+            }
 
             if (language == null || cefrLevel == null
                     || !COURSE_LANGUAGES.contains(language)
-                    || !CEFR_LEVELS.contains(cefrLevel)) {
+                    || !CEFR_LEVELS.contains(cefrLevel)
+                    || !CEFR_LEVELS.contains(cefrEndLevel)
+                    || CefrLevels.rank(cefrEndLevel) < CefrLevels.rank(cefrLevel)) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Kurs językowy wymaga języka i poziomu od A1 do C2"
+                        "Kurs językowy wymaga poprawnego zakresu poziomów od A1 do C2"
                 );
             }
 
             course.setCourseLanguage(language);
             course.setCefrLevel(cefrLevel);
+            course.setCefrEndLevel(cefrEndLevel);
         } else {
             course.setCourseLanguage(null);
             course.setCefrLevel(null);
+            course.setCefrEndLevel(null);
         }
     }
 

@@ -87,6 +87,7 @@ public class LessonController {
                         "Moduł nie istnieje"
                 ));
         courseAccessService.requireAccess(user, module.getCourse());
+        courseAccessService.requireLevelAccess(user, module);
 
         List<Lesson> lessons = lessonRepository.findByModuleIdOrderByOrderIndexAsc(moduleId);
         Set<Long> completedLessonIds = Set.copyOf(
@@ -171,6 +172,9 @@ public class LessonController {
                 .orElseThrow();
 
         if (!courseAccessService.hasAccess(user, lesson.getModule().getCourse())) {
+            return false;
+        }
+        if (!courseAccessService.hasLevelAccess(user, lesson.getModule())) {
             return false;
         }
         if (!lesson.getModule().isLessonsLocked()) {

@@ -27,6 +27,7 @@ public class Course {
     private String category = "PROGRAMMING";
     private String courseLanguage;
     private String cefrLevel;
+    private String cefrEndLevel;
     @Column(length = 1000)
     private String paymentUrl;
     @Column(length = 1000)
@@ -150,6 +151,14 @@ public class Course {
 
     public void setCefrLevel(String cefrLevel) {
         this.cefrLevel = cefrLevel;
+    }
+
+    public String getCefrEndLevel() {
+        return cefrEndLevel == null ? cefrLevel : cefrEndLevel;
+    }
+
+    public void setCefrEndLevel(String cefrEndLevel) {
+        this.cefrEndLevel = cefrEndLevel;
     }
 
     public String getPaymentUrl() {

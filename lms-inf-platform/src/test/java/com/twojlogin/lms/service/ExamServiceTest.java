@@ -22,6 +22,7 @@ class ExamServiceTest {
     private ExamAttemptRepository attemptRepository;
     private QuestionRepository questionRepository;
     private CourseAccessService accessService;
+    private LanguageProgressService languageProgressService;
     private ExamService service;
     private Authentication authentication;
     private User user;
@@ -32,13 +33,16 @@ class ExamServiceTest {
         attemptRepository = mock(ExamAttemptRepository.class);
         questionRepository = mock(QuestionRepository.class);
         accessService = mock(CourseAccessService.class);
+        languageProgressService = mock(LanguageProgressService.class);
         authentication = mock(Authentication.class);
         service = new ExamService(
                 attemptRepository,
                 questionRepository,
                 accessService,
                 mock(NotificationService.class),
-                mock(AchievementService.class)
+                mock(AchievementService.class),
+                languageProgressService,
+                mock(CertificateService.class)
         );
 
         user = new User();
@@ -54,6 +58,31 @@ class ExamServiceTest {
         when(accessService.requireCourseAccess(course.getId(), authentication)).thenReturn(course);
         when(attemptRepository.save(any(ExamAttempt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+    }
+
+    @Test
+    void placementExamUsesOnlyQuestionsFromRequestedCefrLevel() {
+        course.setCategory("LANGUAGE");
+        course.setCefrLevel("A1");
+        course.setCefrEndLevel("C2");
+        List<Question> b1Questions = java.util.stream.LongStream.rangeClosed(1, 10)
+                .mapToObj(id -> question(id, "B1 pytanie " + id))
+                .toList();
+
+        when(languageProgressService.isLanguageCourse(course)).thenReturn(true);
+        when(languageProgressService.startLevel(course)).thenReturn("A1");
+        when(languageProgressService.endLevel(course)).thenReturn("C2");
+        when(languageProgressService.unlockedLevel(user, course)).thenReturn("A1");
+        when(languageProgressService.questionsForLevel(course, "B1")).thenReturn(b1Questions);
+
+        ExamAttemptDto attempt = service.start(
+                new ExamStartRequest(course.getId(), 20, 40, ExamType.PLACEMENT, "B1"),
+                authentication
+        );
+
+        assertEquals(ExamType.PLACEMENT, attempt.examType());
+        assertEquals("B1", attempt.cefrLevel());
+        assertEquals(10, attempt.totalQuestions());
     }
 
     @Test
