@@ -44,8 +44,8 @@ export default function BlockForm({
 
             <div>
 
-                <h2 className="text-2xl font-bold">
-                    Dodaj blok
+                <h2>
+                    {block.id ? "Edytuj blok" : "Dodaj blok"}
                 </h2>
 
                 <p className="text-gray-400 mt-1">

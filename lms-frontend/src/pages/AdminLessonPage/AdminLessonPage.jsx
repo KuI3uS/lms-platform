@@ -649,11 +649,10 @@ export default function AdminLessonPage() {
 
                         }}
 
-                        saveBlock={() =>
-
-                            saveBlock(lesson.id)
-
+                        saveBlock={saveBlock
                         }
+
+                        updateBlock={updateBlock}
 
                         /*
                         |--------------------------------------------------------------------------
