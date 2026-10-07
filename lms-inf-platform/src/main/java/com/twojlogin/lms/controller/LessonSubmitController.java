@@ -85,7 +85,7 @@ public class LessonSubmitController {
 
             answer.setTaskId(task.getId());
 
-            answer.setTaskContent(task.getTaskContent());
+            answer.setTaskContent(task.getInstruction());
 
             answer.setStudentAnswer(dto.getStudentAnswer());
 
