@@ -10,11 +10,15 @@ import com.twojlogin.lms.entity.TutoringBooking;
 import com.twojlogin.lms.entity.User;
 import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.entity.BlockType;
+import com.twojlogin.lms.entity.Course;
+import com.twojlogin.lms.entity.CourseModule;
+import com.twojlogin.lms.entity.Lesson;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ApiDtoSecurityTest {
@@ -110,5 +114,21 @@ class ApiDtoSecurityTest {
         assertFalse(studentJson.contains("5 => 25"));
         assertTrue(adminJson.contains("tajne rozwiązanie"));
         assertTrue(adminJson.contains("5 => 25"));
+    }
+
+    @Test
+    void lessonDtoContainsItsCourseIdForReliableBackNavigation() {
+        Course course = new Course();
+        course.setId(31L);
+        CourseModule module = new CourseModule();
+        module.setId(17L);
+        module.setCourse(course);
+        Lesson lesson = new Lesson();
+        lesson.setModule(module);
+
+        LessonDto dto = new LessonDto(lesson);
+
+        assertEquals(17L, dto.moduleId);
+        assertEquals(31L, dto.courseId);
     }
 }

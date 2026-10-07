@@ -3,6 +3,7 @@ import { BsCollection, BsTrash } from "react-icons/bs";
 import BlockList from "./BlockList";
 import BlockForm from "./BlockForm/BlockForm";
 import ChatGptLessonImport from "./ChatGptLessonImport";
+import { MAX_LESSON_BLOCKS } from "../../utils/lessonBlockLimits";
 
 export default function BlockManager({
 
@@ -16,6 +17,8 @@ export default function BlockManager({
     const blocks = lessonBlocks.getBlocks(lessonId);
 
     const block = lessonBlocks.getBlockForm(lessonId);
+
+    const blockLimitReached = blocks.length >= MAX_LESSON_BLOCKS && !block.id;
 
     return (
 
@@ -41,6 +44,10 @@ export default function BlockManager({
                         {variant === "LANGUAGE"
                             ? "Dodawaj tylko krótkie porcje materiału i ćwiczenia utrwalające."
                             : "Buduj lekcję z tekstów, obrazów, filmów, przykładów oraz zadań."}
+                    </p>
+
+                    <p className="mt-1 text-xs font-bold text-cyan-300/80">
+                        {blocks.length}/{MAX_LESSON_BLOCKS} bloków · jedna lekcja = jeden konkretny cel
                     </p>
 
                 </div>
@@ -82,7 +89,11 @@ export default function BlockManager({
                 lessonBlocks={lessonBlocks}
             />
 
-            <BlockForm
+            {blockLimitReached ? (
+                <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] p-5 text-sm leading-6 text-cyan-100">
+                    Ta lekcja ma już 10 bloków. Edytuj istniejący element, usuń zbędny blok albo przenieś dalszy materiał do kolejnej lekcji.
+                </div>
+            ) : <BlockForm
 
                 lessonId={lessonId}
 
@@ -110,7 +121,7 @@ export default function BlockManager({
                         )
                 }
 
-            />
+            />}
 
         </section>
 

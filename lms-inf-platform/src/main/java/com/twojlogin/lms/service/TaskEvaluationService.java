@@ -641,7 +641,8 @@ public class TaskEvaluationService {
         String normalizedLanguage = language.toLowerCase();
         return normalizedLanguage.equals("java")
                 || normalizedLanguage.equals("javascript")
-                || normalizedLanguage.equals("csharp");
+                || normalizedLanguage.equals("csharp")
+                || normalizedLanguage.equals("sql");
     }
 
     private String normalize(String code) {

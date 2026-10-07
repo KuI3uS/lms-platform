@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/lesson-blocks")
 public class LessonBlockController {
 
+    private static final int MAX_BLOCKS_PER_LESSON = 10;
+
     private final LessonBlockRepository blockRepository;
     private final LessonRepository lessonRepository;
     private final TaskAttemptRepository attemptRepository;
@@ -114,6 +116,8 @@ public class LessonBlockController {
                         "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
                 ));
 
+        ensureLessonCapacity(lessonId, 1);
+
         Integer maxOrder =
                 blockRepository.findMaxOrderIndexByLessonId(lessonId);
 
@@ -142,10 +146,10 @@ public class LessonBlockController {
                     "Import nie zawiera żadnych bloków."
             );
         }
-        if (requests.size() > 100) {
+        if (requests.size() > MAX_BLOCKS_PER_LESSON) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Jednorazowo możesz zaimportować maksymalnie 100 bloków."
+                    "Jedna lekcja może zawierać maksymalnie 10 bloków."
             );
         }
 
@@ -154,6 +158,7 @@ public class LessonBlockController {
                         HttpStatus.NOT_FOUND,
                         "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
                 ));
+        ensureLessonCapacity(lessonId, requests.size());
         Integer maxOrder = blockRepository.findMaxOrderIndexByLessonId(lessonId);
         int firstOrder = (maxOrder == null ? -1 : maxOrder) + 1;
 
@@ -169,6 +174,16 @@ public class LessonBlockController {
         return blockRepository.saveAllAndFlush(blocks).stream()
                 .map(block -> LessonBlockDto.from(block, true))
                 .toList();
+    }
+
+    private void ensureLessonCapacity(Long lessonId, int newBlocks) {
+        int currentBlocks = blockRepository.countByLessonId(lessonId);
+        if (currentBlocks + newBlocks > MAX_BLOCKS_PER_LESSON) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Jedna lekcja może zawierać maksymalnie 10 bloków. Usuń zbędne bloki albo podziel materiał na dwie lekcje."
+            );
+        }
     }
 
     @Transactional

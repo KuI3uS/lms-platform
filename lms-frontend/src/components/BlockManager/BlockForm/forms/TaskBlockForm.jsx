@@ -192,6 +192,10 @@ export default function TaskBlockForm({
 
                         <option value="csharp">C#</option>
 
+                        <option value="sql">SQL</option>
+
+                        <option value="html">HTML</option>
+
                     </select>
 
                 </div>

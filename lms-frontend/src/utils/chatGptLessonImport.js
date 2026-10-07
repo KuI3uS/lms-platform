@@ -1,3 +1,5 @@
+import { MAX_LESSON_BLOCKS } from "./lessonBlockLimits.js";
+
 const TYPE_MAP = {
     tekst: "TEXT",
     material: "TEXT",
@@ -216,6 +218,24 @@ function summaryContent(fields) {
     ].filter(Boolean).join("\n\n");
 }
 
+function stableHash(value) {
+    return Array.from(String(value || "")).reduce(
+        (hash, character) => ((hash * 31) + character.charCodeAt(0)) >>> 0,
+        0
+    );
+}
+
+function distributeQuizAnswer(answers, correctAnswer, seed) {
+    const correctIndex = answers.indexOf(correctAnswer);
+    if (correctIndex < 0 || answers.length < 2) return answers;
+
+    const reordered = [...answers];
+    const [correct] = reordered.splice(correctIndex, 1);
+    const targetIndex = stableHash(seed) % answers.length;
+    reordered.splice(targetIndex, 0, correct);
+    return reordered;
+}
+
 function parseStep(step, warnings, errors) {
     const fields = fieldsFromLines(step.lines);
     const resolved = resolveType(fields.type, step.heading);
@@ -261,15 +281,23 @@ function parseStep(step, warnings, errors) {
         const answers = answersFromList.length ? answersFromList : legacyAnswers;
         const correctKey = normalize(fields.correctAnswer).toUpperCase();
         const answerIndex = ["A", "B", "C", "D"].indexOf(correctKey);
-        block.instruction = fields.question || fields.instruction || block.title;
-        block.title = fields.question || block.title;
-        block.content = answers.join("\n");
-        block.expectedAnswer = answerIndex >= 0
+        const correctAnswer = answerIndex >= 0
             ? answers[answerIndex] || ""
             : fields.correctAnswer || "";
+        const distributedAnswers = distributeQuizAnswer(
+            answers,
+            correctAnswer,
+            `${step.number}:${fields.question || block.title}`
+        );
+        block.instruction = fields.question || fields.instruction || block.title;
+        block.title = fields.question || block.title;
+        block.content = distributedAnswers.join("\n");
+        block.expectedAnswer = correctAnswer;
         block.detailedHint = fields.detailedHint || fields.solutionExplanation || "";
         if (answers.length < 2) {
             errors.push(`Krok ${step.number}: quiz wymaga co najmniej dwóch odpowiedzi zapisanych pod polem „Odpowiedzi — każda w nowym wierszu”.`);
+        } else if (new Set(answers.map(normalize)).size !== answers.length) {
+            errors.push(`Krok ${step.number}: wszystkie odpowiedzi quizu muszą być różne.`);
         } else if (!block.expectedAnswer || !answers.includes(block.expectedAnswer)) {
             errors.push(`Krok ${step.number}: „Poprawna odpowiedź” musi być pełną treścią jednego z wierszy odpowiedzi.`);
         }
@@ -333,6 +361,11 @@ export function parseChatGptLesson(source) {
     if (String(source || "").trim() && steps.length === 0) {
         errors.push("Nie znaleziono kroków. Każdy blok rozpocznij od nagłówka KROK 1, KROK 2 itd.");
     }
+    if (steps.length > MAX_LESSON_BLOCKS) {
+        errors.push(
+            `Lekcja zawiera ${steps.length} bloków. Maksymalnie można zaimportować ${MAX_LESSON_BLOCKS}; podziel materiał na dwie lekcje.`
+        );
+    }
 
     const blocks = steps
         .map((step) => parseStep(step, warnings, errors))
@@ -342,6 +375,19 @@ export function parseChatGptLesson(source) {
 }
 
 export const CHAT_GPT_LESSON_PROMPT = `Jesteś metodykiem i nauczycielem. Przygotuj kompletną lekcję do importu w EduHub.
+
+NAJWAŻNIEJSZA ZASADA LEKCJI
+- Jedna lekcja rozwija jedną konkretną umiejętność i zawiera od 6 do maksymalnie 10 bloków.
+- Najpierw zaplanuj lekcję wewnętrznie, ale nie pokazuj planu ani komentarzy. Zwróć tylko gotowe bloki.
+- Zachowaj logiczny rytm: krótkie wyjaśnienie problemu, demonstracja jednego nowego pojęcia na innym przykładzie, samodzielna praktyka o rosnącej trudności, sprawdzenie zrozumienia i krótkie podsumowanie.
+- Nie próbuj używać wszystkich dostępnych typów bloków. Każdy blok musi mieć wyraźny cel; usuń treści powtarzające to samo innymi słowami.
+- Nie dziel jednej prostej czynności na kilka sztucznych bloków. Jeżeli materiał nie mieści się w 10 blokach, zawęź cel albo zaproponuj osobną następną lekcję.
+
+SPÓJNOŚĆ Z CAŁYM KURSEM
+- Oprzyj lekcję na podanym miejscu w programie, wcześniejszych tematach i umiejętnościach ucznia.
+- Nie ucz ponownie treści już zrealizowanych. Możesz je krótko wykorzystać w nowym kontekście.
+- Każde ćwiczenie musi sprawdzać dokładnie to, co zostało wcześniej wyjaśnione, ale nie może być kopią przykładu.
+- Nazwy, dane i sytuacja w przykładzie oraz w zadaniu muszą się różnić. Uczeń ma przenieść zasadę na nowy problem.
 
 ZANIM UTWORZYSZ LEKCJĘ
 Najpierw sprawdź, czy użytkownik podał tryb wsparcia ucznia. Jeżeli go nie podał, nie generuj jeszcze lekcji. Zadaj tylko jedno krótkie pytanie:
@@ -361,6 +407,20 @@ NIE PODAWAJ ROZWIĄZANIA UCZNIOWI
 - Pole „Poprawna odpowiedź” jest wymagane do automatycznego sprawdzania i może zawierać pełne rozwiązanie, ponieważ uczeń nie widzi go przed sprawdzeniem.
 - Pole „Wyjaśnienie rozwiązania (od 4. błędnej próby)” może dokładnie tłumaczyć rozwiązanie, ponieważ pojawia się dopiero po kolejnych nieudanych próbach.
 - Podpowiedzi mają zmniejszać trudność stopniowo: pierwsza wskazuje kierunek, druga konkretny brak, a dopiero późniejsze wyjaśnienie omawia rozwiązanie.
+- Polecenie zadania opisuj przez cel, wymagania i kryteria zaliczenia. Unikaj poleceń typu „wpisz dokładnie...” oraz instrukcji podających komendę, zapytanie lub kod do przepisania.
+- Kod startowy nie może zawierać nazw metod, zapytań lub instrukcji stanowiących zasadniczą część rozwiązania. Zostaw wyłącznie techniczny szkielet niezbędny do uruchomienia pracy.
+- Dla trybu samodzielnego pierwsza podpowiedź ma wskazywać wyłącznie pojęcie lub miejsce w materiale, a nie początek gotowego kodu.
+
+JAK BUDOWAĆ PRAKTYKĘ
+- Daj zwykle 2–4 samodzielne zadania: najpierw jedno krótkie zastosowanie, potem zadanie z nowym kontekstem, a na końcu małe zadanie łączące poznane elementy.
+- Dla SQL możesz najpierw pokazać np. utworzenie bazy „szkola”, a potem polecić samodzielne utworzenie innej bazy, np. „firma”, z jasno opisanymi wymaganiami. Nie podawaj w poleceniu gotowego CREATE DATABASE dla zadania.
+- Przy pracy w XAMPP, phpMyAdmin, systemie Windows, Linux lub innym zewnętrznym narzędziu opisz także rezultat, który uczeń ma uzyskać i sposób, w jaki może go sprawdzić. Jeżeli odpowiedzią jest kod SQL lub HTML, użyj bloku Zadanie z odpowiednim językiem.
+- Nie oceniaj pamięciowego przepisywania. Oceniaj zastosowanie reguły, analizę wyniku, wykrycie błędu lub stworzenie działającego rozwiązania.
+
+QUIZY
+- Quiz służy do sprawdzenia rozumienia, a nie oczywistego rozpoznania definicji.
+- Odpowiedzi błędne mają być wiarygodne, ale jednoznacznie niepoprawne.
+- Zmieniaj pozycję poprawnej odpowiedzi między pytaniami; nie umieszczaj jej stale jako pierwszej. EduHub dodatkowo uporządkuje odpowiedzi podczas importu.
 
 Zwróć wyłącznie gotowe bloki, bez tabel, Markdown, komentarzy i dodatkowego wstępu.
 Każdy blok rozpocznij od KROK i kolejnego numeru. Nie pomijaj numerów.
@@ -370,7 +430,7 @@ Używaj wyłącznie pól pokazanych poniżej. Nie zmieniaj ich nazw.
 Wartość nagrody zapisuj pod polem „Punkty”. Nie używaj osobnego pola „XP”.
 
 TEKST
-KROK 1
+KROK [NUMER]
 Typ bloku
 Tekst
 Tytuł rozdziału
@@ -379,7 +439,7 @@ Treść materiału
 [pełne wyjaśnienie]
 
 WSKAZÓWKA
-KROK 2
+KROK [NUMER]
 Typ bloku
 Wskazówka
 Tytuł wskazówki
@@ -388,7 +448,7 @@ Treść wskazówki
 [krótka praktyczna porada]
 
 OSTRZEŻENIE
-KROK 3
+KROK [NUMER]
 Typ bloku
 Ostrzeżenie
 Tytuł ostrzeżenia
@@ -397,7 +457,7 @@ Co może pójść źle?
 [błąd, skutek i sposób uniknięcia]
 
 INFORMACJA
-KROK 4
+KROK [NUMER]
 Typ bloku
 Informacja
 Tytuł informacji
@@ -406,7 +466,7 @@ Dodatkowy kontekst
 [definicja lub informacja uzupełniająca]
 
 PODSUMOWANIE
-KROK 5
+KROK [NUMER]
 Typ bloku
 Podsumowanie
 Tytuł podsumowania
@@ -415,7 +475,7 @@ Najważniejsze punkty
 [każdy punkt wpisz w osobnym wierszu]
 
 OBRAZ — używaj tylko wtedy, gdy użytkownik podał prawdziwy adres obrazu
-KROK 6
+KROK [NUMER]
 Typ bloku
 Obraz
 Tytuł grafiki
@@ -426,7 +486,7 @@ Adres obrazu
 [pełny adres https]
 
 FILM — używaj tylko wtedy, gdy użytkownik podał prawdziwy link
-KROK 7
+KROK [NUMER]
 Typ bloku
 Film
 Tytuł filmu
@@ -437,7 +497,7 @@ Link do filmu
 [YouTube lub bezpośredni adres wideo]
 
 AUDIO I WYMOWA
-KROK 8
+KROK [NUMER]
 Typ bloku
 Audio i wymowa
 Tytuł ćwiczenia
@@ -452,7 +512,7 @@ Język rozpoznawania
 [en-US, en-GB, de-DE, es-ES, fr-FR, it-IT lub pl-PL]
 
 PRZYKŁAD KODU
-KROK 9
+KROK [NUMER]
 Typ bloku
 Przykład kodu
 Tytuł przykładu
@@ -465,7 +525,7 @@ Kod przykładu
 [kod ilustrujący wyłącznie omawiane pojęcie; nie może być gotowym rozwiązaniem późniejszego zadania]
 
 ZADANIE — jest sprawdzane automatycznie, dlatego musi mieć dokładną poprawną odpowiedź
-KROK 10
+KROK [NUMER]
 Typ bloku
 Zadanie
 Tytuł
@@ -479,7 +539,7 @@ Kod startowy
 Ukryte testy uruchomieniowe
 [jeden test w wierszu: wejście => oczekiwane wyjście; użyj <brak>, jeśli nie ma wejścia]
 Język
-[java, javascript, python albo csharp]
+[java, javascript, python, csharp, sql albo html]
 Poprawna odpowiedź
 [pełna poprawna odpowiedź lub kod]
 Podstawowa podpowiedź (1. błędna próba)
@@ -492,7 +552,7 @@ Punkty
 [liczba od 0 do 1000]
 
 QUIZ — odpowiedzi wpisz jako zwykłe wiersze, bez oznaczeń A, B, C, D. Poprawna odpowiedź musi być pełną treścią jednego z tych wierszy, a nie literą.
-KROK 11
+KROK [NUMER]
 Typ bloku
 Quiz
 Pytanie
@@ -512,7 +572,7 @@ Wyjaśnienie po kolejnych próbach
 [wyjaśnienie reguły]
 
 PLIK — używaj tylko wtedy, gdy użytkownik podał prawdziwy adres pliku
-KROK 12
+KROK [NUMER]
 Typ bloku
 Plik
 Nazwa pliku
@@ -523,7 +583,7 @@ Adres pliku
 [pełny adres https]
 
 CYTAT
-KROK 13
+KROK [NUMER]
 Typ bloku
 Cytat
 Treść cytatu
@@ -534,7 +594,7 @@ Nagłówek cytatu
 [nagłówek]
 
 SEPARATOR
-KROK 14
+KROK [NUMER]
 Typ bloku
 Separator
 Nazwa kolejnej części (opcjonalnie)
@@ -544,15 +604,18 @@ Styl
 
 Nie musisz używać wszystkich typów. Dobieraj je do tematu. Nie twórz fikcyjnych adresów obrazów, filmów ani plików.
 Quiz musi mieć minimum dwie unikalne odpowiedzi. Pole „Poprawna odpowiedź” ma zawierać dokładny tekst wybranej odpowiedzi.
-Lekcja ma być napisana po ludzku, prowadzić krok po kroku, łączyć teorię z praktyką, nie powtarzać treści i kończyć się quizem oraz podsumowaniem.
+Lekcja ma być napisana po ludzku, łączyć teorię z samodzielną praktyką, nie powtarzać treści i kończyć się krótkim podsumowaniem. Quiz dodaj tylko wtedy, gdy naprawdę sprawdza zrozumienie; maksymalnie dwa quizy w lekcji.
 Przed zwróceniem lekcji sprawdź każde zadanie: jeżeli uczeń może je wykonać przez skopiowanie wcześniejszego kodu albo instrukcji, przeprojektuj je tak, aby wymagało samodzielnego myślenia.
+Przed zwróceniem wyniku policz bloki. Jeżeli jest ich więcej niż 10, połącz lub usuń słabsze elementy. Nigdy nie zwracaj KROK 11 ani wyższego.
 
 Temat lekcji: [WPISZ TEMAT]
 Przedmiot: [WPISZ PRZEDMIOT]
 Klasa lub poziom: [WPISZ KLASĘ]
+Numer i miejsce lekcji w kursie: [np. lekcja 4 z 27, etap 2]
 Poziom trudności: [podstawowy, średniozaawansowany albo zaawansowany]
 Tryb wsparcia: [samodzielny, mała podpowiedź, prowadzony krok po kroku albo „zapytaj mnie”]
 Czas: [WPISZ CZAS, np. 45 minut]
 Wcześniej zrealizowane tematy: [WPISZ TEMATY albo „brak”]
+Dalszy temat po tej lekcji: [WPISZ NASTĘPNY TEMAT albo „brak danych”]
 Dostępne wyposażenie: [WPISZ WYPOSAŻENIE]
-Cel lekcji: [WPISZ CEL]`;
+Cel lekcji: [jedna obserwowalna umiejętność, którą uczeń ma wykonać samodzielnie]`;

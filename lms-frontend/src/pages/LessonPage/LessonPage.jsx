@@ -264,7 +264,8 @@ export default function LessonPage() {
     }
 
     function goBack() {
-        navigate(lesson?.moduleId ? `/lessons/${lesson.moduleId}` : "/courses");
+        const courseId = lesson?.courseId || location.state?.courseId;
+        navigate(courseId ? `/modules/${courseId}` : "/courses");
     }
 
     if (loading) {
@@ -285,7 +286,9 @@ export default function LessonPage() {
                         onClick={goBack}
                         className="rounded-xl border border-white/10 bg-white/[0.04] px-5 py-3 font-bold text-gray-200 hover:bg-white/[0.08]"
                     >
-                        Wróć do kursów
+                        {lesson?.courseId || location.state?.courseId
+                            ? "Wróć do kursu"
+                            : "Wróć do kursów"}
                     </button>
                     <button
                         type="button"
@@ -401,8 +404,14 @@ export default function LessonPage() {
                         onNextStep={() => nextBlock && selectBlock(nextBlock)}
                         previousLesson={previousLesson}
                         nextLesson={nextLesson}
-                        onPreviousLesson={() => previousLesson && navigate(`/lesson/${previousLesson.id}`)}
-                        onNextLesson={() => nextLesson && navigate(`/lesson/${nextLesson.id}`)}
+                        onPreviousLesson={() => previousLesson && navigate(
+                            `/lesson/${previousLesson.id}`,
+                            { state: { courseId: lesson.courseId || location.state?.courseId } }
+                        )}
+                        onNextLesson={() => nextLesson && navigate(
+                            `/lesson/${nextLesson.id}`,
+                            { state: { courseId: lesson.courseId || location.state?.courseId } }
+                        )}
                         onBack={goBack}
                         completedAssessments={completedAssessmentCount}
                         totalAssessments={assessmentBlocks.length}

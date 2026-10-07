@@ -419,7 +419,9 @@ export default function ModulePage() {
                                                             <button
                                                                 type="button"
                                                                 disabled={!lessonAccessible}
-                                                                onClick={() => lessonAccessible && navigate(`/lesson/${lesson.id}`)}
+                                                                onClick={() => lessonAccessible && navigate(`/lesson/${lesson.id}`, {
+                                                                    state: { courseId: Number(courseId) }
+                                                                })}
                                                                 aria-label={`Lekcja ${lesson.orderIndex ?? index + 1}: ${lesson.title}`}
                                                                 className="group flex w-56 flex-col items-center text-center disabled:cursor-not-allowed"
                                                             >
@@ -466,7 +468,8 @@ export default function ModulePage() {
                                                                 loading={stepsLoading}
                                                                 error={stepRoadmap.error}
                                                                 onOpenStep={step => navigate(
-                                                                    `/lesson/${lesson.id}?step=${step.id}`
+                                                                    `/lesson/${lesson.id}?step=${step.id}`,
+                                                                    { state: { courseId: Number(courseId) } }
                                                                 )}
                                                             />
                                                         )}
