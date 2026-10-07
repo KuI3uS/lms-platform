@@ -463,7 +463,7 @@ function parseStep(step, warnings, errors) {
     return block;
 }
 
-export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS) {
+export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS, variant = "PROGRAMMING") {
     const warnings = [];
     const errors = [];
     const steps = splitSteps(source);
@@ -479,6 +479,29 @@ export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS) {
     const blocks = steps
         .map((step) => parseStep(step, warnings, errors))
         .filter(Boolean);
+
+    if (String(source || "").trim() && errors.length === 0) {
+        const interactiveTypes = new Set(["AUDIO", "DIALOG", "VOCABULARY", "SENTENCE_BUILDER", "TASK", "QUIZ"]);
+        const interactiveCount = blocks.filter((block) => interactiveTypes.has(block.type)).length;
+        if (blocks.length < Math.min(10, maxBlocks)) {
+            warnings.push("Ta lekcja jest krótka. Dla pełnej, zaawansowanej lekcji zalecamy co najmniej 10 zróżnicowanych bloków.");
+        }
+        if (interactiveCount < Math.min(6, Math.ceil(blocks.length / 2))) {
+            warnings.push("Lekcja ma mało aktywnej praktyki. Dodaj więcej zadań, wymowy, dialogów, układanek lub quizów zamiast kolejnych bloków teorii.");
+        }
+        if (variant === "LANGUAGE") {
+            const types = new Set(blocks.map((block) => block.type));
+            if (!types.has("DIALOG")) {
+                warnings.push("W lekcji językowej brakuje dialogu, który ćwiczy użycie języka w sytuacji komunikacyjnej.");
+            }
+            if (!types.has("AUDIO")) {
+                warnings.push("W lekcji językowej brakuje ćwiczenia wymowy lub mówienia.");
+            }
+            if (!types.has("SENTENCE_BUILDER")) {
+                warnings.push("W lekcji językowej brakuje układania zdania utrwalającego szyk wyrazów.");
+            }
+        }
+    }
 
     return { blocks, warnings, errors };
 }
@@ -528,6 +551,11 @@ Instrukcja dla ucznia
 Słówka — jedno w wierszu
 hello | cześć | Hello, Anna! | hej; dzień dobry
 good morning | dzień dobry | Good morning, Emma!
+bye | cześć, do widzenia | Bye, Leo! | goodbye
+Język audio
+[np. en-GB]
+
+Każdy wiersz słówka ma format „słowo lub zwrot | polskie znaczenie | przykład opcjonalny | inne uznawane odpowiedzi oddzielone średnikami”. Nie przekraczaj 20 pozycji w jednym treningu.
 
 UKŁADANIE ZDANIA — uczeń układa tłumaczenie z 2–6 pomieszanych kafelków. Każdy wyraz oddzielony spacją jest jednym kafelkiem.
 KROK [NUMER]
@@ -541,16 +569,32 @@ Poprawne zdanie po angielsku
 [od 2 do 6 wyrazów w poprawnej kolejności]
 Język
 en-GB
-bye | cześć, do widzenia | Bye, Leo! | goodbye
-Język audio
-[np. en-GB]
-
-Każdy wiersz słówka ma format „słowo lub zwrot | polskie znaczenie | przykład opcjonalny | inne uznawane odpowiedzi oddzielone średnikami”. Nie przekraczaj 20 pozycji w jednym treningu.
 ` : "";
+    const subjectMethodology = languageLesson ? `
+METODYKA LEKCJI JĘZYKOWEJ
+- Najpierw ustal poziom CEFR ucznia, jedną sytuację komunikacyjną i jedno zachowanie końcowe, np. „uczeń samodzielnie zamawia napój i reaguje na dwa pytania sprzedawcy”. Jeżeli danych brakuje, wywnioskuj je z tematu i miejsca w kursie.
+- Używaj naturalnego, współczesnego angielskiego. Wybierz jedną odmianę, en-GB albo en-US, i zachowaj ją konsekwentnie w zapisie, audio, słownictwie i dialogach.
+- Dla A1 używaj częstych słów, krótkich komunikatów, konkretnych sytuacji i polskich podpór. Na kolejnych poziomach stopniowo ograniczaj polski i zwiększaj samodzielność, długość wypowiedzi oraz niejednoznaczność sytuacji.
+- Zbuduj progresję: zrozumiały materiał wejściowy → zauważenie znaczenia lub reguły → kontrolowana praktyka → samodzielne przypomnienie → szyk zdania → wypowiedź na głos → dialog → transfer do nowej sytuacji → krótka powtórka.
+- Co najmniej 60% bloków ma wymagać działania ucznia. Dla lekcji około 45 minut twórz zwykle 12–18 bloków, w tym 7–12 bloków aktywnych. Krótszą lekcję twórz tylko wtedy, gdy użytkownik wyraźnie o nią poprosi.
+- Każdy nowy zwrot wykorzystaj co najmniej trzy razy w różnych czynnościach, np. rozpoznanie, układanie zdania i samodzielna wypowiedź. Nie powtarzaj jednak identycznego pytania ani identycznego przykładu.
+- Dobieraj zadania do celu, zamiast mechanicznie używać wszystkich typów. Pełna lekcja językowa powinna zwykle zawierać słownictwo w kontekście, minimum dwie układanki zdań, minimum dwa ćwiczenia mówienia lub wymowy oraz dialog końcowy.
+- Każda kwestia ucznia w dialogu musi mieć w czwartym polu po znakach || konkretne polskie zdanie do przetłumaczenia, np. „Dzień dobry!”. Nigdy nie wpisuj ogólnej instrukcji „odpowiedz po angielsku”. Dodaj naturalne alternatywy tylko wtedy, gdy naprawdę pasują do kontekstu.
+- Układanka ma zawierać 2–6 sensownych kafelków. Dłuższą wypowiedź rozbij na kilka celowych ćwiczeń, a nie na przypadkowe fragmenty.
+- Dystraktory quizu mają odzwierciedlać typowe błędy ucznia, ale poprawna odpowiedź musi być jednoznaczna. Sprawdzaj znaczenie, dobór zwrotu, szyk, gramatykę i reakcję w sytuacji, a nie samą pamięć definicji.
+- Nie ucz kilku nowych reguł naraz. Wyjaśniaj krótko, przykład pokazuj w innym kontekście niż zadanie, a błędną odpowiedź wykorzystuj do konkretnej, życzliwej korekty.
+` : `
+METODYKA LEKCJI PRZEDMIOTOWEJ
+- Najpierw ustal jedną obserwowalną umiejętność końcową i dowód jej opanowania. Jeśli danych brakuje, wywnioskuj rozsądny poziom z tematu oraz miejsca w kursie.
+- Zbuduj progresję: aktywacja wcześniejszej wiedzy → krótkie wyjaśnienie → przykład → zadanie kontrolowane → samodzielne zastosowanie w nowym kontekście → diagnoza błędu → transfer → podsumowanie.
+- Co najmniej 60% bloków ma wymagać działania ucznia. Dla lekcji około 45 minut twórz zwykle 10–18 bloków i 2–5 zróżnicowanych zadań praktycznych.
+- Trudność zwiększaj jednym wymiarem naraz. Przykład i zadanie muszą korzystać z innych danych, nazw lub sytuacji.
+- Sprawdzaj rozumienie i zastosowanie, nie przepisywanie gotowego rozwiązania ani pamięciowe odtworzenie definicji.
+`;
     return `Jesteś metodykiem i nauczycielem. Przygotuj kompletną lekcję do importu w EduHub.
 
 NAJWAŻNIEJSZA ZASADA LEKCJI
-- Jedna lekcja rozwija jedną konkretną umiejętność i zawiera od 6 do maksymalnie ${maxBlocks} bloków.
+- Jedna lekcja rozwija jedną konkretną umiejętność i zawiera od 10 do maksymalnie ${maxBlocks} bloków, chyba że użytkownik wyraźnie poprosi o krótszą formę.
 - Najpierw zaplanuj lekcję wewnętrznie, ale nie pokazuj planu ani komentarzy. Zwróć tylko gotowe bloki.
 - Zachowaj logiczny rytm: krótkie wyjaśnienie problemu, demonstracja jednego nowego pojęcia na innym przykładzie, samodzielna praktyka o rosnącej trudności, sprawdzenie zrozumienia i krótkie podsumowanie.
 - Nie próbuj używać wszystkich dostępnych typów bloków. Każdy blok musi mieć wyraźny cel; usuń treści powtarzające to samo innymi słowami.
@@ -562,16 +606,20 @@ SPÓJNOŚĆ Z CAŁYM KURSEM
 - Każde ćwiczenie musi sprawdzać dokładnie to, co zostało wcześniej wyjaśnione, ale nie może być kopią przykładu.
 - Nazwy, dane i sytuacja w przykładzie oraz w zadaniu muszą się różnić. Uczeń ma przenieść zasadę na nowy problem.
 
-ZANIM UTWORZYSZ LEKCJĘ
-Najpierw sprawdź, czy użytkownik podał tryb wsparcia ucznia. Jeżeli go nie podał, nie generuj jeszcze lekcji. Zadaj tylko jedno krótkie pytanie:
-„Jaki tryb wsparcia zastosować: 1. samodzielny, 2. mała podpowiedź, 3. prowadzony krok po kroku?”
+SAMODZIELNE PLANOWANIE
+- Nie zadawaj użytkownikowi pytań uzupełniających. Jeżeli brakuje danych, przyjmij rozsądne założenia odpowiednie do wieku, poziomu, tematu i miejsca lekcji w kursie.
+- Samodzielnie dobierz liczbę bloków, rodzaje ćwiczeń, tempo, poziom języka, tryb wsparcia i liczbę powtórek. Nie używaj stałego schematu, jeżeli nie pasuje do celu.
+- Przed napisaniem bloków wewnętrznie określ: co uczeń już prawdopodobnie umie, czego ma nauczyć się teraz, jakie błędy są typowe i po czym będzie wiadomo, że cel osiągnął. Nie pokazuj tej analizy w odpowiedzi.
+- Jeżeli temat jest zbyt szeroki na jedną lekcję, wybierz najważniejszy pierwszy krok i zachowaj spójność z następną lekcją.
 
 Znaczenie trybów:
 1. Samodzielny — uczeń otrzymuje przede wszystkim opis problemu, wymagania i kryteria ukończenia. Nie pokazuj gotowego rozwiązania, gotowego kodu, szczegółowego algorytmu ani kolejności wszystkich czynności. Kod startowy ma zawierać wyłącznie niezbędny szkielet albo może być pusty.
 2. Mała podpowiedź — uczeń otrzymuje krótkie naprowadzenie na pojęcie, narzędzie lub pierwszy krok. Nie pokazuj kompletnego rozwiązania ani kodu, który wystarczy przepisać.
 3. Prowadzony krok po kroku — można podzielić nowe i trudne zagadnienie na etapy, ale uczeń nadal sam wykonuje kluczowe fragmenty. Nie wklejaj gotowego rozwiązania zadania w teorii lub przykładzie kodu.
 
-Jeżeli poziom został określony jako „średniozaawansowany” albo „zaawansowany”, automatycznie wybierz tryb 1 — samodzielny i nie zadawaj pytania o tryb. Jeżeli poziom jest „podstawowy” lub uczeń poznaje zagadnienie pierwszy raz, zapytaj o tryb, chyba że użytkownik wskazał go wprost.
+Jeżeli użytkownik nie wskazał trybu, dobierz go sam: dla pierwszego kontaktu i poziomu podstawowego zastosuj prowadzenie krok po kroku, dla utrwalania małą podpowiedź, a dla poziomu średniozaawansowanego i zaawansowanego tryb samodzielny. W jednej lekcji możesz stopniowo zmniejszać wsparcie.
+
+${subjectMethodology}
 
 NIE PODAWAJ ROZWIĄZANIA UCZNIOWI
 - Nie twórz przykładu kodu rozwiązującego późniejsze zadanie przez zmianę samych nazw lub liczb.
@@ -779,21 +827,25 @@ Styl
 
 Nie musisz używać wszystkich typów. Dobieraj je do tematu. Nie twórz fikcyjnych adresów obrazów, filmów ani plików.
 Quiz musi mieć minimum dwie unikalne odpowiedzi. Pole „Poprawna odpowiedź” ma zawierać dokładny tekst wybranej odpowiedzi.
-Lekcja ma być napisana po ludzku, łączyć teorię z samodzielną praktyką, nie powtarzać treści i kończyć się krótkim podsumowaniem. Quiz dodaj tylko wtedy, gdy naprawdę sprawdza zrozumienie; maksymalnie dwa quizy w lekcji.
+Lekcja ma być napisana po ludzku, łączyć krótkie objaśnienia z dużą ilością samodzielnej praktyki, nie powtarzać treści i kończyć się krótkim podsumowaniem. Quiz dodaj tylko wtedy, gdy naprawdę sprawdza zrozumienie; maksymalnie dwa quizy w lekcji. Większą liczbę ćwiczeń realizuj przez zadania, dialogi, audio, trening słówek i układanie zdań.
 Przed zwróceniem lekcji sprawdź każde zadanie: jeżeli uczeń może je wykonać przez skopiowanie wcześniejszego kodu albo instrukcji, przeprojektuj je tak, aby wymagało samodzielnego myślenia.
+Wykonaj cichy audyt jakości: sprawdź poprawność merytoryczną i językową, zgodność trudności z poziomem, różnorodność praktyki, jednoznaczność poleceń i odpowiedzi, sens każdej podpowiedzi oraz to, czy wszystkie elementy rzeczywiście prowadzą do celu lekcji. Popraw słabe elementy przed zwróceniem wyniku. Nie pokazuj audytu.
 Przed zwróceniem wyniku policz bloki. Jeżeli jest ich więcej niż ${maxBlocks}, połącz lub usuń słabsze elementy. Nigdy nie zwracaj KROK ${maxBlocks + 1} ani wyższego.
 
+Poniższe dane są wskazówkami, nie formularzem wymagającym uzupełnienia. Użytkownik może podać tylko temat. Wszystkie brakujące informacje wywnioskuj samodzielnie i od razu utwórz najlepszą możliwą lekcję.
+
 Temat lekcji: [WPISZ TEMAT]
-Przedmiot: [WPISZ PRZEDMIOT]
-Klasa lub poziom: [WPISZ KLASĘ]
-Numer i miejsce lekcji w kursie: [np. lekcja 4 z 27, etap 2]
-Poziom trudności: [podstawowy, średniozaawansowany albo zaawansowany]
-Tryb wsparcia: [samodzielny, mała podpowiedź, prowadzony krok po kroku albo „zapytaj mnie”]
-Czas: [WPISZ CZAS, np. 45 minut]
-Wcześniej zrealizowane tematy: [WPISZ TEMATY albo „brak”]
-Dalszy temat po tej lekcji: [WPISZ NASTĘPNY TEMAT albo „brak danych”]
-Dostępne wyposażenie: [WPISZ WYPOSAŻENIE]
-Cel lekcji: [jedna obserwowalna umiejętność, którą uczeń ma wykonać samodzielnie]`;
+Przedmiot lub język: [opcjonalnie]
+Klasa, wiek lub poziom CEFR: [opcjonalnie]
+Numer i miejsce lekcji w kursie: [opcjonalnie, np. lekcja 4 z 27]
+Odmiana języka: [opcjonalnie, np. en-GB lub en-US]
+Poziom trudności: [opcjonalnie]
+Tryb wsparcia: [opcjonalnie; jeśli brak, dobierz sam]
+Czas: [opcjonalnie; domyślnie 45 minut]
+Wcześniej zrealizowane tematy: [opcjonalnie]
+Dalszy temat po tej lekcji: [opcjonalnie]
+Dostępne wyposażenie: [opcjonalnie]
+Cel lekcji: [opcjonalnie; jeśli brak, sformułuj jedną obserwowalną umiejętność]`;
 }
 
 export const CHAT_GPT_LESSON_PROMPT = getChatGptLessonPrompt();
