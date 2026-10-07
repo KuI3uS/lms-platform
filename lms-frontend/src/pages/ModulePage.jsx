@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import {
     BsArrowLeft,
+    BsChevronDown,
     BsCheckCircle,
     BsLockFill,
     BsPlayFill,
@@ -48,6 +49,7 @@ export default function ModulePage() {
     const [newModule, setNewModule] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [moduleExpansion, setModuleExpansion] = useState({});
     const [stepRoadmap, setStepRoadmap] = useState({
         lessonId: null,
         steps: [],
@@ -166,6 +168,28 @@ export default function ModulePage() {
         && !lesson.belowCurrentLanguageLevel
     )) || null;
     const activeLessonId = activeLesson?.id ?? null;
+    const activeModuleId = modules.find(module => (
+        (module.lessons || []).some(lesson => lesson.id === activeLessonId)
+    ))?.id;
+    const isModuleExpanded = module => (
+        moduleExpansion[`${courseId}:${module.id}`] ?? (module.id === activeModuleId)
+    );
+    const expandedModuleCount = modules.filter(isModuleExpanded).length;
+    const toggleModule = module => {
+        const expanded = isModuleExpanded(module);
+        setModuleExpansion(previous => ({
+            ...previous,
+            [`${courseId}:${module.id}`]: !expanded
+        }));
+    };
+    const setAllModulesExpanded = expanded => {
+        setModuleExpansion(previous => ({
+            ...previous,
+            ...Object.fromEntries(modules.map(module => (
+                [`${courseId}:${module.id}`, expanded]
+            )))
+        }));
+    };
     const progressLessons = role === "ADMIN"
         ? allLessons
         : allLessons.filter(lesson => lesson.hasContent !== false);
@@ -306,7 +330,30 @@ export default function ModulePage() {
                 </section>
             )}
 
-            <section className="mx-auto max-w-3xl space-y-24 pb-16">
+            <section className="mx-auto max-w-3xl space-y-4 pb-16">
+                {modules.length > 0 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 px-2">
+                        <p className="text-sm font-bold text-gray-400">Etapy kursu</p>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                disabled={expandedModuleCount === 0}
+                                onClick={() => setAllModulesExpanded(false)}
+                                className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-gray-300 transition hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-default disabled:opacity-40"
+                            >
+                                Zwiń wszystkie
+                            </button>
+                            <button
+                                type="button"
+                                disabled={expandedModuleCount === modules.length}
+                                onClick={() => setAllModulesExpanded(true)}
+                                className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-gray-300 transition hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-default disabled:opacity-40"
+                            >
+                                Rozwiń wszystkie
+                            </button>
+                        </div>
+                    </div>
+                )}
                 {modules.length === 0 ? (
                     <div className="py-16 text-center text-gray-500">
                         Brak sekcji w tym kursie.
@@ -327,31 +374,48 @@ export default function ModulePage() {
                         const moduleProgress = progressEligibleLessons.length
                             ? Math.round((completedLessons / progressEligibleLessons.length) * 100)
                             : 0;
+                        const expanded = isModuleExpanded(module);
+                        const lessonsPanelId = `module-${courseId}-${module.id}-lessons`;
 
                         return (
                             <article
                                 key={module.id}
-                                className="relative"
+                                className="relative rounded-2xl border border-white/10 bg-white/[0.02]"
                             >
-                                <header className="flex flex-col gap-4 border-t border-white/10 px-2 pt-8 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="flex items-center gap-4">
-                                            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-500/15 text-base font-black text-blue-200 ring-1 ring-blue-300/20">
-                                                {moduleIndex + 1}
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">
-                                                    {isLanguageCourse ? `CEFR ${module.cefrLevel}` : `Etap ${moduleIndex + 1}`}
-                                                </p>
-                                                <h2 className="mt-1 text-xl font-black sm:text-2xl">
-                                                    {module.name}
-                                                </h2>
-                                                <p className="mt-1 text-xs text-gray-500">
-                                                    {progressEligibleLessons.length} {progressEligibleLessons.length === 1 ? "dostępna lekcja" : "dostępnych lekcji"} · ukończono {completedLessons}
-                                                    {isLanguageCourse && !module.levelUnlocked ? " · poziom zablokowany" : ""}
-                                                    {levelBelowCurrent && completedLessons < lessons.length ? " · potwierdzony testem kwalifikacyjnym" : ""}
-                                                </p>
-                                            </div>
+                                <header className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                                    <div className="flex min-w-0 flex-1 items-center gap-4">
+                                        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-500/15 text-base font-black text-blue-200 ring-1 ring-blue-300/20">
+                                            {moduleIndex + 1}
                                         </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">
+                                                {isLanguageCourse ? `CEFR ${module.cefrLevel}` : `Etap ${moduleIndex + 1}`}
+                                            </p>
+                                            <h2 className="mt-1 text-lg font-black sm:text-xl">
+                                                <button
+                                                    type="button"
+                                                    aria-expanded={expanded}
+                                                    aria-controls={lessonsPanelId}
+                                                    aria-label={`${expanded ? "Zwiń" : "Rozwiń"} etap ${module.name}`}
+                                                    onClick={() => toggleModule(module)}
+                                                    className="flex w-full items-center justify-between gap-3 rounded-lg text-left transition hover:text-cyan-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+                                                >
+                                                    <span>{module.name}</span>
+                                                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/5 text-blue-200">
+                                                        <BsChevronDown
+                                                            aria-hidden="true"
+                                                            className={`transition-transform duration-200 motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
+                                                        />
+                                                    </span>
+                                                </button>
+                                            </h2>
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                {progressEligibleLessons.length} {progressEligibleLessons.length === 1 ? "dostępna lekcja" : "dostępnych lekcji"} · ukończono {completedLessons}
+                                                {isLanguageCourse && !module.levelUnlocked ? " · poziom zablokowany" : ""}
+                                                {levelBelowCurrent && completedLessons < lessons.length ? " · potwierdzony testem kwalifikacyjnym" : ""}
+                                            </p>
+                                        </div>
+                                    </div>
 
                                     <div className="flex items-center gap-3 self-end sm:self-auto">
                                         <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
@@ -387,8 +451,12 @@ export default function ModulePage() {
                                     </div>
                                 </header>
 
-                                <div className="pt-8">
-                                    {lessons.length === 0 ? (
+                                <div
+                                    id={lessonsPanelId}
+                                    hidden={!expanded}
+                                    className="border-t border-white/10 pb-6 pt-6"
+                                >
+                                    {expanded && (lessons.length === 0 ? (
                                         <div className="flex flex-col items-center py-5 text-center">
                                             <div className="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-gray-700 text-gray-600">
                                                 <BsLockFill />
@@ -485,7 +553,7 @@ export default function ModulePage() {
                                                 );
                                             })}
                                         </ol>
-                                    )}
+                                    ))}
                                 </div>
                             </article>
                         );
