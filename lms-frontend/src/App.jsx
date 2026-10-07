@@ -21,8 +21,7 @@ import AdminPage from "./pages/AdminPage";
 import AddCoursePage from "./pages/AddCoursePage";
 import AddQuestionPage from "./pages/AddQuestionPage";
 import AdminUsers from "./pages/admin/AdminUsers";
-import AdminLessonPageOld from "./pages/AdminLessonPage/AdminLessonPage.jsx";
-
+import AdminLessonPage from "./pages/AdminLessonPage/AdminLessonPage.jsx";
 
 /* ===== ROUTE GUARDS ===== */
 import AdminRoute from "./components/AdminRoute";
@@ -90,7 +89,7 @@ export default function App() {
 
                     {/* ===== ADMIN LESSON SYSTEM ===== */}
                     <Route path="/admin/lessons/:moduleId" element={
-                        <AdminRoute><AdminLessonPageOld /></AdminRoute>
+                        <AdminRoute><AdminLessonPage /></AdminRoute>
                     } />
                     <Route path="/admin/submissions" element={
                         <AdminRoute><AdminSubmissionsPage /></AdminRoute>
