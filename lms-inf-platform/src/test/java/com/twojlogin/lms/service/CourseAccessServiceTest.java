@@ -32,6 +32,7 @@ class CourseAccessServiceTest {
                 mock(CourseRepository.class),
                 mock(CourseModuleRepository.class),
                 mock(LessonRepository.class),
+                mock(LessonBlockRepository.class),
                 enrollmentRepository,
                 mock(CourseOrderRepository.class),
                 mock(LanguageProgressService.class)

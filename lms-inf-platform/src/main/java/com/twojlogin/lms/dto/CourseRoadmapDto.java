@@ -28,7 +28,8 @@ public record CourseRoadmapDto(
             String title,
             Integer orderIndex,
             boolean completed,
-            boolean canAccess
+            boolean canAccess,
+            boolean hasContent
     ) {
     }
 }

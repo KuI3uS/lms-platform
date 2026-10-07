@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import {
+    BsArrowLeft,
     BsCheckCircle,
     BsLockFill,
     BsPlayFill,
@@ -157,11 +158,14 @@ export default function ModulePage() {
         && !lesson.belowCurrentLanguageLevel
     )) || null;
     const activeLessonId = activeLesson?.id ?? null;
-    const completedCount = allLessons.filter(lesson => (
+    const progressLessons = role === "ADMIN"
+        ? allLessons
+        : allLessons.filter(lesson => lesson.hasContent !== false);
+    const completedCount = progressLessons.filter(lesson => (
         lesson.completed || lesson.belowCurrentLanguageLevel
     )).length;
-    const progress = allLessons.length > 0
-        ? Math.round((completedCount / allLessons.length) * 100)
+    const progress = progressLessons.length > 0
+        ? Math.round((completedCount / progressLessons.length) * 100)
         : 0;
 
     useEffect(() => {
@@ -215,6 +219,14 @@ export default function ModulePage() {
         <div className="mx-auto max-w-5xl space-y-10 text-white">
             <header className="relative px-2 py-3 sm:px-4">
                 <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
+                <button
+                    type="button"
+                    onClick={() => navigate("/courses")}
+                    className="relative mb-7 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-black text-gray-300 transition hover:border-cyan-300/30 hover:bg-white/[0.07] hover:text-white"
+                >
+                    <BsArrowLeft />
+                    Wróć do kursów
+                </button>
                 <div className="relative flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <p className="mb-3 text-sm font-semibold text-blue-300">
@@ -252,7 +264,7 @@ export default function ModulePage() {
                             />
                         </div>
                         <p className="mt-2 text-xs text-gray-600">
-                            Zaliczono {completedCount} z {allLessons.length} lekcji lub ich odpowiedników
+                            Zaliczono {completedCount} z {progressLessons.length} dostępnych lekcji lub ich odpowiedników
                         </p>
                         {isLanguageCourse && (
                             <button
@@ -294,13 +306,18 @@ export default function ModulePage() {
                 ) : (
                     modules.map((module, moduleIndex) => {
                         const lessons = module.lessons || [];
-                        const completedLessons = lessons.filter(lesson => lesson.completed).length;
+                        const progressEligibleLessons = role === "ADMIN"
+                            ? lessons
+                            : lessons.filter(lesson => lesson.hasContent !== false);
+                        const completedLessons = progressEligibleLessons.filter(
+                            lesson => lesson.completed
+                        ).length;
                         const levelBelowCurrent = isLanguageCourse && isCefrBelow(
                             module.cefrLevel,
                             course?.unlockedCefrLevel
                         );
-                        const moduleProgress = lessons.length
-                            ? Math.round((completedLessons / lessons.length) * 100)
+                        const moduleProgress = progressEligibleLessons.length
+                            ? Math.round((completedLessons / progressEligibleLessons.length) * 100)
                             : 0;
 
                         return (
@@ -321,7 +338,7 @@ export default function ModulePage() {
                                                     {module.name}
                                                 </h2>
                                                 <p className="mt-1 text-xs text-gray-500">
-                                                    {lessons.length} {lessons.length === 1 ? "lekcja" : "lekcji"} · ukończono {completedLessons}
+                                                    {progressEligibleLessons.length} {progressEligibleLessons.length === 1 ? "dostępna lekcja" : "dostępnych lekcji"} · ukończono {completedLessons}
                                                     {isLanguageCourse && !module.levelUnlocked ? " · poziom zablokowany" : ""}
                                                     {levelBelowCurrent && completedLessons < lessons.length ? " · potwierdzony testem kwalifikacyjnym" : ""}
                                                 </p>
@@ -384,6 +401,11 @@ export default function ModulePage() {
                                                     : [];
                                                 const stepsLoading = current
                                                     && Number(stepRoadmap.lessonId) !== Number(lesson.id);
+                                                const hasContent = lesson.hasContent !== false;
+                                                const lessonAccessible = Boolean(
+                                                    lesson.canAccess
+                                                    && (role === "ADMIN" || hasContent)
+                                                );
 
                                                 return (
                                                     <li
@@ -396,8 +418,8 @@ export default function ModulePage() {
                                                         >
                                                             <button
                                                                 type="button"
-                                                                disabled={!lesson.canAccess}
-                                                                onClick={() => lesson.canAccess && navigate(`/lesson/${lesson.id}`)}
+                                                                disabled={!lessonAccessible}
+                                                                onClick={() => lessonAccessible && navigate(`/lesson/${lesson.id}`)}
                                                                 aria-label={`Lekcja ${lesson.orderIndex ?? index + 1}: ${lesson.title}`}
                                                                 className="group flex w-56 flex-col items-center text-center disabled:cursor-not-allowed"
                                                             >
@@ -409,13 +431,13 @@ export default function ModulePage() {
                                                                 <span className={`relative grid h-20 w-20 place-items-center rounded-full border-2 border-b-[7px] text-2xl font-black transition-all duration-200 motion-safe:group-hover:-translate-y-1 motion-safe:group-active:translate-y-0 ${
                                                                     lesson.completed
                                                                         ? "border-emerald-300/70 border-b-emerald-700 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                                                                        : lesson.canAccess
+                                                                        : lessonAccessible
                                                                             ? "border-blue-300/80 border-b-blue-800 bg-blue-600 text-white shadow-xl shadow-blue-500/25"
                                                                             : "border-gray-700 border-b-gray-950 bg-gray-800 text-gray-600"
                                                                 }`}>
                                                                     {lesson.completed ? (
                                                                         <BsCheckCircle size={30} />
-                                                                    ) : lesson.canAccess ? (
+                                                                    ) : lessonAccessible ? (
                                                                         <BsPlayFill className="ml-1" size={28} />
                                                                     ) : (
                                                                         <BsLockFill size={23} />
@@ -425,10 +447,15 @@ export default function ModulePage() {
                                                                     Lekcja {lesson.orderIndex ?? index + 1}
                                                                 </span>
                                                                 <span className={`mt-1 line-clamp-2 max-w-52 text-sm font-black leading-5 ${
-                                                                    lesson.canAccess ? "text-gray-100" : "text-gray-600"
+                                                                    lessonAccessible ? "text-gray-100" : "text-gray-600"
                                                                 }`}>
                                                                     {lesson.title}
                                                                 </span>
+                                                                {!hasContent && role !== "ADMIN" && (
+                                                                    <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-300/60">
+                                                                        Materiały w przygotowaniu
+                                                                    </span>
+                                                                )}
                                                             </button>
                                                         </div>
 
