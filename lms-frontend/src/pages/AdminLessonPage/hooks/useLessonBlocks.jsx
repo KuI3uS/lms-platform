@@ -32,6 +32,8 @@ export default function useLessonBlocks() {
     const [blocksByLesson, setBlocksByLesson] = useState({});
 
     const [blockForms, setBlockForms] = useState({});
+    const [savingByLesson, setSavingByLesson] = useState({});
+    const [errorsByLesson, setErrorsByLesson] = useState({});
 
     async function loadBlocks(lessonId) {
 
@@ -62,17 +64,27 @@ export default function useLessonBlocks() {
 
         if (!validateBlock(block)) return;
 
-        await apiFetch(
-            `/lesson-blocks/lesson/${lessonId}`,
-            {
-                method: "POST",
-                body: JSON.stringify(block)
-            }
-        );
+        try {
+            setSaving(lessonId, true);
+            clearError(lessonId);
+            const saved = await apiFetch(
+                `/lesson-blocks/lesson/${lessonId}`,
+                {
+                    method: "POST",
+                    body: JSON.stringify(toRequest(block))
+                }
+            );
 
-        await loadBlocks(lessonId);
-
-        resetBlockForm(lessonId);
+            setBlocksByLesson(prev => ({
+                ...prev,
+                [lessonId]: [...(prev[lessonId] || []), saved]
+            }));
+            resetBlockForm(lessonId);
+        } catch (error) {
+            setError(lessonId, error);
+        } finally {
+            setSaving(lessonId, false);
+        }
 
     }
 
@@ -89,17 +101,29 @@ export default function useLessonBlocks() {
 
         if (!validateBlock(block)) return;
 
-        await apiFetch(
-            `/lesson-blocks/${blockId}`,
-            {
-                method: "PUT",
-                body: JSON.stringify(block)
-            }
-        );
+        try {
+            setSaving(lessonId, true);
+            clearError(lessonId);
+            const saved = await apiFetch(
+                `/lesson-blocks/${blockId}`,
+                {
+                    method: "PUT",
+                    body: JSON.stringify(toRequest(block))
+                }
+            );
 
-        await loadBlocks(lessonId);
-
-        resetBlockForm(lessonId);
+            setBlocksByLesson(prev => ({
+                ...prev,
+                [lessonId]: (prev[lessonId] || []).map(item =>
+                    item.id === blockId ? saved : item
+                )
+            }));
+            resetBlockForm(lessonId);
+        } catch (error) {
+            setError(lessonId, error);
+        } finally {
+            setSaving(lessonId, false);
+        }
 
     }
 
@@ -213,7 +237,41 @@ export default function useLessonBlocks() {
             }
         }
 
+        if (block.type === "TASK") {
+            if (!block.instruction?.trim()) {
+                alert("Dodaj polecenie do zadania.");
+                return false;
+            }
+            if (!block.expectedAnswer?.trim()) {
+                alert("Dodaj poprawną odpowiedź do zadania.");
+                return false;
+            }
+        }
+
         return true;
+    }
+
+    function toRequest(block) {
+        const request = { ...block };
+        delete request.id;
+        delete request.lessonId;
+        delete request.lesson;
+        return request;
+    }
+
+    function setSaving(lessonId, saving) {
+        setSavingByLesson(prev => ({ ...prev, [lessonId]: saving }));
+    }
+
+    function setError(lessonId, error) {
+        setErrorsByLesson(prev => ({
+            ...prev,
+            [lessonId]: error?.message || "Nie udało się zapisać bloku."
+        }));
+    }
+
+    function clearError(lessonId) {
+        setErrorsByLesson(prev => ({ ...prev, [lessonId]: "" }));
     }
 
     return {
@@ -221,6 +279,8 @@ export default function useLessonBlocks() {
         blocksByLesson,
 
         blockForms,
+        savingByLesson,
+        errorsByLesson,
 
         emptyBlock,
 

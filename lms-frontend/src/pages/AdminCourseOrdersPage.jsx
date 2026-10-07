@@ -107,6 +107,11 @@ export default function AdminCourseOrdersPage() {
                                     <div>
                                         <p className="text-xs uppercase tracking-wider text-slate-600">Kwota</p>
                                         <p className="mt-1 font-black">{formatPrice(order.amount)}</p>
+                                        {Number(order.discountAmount || 0) > 0 && (
+                                            <p className="mt-1 text-xs font-bold text-emerald-300">
+                                                Zniżka: −{formatPrice(order.discountAmount)}
+                                            </p>
+                                        )}
                                     </div>
                                     <div>
                                         <p className="text-xs uppercase tracking-wider text-slate-600">Status</p>

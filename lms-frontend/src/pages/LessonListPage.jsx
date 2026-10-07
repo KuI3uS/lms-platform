@@ -19,6 +19,7 @@ export default function LessonListPage() {
 
     const [lessons, setLessons] = useState([]);
     const [moduleName, setModuleName] = useState("Ścieżka nauki");
+    const [learningStats, setLearningStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -31,12 +32,15 @@ export default function LessonListPage() {
 
             const [
                 moduleData,
-                lessonsData
+                lessonsData,
+                statsData
             ] = await Promise.all([
 
                 apiFetch(`/modules/${moduleId}`).catch(() => null),
 
-                apiFetch(`/lessons/module/${moduleId}`)
+                apiFetch(`/lessons/module/${moduleId}`),
+
+                apiFetch("/learning-stats")
 
             ]);
 
@@ -57,6 +61,7 @@ export default function LessonListPage() {
                 )
 
             );
+            setLearningStats(statsData);
 
         }
         catch (e) {
@@ -131,14 +136,9 @@ export default function LessonListPage() {
             ? Math.round((completed / lessons.length) * 100)
             : 0;
 
-    const xp =
-        completed * 20;
+    const xp = Number(learningStats?.xp || 0);
 
-    const level =
-        Math.max(
-            1,
-            Math.floor(xp / 150) + 1
-        );
+    const level = Number(learningStats?.level || 1);
 
     const currentLesson =
         lessons.find(
@@ -405,7 +405,7 @@ export default function LessonListPage() {
                 <StatCard
                     icon={<BsFire size={22} />}
                     value={xp}
-                    label="XP"
+                    label="Łączne XP"
                     color="orange"
                 />
 

@@ -137,6 +137,7 @@ export default function LessonPage() {
                 : response;
 
             setResults(previous => ({ ...previous, [blockId]: normalizedResponse }));
+            window.dispatchEvent(new Event("eduhub:stats-changed"));
 
             if (normalizedResponse.lessonCompleted) {
                 markLessonCompleted();
@@ -170,6 +171,7 @@ export default function LessonPage() {
             if (taskBlocks.length === 0) {
                 await apiFetch(`/lessons/${lessonId}/complete`, { method: "POST" });
                 markLessonCompleted();
+                window.dispatchEvent(new Event("eduhub:stats-changed"));
                 setFinishResult({
                     success: true,
                     message: "Lekcja została ukończona.",
@@ -203,6 +205,7 @@ export default function LessonPage() {
 
             await apiFetch(`/lessons/${lessonId}/complete`, { method: "POST" });
             markLessonCompleted();
+            window.dispatchEvent(new Event("eduhub:stats-changed"));
             setFinishResult({
                 success: true,
                 message: "Wszystkie odpowiedzi są poprawne. Lekcja została ukończona!",

@@ -16,17 +16,18 @@ import java.util.Set;
 @Service
 public class LearningStatsService {
 
-    private static final int XP_PER_COMPLETED_LESSON = 20;
-
     private final UserRepository userRepository;
     private final LessonProgressRepository lessonProgressRepository;
+    private final GamificationService gamificationService;
 
     public LearningStatsService(
             UserRepository userRepository,
-            LessonProgressRepository lessonProgressRepository
+            LessonProgressRepository lessonProgressRepository,
+            GamificationService gamificationService
     ) {
         this.userRepository = userRepository;
         this.lessonProgressRepository = lessonProgressRepository;
+        this.gamificationService = gamificationService;
     }
 
     public LearningStatsDto getFor(Authentication authentication) {
@@ -34,10 +35,26 @@ public class LearningStatsService {
         long completedLessons = lessonProgressRepository.countByUserIdAndCompletedTrue(user.getId());
         List<LocalDateTime> completedDates = lessonProgressRepository.findCompletedDatesByUserId(user.getId());
 
-        int xp = Math.toIntExact(completedLessons * XP_PER_COMPLETED_LESSON);
         int streakDays = calculateStreak(completedDates, LocalDate.now());
+        GamificationService.GamificationSnapshot stats =
+                gamificationService.snapshot(user);
 
-        return new LearningStatsDto(xp, streakDays, completedLessons);
+        return new LearningStatsDto(
+                stats.xp(),
+                stats.level(),
+                stats.levelStartXp(),
+                stats.nextLevelXp(),
+                stats.xpIntoLevel(),
+                stats.xpForNextLevel(),
+                streakDays,
+                stats.taskStreak(),
+                stats.bestTaskStreak(),
+                stats.xpMultiplier(),
+                completedLessons,
+                stats.discountBalance(),
+                stats.nextRewardLevel(),
+                stats.nextRewardAmount()
+        );
     }
 
     static int calculateStreak(List<LocalDateTime> activityDates, LocalDate today) {

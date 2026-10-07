@@ -24,6 +24,7 @@ public class CourseOrderService {
     private final UserRepository userRepository;
     private final CourseAccessService accessService;
     private final NotificationService notificationService;
+    private final GamificationService gamificationService;
 
     public CourseOrderService(
             CourseRepository courseRepository,
@@ -31,7 +32,8 @@ public class CourseOrderService {
             CourseEnrollmentRepository enrollmentRepository,
             UserRepository userRepository,
             CourseAccessService accessService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            GamificationService gamificationService
     ) {
         this.courseRepository = courseRepository;
         this.orderRepository = orderRepository;
@@ -39,10 +41,15 @@ public class CourseOrderService {
         this.userRepository = userRepository;
         this.accessService = accessService;
         this.notificationService = notificationService;
+        this.gamificationService = gamificationService;
     }
 
     @Transactional
-    public CourseOrderDto create(Long courseId, Authentication authentication) {
+    public CourseOrderDto create(
+            Long courseId,
+            BigDecimal requestedDiscount,
+            Authentication authentication
+    ) {
         User user = accessService.currentUser(authentication);
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -66,7 +73,12 @@ public class CourseOrderService {
         }
 
         if (accessService.isFree(course)) {
-            CourseOrder order = newOrder(user, course, BigDecimal.ZERO);
+            CourseOrder order = newOrder(
+                    user,
+                    course,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO
+            );
             order.setStatus(CourseOrderStatus.PAID);
             order.setPaidAt(LocalDateTime.now());
             CourseOrder saved = orderRepository.save(order);
@@ -87,9 +99,21 @@ public class CourseOrderService {
                         courseId,
                         CourseOrderStatus.PENDING
                 )
-                .orElseGet(() -> orderRepository.save(
-                        newOrder(user, course, course.getPrice())
-                ));
+                .orElse(null);
+
+        if (pending == null) {
+            BigDecimal discount = gamificationService.reserveDiscount(
+                    user,
+                    course.getPrice(),
+                    requestedDiscount
+            );
+            pending = orderRepository.save(newOrder(
+                    user,
+                    course,
+                    course.getPrice(),
+                    discount
+            ));
+        }
 
         return CourseOrderDto.from(pending, true);
     }
@@ -159,6 +183,13 @@ public class CourseOrderService {
                     "Opłaconego zamówienia nie można anulować"
             );
         }
+        if (order.getStatus() == CourseOrderStatus.CANCELLED) {
+            return CourseOrderDto.from(order, false);
+        }
+        gamificationService.refundDiscount(
+                order.getUser(),
+                order.getDiscountAmount()
+        );
         order.setStatus(CourseOrderStatus.CANCELLED);
         return CourseOrderDto.from(orderRepository.save(order), false);
     }
@@ -193,14 +224,24 @@ public class CourseOrderService {
                         CourseOrderStatus.PAID
                 )
                 .orElseGet(() -> {
-                    CourseOrder order = newOrder(user, course, BigDecimal.ZERO);
+                    CourseOrder order = newOrder(
+                            user,
+                            course,
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO
+                    );
                     order.setStatus(CourseOrderStatus.PAID);
                     order.setPaidAt(LocalDateTime.now());
                     return orderRepository.save(order);
                 });
     }
 
-    private CourseOrder newOrder(User user, Course course, BigDecimal amount) {
+    private CourseOrder newOrder(
+            User user,
+            Course course,
+            BigDecimal originalAmount,
+            BigDecimal discountAmount
+    ) {
         CourseOrder order = new CourseOrder();
         order.setReference("EDU-"
                 + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
@@ -208,7 +249,15 @@ public class CourseOrderService {
                 + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         order.setUser(user);
         order.setCourse(course);
-        order.setAmount(amount);
+        BigDecimal original = originalAmount == null
+                ? BigDecimal.ZERO
+                : originalAmount.max(BigDecimal.ZERO);
+        BigDecimal discount = discountAmount == null
+                ? BigDecimal.ZERO
+                : discountAmount.max(BigDecimal.ZERO).min(original);
+        order.setOriginalAmount(original);
+        order.setDiscountAmount(discount);
+        order.setAmount(original.subtract(discount));
         order.setCurrency("PLN");
         order.setStatus(CourseOrderStatus.PENDING);
         order.setCreatedAt(LocalDateTime.now());

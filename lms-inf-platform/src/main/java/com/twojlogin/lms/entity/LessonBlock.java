@@ -62,6 +62,8 @@ public class LessonBlock {
      * Multimedia
      */
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String mediaUrl;
 
     private String mediaType;

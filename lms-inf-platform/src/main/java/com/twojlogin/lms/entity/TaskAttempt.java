@@ -38,6 +38,9 @@ public class TaskAttempt {
 
     private boolean correct;
 
+    @Column(nullable = false)
+    private int xpAwarded;
+
     @Column(columnDefinition = "LONGTEXT")
     private String lastAnswer;
 
@@ -77,6 +80,14 @@ public class TaskAttempt {
 
     public void setCorrect(boolean correct) {
         this.correct = correct;
+    }
+
+    public int getXpAwarded() {
+        return xpAwarded;
+    }
+
+    public void setXpAwarded(int xpAwarded) {
+        this.xpAwarded = xpAwarded;
     }
 
     public String getLastAnswer() {

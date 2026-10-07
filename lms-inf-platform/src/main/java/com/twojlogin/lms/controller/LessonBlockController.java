@@ -2,7 +2,9 @@ package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.AnswerRequest;
 import com.twojlogin.lms.dto.LessonBlockDto;
+import com.twojlogin.lms.dto.LessonBlockRequest;
 import com.twojlogin.lms.dto.TaskCheckResponse;
+import com.twojlogin.lms.entity.BlockType;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.entity.User;
@@ -12,9 +14,11 @@ import com.twojlogin.lms.repository.TaskAttemptRepository;
 import com.twojlogin.lms.service.TaskEvaluationService;
 import com.twojlogin.lms.service.CourseAccessService;
 import jakarta.transaction.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -66,15 +70,19 @@ public class LessonBlockController {
         return LessonBlockDto.from(block, isAdmin(authentication));
     }
 
+    @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/lesson/{lessonId}")
     public LessonBlockDto create(
             @PathVariable Long lessonId,
-            @RequestBody LessonBlock block
+            @RequestBody LessonBlockRequest request
     ) {
 
         Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
+                ));
 
         Integer maxOrder =
                 blockRepository.findMaxOrderIndexByLessonId(lessonId);
@@ -83,60 +91,31 @@ public class LessonBlockController {
             maxOrder = -1;
         }
 
+        LessonBlock block = new LessonBlock();
         block.setLesson(lesson);
         block.setOrderIndex(maxOrder + 1);
+        applyRequest(block, request, false);
 
-        if (block.getPublished() == null) {
-            block.setPublished(true);
-        }
-
-        if (block.getPoints() == null) {
-            block.setPoints(0);
-        }
-
-        return LessonBlockDto.from(blockRepository.save(block), true);
+        return LessonBlockDto.from(blockRepository.saveAndFlush(block), true);
     }
 
+    @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public LessonBlockDto update(
             @PathVariable Long id,
-            @RequestBody LessonBlock updated
+            @RequestBody LessonBlockRequest request
     ) {
 
         LessonBlock block = blockRepository.findById(id)
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Nie znaleziono tego bloku lekcji."
+                ));
 
-        if (updated.getPublished() == null) {
-            updated.setPublished(true);
-        }
+        applyRequest(block, request, true);
 
-        if (updated.getPoints() == null) {
-            updated.setPoints(0);
-        }
-
-        block.setTitle(updated.getTitle());
-        block.setType(updated.getType());
-
-        block.setContent(updated.getContent());
-        block.setDescription(updated.getDescription());
-        block.setInstruction(updated.getInstruction());
-
-        block.setStarterCode(updated.getStarterCode());
-        block.setExpectedAnswer(updated.getExpectedAnswer());
-        block.setHint(updated.getHint());
-        block.setDetailedHint(updated.getDetailedHint());
-        block.setSolutionExplanation(updated.getSolutionExplanation());
-        block.setLanguage(updated.getLanguage());
-
-        block.setMediaUrl(updated.getMediaUrl());
-        block.setMediaType(updated.getMediaType());
-
-        block.setOrderIndex(updated.getOrderIndex());
-        block.setPublished(updated.getPublished());
-        block.setPoints(updated.getPoints());
-
-        return LessonBlockDto.from(blockRepository.save(block), true);
+        return LessonBlockDto.from(blockRepository.saveAndFlush(block), true);
     }
 
     @Transactional
@@ -201,5 +180,67 @@ public class LessonBlockController {
     private boolean isAdmin(Authentication authentication) {
         return authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+    }
+
+    private void applyRequest(
+            LessonBlock block,
+            LessonBlockRequest request,
+            boolean allowOrderChange
+    ) {
+        if (request.type() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wybierz typ bloku.");
+        }
+        if (request.type() != BlockType.DIVIDER && isBlank(request.title())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Podaj tytuł bloku.");
+        }
+        if (request.title() != null && request.title().trim().length() > 255) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Tytuł bloku może mieć maksymalnie 255 znaków."
+            );
+        }
+        if ((request.type() == BlockType.TASK || request.type() == BlockType.QUIZ)
+                && isBlank(request.expectedAnswer())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Dodaj poprawną odpowiedź do zadania."
+            );
+        }
+
+        block.setTitle(trimToNull(request.title()));
+        block.setType(request.type());
+        block.setContent(trimToNull(request.content()));
+        block.setDescription(trimToNull(request.description()));
+        block.setInstruction(trimToNull(request.instruction()));
+        block.setStarterCode(emptyToNull(request.starterCode()));
+        block.setExpectedAnswer(emptyToNull(request.expectedAnswer()));
+        block.setHint(trimToNull(request.hint()));
+        block.setDetailedHint(trimToNull(request.detailedHint()));
+        block.setSolutionExplanation(trimToNull(request.solutionExplanation()));
+        block.setLanguage(trimToNull(request.language()));
+        block.setMediaUrl(trimToNull(request.mediaUrl()));
+        block.setMediaType(trimToNull(request.mediaType()));
+        block.setPublished(request.published() == null || request.published());
+        block.setPoints(Math.max(0, Math.min(
+                request.points() == null ? 0 : request.points(),
+                1000
+        )));
+
+        if (allowOrderChange && request.orderIndex() != null) {
+            block.setOrderIndex(Math.max(0, request.orderIndex()));
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private String trimToNull(String value) {
+        if (value == null || value.isBlank()) return null;
+        return value.trim();
+    }
+
+    private String emptyToNull(String value) {
+        return value == null || value.isEmpty() ? null : value;
     }
 }

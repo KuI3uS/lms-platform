@@ -2,6 +2,7 @@ package com.twojlogin.lms.service;
 
 import com.twojlogin.lms.dto.TaskCheckResponse;
 import com.twojlogin.lms.entity.BlockType;
+import com.twojlogin.lms.entity.GamificationProfile;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.entity.LessonProgress;
@@ -33,6 +34,7 @@ class TaskEvaluationServiceTest {
     private LessonProgressRepository progressRepository;
     private UserRepository userRepository;
     private ProgressRewardService rewardService;
+    private GamificationService gamificationService;
     private Authentication authentication;
     private TaskEvaluationService service;
     private User user;
@@ -54,18 +56,38 @@ class TaskEvaluationServiceTest {
         progressRepository = mock(LessonProgressRepository.class);
         userRepository = mock(UserRepository.class);
         rewardService = mock(ProgressRewardService.class);
+        gamificationService = mock(GamificationService.class);
         authentication = mock(Authentication.class);
         service = new TaskEvaluationService(
                 blockRepository,
                 attemptRepository,
                 progressRepository,
                 userRepository,
-                rewardService
+                rewardService,
+                gamificationService
         );
 
         user = new User();
         user.setId(7L);
         user.setEmail("uczen@example.com");
+
+        GamificationProfile profile = new GamificationProfile();
+        profile.setUser(user);
+        profile.setLevel(1);
+        when(gamificationService.profileForUpdate(user)).thenReturn(profile);
+        when(gamificationService.recordTaskResult(
+                any(GamificationProfile.class),
+                any(LessonBlock.class),
+                any(TaskAttempt.class),
+                org.mockito.ArgumentMatchers.anyBoolean(),
+                org.mockito.ArgumentMatchers.anyBoolean()
+        )).thenReturn(new GamificationService.AwardResult(
+                0,
+                1,
+                0,
+                1,
+                false
+        ));
 
         lesson = new Lesson();
         lesson.setId(11L);

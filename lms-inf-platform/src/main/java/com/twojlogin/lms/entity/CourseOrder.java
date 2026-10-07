@@ -33,6 +33,12 @@ public class CourseOrder {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
+    @Column(precision = 12, scale = 2)
+    private BigDecimal originalAmount;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal discountAmount;
+
     @Column(nullable = false, length = 3)
     private String currency;
 
@@ -83,6 +89,22 @@ public class CourseOrder {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public BigDecimal getOriginalAmount() {
+        return originalAmount == null ? amount : originalAmount;
+    }
+
+    public void setOriginalAmount(BigDecimal originalAmount) {
+        this.originalAmount = originalAmount;
+    }
+
+    public BigDecimal getDiscountAmount() {
+        return discountAmount == null ? BigDecimal.ZERO : discountAmount;
+    }
+
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
     }
 
     public String getCurrency() {

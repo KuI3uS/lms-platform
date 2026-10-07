@@ -69,6 +69,8 @@ export default function BlockManager({
                 }
 
                 tasks={lessonTasks.getTasks(lessonId)}
+                saving={Boolean(lessonBlocks.savingByLesson[lessonId])}
+                error={lessonBlocks.errorsByLesson[lessonId] || ""}
 
                 onSave={() =>
                     block.id

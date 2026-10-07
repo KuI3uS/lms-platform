@@ -12,21 +12,26 @@ public class ProgressRewardService {
     private final CertificateService certificateService;
     private final AchievementService achievementService;
     private final NotificationService notificationService;
+    private final GamificationService gamificationService;
 
     public ProgressRewardService(
             LessonRepository lessonRepository,
             CertificateService certificateService,
             AchievementService achievementService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            GamificationService gamificationService
     ) {
         this.lessonRepository = lessonRepository;
         this.certificateService = certificateService;
         this.achievementService = achievementService;
         this.notificationService = notificationService;
+        this.gamificationService = gamificationService;
     }
 
     @Transactional
     public void afterLessonCompleted(User user, Lesson lesson) {
+        gamificationService.awardLessonCompletion(user);
+
         lessonRepository
                 .findFirstByModuleIdAndOrderIndexGreaterThanOrderByOrderIndexAsc(
                         lesson.getModule().getId(),

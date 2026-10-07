@@ -4,6 +4,7 @@ import {
     BsAwardFill,
     BsBarChartFill,
     BsBookHalf,
+    BsCashCoin,
     BsCheckCircleFill,
     BsClockHistory,
     BsFire,
@@ -38,14 +39,20 @@ const achievementIcons = {
 export default function LearningCenterPage() {
     const navigate = useNavigate();
     const [data, setData] = useState(null);
+    const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
         let active = true;
-        apiFetch("/learning/analytics")
-            .then((response) => {
-                if (active) setData(response);
+        Promise.all([
+            apiFetch("/learning/analytics"),
+            apiFetch("/learning-stats")
+        ])
+            .then(([analyticsResponse, statsResponse]) => {
+                if (!active) return;
+                setData(analyticsResponse);
+                setStats(statsResponse);
             })
             .catch((loadError) => {
                 if (active) setError(loadError.message || "Nie udało się pobrać statystyk.");
@@ -99,6 +106,52 @@ export default function LearningCenterPage() {
                 <Stat icon={<BsGraphUpArrow />} label="Skuteczność zadań" value={`${data.taskAccuracy}%`} color="violet" />
                 <Stat icon={<BsTrophyFill />} label="Średnia egzaminów" value={`${data.examAverage}%`} color="amber" />
             </div>
+
+            {stats && (
+                <section className="grid gap-4 lg:grid-cols-3">
+                    <div className="rounded-3xl border border-blue-400/20 bg-blue-500/[0.08] p-6">
+                        <p className="text-xs font-black uppercase tracking-widest text-blue-300">Poziom {stats.level}</p>
+                        <p className="mt-3 text-3xl font-black">{stats.xp} XP</p>
+                        <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-black/30">
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500"
+                                style={{
+                                    width: `${Math.min(100, stats.xpIntoLevel * 100 / Math.max(1, stats.xpForNextLevel))}%`
+                                }}
+                            />
+                        </div>
+                        <p className="mt-2 text-xs text-slate-400">
+                            {stats.xpIntoLevel} / {stats.xpForNextLevel} XP do kolejnego poziomu
+                        </p>
+                    </div>
+
+                    <div className="rounded-3xl border border-orange-400/20 bg-orange-500/[0.08] p-6">
+                        <p className="text-xs font-black uppercase tracking-widest text-orange-300">Seria zadań</p>
+                        <div className="mt-3 flex items-end justify-between gap-4">
+                            <p className="text-3xl font-black">{stats.taskStreak}</p>
+                            <p className="rounded-full bg-orange-500/15 px-3 py-1 font-black text-orange-200">
+                                x{stats.xpMultiplier} XP
+                            </p>
+                        </div>
+                        <p className="mt-4 text-sm leading-6 text-slate-400">
+                            5 poprawnych zadań uruchamia x2, a 10 poprawnych x3. Powtórne zaliczanie tego samego zadania nie nalicza XP.
+                        </p>
+                    </div>
+
+                    <div className="rounded-3xl border border-emerald-400/20 bg-emerald-500/[0.08] p-6">
+                        <div className="flex items-center justify-between gap-4">
+                            <div>
+                                <p className="text-xs font-black uppercase tracking-widest text-emerald-300">Portfel nagród</p>
+                                <p className="mt-3 text-3xl font-black">{Number(stats.discountBalance || 0)} zł</p>
+                            </div>
+                            <BsCashCoin className="text-3xl text-emerald-300" />
+                        </div>
+                        <p className="mt-4 text-sm leading-6 text-slate-400">
+                            Kolejne {Number(stats.nextRewardAmount || 0)} zł otrzymasz na poziomie {stats.nextRewardLevel}. Na jeden kurs można wykorzystać maksymalnie 20% jego ceny.
+                        </p>
+                    </div>
+                </section>
+            )}
 
             <div className="grid gap-7 xl:grid-cols-[1.15fr_0.85fr]">
                 <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-8">

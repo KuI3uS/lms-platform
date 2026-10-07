@@ -138,6 +138,21 @@ export default function LessonTask({
                                 }`}>
                                     {result.message}
                                 </p>
+                                {result.correct && result.xpEarned > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <span className="rounded-full bg-blue-500/15 px-3 py-1 text-xs font-black text-blue-200">
+                                            +{result.xpEarned} XP
+                                        </span>
+                                        <span className="rounded-full bg-orange-500/15 px-3 py-1 text-xs font-black text-orange-200">
+                                            Seria {result.taskStreak} · x{result.xpMultiplier}
+                                        </span>
+                                        {result.levelUp && (
+                                            <span className="rounded-full bg-violet-500/15 px-3 py-1 text-xs font-black text-violet-200">
+                                                Nowy poziom {result.level}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
