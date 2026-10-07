@@ -1026,17 +1026,41 @@ export default function useLessonBlocks() {
                     "Dialog wymaga dwóch bohaterów.",
                     "warning"
                 );
-
                 return false;
             }
 
-            if (
-                !dialog.studentCharacterId
-                || !characters.some(
+            const studentCharacterId =
+                dialog?.studentCharacterId != null
+                    ? String(dialog.studentCharacterId)
+                    : "";
+
+            const studentCharacterExists =
+                characters.some(
                     character =>
-                        character.id === dialog.studentCharacterId
-                )
+                        String(character?.id ?? "")
+                        === studentCharacterId
+                );
+
+            if (
+                !studentCharacterId
+                || !studentCharacterExists
             ) {
+                console.error(
+                    "BŁĘDNA ROLA UCZNIA:",
+                    {
+                        studentCharacterId:
+                        dialog?.studentCharacterId,
+
+                        characters:
+                            characters.map(character => ({
+                                id: character.id,
+                                name: character.name
+                            })),
+
+                        dialog
+                    }
+                );
+
                 showToast(
                     "Wybierz postać, w którą wciela się uczeń.",
                     "warning"
@@ -1050,11 +1074,9 @@ export default function useLessonBlocks() {
                     "Dialog wymaga przynajmniej dwóch wypowiedzi.",
                     "warning"
                 );
-
                 return false;
             }
         }
-
 
         /**
          * Trening słówek.

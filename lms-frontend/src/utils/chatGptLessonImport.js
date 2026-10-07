@@ -371,16 +371,19 @@ function parseStep(step, warnings, errors) {
     }
     if (resolved.type === "DIALOG") {
         const config = createEmptyDialogConfig();
-        config.characters[0] = {
-            ...config.characters[0],
-            name: fields.character1 || "Emma",
-            avatar: fields.avatar1 || "👩"
-        };
-        config.characters[1] = {
-            ...config.characters[1],
-            name: fields.character2 || "Leo",
-            avatar: fields.avatar2 || "👨"
-        };
+
+        config.characters = [
+            {
+                ...config.characters[0],
+                name: (fields.character1 || "Emma").trim(),
+                avatar: (fields.avatar1 || "👩").trim()
+            },
+            {
+                ...config.characters[1],
+                name: (fields.character2 || "Leo").trim(),
+                avatar: (fields.avatar2 || "👨").trim()
+            }
+        ];
         const requestedStudent = normalize(fields.studentCharacter);
         const selectedStudent = config.characters.find(
             (character) => normalize(character.name) === requestedStudent
