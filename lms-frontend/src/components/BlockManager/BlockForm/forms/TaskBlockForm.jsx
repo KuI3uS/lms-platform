@@ -12,13 +12,13 @@ import MonacoEditorBox from "../../../../pages/LessonPage/MonacoEditor";
 
 export default function TaskBlockForm({
                                      task,
-                                     setTask,
+                                          setBlock,
                                      onSave
                                  }) {
 
     function update(field, value) {
 
-        setTask(prev => ({
+        setBlock(prev => ({
             ...prev,
             [field]: value
         }));
