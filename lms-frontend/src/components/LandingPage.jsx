@@ -19,41 +19,43 @@
         return (
             <div className="landing-page">
                 <TutoringFloatingButton />
-                <nav>
-                    <a href="#home">Home</a>
-                    <a href="#courses">Kursy</a>
-                    <a href="#how">Jak_działa</a>
-                </nav>
-                <header id="home" className="hero">
-                    <div className="hero-content">
-                        <h1>
-                            Kursy IT, programowanie i przygotowanie do egzaminów<br />
-                            w nowoczesnej platformie <span className="accent">EduHub</span>
-                        </h1>
+                <nav className="landing-nav" aria-label="Główna nawigacja">
+                    <div className="landing-nav__inner">
+                        <a href="#home" className="landing-brand" aria-label="EduHub — strona główna">
+                            <span className="landing-brand__icon">
+                                <BsMortarboard aria-hidden="true" />
+                            </span>
+                            <span>EduHub</span>
+                        </a>
 
-                        <p className="hero-subtitle">
-                            Ucz się INF.02, INF.03, INF.04, Javy, Pythona, SQL, backendu,
-                            aplikacji webowych i ścieżki Junior Java Developer od podstaw do poziomu projektowego.
-                        </p>
-
-                        <div className="hero-badges">
-                            <span className="badge">INF.02</span>
-                            <span className="badge">INF.03</span>
-                            <span className="badge">INF.04</span>
-                            <span className="badge">Java</span>
-                            <span className="badge">Python</span>
-                            <span className="badge">SQL</span>
-                            <span className="badge">Spring Boot</span>
+                        <div className="landing-nav__links">
+                            <a href="#home">Start</a>
+                            <a href="#courses">Kursy</a>
+                            <a href="#how">Jak to działa</a>
+                            <a href="#tutoring">Korepetycje</a>
                         </div>
 
-                        <div className="hero-platform-box">
-                            <p className="hero-platform-label">Platforma edukacyjna EduHub</p>
+                        <div className="landing-nav__actions">
+                            <Link to="/login" className="nav-login">Zaloguj się</Link>
+                            <Link to="/register" className="nav-register">Załóż konto</Link>
+                        </div>
+                    </div>
+                </nav>
 
-                            <h3>Przejdź do nauki i kontynuuj kursy</h3>
+                <header id="home" className="hero">
+                    <div className="hero-grid">
+                        <div className="hero-copy">
+                            <p className="hero-eyebrow">
+                                <span aria-hidden="true">●</span> Nauka IT w praktyce
+                            </p>
 
-                            <p>
-                                Zaloguj się, aby wrócić do lekcji, zadań i swojego postępu.
-                                Nie masz konta? Rozpocznij naukę od rejestracji.
+                            <h1>
+                                Przygotuj się do egzaminu i <span className="accent">naucz się programować</span>
+                            </h1>
+
+                            <p className="hero-subtitle">
+                                Kursy INF.02, INF.03 i INF.04 oraz praktyczna Java, Python i SQL.
+                                Uczysz się krok po kroku, rozwiązujesz zadania i widzisz swój postęp.
                             </p>
 
                             <div className="hero-actions">
@@ -65,9 +67,62 @@
                                     Mam już konto
                                 </Link>
                             </div>
+
+                            <div className="hero-badges" aria-label="Dostępne technologie">
+                                <span className="badge">INF.02</span>
+                                <span className="badge">INF.03</span>
+                                <span className="badge">INF.04</span>
+                                <span className="badge">Java</span>
+                                <span className="badge">SQL</span>
+                            </div>
+                        </div>
+
+                        <div className="hero-preview" aria-label="Podgląd panelu ucznia EduHub">
+                            <div className="hero-preview__bar">
+                                <span className="preview-dot preview-dot--red"></span>
+                                <span className="preview-dot preview-dot--yellow"></span>
+                                <span className="preview-dot preview-dot--green"></span>
+                                <span className="hero-preview__title">Panel ucznia</span>
+                            </div>
+
+                            <img
+                                src={dashboardPreview}
+                                alt="Panel ucznia EduHub z postępem kursu i zdobytym XP"
+                                width="1536"
+                                height="1024"
+                                decoding="async"
+                                fetchPriority="high"
+                            />
+
+                            <div className="hero-progress-card" aria-hidden="true">
+                                <span>Postęp nauki</span>
+                                <strong>68%</strong>
+                                <div><i></i></div>
+                            </div>
                         </div>
                     </div>
                 </header>
+
+                <section className="benefits-strip" aria-label="Najważniejsze możliwości platformy">
+                    <div className="benefits-strip__inner">
+                        <div className="benefit-item">
+                            <BsMortarboard aria-hidden="true" />
+                            <span>3 ścieżki egzaminacyjne</span>
+                        </div>
+                        <div className="benefit-item">
+                            <BsCodeSlash aria-hidden="true" />
+                            <span>Zadania sprawdzane automatycznie</span>
+                        </div>
+                        <div className="benefit-item">
+                            <BsDiagram3 aria-hidden="true" />
+                            <span>Nauka krok po kroku</span>
+                        </div>
+                        <div className="benefit-item">
+                            <BsBook aria-hidden="true" />
+                            <span>Korepetycje online</span>
+                        </div>
+                    </div>
+                </section>
 
                 <main>
                     <section id="courses" className="section">

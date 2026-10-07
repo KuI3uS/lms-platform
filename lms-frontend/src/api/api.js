@@ -1,5 +1,19 @@
-export const API_URL = import.meta.env.VITE_API_URL
-    || "https://lms-platform-1-dcxg.onrender.com/api";
+const DEFAULT_API_URL = "https://lms-platform-1-dcxg.onrender.com/api";
+
+function resolveApiUrl(value) {
+    const configuredUrl = value?.trim().replace(/\/+$/, "");
+
+    // Ten adres był przykładowym placeholderem i nie wskazuje na backend EduHub.
+    if (!configuredUrl || configuredUrl.includes("twoj-backend.onrender.com")) {
+        return DEFAULT_API_URL;
+    }
+
+    return configuredUrl.endsWith("/api")
+        ? configuredUrl
+        : `${configuredUrl}/api`;
+}
+
+export const API_URL = resolveApiUrl(import.meta.env.VITE_API_URL);
 
 export function getToken() {
     return localStorage.getItem("token");
