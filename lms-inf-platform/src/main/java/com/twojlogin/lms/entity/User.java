@@ -2,6 +2,8 @@ package com.twojlogin.lms.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users") // unikamy słowa "user" (reserved)
 public class User {
@@ -14,6 +16,10 @@ public class User {
     private String password;
     private String firstName;
     private String lastName;
+
+    private boolean enabled = false;
+    private String verificationToken;
+    private LocalDateTime verificationTokenExpiresAt;
 
     @ManyToOne
     @JoinColumn(name = "class_id")
@@ -76,5 +82,29 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public LocalDateTime getVerificationTokenExpiresAt() {
+        return verificationTokenExpiresAt;
+    }
+
+    public void setVerificationTokenExpiresAt(LocalDateTime verificationTokenExpiresAt) {
+        this.verificationTokenExpiresAt = verificationTokenExpiresAt;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getVerificationToken() {
+        return verificationToken;
+    }
+
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
     }
 }
