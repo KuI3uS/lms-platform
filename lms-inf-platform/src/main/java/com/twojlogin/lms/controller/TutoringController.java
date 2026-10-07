@@ -7,9 +7,11 @@ import com.twojlogin.lms.repository.TutoringAvailabilityRepository;
 import com.twojlogin.lms.repository.TutoringBookingRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import com.twojlogin.lms.service.EmailService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -98,7 +100,10 @@ public class TutoringController {
                 LocalDateTime.now()
         );
         if (conflict) {
-            throw new RuntimeException("Ten termin jest aktualnie zajęty lub oczekuje na płatność");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ten termin jest aktualnie zajęty lub oczekuje na płatność"
+            );
         }
 
         TutoringBooking booking = new TutoringBooking();

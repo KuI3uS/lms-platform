@@ -20,6 +20,8 @@ public class TutoringBooking {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
+
+
     private LocalDateTime paymentDeadline;
 
     @Column(length = 1000)
