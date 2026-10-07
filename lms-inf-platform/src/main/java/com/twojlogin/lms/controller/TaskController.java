@@ -9,6 +9,7 @@ import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.TaskRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.twojlogin.lms.repository.LessonBlockRepository;
 
 import java.util.List;
 
@@ -18,11 +19,13 @@ public class TaskController {
 
     private final TaskRepository taskRepository;
     private final LessonRepository lessonRepository;
+    private final LessonBlockRepository lessonBlockRepository;
 
     public TaskController(TaskRepository taskRepository,
-                          LessonRepository lessonRepository) {
+                          LessonRepository lessonRepository, LessonBlockRepository lessonBlockRepository) {
         this.taskRepository = taskRepository;
         this.lessonRepository = lessonRepository;
+        this.lessonBlockRepository = lessonBlockRepository;
     }
 
     // 🔥 CREATE
@@ -56,6 +59,7 @@ public class TaskController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
+        lessonBlockRepository.deleteAll(lessonBlockRepository.findByTaskId(id));
         taskRepository.deleteById(id);
     }
 

@@ -1,5 +1,6 @@
 package com.twojlogin.lms.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -21,7 +22,7 @@ public class Course {
     private String thumbnailUrl;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
-    
+    @JsonIgnore
     private List<CourseModule> modules;
 
 
