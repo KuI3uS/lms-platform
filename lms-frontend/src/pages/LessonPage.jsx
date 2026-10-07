@@ -2,14 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import {
-    BsBook,
-    BsCheckCircle,
     BsXCircle,
-    BsCodeSlash,
-    BsLightbulb,
-    BsArrowRight,
-    BsImage,
-    BsListCheck
+    BsArrowRight
 } from "react-icons/bs";
 
 export default function LessonPage() {
@@ -22,6 +16,9 @@ export default function LessonPage() {
     const [results, setResults] = useState({});
     const [error, setError] = useState(null);
     const [moduleLessons, setModuleLessons] = useState([]);
+
+    const [blocks, setBlocks] = useState([]);
+    const [selectedBlock, setSelectedBlock] = useState(null);
 
     useEffect(() => {
         if (!lessonId) return;
@@ -56,6 +53,19 @@ export default function LessonPage() {
                 setError(e.message);
             });
 
+        apiFetch(`/lesson-blocks/lesson/${lessonId}`)
+            .then(data => {
+                const sorted = [...(data || [])].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+                setBlocks(sorted);
+
+                if (sorted.length > 0) {
+                    setSelectedBlock(sorted[0]);
+                }
+            })
+            .catch(e => {
+                console.error("BLOCKS ERROR:", e);
+            });
+
         apiFetch(`/tasks/lesson/${lessonId}`)
             .then(data => setTasks(
                 [...(data || [])].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
@@ -65,6 +75,8 @@ export default function LessonPage() {
                 setError(e.message);
             });
     }, [lessonId]);
+
+
 
     const submitAll = async () => {
         try {
@@ -128,8 +140,34 @@ export default function LessonPage() {
     }
 
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-8 text-white">
-            <div className="max-w-4xl space-y-8">
+        <div className="grid grid-cols-1 xl:grid-cols-[260px_1fr_320px] gap-8 text-white">
+
+            <aside className="bg-gray-900 border border-gray-800 rounded-2xl p-4 h-fit sticky top-8">
+                <h2 className="text-lg font-bold mb-4">Lekcja</h2>
+
+                <div className="space-y-2">
+                    {blocks.map((block, index) => (
+                        <button
+                            key={block.id}
+                            onClick={() => setSelectedBlock(block)}
+                            className={`w-full text-left p-3 rounded-xl border transition ${
+                                selectedBlock?.id === block.id
+                                    ? "bg-blue-600/20 border-blue-500 text-blue-300"
+                                    : "bg-gray-800 border-gray-700 hover:border-blue-500"
+                            }`}
+                        >
+                            <div className="text-xs text-gray-400">
+                                {block.type}
+                            </div>
+                            <div className="font-semibold">
+                                {index + 1}. {block.title || block.type}
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </aside>
+
+            <main className="max-w-4xl space-y-8">
                 <div>
                     <h1 className="text-3xl font-bold">
                         {lesson.title}
@@ -142,147 +180,68 @@ export default function LessonPage() {
                     )}
                 </div>
 
-                <div className="bg-gray-800 p-5 rounded-xl space-y-6">
-                    {lesson.imageUrl && (
-                        <div>
-                            <div className="flex items-center gap-2 text-gray-400 mb-2">
-                                <BsImage />
-                                <span>Grafika lekcji</span>
-                            </div>
-
-                            <img
-                                src={lesson.imageUrl}
-                                alt={lesson.title}
-                                className="rounded-xl max-h-96 object-contain bg-gray-900 border border-gray-700"
-                            />
-                        </div>
-                    )}
-
-                    <div>
-                        <h2 className="text-blue-400 font-semibold mb-2">
-                            Wytłumaczenie
+                {!selectedBlock ? (
+                    <div className="bg-gray-800 p-6 rounded-xl text-gray-400">
+                        Brak bloków w tej lekcji.
+                    </div>
+                ) : selectedBlock.type === "THEORY" ? (
+                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                        <h2 className="text-blue-400 text-xl font-bold mb-4">
+                            {selectedBlock.title || "Teoria"}
                         </h2>
                         <p className="whitespace-pre-line text-gray-300">
-                            {lesson.theory || "BRAK TEORII"}
+                            {selectedBlock.content}
                         </p>
                     </div>
-
-                    <div>
-                        <h2 className="text-green-400 font-semibold mb-2">
-                            Przykład
+                ) : selectedBlock.type === "EXAMPLE" ? (
+                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                        <h2 className="text-green-400 text-xl font-bold mb-4">
+                            {selectedBlock.title || "Przykład"}
                         </h2>
-                        <pre className="bg-gray-900 p-4 rounded-xl text-green-400 whitespace-pre-wrap font-mono border border-gray-700">
-                            {lesson.example || "BRAK PRZYKŁADU"}
-                        </pre>
+                        <pre className="bg-gray-950 p-4 rounded-xl text-green-400 whitespace-pre-wrap font-mono border border-gray-700">
+                        {selectedBlock.content}
+                    </pre>
                     </div>
-
-                    {lesson.content && (
-                        <div>
-                            <h2 className="text-purple-400 font-semibold mb-2">
-                                Dodatkowe materiały
-                            </h2>
-                            <p className="whitespace-pre-line text-gray-300">
-                                {lesson.content}
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                <div className="space-y-5">
-                    <div className="flex items-center gap-2">
-                        <BsListCheck className="text-yellow-400" />
-                        <h2 className="text-2xl font-bold">Zadania</h2>
+                ) : selectedBlock.type === "IMAGE" ? (
+                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                        <h2 className="text-purple-400 text-xl font-bold mb-4">
+                            {selectedBlock.title || "Grafika"}
+                        </h2>
+                        <img
+                            src={selectedBlock.content}
+                            alt={selectedBlock.title || "Grafika lekcji"}
+                            className="rounded-xl border border-gray-700 bg-gray-900"
+                        />
                     </div>
+                ) : selectedBlock.type === "TASK" ? (
+                    <TaskBlock
+                        block={selectedBlock}
+                        tasks={tasks}
+                        answers={answers}
+                        setAnswers={setAnswers}
+                        results={results}
+                        check={check}
+                    />
+                ) : (
+                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                        <h2 className="text-purple-400 text-xl font-bold mb-4">
+                            {selectedBlock.title || selectedBlock.type}
+                        </h2>
+                        <p className="whitespace-pre-line text-gray-300">
+                            {selectedBlock.content}
+                        </p>
+                    </div>
+                )}
 
-                    {tasks.length === 0 && (
-                        <p className="text-gray-400">Brak zadań w tej lekcji.</p>
-                    )}
-
-                    {tasks.map((task, index) => (
-                        <div key={task.id} className="bg-gray-800 p-5 rounded-xl space-y-4 border border-gray-700/60">
-                            <div className="flex items-center justify-between gap-4">
-                                <h3 className="text-yellow-400 font-semibold">
-                                    Zadanie {index + 1}
-                                </h3>
-
-                                <span className="text-xs px-3 py-1 rounded-full bg-gray-900 border border-gray-700 text-gray-400">
-                                    {task.type || "TEXT"} {task.language ? `- ${task.language}` : ""}
-                                </span>
-                            </div>
-
-                            <p className="text-gray-300 whitespace-pre-line">
-                                {task.taskContent}
-                            </p>
-
-                            {task.type === "CODE" && task.starterCode && (
-                                <div>
-                                    <div className="flex items-center gap-2 text-green-400 mb-2">
-                                        <BsCodeSlash />
-                                        <span>Kod startowy</span>
-                                    </div>
-
-                                    <pre className="bg-gray-950 border border-gray-700 p-4 rounded-xl text-green-400 whitespace-pre-wrap font-mono">
-                                        {task.starterCode}
-                                    </pre>
-                                </div>
-                            )}
-
-                            {task.hint && (
-                                <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 p-3 rounded-xl flex gap-2">
-                                    <BsLightbulb className="mt-1 shrink-0" />
-                                    <div>
-                                        <strong>Podpowiedź:</strong> {task.hint}
-                                    </div>
-                                </div>
-                            )}
-
-                            <textarea
-                                className="w-full bg-gray-900 p-3 rounded-xl text-green-400 font-mono border border-gray-700 outline-none focus:border-blue-500"
-                                rows={task.type === "CODE" ? 10 : 5}
-                                placeholder={task.type === "CODE" ? "Dokończ kod..." : "Wpisz odpowiedź..."}
-                                value={answers[task.id] || ""}
-                                onChange={(e) =>
-                                    setAnswers(prev => ({
-                                        ...prev,
-                                        [task.id]: e.target.value
-                                    }))
-                                }
-                            />
-
-                            <button
-                                onClick={() => check(task.id)}
-                                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl font-semibold transition"
-                            >
-                                Sprawdź
-                            </button>
-
-                            {results[task.id] !== undefined && (
-                                <div
-                                    className={`flex items-center gap-2 p-3 rounded-xl border ${
-                                        results[task.id]
-                                            ? "bg-green-500/10 border-green-500/30 text-green-400"
-                                            : "bg-red-500/10 border-red-500/30 text-red-400"
-                                    }`}
-                                >
-                                    {results[task.id] ? <BsCheckCircle /> : <BsXCircle />}
-                                    <span>
-                                        {results[task.id] ? "Poprawna odpowiedź" : "Błędna odpowiedź"}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-
-                    {tasks.length > 0 && (
-                        <button
-                            onClick={submitAll}
-                            className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl font-semibold transition"
-                        >
-                            Wyślij wszystkie zadania do nauczyciela
-                        </button>
-                    )}
-                </div>
-            </div>
+                {tasks.length > 0 && (
+                    <button
+                        onClick={submitAll}
+                        className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl font-semibold transition"
+                    >
+                        Wyślij wszystkie zadania do nauczyciela
+                    </button>
+                )}
+            </main>
 
             <aside className="hidden xl:block sticky top-8 h-fit bg-gray-900 border border-gray-800 rounded-2xl p-5">
                 <h2 className="text-lg font-bold mb-4">Plan lekcji</h2>
@@ -321,6 +280,71 @@ export default function LessonPage() {
                     })}
                 </div>
             </aside>
+        </div>
+    );
+}
+function TaskBlock({ block, tasks, answers, setAnswers, results, check }) {
+    const task = tasks.find(t => t.id === block.taskId);
+
+    if (!task) {
+        return (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-5 rounded-xl">
+                Nie znaleziono zadania dla tego bloku.
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-gray-800 p-6 rounded-xl space-y-4 border border-gray-700">
+            <h2 className="text-yellow-400 text-xl font-bold">
+                {block.title || "Zadanie"}
+            </h2>
+
+            <p className="text-gray-300 whitespace-pre-line">
+                {task.taskContent}
+            </p>
+
+            {task.starterCode && (
+                <pre className="bg-gray-950 border border-gray-700 p-4 rounded-xl text-green-400 whitespace-pre-wrap font-mono">
+                    {task.starterCode}
+                </pre>
+            )}
+
+            {task.hint && (
+                <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 p-3 rounded-xl">
+                    <strong>Podpowiedź:</strong> {task.hint}
+                </div>
+            )}
+
+            <textarea
+                className="w-full bg-gray-900 p-3 rounded-xl text-green-400 font-mono border border-gray-700 outline-none focus:border-blue-500"
+                rows={task.type === "CODE" ? 12 : 6}
+                placeholder={task.type === "CODE" ? "Dokończ kod..." : "Wpisz odpowiedź..."}
+                value={answers[task.id] || ""}
+                onChange={(e) =>
+                    setAnswers(prev => ({
+                        ...prev,
+                        [task.id]: e.target.value
+                    }))
+                }
+            />
+
+            <button
+                onClick={() => check(task.id)}
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl font-semibold"
+            >
+                Sprawdź
+            </button>
+
+            {results[task.id] !== undefined && (
+                <div className={`p-3 rounded-xl border ${
+                    results[task.id]
+                        ? "bg-green-500/10 border-green-500/30 text-green-400"
+                        : "bg-red-500/10 border-red-500/30 text-red-400"
+                }`}>
+                    {results[task.id] ? "Poprawna odpowiedź" : "Błędna odpowiedź"}
+                </div>
+            )}
         </div>
     );
 }

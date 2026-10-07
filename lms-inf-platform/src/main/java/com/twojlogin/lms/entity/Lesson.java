@@ -14,6 +14,9 @@ public class Lesson {
     private Integer position;
     private boolean freePreview;
 
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LessonBlock> blocks;
+
     @Lob
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
@@ -133,5 +136,13 @@ public class Lesson {
 
     public void setPublished(boolean published) {
         this.published = published;
+    }
+
+    public List<LessonBlock> getBlocks() {
+        return blocks;
+    }
+
+    public void setBlocks(List<LessonBlock> blocks) {
+        this.blocks = blocks;
     }
 }
