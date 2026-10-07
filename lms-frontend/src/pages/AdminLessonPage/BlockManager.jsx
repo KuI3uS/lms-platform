@@ -6,13 +6,17 @@ import BlockForm from "./BlockForm";
 export default function BlockManager({
                                          lessonId,
 
-                                         blocks = [],
+                                         blocks,
 
                                          block,
                                          setBlock,
+
                                          saveBlock,
 
-                                         tasks = []
+                                         editBlock,
+                                         deleteBlock,
+
+                                         tasks
                                      }) {
 
     return (
@@ -43,6 +47,9 @@ export default function BlockManager({
 
             <BlockList
                 blocks={blocks}
+                onEdit={editBlock}
+                onDelete={deleteBlock}
+                lessonId={lessonId}
             />
 
             <BlockForm

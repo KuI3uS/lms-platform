@@ -105,6 +105,8 @@ export default function LessonCard({
                         block={block}
                         setBlock={setBlock}
                         saveBlock={saveBlock}
+                        editBlock={editBlock}
+                        deleteBlock={deleteBlock}
                         tasks={tasks}
                     />
 
