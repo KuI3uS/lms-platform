@@ -1081,16 +1081,16 @@ export default function useLessonBlocks() {
 
         if (block.type === "WORD_LAB") {
             const vocabulary = parseVocabularyContent(block.content);
-            if (vocabulary.items.length < 1 || vocabulary.items.length > 20) {
-                showToast("Laboratorium słów musi zawierać od 1 do 20 pozycji.", "warning");
+            if (vocabulary.items.length < 1 || vocabulary.items.length > 30) {
+                showToast("Laboratorium słów musi zawierać od 1 do 30 pozycji.", "warning");
                 return false;
             }
         }
 
         if (block.type === "LISTENING") {
             const listening = parseVocabularyContent(block.content);
-            if (listening.items.length < 1 || listening.items.length > 20) {
-                showToast("Rozpoznawanie ze słuchu musi zawierać od 1 do 20 nagrań.", "warning");
+            if (listening.items.length < 1 || listening.items.length > 30) {
+                showToast("Rozpoznawanie ze słuchu musi zawierać od 1 do 30 nagrań.", "warning");
                 return false;
             }
         }
