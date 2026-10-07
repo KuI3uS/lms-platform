@@ -351,19 +351,21 @@ export default function LearningCenterPage() {
                     ) : (
                         <div className="mt-6 space-y-3">
                             {data.hardestTasks.map((task, index) => (
-                                <div key={task.blockId} className="flex items-center gap-4 rounded-2xl bg-black/20 p-4">
+                                task.attemptCount !== 1 && (
+                                    <div key={task.blockId} className="flex items-center gap-4 rounded-2xl bg-black/20 p-4">
                                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-500/10 font-black text-red-300">
                                         {index + 1}
                                     </span>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate font-black">{task.title}</p>
-                                        <p className="truncate text-xs text-slate-500">{task.lessonTitle}</p>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate font-black">{task.title}</p>
+                                            <p className="truncate text-xs text-slate-500">{task.lessonTitle}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-black">{task.attemptCount}</p>
+                                            <p className="text-[10px] uppercase text-slate-600">prób</p>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-black">{task.attemptCount}</p>
-                                        <p className="text-[10px] uppercase text-slate-600">prób</p>
-                                    </div>
-                                </div>
+                                )
                             ))}
                         </div>
                     )}
