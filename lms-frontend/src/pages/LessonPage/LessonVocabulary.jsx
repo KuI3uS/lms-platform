@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BsArrowRepeat, BsCheckCircleFill, BsPlayFill, BsTranslate, BsXCircleFill } from "react-icons/bs";
 import {
     languageAnswerScore,
     parseVocabularyContent
 } from "../../utils/languageInteractiveBlocks";
 
-function speak(text, language) {
+function speakWithBrowser(text, language) {
     if (!text || typeof window === "undefined" || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
@@ -21,7 +21,47 @@ export default function LessonVocabulary({ block, onComplete }) {
     const [answer, setAnswer] = useState("");
     const [result, setResult] = useState(null);
     const [score, setScore] = useState({ correct: 0, completed: 0 });
+    const audioRef = useRef(null);
+    const objectUrlRef = useRef("");
     const item = config.items[index];
+
+    const stopAudio = () => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+        }
+        if (objectUrlRef.current) {
+            URL.revokeObjectURL(objectUrlRef.current);
+            objectUrlRef.current = "";
+        }
+    };
+
+    const speakWord = async (wordIndex) => {
+        const word = config.items[wordIndex];
+        if (!word) return;
+        stopAudio();
+        try {
+            const response = await fetch(`/api/lesson-blocks/${block.id}/vocabulary-audio/${wordIndex}`, {
+                credentials: "include",
+                headers: { Accept: "audio/mpeg" }
+            });
+            if (!response.ok) throw new Error(`natural-audio-${response.status}`);
+            objectUrlRef.current = URL.createObjectURL(await response.blob());
+            const audio = new Audio(objectUrlRef.current);
+            audioRef.current = audio;
+            audio.onended = stopAudio;
+            audio.onerror = () => {
+                stopAudio();
+                speakWithBrowser(word.term, block.language);
+            };
+            await audio.play();
+        } catch {
+            stopAudio();
+            speakWithBrowser(word.term, block.language);
+        }
+    };
+
+    useEffect(() => () => stopAudio(), []);
 
     const startPractice = () => {
         setMode("practice");
@@ -85,7 +125,7 @@ export default function LessonVocabulary({ block, onComplete }) {
                                         <p className="text-xl font-black text-white">{word.term}</p>
                                         <p className="mt-1 font-bold text-emerald-300">{word.translation}</p>
                                     </div>
-                                    <button type="button" onClick={() => speak(word.term, block.language)} aria-label={`Odsłuchaj ${word.term}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20"><BsPlayFill /></button>
+                                    <button type="button" onClick={() => speakWord(wordIndex)} aria-label={`Odsłuchaj ${word.term}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20"><BsPlayFill /></button>
                                 </div>
                                 {word.example && <p className="mt-4 border-t border-white/5 pt-4 text-sm italic leading-6 text-slate-400">{word.example}</p>}
                             </article>
@@ -100,7 +140,7 @@ export default function LessonVocabulary({ block, onComplete }) {
                         <div className="h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all" style={{ width: `${((index + (result ? 1 : 0)) / config.items.length) * 100}%` }} /></div>
                         <div className="mt-7 rounded-3xl border border-white/10 bg-black/20 p-6 text-center sm:p-8">
                             <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Wpisz polskie znaczenie</p>
-                            <div className="mt-4 flex items-center justify-center gap-3"><h3 className="text-3xl font-black text-white sm:text-4xl">{item.term}</h3><button type="button" onClick={() => speak(item.term, block.language)} className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-400/10 text-emerald-300"><BsPlayFill /></button></div>
+                            <div className="mt-4 flex items-center justify-center gap-3"><h3 className="text-3xl font-black text-white sm:text-4xl">{item.term}</h3><button type="button" onClick={() => speakWord(index)} className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-400/10 text-emerald-300"><BsPlayFill /></button></div>
                             {item.example && <p className="mt-3 text-sm italic text-slate-500">{item.example}</p>}
 
                             <input value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={(event) => event.key === "Enter" && (result ? next() : check())} disabled={Boolean(result)} autoFocus placeholder="Twoja odpowiedź…" className="mt-7 w-full rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 text-lg font-bold text-white outline-none focus:border-emerald-300/50 disabled:opacity-70" />

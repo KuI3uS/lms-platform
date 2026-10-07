@@ -64,6 +64,36 @@ public class DialogAudioController {
                 block.getLanguage(),
                 line.gender()
         );
+        return audioResponse(result);
+    }
+
+    @GetMapping("/{blockId}/vocabulary-audio/{itemIndex}")
+    public ResponseEntity<byte[]> getVocabularyAudio(
+            @PathVariable Long blockId,
+            @PathVariable int itemIndex,
+            Authentication authentication
+    ) {
+        LessonBlock block = blockRepository.findById(blockId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        User user = accessService.currentUser(authentication);
+        accessService.requireLessonAccess(user, block.getLesson());
+        if (!accessService.isAdmin(user) && Boolean.FALSE.equals(block.getPublished())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        if (block.getType() != BlockType.VOCABULARY) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ten blok nie jest treningiem słówek");
+        }
+
+        String term = vocabularyTerm(block.getContent(), itemIndex);
+        DialogAudioService.AudioResult result = audioService.getOrCreate(
+                term,
+                block.getLanguage(),
+                VoiceGender.FEMALE
+        );
+        return audioResponse(result);
+    }
+
+    private ResponseEntity<byte[]> audioResponse(DialogAudioService.AudioResult result) {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(result.contentType()))
                 // Adres nie zawiera treści wypowiedzi. Przeglądarka musi więc
@@ -73,6 +103,28 @@ public class DialogAudioController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
                 .header("X-EduHub-Audio-Cache", result.cached() ? "HIT" : "MISS")
                 .body(result.bytes());
+    }
+
+    private String vocabularyTerm(String content, int itemIndex) {
+        try {
+            JsonNode items = OBJECT_MAPPER.readTree(content).path("items");
+            if (!items.isArray() || itemIndex < 0 || itemIndex >= items.size()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Słówko nie istnieje");
+            }
+            String term = items.get(itemIndex).path("term").asText("").trim();
+            if (term.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Słówko nie ma treści");
+            }
+            return term;
+        } catch (ResponseStatusException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Trening słówek ma nieprawidłowy format",
+                    exception
+            );
+        }
     }
 
     private DialogLine line(String content, int turnIndex) {
