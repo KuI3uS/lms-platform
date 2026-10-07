@@ -49,7 +49,6 @@ export default function App() {
                 <Route element={<Layout />}>
 
                     {/* ===== MAIN ===== */}
-                    <Route path="/" element={<CoursesPage />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
 
                     {/* ===== COURSE FLOW ===== */}
