@@ -15,14 +15,13 @@ export default function LessonCard({
                                        toggle,
                                        onEdit,
                                        onDelete,
-
                                        blocks = [],
                                        tasks = [],
-
                                        block,
                                        setBlock,
                                        saveBlock,
-
+                                       editBlock,
+                                       deleteBlock,
                                        taskForm,
                                        editingTaskId,
                                        setTaskForms,

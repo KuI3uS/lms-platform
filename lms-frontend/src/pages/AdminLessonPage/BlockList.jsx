@@ -32,7 +32,8 @@ const icons = {
 };
 
 export default function BlockList({
-                                      blocks = [],
+                                      lessonId,
+                                      blocks,
                                       onEdit,
                                       onDelete
                                   }) {
@@ -87,14 +88,14 @@ export default function BlockList({
                             <div className="flex gap-2">
 
                                 <button
-                                    onClick={() => onEdit?.(block)}
+                                    onClick={() => onEdit(lessonId, block)}
                                     className="w-10 h-10 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center"
                                 >
                                     <BsPencilSquare />
                                 </button>
 
                                 <button
-                                    onClick={() => onDelete?.(block.id)}
+                                    onClick={() => onDelete(lessonId, block.id)}
                                     className="w-10 h-10 rounded-xl bg-red-600 hover:bg-red-700 flex items-center justify-center"
                                 >
                                     <BsTrash />
