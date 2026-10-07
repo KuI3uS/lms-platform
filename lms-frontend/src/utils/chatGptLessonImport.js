@@ -631,15 +631,20 @@ SAMODZIELNE PLANOWANIE
 - Jeżeli temat jest zbyt szeroki na jedną lekcję, wybierz najważniejszy pierwszy krok i zachowaj spójność z następną lekcją.
 
 Znaczenie trybów:
-1. Samodzielny — uczeń otrzymuje przede wszystkim opis problemu, wymagania i kryteria ukończenia. Nie pokazuj gotowego rozwiązania, gotowego kodu, szczegółowego algorytmu ani kolejności wszystkich czynności. Kod startowy ma zawierać wyłącznie niezbędny szkielet albo może być pusty.
-2. Mała podpowiedź — uczeń otrzymuje krótkie naprowadzenie na pojęcie, narzędzie lub pierwszy krok. Nie pokazuj kompletnego rozwiązania ani kodu, który wystarczy przepisać.
-3. Prowadzony krok po kroku — można podzielić nowe i trudne zagadnienie na etapy, ale uczeń nadal sam wykonuje kluczowe fragmenty. Nie wklejaj gotowego rozwiązania zadania w teorii lub przykładzie kodu.
+1. Samodzielny — uczeń otrzymuje cel, sytuację i kryteria ukończenia, ale sam przypomina sobie oraz stosuje potrzebną wiedzę.
+2. Mała podpowiedź — uczeń otrzymuje krótkie naprowadzenie na regułę, znaczenie lub pierwszy krok, bez ujawniania pełnej odpowiedzi.
+3. Prowadzony krok po kroku — nowe i trudne zagadnienie można podzielić na etapy, ale uczeń nadal sam wykonuje kluczowe części.
 
 Jeżeli użytkownik nie wskazał trybu, dobierz go sam: dla pierwszego kontaktu i poziomu podstawowego zastosuj prowadzenie krok po kroku, dla utrwalania małą podpowiedź, a dla poziomu średniozaawansowanego i zaawansowanego tryb samodzielny. W jednej lekcji możesz stopniowo zmniejszać wsparcie.
 
 ${subjectMethodology}
 
-NIE PODAWAJ ROZWIĄZANIA UCZNIOWI
+${languageLesson ? `ZASADY PODPOWIEDZI W JĘZYKU
+- Nie pokazuj angielskiej odpowiedzi przed pierwszą próbą ucznia, chyba że dany typ ćwiczenia z założenia pokazuje materiał do nauki.
+- Po pierwszym błędzie naprowadź na znaczenie, funkcję zwrotu albo pierwsze słowo. Pełną odpowiedź i krótkie wyjaśnienie pokaż dopiero po kolejnych próbach.
+- W ćwiczeniach otwartych podaj naturalne warianty poprawnej odpowiedzi, ale nie uznawaj odpowiedzi sprzecznych z sytuacją.
+- Korekta ma wskazywać konkretny problem: znaczenie, brakujące słowo, szyk, formę gramatyczną albo wymowę.
+` : `NIE PODAWAJ ROZWIĄZANIA UCZNIOWI
 - Nie twórz przykładu kodu rozwiązującego późniejsze zadanie przez zmianę samych nazw lub liczb.
 - Nie umieszczaj kompletnej odpowiedzi w opisie, poleceniu, wskazówce ani kodzie startowym.
 - Nie rozpisuj całego algorytmu zadania w takiej kolejności, żeby uczeń musiał go jedynie przepisać.
@@ -655,6 +660,7 @@ JAK BUDOWAĆ PRAKTYKĘ
 - Dla SQL możesz najpierw pokazać np. utworzenie bazy „szkola”, a potem polecić samodzielne utworzenie innej bazy, np. „firma”, z jasno opisanymi wymaganiami. Nie podawaj w poleceniu gotowego CREATE DATABASE dla zadania.
 - Przy pracy w XAMPP, phpMyAdmin, systemie Windows, Linux lub innym zewnętrznym narzędziu opisz także rezultat, który uczeń ma uzyskać i sposób, w jaki może go sprawdzić. Jeżeli odpowiedzią jest kod SQL lub HTML, użyj bloku Zadanie z odpowiednim językiem.
 - Nie oceniaj pamięciowego przepisywania. Oceniaj zastosowanie reguły, analizę wyniku, wykrycie błędu lub stworzenie działającego rozwiązania.
+`}
 
 QUIZY
 - Quiz służy do sprawdzenia rozumienia, a nie oczywistego rozpoznania definicji.
@@ -686,7 +692,7 @@ Tytuł wskazówki
 Treść wskazówki
 [krótka praktyczna porada]
 
-OSTRZEŻENIE
+${languageLesson ? "" : `OSTRZEŻENIE
 KROK [NUMER]
 Typ bloku
 Ostrzeżenie
@@ -694,6 +700,7 @@ Tytuł ostrzeżenia
 [tytuł]
 Co może pójść źle?
 [błąd, skutek i sposób uniknięcia]
+`}
 
 INFORMACJA
 KROK [NUMER]
@@ -752,7 +759,27 @@ Język rozpoznawania
 
 ${interactiveLanguageTemplates}
 
-PRZYKŁAD KODU
+${languageLesson ? `ZADANIE JĘZYKOWE — krótka odpowiedź ucznia sprawdzana automatycznie
+KROK [NUMER]
+Typ bloku
+Zadanie
+Tytuł
+[tytuł]
+Opis
+[krótki kontekst]
+Polecenie
+[jednoznaczne polecenie po polsku]
+Poprawna odpowiedź
+[naturalna odpowiedź w języku docelowym]
+Podstawowa podpowiedź (1. błędna próba)
+[naprowadzenie bez ujawnienia odpowiedzi]
+Dokładniejsza podpowiedź (od 2. błędnej próby)
+[konkretna pomoc]
+Wyjaśnienie rozwiązania (od 4. błędnej próby)
+[krótkie wyjaśnienie znaczenia lub reguły]
+Punkty
+[liczba od 0 do 1000]
+` : `PRZYKŁAD KODU
 KROK [NUMER]
 Typ bloku
 Przykład kodu
@@ -791,6 +818,7 @@ Wyjaśnienie rozwiązania (od 4. błędnej próby)
 [wyjaśnienie]
 Punkty
 [liczba od 0 do 1000]
+`}
 
 QUIZ — odpowiedzi wpisz jako zwykłe wiersze, bez oznaczeń A, B, C, D. Poprawna odpowiedź musi być pełną treścią jednego z tych wierszy, a nie literą.
 KROK [NUMER]
@@ -812,7 +840,7 @@ Wskazówka po pierwszym błędzie
 Wyjaśnienie po kolejnych próbach
 [wyjaśnienie reguły]
 
-PLIK — używaj tylko wtedy, gdy użytkownik podał prawdziwy adres pliku
+${languageLesson ? "" : `PLIK — używaj tylko wtedy, gdy użytkownik podał prawdziwy adres pliku
 KROK [NUMER]
 Typ bloku
 Plik
@@ -842,11 +870,12 @@ Nazwa kolejnej części (opcjonalnie)
 [nazwa albo pusta linia]
 Styl
 [Gradient, Linia albo Kropki]
+`}
 
 Nie musisz używać wszystkich typów. Dobieraj je do tematu. Nie twórz fikcyjnych adresów obrazów, filmów ani plików.
 Quiz musi mieć minimum dwie unikalne odpowiedzi. Pole „Poprawna odpowiedź” ma zawierać dokładny tekst wybranej odpowiedzi.
 Lekcja ma być napisana po ludzku, łączyć krótkie objaśnienia z dużą ilością samodzielnej praktyki, nie powtarzać treści i kończyć się krótkim podsumowaniem. Quiz dodaj tylko wtedy, gdy naprawdę sprawdza zrozumienie; maksymalnie dwa quizy w lekcji. Większą liczbę ćwiczeń realizuj przez zadania, dialogi, audio, trening słówek i układanie zdań.
-Przed zwróceniem lekcji sprawdź każde zadanie: jeżeli uczeń może je wykonać przez skopiowanie wcześniejszego kodu albo instrukcji, przeprojektuj je tak, aby wymagało samodzielnego myślenia.
+Przed zwróceniem lekcji sprawdź każde zadanie: jeżeli uczeń może je wykonać przez bezmyślne skopiowanie wcześniejszego przykładu albo instrukcji, przeprojektuj je tak, aby wymagało samodzielnego przypomnienia i zastosowania wiedzy.
 Wykonaj cichy audyt jakości: sprawdź poprawność merytoryczną i językową, zgodność trudności z poziomem, różnorodność praktyki, jednoznaczność poleceń i odpowiedzi, sens każdej podpowiedzi oraz to, czy wszystkie elementy rzeczywiście prowadzą do celu lekcji. Popraw słabe elementy przed zwróceniem wyniku. Nie pokazuj audytu.
 Przed zwróceniem wyniku policz bloki. Jeżeli jest ich więcej niż ${maxBlocks}, połącz lub usuń słabsze elementy. Nigdy nie zwracaj KROK ${maxBlocks + 1} ani wyższego.
 
