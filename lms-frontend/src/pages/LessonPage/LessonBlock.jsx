@@ -6,12 +6,12 @@ import LessonTask from "./LessonTask";
 export default function LessonBlock({
                                         block,
                                         blocks,
-                                        tasks,
                                         answers,
                                         setAnswers,
                                         results,
                                         checkTask
                                     }) {
+
     if (!block) {
         return (
             <section className="bg-gray-900 border border-gray-800 rounded-3xl p-8 text-gray-400">
@@ -39,8 +39,6 @@ export default function LessonBlock({
             return (
                 <LessonTask
                     block={block}
-                    blocks={blocks}
-                    tasks={tasks}
                     answers={answers}
                     setAnswers={setAnswers}
                     results={results}

@@ -5,8 +5,17 @@ import {
     BsFileText,
     BsCodeSlash,
     BsImage,
-    BsQuestionCircle
+    BsQuestionCircle,
+    BsPlayBtn,
+    BsDownload,
+    BsLightbulb,
+    BsExclamationTriangle,
+    BsInfoCircle,
+    BsCheckCircle,
+    BsQuote,
+    BsDashLg
 } from "react-icons/bs";
+
 import { useNavigate } from "react-router-dom";
 
 export default function LessonSidebar({
@@ -19,46 +28,92 @@ export default function LessonSidebar({
 
     const navigate = useNavigate();
 
-    const blockIcon = (type) => {
+    function blockIcon(type) {
+
         switch (type) {
+
             case "TEXT":
                 return <BsFileText />;
-            case "EXAMPLE":
-                return <BsCodeSlash />;
+
+            case "TIP":
+                return <BsLightbulb />;
+
+            case "WARNING":
+                return <BsExclamationTriangle />;
+
+            case "INFO":
+                return <BsInfoCircle />;
+
+            case "SUMMARY":
+                return <BsCheckCircle />;
+
             case "IMAGE":
                 return <BsImage />;
+
+            case "VIDEO":
+                return <BsPlayBtn />;
+
+            case "DOWNLOAD":
+                return <BsDownload />;
+
+            case "EXAMPLE":
+                return <BsCodeSlash />;
+
             case "TASK":
                 return <BsQuestionCircle />;
+
+            case "QUIZ":
+                return <BsQuestionCircle />;
+
+            case "QUOTE":
+                return <BsQuote />;
+
+            case "DIVIDER":
+                return <BsDashLg />;
+
             default:
                 return <BsFileText />;
+
         }
-    };
+
+    }
 
     return (
+
         <aside className="space-y-6">
 
-            <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5">
+            {/* ROADMAP */}
+
+            <section className="bg-gray-900 border border-gray-800 rounded-3xl p-5">
 
                 <h2 className="text-xl font-bold mb-5">
+
                     Roadmap modułu
+
                 </h2>
 
                 <div className="space-y-3">
 
                     {moduleLessons.map((lesson, index) => {
 
-                        const active = Number(currentLessonId) === Number(lesson.id);
+                        const active =
+                            Number(currentLessonId) === Number(lesson.id);
 
                         return (
+
                             <button
                                 key={lesson.id}
                                 disabled={!lesson.canAccess}
                                 onClick={() => {
+
                                     if (lesson.canAccess) {
+
                                         navigate(`/lesson/${lesson.id}`);
+
                                     }
+
                                 }}
-                                className={`w-full flex items-center gap-3 p-3 rounded-2xl transition text-left ${
+                                className={`w-full flex gap-3 p-3 rounded-2xl transition text-left ${
                                     active
                                         ? "bg-blue-600 text-white"
                                         : lesson.canAccess
@@ -68,36 +123,53 @@ export default function LessonSidebar({
                             >
 
                                 {lesson.completed ? (
-                                    <BsCheckCircleFill className="text-green-400 shrink-0" />
+
+                                    <BsCheckCircleFill className="text-green-400 shrink-0 mt-1"/>
+
                                 ) : lesson.canAccess ? (
-                                    <BsPlayFill className="text-blue-300 shrink-0" />
+
+                                    <BsPlayFill className="text-blue-300 shrink-0 mt-1"/>
+
                                 ) : (
-                                    <BsLockFill className="text-gray-500 shrink-0" />
+
+                                    <BsLockFill className="text-gray-500 shrink-0 mt-1"/>
+
                                 )}
 
                                 <div>
+
                                     <p className="text-xs opacity-70">
+
                                         Lekcja {lesson.orderIndex ?? index + 1}
+
                                     </p>
 
                                     <p className="font-semibold">
+
                                         {lesson.title}
+
                                     </p>
+
                                 </div>
 
                             </button>
+
                         );
 
                     })}
 
                 </div>
 
-            </div>
+            </section>
 
-            <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5">
+            {/* BLOKI */}
+
+            <section className="bg-gray-900 border border-gray-800 rounded-3xl p-5">
 
                 <h2 className="text-xl font-bold mb-5">
+
                     Zawartość lekcji
+
                 </h2>
 
                 <div className="space-y-2">
@@ -106,6 +178,7 @@ export default function LessonSidebar({
 
                         <button
                             key={block.id}
+                            type="button"
                             onClick={() => setSelectedBlock(block)}
                             className={`w-full flex items-center gap-3 p-3 rounded-xl transition ${
                                 selectedBlock?.id === block.id
@@ -114,14 +187,27 @@ export default function LessonSidebar({
                             }`}
                         >
 
-                            {blockIcon(block.type)}
+                            <div className="text-lg">
 
-                            <span className="flex-1 text-left">
+                                {blockIcon(block.type)}
 
-                                {block.title ||
-                                    `${block.type} ${index + 1}`}
+                            </div>
 
-                            </span>
+                            <div className="flex-1 text-left">
+
+                                <div className="font-semibold">
+
+                                    {block.title || `${block.type} ${index + 1}`}
+
+                                </div>
+
+                                <div className="text-xs opacity-70">
+
+                                    {block.type}
+
+                                </div>
+
+                            </div>
 
                         </button>
 
@@ -129,8 +215,10 @@ export default function LessonSidebar({
 
                 </div>
 
-            </div>
+            </section>
 
         </aside>
+
     );
+
 }

@@ -4,9 +4,7 @@ import {
     BsCodeSlash,
     BsLightbulb,
     BsCheckCircle,
-    BsStars,
-    BsGlobe,
-    BsToggleOn
+    BsGlobe
 } from "react-icons/bs";
 import MonacoEditorBox from "../../../../pages/LessonPage/MonacoEditor";
 
@@ -14,9 +12,7 @@ export default function TaskBlockForm({
 
                                           block: task,
 
-                                          setBlock,
-
-                                          onSave
+                                          setBlock
 
                                       }) {
 
@@ -220,94 +216,6 @@ export default function TaskBlockForm({
                 </div>
 
             </div>
-
-            {/* ------------------------------------------------ */}
-            {/* USTAWIENIA */}
-            {/* ------------------------------------------------ */}
-
-            <div className="space-y-5">
-
-                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">
-                    Ustawienia
-                </h3>
-
-                <div className="grid md:grid-cols-3 gap-4">
-
-                    <div className="space-y-2">
-
-                        <label className="flex items-center gap-2 text-gray-300">
-
-                            <BsStars />
-
-                            XP
-
-                        </label>
-
-                        <input
-                            type="number"
-                            value={task.points ?? 0}
-                            onChange={(e)=>update("points", Number(e.target.value))}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
-                        />
-
-                    </div>
-
-                    <div className="space-y-2">
-
-                        <label className="text-gray-300">
-                            Typ
-                        </label>
-
-                        <select
-                            value={task.type || "CODE"}
-                            onChange={(e)=>update("type", e.target.value)}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
-                        >
-
-                            <option value="CODE">
-                                CODE
-                            </option>
-
-                            <option value="TEXT">
-                                TEXT
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                    <div className="flex items-end">
-
-                        <label className="flex items-center gap-3 bg-gray-800 rounded-xl p-4 w-full cursor-pointer">
-
-                            <input
-                                type="checkbox"
-                                checked={task.published ?? true}
-                                onChange={(e)=>update("published", e.target.checked)}
-                            />
-
-                            <BsToggleOn />
-
-                            Opublikowane
-
-                        </label>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <button
-                onClick={onSave}
-                className="w-full bg-green-600 hover:bg-green-700 rounded-xl py-4 font-bold transition"
-            >
-
-                {task.id
-                    ? "Zapisz zmiany"
-                    : "Dodaj zadanie"}
-
-            </button>
 
         </section>
 

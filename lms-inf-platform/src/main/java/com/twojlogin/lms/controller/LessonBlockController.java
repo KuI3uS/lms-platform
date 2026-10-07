@@ -25,21 +25,14 @@ public class LessonBlockController {
         this.lessonRepository = lessonRepository;
     }
 
-
-
     @GetMapping("/lesson/{lessonId}")
     public List<LessonBlock> getByLesson(@PathVariable Long lessonId) {
-
         return blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
-
     }
 
     @GetMapping("/{id}")
     public LessonBlock getOne(@PathVariable Long id) {
-
-        return blockRepository.findById(id)
-                .orElseThrow();
-
+        return blockRepository.findById(id).orElseThrow();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -52,22 +45,20 @@ public class LessonBlockController {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow();
 
-        Integer maxOrder =
-                blockRepository.findMaxOrderIndexByLessonId(lessonId);
+        Integer maxOrder = blockRepository.findMaxOrderIndexByLessonId(lessonId);
 
         block.setLesson(lesson);
-
         block.setOrderIndex(maxOrder + 1);
 
         if (block.getPublished() == null) {
             block.setPublished(true);
         }
+
         if (block.getPoints() == null) {
             block.setPoints(0);
         }
 
         return blockRepository.save(block);
-
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -80,28 +71,29 @@ public class LessonBlockController {
         LessonBlock block = blockRepository.findById(id)
                 .orElseThrow();
 
+        // Podstawowe informacje
         block.setTitle(updated.getTitle());
-
         block.setType(updated.getType());
-
         block.setContent(updated.getContent());
+        block.setDescription(updated.getDescription());
+        block.setInstruction(updated.getInstruction());
 
-        block.setMediaUrl(updated.getMediaUrl());
-
-        block.setMediaType(updated.getMediaType());
-
+        // Kod
+        block.setStarterCode(updated.getStarterCode());
+        block.setExpectedAnswer(updated.getExpectedAnswer());
+        block.setHint(updated.getHint());
         block.setLanguage(updated.getLanguage());
 
-        block.setTaskId(updated.getTaskId());
+        // Multimedia
+        block.setMediaUrl(updated.getMediaUrl());
+        block.setMediaType(updated.getMediaType());
 
+        // Ustawienia
         block.setOrderIndex(updated.getOrderIndex());
-
         block.setPublished(updated.getPublished());
-
         block.setPoints(updated.getPoints());
 
         return blockRepository.save(block);
-
     }
 
     @Transactional
@@ -120,13 +112,10 @@ public class LessonBlockController {
                 blockRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
 
         for (int i = 0; i < blocks.size(); i++) {
-
             blocks.get(i).setOrderIndex(i);
-
         }
 
         blockRepository.saveAll(blocks);
-
     }
 
     @Transactional
@@ -145,15 +134,10 @@ public class LessonBlockController {
             int index = ids.indexOf(block.getId());
 
             if (index >= 0) {
-
                 block.setOrderIndex(index);
-
             }
-
         }
 
         blockRepository.saveAll(blocks);
-
     }
-
 }
