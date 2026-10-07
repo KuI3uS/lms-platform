@@ -1127,11 +1127,11 @@ export default function useLessonBlocks() {
 
 
             if (
-                vocabulary.items.length > 20
+                vocabulary.items.length > 30
             ) {
 
                 showToast(
-                    "Jeden trening może zawierać maksymalnie 20 słówek.",
+                    "Jeden trening może zawierać maksymalnie 30 słówek.",
                     "warning"
                 );
 
