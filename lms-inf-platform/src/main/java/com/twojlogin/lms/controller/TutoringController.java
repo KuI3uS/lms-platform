@@ -10,6 +10,7 @@ import com.twojlogin.lms.repository.TutoringAvailabilityRepository;
 import com.twojlogin.lms.repository.TutoringBookingRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import com.twojlogin.lms.service.EmailService;
+import com.twojlogin.lms.service.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -30,16 +31,20 @@ public class TutoringController {
     private final TutoringBookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     public TutoringController(
             TutoringAvailabilityRepository availabilityRepository,
             TutoringBookingRepository bookingRepository,
-            UserRepository userRepository, EmailService emailService
+            UserRepository userRepository,
+            EmailService emailService,
+            NotificationService notificationService
     ) {
         this.availabilityRepository = availabilityRepository;
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
+        this.notificationService = notificationService;
     }
 
     @GetMapping("/available")
@@ -124,6 +129,10 @@ public class TutoringController {
         booking.setGuestName(request.getName());
         booking.setGuestEmail(request.getEmail());
         booking.setGuestPhone(request.getPhone());
+        if (request.getEmail() != null) {
+            userRepository.findByEmail(request.getEmail().trim())
+                    .ifPresent(booking::setStudent);
+        }
 
         booking.setHours(hours);
         booking.setPrice(hours * PRICE_PER_HOUR);
@@ -135,6 +144,15 @@ public class TutoringController {
         TutoringBooking saved = bookingRepository.save(booking);
 
         emailService.sendTutoringPaymentEmail(saved);
+        if (saved.getStudent() != null) {
+            notificationService.create(
+                    saved.getStudent(),
+                    NotificationType.TUTORING,
+                    "Rezerwacja korepetycji",
+                    "Termin został zarezerwowany i oczekuje na płatność.",
+                    "/tutoring-booking"
+            );
+        }
 
         return TutoringBookingDto.from(saved);
     }
@@ -148,6 +166,7 @@ public class TutoringController {
         TutoringBooking booking = bookingRepository.findById(id)
                 .orElseThrow();
 
+        TutoringStatus previousStatus = booking.getStatus();
         if (request.getStatus() != null) {
             booking.setStatus(request.getStatus());
         }
@@ -155,7 +174,23 @@ public class TutoringController {
         booking.setAdminComment(request.getAdminComment());
         booking.setMeetingLink(request.getMeetingLink());
 
-        return TutoringBookingDto.from(bookingRepository.save(booking));
+        TutoringBooking saved = bookingRepository.save(booking);
+        if (saved.getStudent() != null && saved.getStatus() != previousStatus) {
+            String message = switch (saved.getStatus()) {
+                case PAID -> "Płatność została potwierdzona. Termin korepetycji jest aktywny.";
+                case COMPLETED -> "Korepetycje zostały oznaczone jako zakończone.";
+                case CANCELLED -> "Rezerwacja korepetycji została anulowana.";
+                case PENDING_PAYMENT -> "Rezerwacja oczekuje na płatność.";
+            };
+            notificationService.create(
+                    saved.getStudent(),
+                    NotificationType.TUTORING,
+                    "Aktualizacja korepetycji",
+                    message,
+                    "/tutoring-booking"
+            );
+        }
+        return TutoringBookingDto.from(saved);
     }
     @GetMapping("/blocked")
     public List<TutoringBlockedSlotDto> blocked() {

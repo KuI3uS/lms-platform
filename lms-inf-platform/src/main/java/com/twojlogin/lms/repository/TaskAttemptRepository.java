@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.List;
 
 public interface TaskAttemptRepository extends JpaRepository<TaskAttempt, Long> {
 
@@ -32,4 +33,10 @@ public interface TaskAttemptRepository extends JpaRepository<TaskAttempt, Long> 
             @Param("userId") Long userId,
             @Param("lessonId") Long lessonId
     );
+
+    List<TaskAttempt> findTop5ByUserIdOrderByAttemptCountDesc(Long userId);
+
+    long countByUserId(Long userId);
+
+    long countByUserIdAndCorrectTrue(Long userId);
 }

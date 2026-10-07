@@ -32,6 +32,7 @@ class TaskEvaluationServiceTest {
     private TaskAttemptRepository attemptRepository;
     private LessonProgressRepository progressRepository;
     private UserRepository userRepository;
+    private ProgressRewardService rewardService;
     private Authentication authentication;
     private TaskEvaluationService service;
     private User user;
@@ -52,12 +53,14 @@ class TaskEvaluationServiceTest {
         attemptRepository = mock(TaskAttemptRepository.class);
         progressRepository = mock(LessonProgressRepository.class);
         userRepository = mock(UserRepository.class);
+        rewardService = mock(ProgressRewardService.class);
         authentication = mock(Authentication.class);
         service = new TaskEvaluationService(
                 blockRepository,
                 attemptRepository,
                 progressRepository,
-                userRepository
+                userRepository,
+                rewardService
         );
 
         user = new User();

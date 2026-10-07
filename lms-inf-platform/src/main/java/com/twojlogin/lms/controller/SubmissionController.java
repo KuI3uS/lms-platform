@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import org.springframework.security.core.Authentication;
+import com.twojlogin.lms.service.CourseAccessService;
 @RestController
 @RequestMapping("/api/submit")
 public class SubmissionController {
@@ -18,15 +20,18 @@ public class SubmissionController {
     private final SubmissionRepository submissionRepository;
     private final UserRepository userRepository;
     private final CourseModuleRepository moduleRepository;
+    private final CourseAccessService accessService;
 
     public SubmissionController(AnswerRepository answerRepository,
                                 SubmissionRepository submissionRepository,
                                 UserRepository userRepository,
-                                CourseModuleRepository moduleRepository) {
+                                CourseModuleRepository moduleRepository,
+                                CourseAccessService accessService) {
         this.answerRepository = answerRepository;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.moduleRepository = moduleRepository;
+        this.accessService = accessService;
     }
 
     @DeleteMapping("/{id}")
@@ -38,7 +43,10 @@ public class SubmissionController {
 
     @PostMapping("/module/{moduleId}")
     public SubmissionResultDto submit(@PathVariable Long moduleId,
-                             @RequestBody SubmitRequest request) {
+                             @RequestBody SubmitRequest request,
+                             Authentication authentication) {
+
+        accessService.requireModuleAccess(moduleId, authentication);
 
         int total = request.answers.size();
         int correct = 0;

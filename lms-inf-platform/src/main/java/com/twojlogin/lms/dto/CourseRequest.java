@@ -9,6 +9,7 @@ public record CourseRequest(
         BigDecimal price,
         boolean published,
         String thumbnailUrl,
-        String level
+        String level,
+        String paymentUrl
 ) {
 }

@@ -14,6 +14,11 @@ public record CourseSummaryDto(
         long moduleCount,
         long lessonCount,
         long completedLessonCount,
-        int progress
+        int progress,
+        boolean paid,
+        boolean canAccess,
+        boolean enrolled,
+        String accessStatus,
+        String paymentUrl
 ) {
 }

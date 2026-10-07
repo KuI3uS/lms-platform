@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
+import org.springframework.security.core.Authentication;
+import com.twojlogin.lms.service.CourseAccessService;
 
 @RestController
 @RequestMapping("/api/modules")
@@ -18,11 +20,14 @@ public class CourseModuleController {
 
     private final CourseModuleRepository moduleRepository;
     private final CourseRepository courseRepository;
+    private final CourseAccessService accessService;
 
     public CourseModuleController(CourseModuleRepository moduleRepository,
-                                  CourseRepository courseRepository) {
+                                  CourseRepository courseRepository,
+                                  CourseAccessService accessService) {
         this.moduleRepository = moduleRepository;
         this.courseRepository = courseRepository;
+        this.accessService = accessService;
     }
 
     @PostMapping("/course/{courseId}")
@@ -38,7 +43,11 @@ public class CourseModuleController {
     }
 
     @GetMapping("/course/{courseId}")
-    public List<CourseModuleDto> getByCourse(@PathVariable Long courseId) {
+    public List<CourseModuleDto> getByCourse(
+            @PathVariable Long courseId,
+            Authentication authentication
+    ) {
+        accessService.requireCourseAccess(courseId, authentication);
         return moduleRepository.findByCourseId(courseId).stream()
                 .map(CourseModuleDto::from)
                 .toList();
@@ -60,7 +69,11 @@ public class CourseModuleController {
     }
 
     @GetMapping("/{id}")
-    public CourseModuleDto getOne(@PathVariable Long id) {
+    public CourseModuleDto getOne(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        accessService.requireModuleAccess(id, authentication);
         return CourseModuleDto.from(moduleRepository.findById(id).orElseThrow());
     }
 

@@ -35,7 +35,7 @@ public class CourseController {
 
     @GetMapping("/my")
     public List<CourseSummaryDto> myCourses(Authentication authentication) {
-        return courseService.getAll(authentication);
+        return courseService.getMy(authentication);
     }
 
     @GetMapping("/{id}")

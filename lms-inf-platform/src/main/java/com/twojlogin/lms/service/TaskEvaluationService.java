@@ -31,17 +31,20 @@ public class TaskEvaluationService {
     private final TaskAttemptRepository attemptRepository;
     private final LessonProgressRepository lessonProgressRepository;
     private final UserRepository userRepository;
+    private final ProgressRewardService rewardService;
 
     public TaskEvaluationService(
             LessonBlockRepository blockRepository,
             TaskAttemptRepository attemptRepository,
             LessonProgressRepository lessonProgressRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            ProgressRewardService rewardService
     ) {
         this.blockRepository = blockRepository;
         this.attemptRepository = attemptRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.userRepository = userRepository;
+        this.rewardService = rewardService;
     }
 
     @Transactional
@@ -381,6 +384,7 @@ public class TaskEvaluationService {
 
         LessonProgress progress = lessonProgressRepository.findByUserAndLesson(user, lesson)
                 .orElseGet(LessonProgress::new);
+        boolean newlyCompleted = !progress.isCompleted();
         progress.setUser(user);
         progress.setLesson(lesson);
         if (!progress.isCompleted() || progress.getCompletedAt() == null) {
@@ -389,6 +393,9 @@ public class TaskEvaluationService {
         progress.setCompleted(true);
         lessonProgressRepository.save(progress);
 
-        return true;
+        if (newlyCompleted) {
+            rewardService.afterLessonCompleted(user, lesson);
+        }
+        return newlyCompleted;
     }
 }

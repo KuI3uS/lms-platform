@@ -9,6 +9,14 @@ import com.twojlogin.lms.repository.SubmissionRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import com.twojlogin.lms.repository.LessonProgressRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
+import com.twojlogin.lms.repository.CourseEnrollmentRepository;
+import com.twojlogin.lms.repository.CourseOrderRepository;
+import com.twojlogin.lms.repository.UserNotificationRepository;
+import com.twojlogin.lms.repository.UserAchievementRepository;
+import com.twojlogin.lms.repository.CourseCertificateRepository;
+import com.twojlogin.lms.repository.StudyActivityRepository;
+import com.twojlogin.lms.repository.ExamAttemptRepository;
+import com.twojlogin.lms.repository.TutoringBookingRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.twojlogin.lms.entity.User;
@@ -28,17 +36,41 @@ public class UserController {
     private final SchoolClassRepository schoolClassRepository;
     private final LessonProgressRepository lessonProgressRepository;
     private final TaskAttemptRepository taskAttemptRepository;
+    private final CourseEnrollmentRepository enrollmentRepository;
+    private final CourseOrderRepository orderRepository;
+    private final UserNotificationRepository notificationRepository;
+    private final UserAchievementRepository achievementRepository;
+    private final CourseCertificateRepository certificateRepository;
+    private final StudyActivityRepository activityRepository;
+    private final ExamAttemptRepository examAttemptRepository;
+    private final TutoringBookingRepository tutoringBookingRepository;
 
     public UserController(UserRepository userRepository,
                           SubmissionRepository submissionRepository,
                           SchoolClassRepository schoolClassRepository,
                           LessonProgressRepository lessonProgressRepository,
-                          TaskAttemptRepository taskAttemptRepository) {
+                          TaskAttemptRepository taskAttemptRepository,
+                          CourseEnrollmentRepository enrollmentRepository,
+                          CourseOrderRepository orderRepository,
+                          UserNotificationRepository notificationRepository,
+                          UserAchievementRepository achievementRepository,
+                          CourseCertificateRepository certificateRepository,
+                          StudyActivityRepository activityRepository,
+                          ExamAttemptRepository examAttemptRepository,
+                          TutoringBookingRepository tutoringBookingRepository) {
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
         this.schoolClassRepository = schoolClassRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.taskAttemptRepository = taskAttemptRepository;
+        this.enrollmentRepository = enrollmentRepository;
+        this.orderRepository = orderRepository;
+        this.notificationRepository = notificationRepository;
+        this.achievementRepository = achievementRepository;
+        this.certificateRepository = certificateRepository;
+        this.activityRepository = activityRepository;
+        this.examAttemptRepository = examAttemptRepository;
+        this.tutoringBookingRepository = tutoringBookingRepository;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -64,6 +96,15 @@ public class UserController {
         submissionRepository.deleteByUserId(id);
         taskAttemptRepository.deleteByUserId(id);
         lessonProgressRepository.deleteByUserId(id);
+        examAttemptRepository.deleteByUserId(id);
+        certificateRepository.deleteByUserId(id);
+        achievementRepository.deleteByUserId(id);
+        notificationRepository.deleteByUserId(id);
+        activityRepository.deleteByUserId(id);
+        orderRepository.clearConfirmedBy(id);
+        orderRepository.deleteByUserId(id);
+        enrollmentRepository.deleteByUserId(id);
+        tutoringBookingRepository.clearStudent(id);
         userRepository.deleteById(id);
     }
 

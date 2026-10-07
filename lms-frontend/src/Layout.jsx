@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import {
     BsBarChart,
+    BsAward,
     BsBook,
     BsCalendarCheck,
+    BsClipboardCheck,
+    BsCreditCard,
     BsGrid1X2,
     BsInbox,
     BsPeople,
@@ -13,6 +16,7 @@ import {
     BsShieldLock,
     BsX
 } from "react-icons/bs";
+import { apiFetch } from "./api/api";
 
 export default function Layout() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -40,6 +44,21 @@ export default function Layout() {
                 ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-600/20"
                 : "text-slate-400 hover:bg-white/5 hover:text-white"
         }`;
+
+    useEffect(() => {
+        const heartbeat = () => {
+            if (document.visibilityState === "visible") {
+                apiFetch("/learning/heartbeat", { method: "POST" }).catch(() => {});
+            }
+        };
+        heartbeat();
+        const timer = window.setInterval(heartbeat, 60000);
+        document.addEventListener("visibilitychange", heartbeat);
+        return () => {
+            window.clearInterval(timer);
+            document.removeEventListener("visibilitychange", heartbeat);
+        };
+    }, []);
 
     if (isLessonPage) {
         return (
@@ -97,6 +116,14 @@ export default function Layout() {
                         <BsBarChart />
                         <span>Wyniki</span>
                     </NavLink>
+                    <NavLink to="/exams" onClick={closeMenu} className={linkClass}>
+                        <BsClipboardCheck />
+                        <span>Egzaminy INF</span>
+                    </NavLink>
+                    <NavLink to="/learning-center" onClick={closeMenu} className={linkClass}>
+                        <BsAward />
+                        <span>Statystyki i nagrody</span>
+                    </NavLink>
 
                     {role === "ADMIN" && (
                         <>
@@ -118,6 +145,10 @@ export default function Layout() {
                             <NavLink to="/admin/submissions" onClick={closeMenu} className={linkClass}>
                                 <BsInbox />
                                 <span>Prace uczniów</span>
+                            </NavLink>
+                            <NavLink to="/admin/course-orders" onClick={closeMenu} className={linkClass}>
+                                <BsCreditCard />
+                                <span>Zamówienia kursów</span>
                             </NavLink>
                             <NavLink to="/admin/tutoring" onClick={closeMenu} className={linkClass}>
                                 <BsCalendarCheck />

@@ -11,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.security.core.Authentication;
+import com.twojlogin.lms.service.CourseAccessService;
 
 @RestController
 @RequestMapping("/api/questions")
@@ -18,11 +20,14 @@ public class QuestionController {
 
     private final QuestionRepository questionRepository;
     private final CourseModuleRepository moduleRepository;
+    private final CourseAccessService accessService;
 
     public QuestionController(QuestionRepository questionRepository,
-                              CourseModuleRepository moduleRepository) {
+                              CourseModuleRepository moduleRepository,
+                              CourseAccessService accessService) {
         this.questionRepository = questionRepository;
         this.moduleRepository = moduleRepository;
+        this.accessService = accessService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -51,7 +56,11 @@ public class QuestionController {
     }
 
     @GetMapping("/module/{moduleId}")
-    public List<QuestionDto> getByModule(@PathVariable Long moduleId) {
+    public List<QuestionDto> getByModule(
+            @PathVariable Long moduleId,
+            Authentication authentication
+    ) {
+        accessService.requireModuleAccess(moduleId, authentication);
         return questionRepository.findByModuleId(moduleId).stream()
                 .map(QuestionDto::from)
                 .toList();
