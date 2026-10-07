@@ -51,7 +51,7 @@ export default function Layout() {
                         <span>Dashboard</span>
                     </NavLink>
 
-                    <NavLink to="/" className={linkClass}>
+                    <NavLink to="/courses" className={linkClass}>
                         <BsBook />
                         <span>Kursy</span>
                     </NavLink>
