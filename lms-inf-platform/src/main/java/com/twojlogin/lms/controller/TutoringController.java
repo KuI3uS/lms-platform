@@ -143,4 +143,8 @@ public class TutoringController {
 
         return bookingRepository.save(booking);
     }
+    @GetMapping("/blocked")
+    public List<TutoringBooking> blocked() {
+        return bookingRepository.findActiveBlockedBookings(LocalDateTime.now());
+    }
 }
