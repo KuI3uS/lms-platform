@@ -29,7 +29,7 @@ import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./ForgotPassword";
 import ResetPassword from "./ResetPassword";
-import LandingPage from "./pages/LandingPage";
+import LandingPage from "./components/LandingPage";
 
 export default function App() {
     return (
