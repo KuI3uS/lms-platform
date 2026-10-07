@@ -33,8 +33,8 @@ export default function LessonPage() {
             .then(async (data) => {
                 setLesson(data);
 
-                if (data?.module?.id) {
-                    const lessons = await apiFetch(`/lessons/module/${data.module.id}`);
+                if (data?.moduleId) {
+                    const lessons = await apiFetch(`/lessons/module/${data.moduleId}`);
 
                     const lessonsWithAccess = await Promise.all(
                         (lessons || []).map(async (l) => {

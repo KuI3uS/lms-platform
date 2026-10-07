@@ -1,5 +1,6 @@
 package com.twojlogin.lms.controller;
 
+import com.twojlogin.lms.dto.LessonDto;
 import com.twojlogin.lms.entity.CourseModule;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonProgress;
@@ -87,9 +88,11 @@ public class LessonController {
     }
 
     @GetMapping("/{id}")
-    public Lesson getOne(@PathVariable Long id) {
-        return lessonRepository.findById(id)
+    public LessonDto getOne(@PathVariable Long id) {
+        Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+        return new LessonDto(lesson);
     }
 
     @GetMapping("/{id}/access")
