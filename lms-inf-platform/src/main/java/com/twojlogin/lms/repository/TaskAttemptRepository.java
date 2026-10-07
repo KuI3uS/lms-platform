@@ -47,6 +47,7 @@ public interface TaskAttemptRepository extends JpaRepository<TaskAttempt, Long> 
                 com.twojlogin.lms.entity.BlockType.QUIZ,
                 com.twojlogin.lms.entity.BlockType.DIALOG,
                 com.twojlogin.lms.entity.BlockType.VOCABULARY,
+                com.twojlogin.lms.entity.BlockType.SENTENCE_BUILDER,
                 com.twojlogin.lms.entity.BlockType.AUDIO
               )
               and attempt.block.published = true

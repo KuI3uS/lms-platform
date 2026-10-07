@@ -14,11 +14,12 @@ import {
     BsQuote,
     BsHeadphones,
     BsChatDots,
-    BsTranslate
+    BsTranslate,
+    BsGrid3X3Gap
 } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 
-const ASSESSMENT_TYPES = new Set(["TASK", "QUIZ"]);
+const ASSESSMENT_TYPES = new Set(["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER"]);
 
 function blockIcon(type) {
     switch (type) {
@@ -38,6 +39,8 @@ function blockIcon(type) {
             return <BsChatDots />;
         case "VOCABULARY":
             return <BsTranslate />;
+        case "SENTENCE_BUILDER":
+            return <BsGrid3X3Gap />;
         case "PDF":
         case "DOWNLOAD":
             return <BsDownload />;

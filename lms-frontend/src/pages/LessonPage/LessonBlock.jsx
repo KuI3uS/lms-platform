@@ -10,6 +10,7 @@ import LessonQuiz from "./LessonQuiz";
 import LessonAudio from "./LessonAudio";
 import LessonDialog from "./LessonDialog";
 import LessonVocabulary from "./LessonVocabulary";
+import LessonSentenceBuilder from "./LessonSentenceBuilder";
 
 export default function LessonBlock({
                                         block,
@@ -56,6 +57,9 @@ export default function LessonBlock({
 
         case "VOCABULARY":
             return <LessonVocabulary block={block} onComplete={onInteractiveComplete} />;
+
+        case "SENTENCE_BUILDER":
+            return <LessonSentenceBuilder block={block} onComplete={onInteractiveComplete} />;
 
         case "PDF":
         case "DOWNLOAD":

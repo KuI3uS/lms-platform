@@ -40,7 +40,7 @@ export default function BlockForm({
                     setBlock(prev=>({
                         ...prev,
                         type,
-                        language: ["AUDIO", "DIALOG", "VOCABULARY"].includes(type)
+                        language: ["AUDIO", "DIALOG", "VOCABULARY", "SENTENCE_BUILDER"].includes(type)
                             && !/^[a-z]{2}-[A-Z]{2}$/.test(prev.language || "")
                                 ? "en-GB"
                                 : prev.language

@@ -6,6 +6,7 @@ import {
     serializeDialogConfig,
     serializeVocabularyConfig
 } from "./languageInteractiveBlocks.js";
+import { createSentenceBuilderConfig, serializeSentenceBuilderConfig } from "./sentenceBuilder.js";
 
 const TYPE_MAP = {
     tekst: "TEXT",
@@ -29,6 +30,9 @@ const TYPE_MAP = {
     "trening slowek": "VOCABULARY",
     slownictwo: "VOCABULARY",
     "cwiczenie slownictwa": "VOCABULARY",
+    "ukladanie zdania": "SENTENCE_BUILDER",
+    "kafelki ze slowami": "SENTENCE_BUILDER",
+    "rozsypanka wyrazowa": "SENTENCE_BUILDER",
     plik: "PDF",
     cytat: "QUOTE",
     separator: "DIVIDER"
@@ -46,6 +50,7 @@ const FIELD_ALIASES = [
     ["tytul cwiczenia", "title"],
     ["tytul dialogu", "title"],
     ["tytul treningu", "title"],
+    ["tytul ukladanki", "title"],
     ["tytul przykladu", "title"],
     ["nazwa pliku", "title"],
     ["naglowek cytatu", "title"],
@@ -67,6 +72,9 @@ const FIELD_ALIASES = [
     ["slowka — jedno w wierszu", "vocabulary"],
     ["slowka - jedno w wierszu", "vocabulary"],
     ["slowka", "vocabulary"],
+    ["zdanie po polsku", "polishSentence"],
+    ["poprawne zdanie po angielsku", "englishSentence"],
+    ["zdanie po angielsku", "englishSentence"],
     ["opis pod grafika", "description"],
     ["opis przed filmem", "description"],
     ["krotka instrukcja", "description"],
@@ -415,6 +423,18 @@ function parseStep(step, warnings, errors) {
             errors.push(`Krok ${step.number}: każde słówko musi mieć zapis „słowo | tłumaczenie”.`);
         }
     }
+    if (resolved.type === "SENTENCE_BUILDER") {
+        const config = createSentenceBuilderConfig(fields.polishSentence, fields.englishSentence);
+        block.content = serializeSentenceBuilderConfig(config);
+        block.language = normalizeLanguage(fields.language, "en-GB");
+        block.mediaType = "sentence-builder";
+        if (!config.polishSentence) {
+            errors.push(`Krok ${step.number}: układanie zdania wymaga pola „Zdanie po polsku”.`);
+        }
+        if (config.words.length < 2 || config.words.length > 6) {
+            errors.push(`Krok ${step.number}: poprawne zdanie po angielsku musi zawierać od 2 do 6 kafelków.`);
+        }
+    }
     if (resolved.type === "DIVIDER") {
         const dividerStyles = { gradient: "gradient", linia: "line", line: "line", kropki: "dots", dots: "dots" };
         block.mediaType = dividerStyles[normalize(fields.mediaType)] || "gradient";
@@ -466,7 +486,7 @@ export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS) {
 export function getChatGptLessonPrompt(maxBlocks = MAX_LESSON_BLOCKS, variant = "PROGRAMMING") {
     const languageLesson = variant === "LANGUAGE";
     const allowedTypes = languageLesson
-        ? "Tekst, Wskazówka, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Dialog interaktywny, Trening słówek, Zadanie, Quiz"
+        ? "Tekst, Wskazówka, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Dialog interaktywny, Trening słówek, Układanie zdania, Zadanie, Quiz"
         : "Tekst, Wskazówka, Ostrzeżenie, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Przykład kodu, Zadanie, Quiz, Plik, Cytat, Separator";
     const interactiveLanguageTemplates = languageLesson ? `
 DIALOG INTERAKTYWNY — cały dialog jest jednym blokiem bez względu na liczbę wypowiedzi. Może mieć 2, 20 albo 60 wypowiedzi. Nie dziel jednej scenki na osobne bloki.
@@ -508,6 +528,19 @@ Instrukcja dla ucznia
 Słówka — jedno w wierszu
 hello | cześć | Hello, Anna! | hej; dzień dobry
 good morning | dzień dobry | Good morning, Emma!
+
+UKŁADANIE ZDANIA — uczeń układa tłumaczenie z 2–6 pomieszanych kafelków. Każdy wyraz oddzielony spacją jest jednym kafelkiem.
+KROK [NUMER]
+Typ bloku
+Układanie zdania
+Tytuł układanki
+[tytuł]
+Zdanie po polsku
+[zdanie, które widzi uczeń]
+Poprawne zdanie po angielsku
+[od 2 do 6 wyrazów w poprawnej kolejności]
+Język
+en-GB
 bye | cześć, do widzenia | Bye, Leo! | goodbye
 Język audio
 [np. en-GB]

@@ -13,7 +13,8 @@ import {
     BsDashLg,
     BsHeadphones,
     BsChatDots,
-    BsTranslate
+    BsTranslate,
+    BsGrid3X3Gap
 } from "react-icons/bs";
 
 export const BLOCK_TYPES = [
@@ -118,6 +119,16 @@ export const BLOCK_TYPES = [
         iconBox: "bg-emerald-400/15 text-emerald-200"
     },
     {
+        value: "SENTENCE_BUILDER",
+        label: "Układanie zdania",
+        description: "Pomieszane kafelki, z których uczeń układa zdanie po angielsku.",
+        icon: <BsGrid3X3Gap />,
+        surface: "bg-amber-500/10",
+        border: "border-amber-500/25",
+        selected: "border-amber-300 bg-amber-500/20 shadow-amber-950/30",
+        iconBox: "bg-amber-400/15 text-amber-200"
+    },
+    {
         value: "EXAMPLE",
         label: "Przykład kodu",
         description: "Kod z językiem, opisem i przyciskiem kopiowania.",
@@ -184,7 +195,7 @@ export const BLOCK_TYPES_MAP = Object.fromEntries(
 );
 
 const LANGUAGE_TYPES = new Set([
-    "TEXT", "TIP", "INFO", "SUMMARY", "IMAGE", "VIDEO", "AUDIO", "DIALOG", "VOCABULARY", "TASK", "QUIZ"
+    "TEXT", "TIP", "INFO", "SUMMARY", "IMAGE", "VIDEO", "AUDIO", "DIALOG", "VOCABULARY", "SENTENCE_BUILDER", "TASK", "QUIZ"
 ]);
 
 const LANGUAGE_OVERRIDES = {
@@ -197,6 +208,7 @@ const LANGUAGE_OVERRIDES = {
     AUDIO: { label: "Audio i wymowa", description: "Odsłuch, nagranie mikrofonem i automatyczna powtórka." },
     DIALOG: { label: "Dialog interaktywny", description: "Rozmowa bohaterów z rolą ucznia, odsłuchem i łagodną korektą." },
     VOCABULARY: { label: "Trening słówek", description: "Od 1 do 20 słów w jednym bloku, z odsłuchem i pisaniem." },
+    SENTENCE_BUILDER: { label: "Układanie zdania", description: "Ułóż tłumaczenie z 2–6 pomieszanych kafelków." },
     TASK: { label: "Ćwiczenie", description: "Krótka odpowiedź sprawdzana automatycznie." },
     QUIZ: { label: "Szybki quiz", description: "Jedno pytanie i natychmiastowa informacja zwrotna." }
 };
