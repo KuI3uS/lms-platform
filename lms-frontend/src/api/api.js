@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8080/api";
+const API_URL = "https://lms-platform-1-dcxg.onrender.com/api";
 
 export function getToken() {
     return localStorage.getItem("token");
