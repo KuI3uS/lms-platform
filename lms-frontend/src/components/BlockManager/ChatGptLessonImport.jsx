@@ -14,6 +14,7 @@ import {
     parseChatGptLesson
 } from "../../utils/chatGptLessonImport";
 import { getBlockLabel } from "./blockTypes";
+import { DEFAULT_EXERCISE_XP, getBlockBaseXp } from "../../utils/lessonBlockRewards";
 
 export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks, variant = "PROGRAMMING" }) {
     const { showToast } = useFeedback();
@@ -24,6 +25,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
         [source, maxBlocks, variant]
     );
     const importing = Boolean(lessonBlocks.importingByLesson?.[lessonId]);
+    const totalXp = result.blocks.reduce((total, block) => total + getBlockBaseXp(block), 0);
     const importError = lessonBlocks.errorsByLesson?.[lessonId] || "";
     const existingCount = lessonBlocks.getBlocks(lessonId).length;
     const remainingSlots = Math.max(0, maxBlocks - existingCount);
@@ -83,6 +85,9 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                     <p className="mt-2 text-xs font-black uppercase tracking-wider text-cyan-300/80">
                         Obecna lekcja: {existingCount}/{maxBlocks} bloków · wolne miejsce: {remainingSlots}
                     </p>
+                    <p className="mt-2 text-sm text-slate-400">
+                        Jeśli w ćwiczeniu brakuje punktów, importer ustawi {DEFAULT_EXERCISE_XP} XP. Tekst i podsumowanie nie mają osobnej nagrody.
+                    </p>
                 </div>
                 <button
                     type="button"
@@ -128,6 +133,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                                 : <BsCheckCircle className="text-emerald-300" />}
                             Wykryto {result.blocks.length} {result.blocks.length === 1 ? "blok" : "bloków"}
                         </div>
+                        <p className="mt-2 text-sm text-emerald-200">Nagrody za ćwiczenia: {totalXp} bazowych XP. Mnożniki i bonus za ukończenie lekcji są naliczane osobno.</p>
                         {result.errors.map((error) => (
                             <p key={error} className="mt-2 text-sm text-red-200">{error}</p>
                         ))}
@@ -153,6 +159,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                                         {index + 1}. {getBlockLabel(block.type)}
                                     </span>
                                     <p className="mt-1 truncate text-sm font-bold text-slate-200">{block.title || "Separator"}</p>
+                                    <p className="mt-2 text-xs font-bold text-slate-400">{getBlockBaseXp(block) > 0 ? `${getBlockBaseXp(block)} XP za pierwsze zaliczenie` : "Materiał bez osobnej nagrody XP"}</p>
                                 </li>
                             ))}
                         </ol>

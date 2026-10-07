@@ -2,6 +2,7 @@ package com.twojlogin.lms.service;
 
 import com.twojlogin.lms.dto.InteractiveCompletionRequest;
 import com.twojlogin.lms.entity.BlockType;
+import com.twojlogin.lms.entity.GamificationProfile;
 import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.entity.TaskAttempt;
 import com.twojlogin.lms.entity.User;
@@ -23,9 +24,14 @@ public class InteractiveBlockCompletionService {
     private static final int MIN_PRONUNCIATION_SCORE = 65;
 
     private final TaskAttemptRepository attemptRepository;
+    private final GamificationService gamificationService;
 
-    public InteractiveBlockCompletionService(TaskAttemptRepository attemptRepository) {
+    public InteractiveBlockCompletionService(
+            TaskAttemptRepository attemptRepository,
+            GamificationService gamificationService
+    ) {
         this.attemptRepository = attemptRepository;
+        this.gamificationService = gamificationService;
     }
 
     @Transactional
@@ -61,14 +67,19 @@ public class InteractiveBlockCompletionService {
             default -> false;
         };
 
+        GamificationProfile profile = gamificationService.profileForUpdate(user);
         TaskAttempt attempt = attemptRepository.findByUserAndBlock(user, block)
                 .orElseGet(TaskAttempt::new);
+        boolean previouslyCorrect = attempt.isCorrect();
         attempt.setUser(user);
         attempt.setBlock(block);
         attempt.setAttemptCount(attempt.getAttemptCount() + 1);
         attempt.setCorrect(attempt.isCorrect() || completed);
         attempt.setLastAnswer("completed=" + completedItems + "/" + requiredItems + ";score=" + score);
         attempt.setUpdatedAt(LocalDateTime.now());
+        GamificationService.AwardResult award = gamificationService.recordTaskResult(
+                profile, block, attempt, previouslyCorrect, completed
+        );
         attemptRepository.save(attempt);
 
         String message = completed
@@ -81,7 +92,12 @@ public class InteractiveBlockCompletionService {
                 requiredItems,
                 completedItems,
                 score,
-                message
+                message,
+                award.xpEarned(),
+                award.multiplier(),
+                award.taskStreak(),
+                award.level(),
+                award.levelUp()
         );
     }
 
@@ -120,6 +136,11 @@ public class InteractiveBlockCompletionService {
             int requiredItems,
             int completedItems,
             int score,
-            String message
+            String message,
+            int xpEarned,
+            int xpMultiplier,
+            int taskStreak,
+            int level,
+            boolean levelUp
     ) {}
 }

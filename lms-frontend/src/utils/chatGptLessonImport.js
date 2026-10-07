@@ -7,6 +7,7 @@ import {
     serializeVocabularyConfig
 } from "./languageInteractiveBlocks.js";
 import { createSentenceBuilderConfig, serializeSentenceBuilderConfig } from "./sentenceBuilder.js";
+import { DEFAULT_EXERCISE_XP, getBlockBaseXp, REWARDED_BLOCK_TYPES } from "./lessonBlockRewards.js";
 
 const TYPE_MAP = {
     tekst: "TEXT",
@@ -124,6 +125,7 @@ const FIELD_ALIASES = [
     ["adres pliku", "mediaUrl"],
     ["styl", "mediaType"],
     ["punkty (xp)", "points"],
+    ["punkty xp", "points"],
     ["punkty", "points"],
     ["xp", "points"],
     ["najwazniejsze informacje", "summary"],
@@ -315,7 +317,7 @@ function parseStep(step, warnings, errors) {
         mediaUrl: fields.mediaUrl || "",
         mediaType: fields.mediaType || "",
         published: true,
-        points: Math.max(0, Math.min(Number(fields.points) || 0, 1000))
+        points: 0
     };
 
     if (resolved.practical) {
@@ -466,6 +468,15 @@ function parseStep(step, warnings, errors) {
         errors.push(`Krok ${step.number}: blok „${block.title}” nie ma treści.`);
     }
 
+    const pointsText = String(fields.points || "").trim().replace(/\s*XP$/i, "").replace(",", ".");
+    const points = Number(pointsText);
+    block.points = pointsText && Number.isFinite(points)
+        ? Math.max(0, Math.min(Math.trunc(points), 1000))
+        : getBlockBaseXp(block);
+    if (fields.points?.trim() && (!pointsText || !Number.isFinite(points))) {
+        warnings.push(`Krok ${step.number}: nie rozpoznano liczby punktów. Ustawiono ${block.points} XP.`);
+    }
+
     return block;
 }
 
@@ -487,8 +498,7 @@ export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS, varian
         .filter(Boolean);
 
     if (String(source || "").trim() && errors.length === 0) {
-        const interactiveTypes = new Set(["AUDIO", "DIALOG", "VOCABULARY", "WORD_LAB", "LISTENING", "SENTENCE_BUILDER", "TASK", "QUIZ"]);
-        const interactiveCount = blocks.filter((block) => interactiveTypes.has(block.type)).length;
+        const interactiveCount = blocks.filter((block) => REWARDED_BLOCK_TYPES.has(block.type)).length;
         if (blocks.length < Math.min(10, maxBlocks)) {
             warnings.push("Ta lekcja jest krótka. Dla pełnej, zaawansowanej lekcji zalecamy co najmniej 10 zróżnicowanych bloków.");
         }
@@ -522,6 +532,8 @@ DIALOG INTERAKTYWNY — cały dialog jest jednym blokiem bez względu na liczbę
 KROK [NUMER]
 Typ bloku
 Dialog interaktywny
+Punkty
+${DEFAULT_EXERCISE_XP}
 Tytuł dialogu
 [tytuł]
 Opis sytuacji
@@ -550,6 +562,8 @@ TRENING SŁÓWEK — cały zestaw od 1 do 20 słówek jest jednym blokiem. Ucze�
 KROK [NUMER]
 Typ bloku
 Trening słówek
+Punkty
+${DEFAULT_EXERCISE_XP}
 Tytuł treningu
 [tytuł]
 Instrukcja dla ucznia
@@ -567,6 +581,8 @@ LABORATORIUM SŁÓW — używaj dla 3–8 najważniejszych słów lekcji. Uczeń
 KROK [NUMER]
 Typ bloku
 Laboratorium słów
+Punkty
+${DEFAULT_EXERCISE_XP}
 Tytuł laboratorium
 [tytuł]
 Instrukcja dla ucznia
@@ -580,6 +596,8 @@ ROZPOZNAWANIE ZE SŁUCHU — odpowiedź jest ukryta do czasu poprawnej próby. U
 KROK [NUMER]
 Typ bloku
 Rozpoznawanie ze słuchu
+Punkty
+${DEFAULT_EXERCISE_XP}
 Tytuł ćwiczenia słuchowego
 [tytuł]
 Instrukcja dla ucznia
@@ -593,6 +611,8 @@ UKŁADANIE ZDANIA — uczeń układa tłumaczenie z 2–6 pomieszanych kafelków
 KROK [NUMER]
 Typ bloku
 Układanie zdania
+Punkty
+${DEFAULT_EXERCISE_XP}
 Tytuł układanki
 [tytuł]
 Zdanie po polsku
@@ -692,11 +712,16 @@ Każdy blok rozpocznij od KROK i kolejnego numeru. Nie pomijaj numerów.
 Dozwolone typy bloków: ${allowedTypes}.
 Używaj wyłącznie pól pokazanych poniżej. Nie zmieniaj ich nazw.
 Wartość nagrody zapisuj pod polem „Punkty”. Nie używaj osobnego pola „XP”.
+Każdy blok musi zawierać pole „Punkty” z samą liczbą całkowitą.
+Za Zadanie, Quiz, Audio i wymowę, Dialog interaktywny, Trening słówek, Laboratorium słów, Rozpoznawanie ze słuchu i Układanie zdania przyznaj domyślnie ${DEFAULT_EXERCISE_XP} punktów za pierwsze zaliczenie całego bloku. Możesz dobrać większą nagrodę za trudniejsze ćwiczenie, maksymalnie 1000 punktów. Nie wpisuj 0 w ćwiczeniach.
+Dla pozostałych typów (w tym Tekstu i Podsumowania) wpisuj 0. Samo czytanie materiału nie przyznaje osobnej nagrody; bonus za ukończenie lekcji nalicza EduHub.
 
 TEKST
 KROK [NUMER]
 Typ bloku
 Tekst
+Punkty
+0
 Tytuł rozdziału
 [tytuł]
 Treść materiału
@@ -706,6 +731,8 @@ WSKAZÓWKA
 KROK [NUMER]
 Typ bloku
 Wskazówka
+Punkty
+0
 Tytuł wskazówki
 [tytuł]
 Treść wskazówki
@@ -715,6 +742,8 @@ ${languageLesson ? "" : `OSTRZEŻENIE
 KROK [NUMER]
 Typ bloku
 Ostrzeżenie
+Punkty
+0
 Tytuł ostrzeżenia
 [tytuł]
 Co może pójść źle?
@@ -725,6 +754,8 @@ INFORMACJA
 KROK [NUMER]
 Typ bloku
 Informacja
+Punkty
+0
 Tytuł informacji
 [tytuł]
 Dodatkowy kontekst
@@ -734,6 +765,8 @@ PODSUMOWANIE
 KROK [NUMER]
 Typ bloku
 Podsumowanie
+Punkty
+0
 Tytuł podsumowania
 Zapamiętaj
 Najważniejsze punkty
@@ -743,6 +776,8 @@ OBRAZ — używaj tylko wtedy, gdy użytkownik podał prawdziwy adres obrazu
 KROK [NUMER]
 Typ bloku
 Obraz
+Punkty
+0
 Tytuł grafiki
 [tytuł]
 Opis pod grafiką
@@ -754,6 +789,8 @@ FILM — używaj tylko wtedy, gdy użytkownik podał prawdziwy link
 KROK [NUMER]
 Typ bloku
 Film
+Punkty
+0
 Tytuł filmu
 [tytuł]
 Opis przed filmem
@@ -765,6 +802,8 @@ AUDIO I WYMOWA
 KROK [NUMER]
 Typ bloku
 Audio i wymowa
+Punkty
+${DEFAULT_EXERCISE_XP}
 Tytuł ćwiczenia
 [tytuł]
 Krótka instrukcja
@@ -797,11 +836,13 @@ Dokładniejsza podpowiedź (od 2. błędnej próby)
 Wyjaśnienie rozwiązania (od 4. błędnej próby)
 [krótkie wyjaśnienie znaczenia lub reguły]
 Punkty
-[liczba od 0 do 1000]
+[liczba od ${DEFAULT_EXERCISE_XP} do 1000]
 ` : `PRZYKŁAD KODU
 KROK [NUMER]
 Typ bloku
 Przykład kodu
+Punkty
+0
 Tytuł przykładu
 [tytuł]
 Język
@@ -836,13 +877,15 @@ Dokładniejsza podpowiedź (od 2. błędnej próby)
 Wyjaśnienie rozwiązania (od 4. błędnej próby)
 [wyjaśnienie]
 Punkty
-[liczba od 0 do 1000]
+[liczba od ${DEFAULT_EXERCISE_XP} do 1000]
 `}
 
 QUIZ — odpowiedzi wpisz jako zwykłe wiersze, bez oznaczeń A, B, C, D. Poprawna odpowiedź musi być pełną treścią jednego z tych wierszy, a nie literą.
 KROK [NUMER]
 Typ bloku
 Quiz
+Punkty
+${DEFAULT_EXERCISE_XP}
 Pytanie
 [treść pytania]
 Wprowadzenie (opcjonalnie)
@@ -863,6 +906,8 @@ ${languageLesson ? "" : `PLIK — używaj tylko wtedy, gdy użytkownik podał pr
 KROK [NUMER]
 Typ bloku
 Plik
+Punkty
+0
 Nazwa pliku
 [nazwa]
 Opis załącznika
@@ -874,6 +919,8 @@ CYTAT
 KROK [NUMER]
 Typ bloku
 Cytat
+Punkty
+0
 Treść cytatu
 [cytat]
 Autor lub źródło
@@ -885,6 +932,8 @@ SEPARATOR
 KROK [NUMER]
 Typ bloku
 Separator
+Punkty
+0
 Nazwa kolejnej części (opcjonalnie)
 [nazwa albo pusta linia]
 Styl
@@ -895,7 +944,7 @@ Nie musisz używać wszystkich typów. Dobieraj je do tematu. Nie twórz fikcyjn
 Quiz musi mieć minimum dwie unikalne odpowiedzi. Pole „Poprawna odpowiedź” ma zawierać dokładny tekst wybranej odpowiedzi.
 Lekcja ma być napisana po ludzku, łączyć krótkie objaśnienia z dużą ilością samodzielnej praktyki, nie powtarzać treści i kończyć się krótkim podsumowaniem. Quiz dodaj tylko wtedy, gdy naprawdę sprawdza zrozumienie; maksymalnie dwa quizy w lekcji. Większą liczbę ćwiczeń realizuj przez zadania, dialogi, audio, trening słówek i układanie zdań.
 Przed zwróceniem lekcji sprawdź każde zadanie: jeżeli uczeń może je wykonać przez bezmyślne skopiowanie wcześniejszego przykładu albo instrukcji, przeprojektuj je tak, aby wymagało samodzielnego przypomnienia i zastosowania wiedzy.
-Wykonaj cichy audyt jakości: sprawdź poprawność merytoryczną i językową, zgodność trudności z poziomem, różnorodność praktyki, jednoznaczność poleceń i odpowiedzi, sens każdej podpowiedzi oraz to, czy wszystkie elementy rzeczywiście prowadzą do celu lekcji. Popraw słabe elementy przed zwróceniem wyniku. Nie pokazuj audytu.
+Wykonaj cichy audyt jakości: sprawdź poprawność merytoryczną i językową, zgodność trudności z poziomem, różnorodność praktyki, jednoznaczność poleceń i odpowiedzi, sens każdej podpowiedzi, dodatnie punkty za każde ćwiczenie oraz to, czy wszystkie elementy rzeczywiście prowadzą do celu lekcji. Popraw słabe elementy przed zwróceniem wyniku. Nie pokazuj audytu.
 Przed zwróceniem wyniku policz bloki. Jeżeli jest ich więcej niż ${maxBlocks}, połącz lub usuń słabsze elementy. Nigdy nie zwracaj KROK ${maxBlocks + 1} ani wyższego.
 
 Poniższe dane są wskazówkami, nie formularzem wymagającym uzupełnienia. Użytkownik może podać tylko temat. Wszystkie brakujące informacje wywnioskuj samodzielnie i od razu utwórz najlepszą możliwą lekcję.

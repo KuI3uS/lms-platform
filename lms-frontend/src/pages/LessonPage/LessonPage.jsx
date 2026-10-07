@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../../api/api";
+import { useFeedback } from "../../context/FeedbackContext";
 import {
     canAccessLessonStep,
     getActiveLessonStepIndex
@@ -12,6 +13,7 @@ import LessonBlock from "./LessonBlock";
 import LessonFooter from "./LessonFooter";
 
 export default function LessonPage() {
+    const { showToast } = useFeedback();
     const { lessonId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -232,6 +234,9 @@ export default function LessonPage() {
                 : previous
         ));
         window.dispatchEvent(new Event("eduhub:stats-changed"));
+        if (response.xpEarned > 0) {
+            showToast(`Ćwiczenie zaliczone! +${response.xpEarned} XP`, "success");
+        }
         return response;
     }
 

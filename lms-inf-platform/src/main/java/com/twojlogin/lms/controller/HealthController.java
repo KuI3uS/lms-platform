@@ -8,7 +8,7 @@ import java.util.Map;
 @RestController
 public class HealthController {
 
-    private static final String VERSION = "2026.09.23-language-import-memory";
+    private static final String VERSION = "2026.10.04-interactive-xp";
 
     @GetMapping("/api/health")
     public Map<String, String> health() {

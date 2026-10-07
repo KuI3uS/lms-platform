@@ -3,6 +3,7 @@ import {
     BsStar,
     BsSave
 } from "react-icons/bs";
+import { DEFAULT_EXERCISE_XP, REWARDED_BLOCK_TYPES } from "../../../utils/lessonBlockRewards";
 
 export default function BlockFooter({
                                         block,
@@ -72,6 +73,11 @@ export default function BlockFooter({
                         }
                         className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3"
                     />
+                    <p className="mt-2 text-xs leading-5 text-gray-400">
+                        {REWARDED_BLOCK_TYPES.has(block.type)
+                            ? `Nagroda za pierwsze zaliczenie ćwiczenia. Wartość 0 oznacza domyślne ${DEFAULT_EXERCISE_XP} XP.`
+                            : "Ten blok jest materiałem do nauki. XP otrzymuje się za ćwiczenia i ukończenie lekcji."}
+                    </p>
 
                 </div>
 
