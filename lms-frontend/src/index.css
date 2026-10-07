@@ -44,7 +44,14 @@ body {
     background: transparent !important;
     border: 0 !important;
     box-shadow: none !important;
-    color: transparent !important;
+    caret-color: #f8fafc !important;
     outline: 0 !important;
     resize: none !important;
+}
+
+.monaco-editor .cursors-layer > .cursor {
+    background-color: #f8fafc !important;
+    border-color: #f8fafc !important;
+    min-width: 3px !important;
+    opacity: 1 !important;
 }

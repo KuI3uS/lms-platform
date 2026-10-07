@@ -40,25 +40,19 @@ export default function LessonPage() {
             const lessonData = await apiFetch(`/lessons/${lessonId}`);
             setLesson(lessonData);
 
-            if (lessonData?.moduleId) {
-                const lessons = await apiFetch(`/lessons/module/${lessonData.moduleId}`);
-                const mapped = await Promise.all(
-                    lessons.map(async moduleLesson => {
-                        try {
-                            const canAccess = await apiFetch(`/lessons/${moduleLesson.id}/access`);
-                            return { ...moduleLesson, canAccess };
-                        } catch {
-                            return { ...moduleLesson, canAccess: false };
-                        }
-                    })
-                );
+            const [lessons, lessonBlocks] = await Promise.all([
+                lessonData?.moduleId
+                    ? apiFetch(`/lessons/module/${lessonData.moduleId}`)
+                    : Promise.resolve([]),
+                apiFetch(`/lesson-blocks/lesson/${lessonId}`)
+            ]);
 
-                setModuleLessons(
-                    mapped.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
-                );
-            }
+            setModuleLessons(
+                [...(lessons || [])].sort(
+                    (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
+                )
+            );
 
-            const lessonBlocks = await apiFetch(`/lesson-blocks/lesson/${lessonId}`);
             const sorted = [...lessonBlocks].sort(
                 (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
             );

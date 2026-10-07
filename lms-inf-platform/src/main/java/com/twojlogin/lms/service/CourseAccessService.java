@@ -124,13 +124,17 @@ public class CourseAccessService {
                         HttpStatus.NOT_FOUND,
                         "Lekcja nie istnieje"
                 ));
+        requireLessonAccess(user, lesson);
+        return lesson;
+    }
+
+    public void requireLessonAccess(User user, Lesson lesson) {
         if (!lesson.getModule().getCourse().isPublished() && !isAdmin(user)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lekcja nie istnieje");
         }
         if (!lesson.isFreePreview()) {
             requireAccess(user, lesson.getModule().getCourse());
         }
-        return lesson;
     }
 
     public void requireAccess(User user, Course course) {

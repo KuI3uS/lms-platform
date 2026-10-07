@@ -108,7 +108,32 @@ class TaskEvaluationServiceTest {
         assertEquals(1, response.hintLevel());
         assertEquals("MISSING_SEMICOLON", response.diagnostics().get(0).type());
         assertEquals(3, response.diagnostics().get(0).line());
-        assertTrue(response.message().contains("średnika"));
+        assertTrue(response.diagnostics().get(0).message().contains("średnika"));
+        assertEquals("Znaleziono 1 rzecz do poprawy.", response.message());
+    }
+
+    @Test
+    void explainsInvalidJavaWithoutRevealingExpectedSolutionImmediately() {
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+
+        String answer = """
+                public class Main {
+                    public static void main(String[] args) {
+                        sdsd
+                    }
+                }
+                """;
+
+        TaskCheckResponse response = service.check(block.getId(), answer, authentication);
+
+        assertFalse(response.correct());
+        assertEquals(2, response.diagnostics().size());
+        assertEquals("INVALID_JAVA_STATEMENT", response.diagnostics().get(0).type());
+        assertEquals(3, response.diagnostics().get(0).line());
+        assertEquals("MISSING_OUTPUT", response.diagnostics().get(1).type());
+        assertFalse(response.message().contains("System.out.println"));
+        assertTrue(response.diagnostics().stream()
+                .noneMatch(diagnostic -> diagnostic.message().contains("Witaj świecie")));
     }
 
     @Test
