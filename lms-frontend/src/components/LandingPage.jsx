@@ -170,12 +170,8 @@ export default function LandingPage() {
                                 </ul>
 
                                 <div className="featured-cta">
-                                    <Link to="/login" className="btn-outline">
+                                    <Link to="/tutoring-booking" className="btn-outline">
                                         Zarezerwuj termin
-                                    </Link>
-
-                                    <Link to="/register" className="btn-ghost">
-                                        Załóż konto
                                     </Link>
                                 </div>
                             </div>
