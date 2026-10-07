@@ -76,9 +76,16 @@ const FIELD_ALIASES = [
     ["adres pliku", "mediaUrl"],
     ["styl", "mediaType"],
     ["punkty", "points"],
+    ["xp", "points"],
     ["najwazniejsze informacje", "summary"],
     ["po tej lekcji potrafisz", "skills"]
 ];
+
+const SECTION_LABELS = new Set([
+    "podstawowe informacje",
+    "kod",
+    "sprawdzanie"
+]);
 
 function normalize(value) {
     return String(value || "")
@@ -139,6 +146,10 @@ function fieldsFromLines(lines) {
     let activeKey = null;
 
     lines.forEach((line) => {
+        if (SECTION_LABELS.has(normalize(line))) {
+            activeKey = null;
+            return;
+        }
         const field = readField(line);
         if (field) {
             activeKey = field.key;
@@ -154,6 +165,27 @@ function fieldsFromLines(lines) {
     return Object.fromEntries(
         Object.entries(fields).map(([key, value]) => [key, value.trim()])
     );
+}
+
+function normalizeLanguage(value, fallback = "") {
+    const language = normalize(String(value || "").split("\n")[0]);
+    const languages = {
+        java: "java",
+        javascript: "javascript",
+        python: "python",
+        "c#": "csharp",
+        csharp: "csharp",
+        sql: "sql",
+        html: "html",
+        "en-us": "en-US",
+        "en-gb": "en-GB",
+        "de-de": "de-DE",
+        "es-es": "es-ES",
+        "fr-fr": "fr-FR",
+        "it-it": "it-IT",
+        "pl-pl": "pl-PL"
+    };
+    return languages[language] || fallback;
 }
 
 function resolveType(rawType, heading) {
@@ -236,6 +268,7 @@ function parseStep(step, warnings, errors) {
     if (resolved.type === "TASK") {
         block.instruction = fields.instruction || fields.content;
         block.expectedAnswer = fields.correctAnswer || "";
+        block.language = normalizeLanguage(fields.language, "java");
         if (!block.expectedAnswer) {
             block.type = "TEXT";
             block.content = `Zadanie\n\n${block.instruction}`.trim();
@@ -245,7 +278,7 @@ function parseStep(step, warnings, errors) {
     }
 
     if (resolved.type === "EXAMPLE") {
-        block.language = fields.language || "java";
+        block.language = normalizeLanguage(fields.language, "java");
     }
 
     if (resolved.type === "IMAGE") block.mediaType = "image";
@@ -253,7 +286,7 @@ function parseStep(step, warnings, errors) {
     if (resolved.type === "PDF") block.mediaType = "file";
     if (resolved.type === "AUDIO") {
         block.mediaType = "audio";
-        block.language = fields.language || "en-US";
+        block.language = normalizeLanguage(fields.language, "en-US");
     }
     if (resolved.type === "DIVIDER") {
         const dividerStyles = { gradient: "gradient", linia: "line", line: "line", kropki: "dots", dots: "dots" };
@@ -321,6 +354,7 @@ Każdy blok rozpocznij od KROK i kolejnego numeru. Nie pomijaj numerów.
 
 Dozwolone typy bloków: Tekst, Wskazówka, Ostrzeżenie, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Przykład kodu, Zadanie, Quiz, Plik, Cytat, Separator.
 Używaj wyłącznie pól pokazanych poniżej. Nie zmieniaj ich nazw.
+Wartość nagrody zapisuj pod polem „Punkty”. Nie używaj osobnego pola „XP”.
 
 TEKST
 KROK 1
