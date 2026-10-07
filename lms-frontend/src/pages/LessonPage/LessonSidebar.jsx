@@ -53,6 +53,7 @@ export default function LessonSidebar({
             case "VIDEO":
                 return <BsPlayBtn />;
 
+            case "PDF":
             case "DOWNLOAD":
                 return <BsDownload />;
 

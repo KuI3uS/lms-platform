@@ -10,6 +10,8 @@ import java.util.List;
 public interface CourseModuleRepository extends JpaRepository<CourseModule, Long> {
     List<CourseModule> findByCourseId(Long courseId);
 
+    List<CourseModule> findByCourseIdOrderByIdAsc(Long courseId);
+
     long countByCourseId(Long courseId);
 
     @Query("""

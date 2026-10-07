@@ -60,16 +60,7 @@ export default function useLessonBlocks() {
             return;
         }
 
-        if (
-            block.type !== "DIVIDER" &&
-            !block.title?.trim()
-        ) {
-
-            alert("Podaj tytuł bloku.");
-
-            return;
-
-        }
+        if (!validateBlock(block)) return;
 
         await apiFetch(
             `/lesson-blocks/lesson/${lessonId}`,
@@ -95,6 +86,8 @@ export default function useLessonBlocks() {
         if (!block) {
             return;
         }
+
+        if (!validateBlock(block)) return;
 
         await apiFetch(
             `/lesson-blocks/${blockId}`,
@@ -183,6 +176,44 @@ export default function useLessonBlocks() {
 
     function getBlockForm(lessonId) {
         return blockForms[lessonId] || { ...emptyBlock };
+    }
+
+    function validateBlock(block) {
+        if (block.type !== "DIVIDER" && !block.title?.trim()) {
+            alert("Podaj tytuł bloku.");
+            return false;
+        }
+
+        if (["TEXT", "TIP", "WARNING", "INFO", "SUMMARY", "QUOTE", "EXAMPLE"]
+            .includes(block.type) && !block.content?.trim()) {
+            alert("Uzupełnij treść tego bloku.");
+            return false;
+        }
+
+        if (["IMAGE", "VIDEO", "PDF", "DOWNLOAD"].includes(block.type)
+            && !block.mediaUrl?.trim()) {
+            alert("Podaj prawidłowy adres materiału.");
+            return false;
+        }
+
+        if (block.type === "QUIZ") {
+            const options = (block.content || "")
+                .split("\n")
+                .map(option => option.trim())
+                .filter(Boolean);
+
+            if (options.length < 2) {
+                alert("Quiz wymaga przynajmniej dwóch odpowiedzi.");
+                return false;
+            }
+            if (!block.expectedAnswer
+                || !options.includes(block.expectedAnswer)) {
+                alert("Wybierz poprawną odpowiedź quizu.");
+                return false;
+            }
+        }
+
+        return true;
     }
 
     return {

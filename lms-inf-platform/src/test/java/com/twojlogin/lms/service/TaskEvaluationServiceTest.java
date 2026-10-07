@@ -83,8 +83,14 @@ class TaskEvaluationServiceTest {
         when(blockRepository.findById(block.getId())).thenReturn(Optional.of(block));
         when(blockRepository.countByLessonIdAndTypeAndPublishedTrue(lesson.getId(), BlockType.TASK))
                 .thenReturn(1L);
+        when(blockRepository.countRequiredAssessmentsByLessonId(lesson.getId()))
+                .thenReturn(1L);
         when(attemptRepository.countCorrectTasksByUserAndLesson(user.getId(), lesson.getId()))
                 .thenReturn(0L);
+        when(attemptRepository.countCorrectAssessmentsByUserAndLesson(
+                user.getId(),
+                lesson.getId()
+        )).thenReturn(0L);
         when(attemptRepository.save(any(TaskAttempt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -157,7 +163,10 @@ class TaskEvaluationServiceTest {
     @Test
     void completesLessonAfterAllPublishedTasksAreCorrect() {
         when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
-        when(attemptRepository.countCorrectTasksByUserAndLesson(user.getId(), lesson.getId()))
+        when(attemptRepository.countCorrectAssessmentsByUserAndLesson(
+                user.getId(),
+                lesson.getId()
+        ))
                 .thenReturn(1L);
         when(progressRepository.findByUserAndLesson(user, lesson)).thenReturn(Optional.empty());
 
@@ -166,5 +175,22 @@ class TaskEvaluationServiceTest {
         assertTrue(response.correct());
         assertTrue(response.lessonCompleted());
         verify(progressRepository).save(any(LessonProgress.class));
+    }
+
+    @Test
+    void checksQuizWithoutSendingTheCorrectAnswerToTheStudent() {
+        block.setType(BlockType.QUIZ);
+        block.setExpectedAnswer("int");
+        block.setHint("Przypomnij sobie typy liczbowe.");
+        when(attemptRepository.findByUserAndBlock(user, block))
+                .thenReturn(Optional.empty());
+
+        TaskCheckResponse response =
+                service.check(block.getId(), "String", authentication);
+
+        assertFalse(response.correct());
+        assertEquals("INCORRECT_QUIZ_ANSWER", response.diagnostics().get(0).type());
+        assertEquals("Przypomnij sobie typy liczbowe.", response.hint());
+        assertFalse(response.message().contains("int"));
     }
 }

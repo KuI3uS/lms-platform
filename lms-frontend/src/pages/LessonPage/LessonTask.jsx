@@ -20,6 +20,7 @@ function EditorLoader() {
 const DIAGNOSTIC_LABELS = {
     EMPTY_ANSWER: "Brak odpowiedzi",
     INVALID_JAVA_STATEMENT: "Niepoprawna instrukcja",
+    INCORRECT_QUIZ_ANSWER: "Niepoprawna odpowiedź",
     MISSING_OUTPUT: "Brak wyniku programu",
     MISSING_SEMICOLON: "Brak średnika",
     MISSING_REQUIRED_ELEMENT: "Niepełne rozwiązanie",

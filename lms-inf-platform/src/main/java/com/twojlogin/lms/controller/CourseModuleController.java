@@ -1,6 +1,7 @@
 package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.CourseModuleDto;
+import com.twojlogin.lms.dto.CourseRoadmapDto;
 import com.twojlogin.lms.entity.Course;
 import com.twojlogin.lms.entity.CourseModule;
 import com.twojlogin.lms.repository.CourseModuleRepository;
@@ -13,6 +14,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import java.util.List;
 import org.springframework.security.core.Authentication;
 import com.twojlogin.lms.service.CourseAccessService;
+import com.twojlogin.lms.service.CourseRoadmapService;
 
 @RestController
 @RequestMapping("/api/modules")
@@ -21,13 +23,24 @@ public class CourseModuleController {
     private final CourseModuleRepository moduleRepository;
     private final CourseRepository courseRepository;
     private final CourseAccessService accessService;
+    private final CourseRoadmapService roadmapService;
 
     public CourseModuleController(CourseModuleRepository moduleRepository,
                                   CourseRepository courseRepository,
-                                  CourseAccessService accessService) {
+                                  CourseAccessService accessService,
+                                  CourseRoadmapService roadmapService) {
         this.moduleRepository = moduleRepository;
         this.courseRepository = courseRepository;
         this.accessService = accessService;
+        this.roadmapService = roadmapService;
+    }
+
+    @GetMapping("/course/{courseId}/roadmap")
+    public CourseRoadmapDto getRoadmap(
+            @PathVariable Long courseId,
+            Authentication authentication
+    ) {
+        return roadmapService.getRoadmap(courseId, authentication);
     }
 
     @PostMapping("/course/{courseId}")

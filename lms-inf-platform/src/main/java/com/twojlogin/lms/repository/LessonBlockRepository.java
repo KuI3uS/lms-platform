@@ -23,4 +23,16 @@ public interface LessonBlockRepository extends JpaRepository<LessonBlock, Long> 
     int countByLessonId(Long lessonId);
 
     long countByLessonIdAndTypeAndPublishedTrue(Long lessonId, BlockType type);
+
+    @Query("""
+            select count(block)
+            from LessonBlock block
+            where block.lesson.id = :lessonId
+              and block.type in (
+                com.twojlogin.lms.entity.BlockType.TASK,
+                com.twojlogin.lms.entity.BlockType.QUIZ
+              )
+              and block.published = true
+            """)
+    long countRequiredAssessmentsByLessonId(Long lessonId);
 }
