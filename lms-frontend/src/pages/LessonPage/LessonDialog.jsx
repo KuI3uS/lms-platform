@@ -12,7 +12,6 @@ import {
     languageAnswerScore,
     parseDialogContent
 } from "../../utils/languageInteractiveBlocks";
-import { characterVoiceGender, selectDialogVoice } from "../../utils/dialogSpeech";
 import useDialogSpeech from "./useDialogSpeech";
 
 function DialogueBubble({ character, text, onSpeak, active = false, muted = false, children }) {
@@ -148,7 +147,7 @@ export default function LessonDialog({ block }) {
     const config = useMemo(() => parseDialogContent(block.content), [block.content]);
     const [mode, setMode] = useState("watch");
     const [results, setResults] = useState({});
-    const { playback, voices, overrides, play, stop, chooseVoice } = useDialogSpeech(config, block.language);
+    const { playback, play, stop } = useDialogSpeech(config, block.language);
     const speaking = ["starting", "playing"].includes(playback.status);
     const charactersById = new Map(config.characters.map((character) => [character.id, character]));
     const studentCharacter = charactersById.get(config.studentCharacterId) || config.characters[1];
@@ -171,28 +170,11 @@ export default function LessonDialog({ block }) {
                     {speaking ? `Wypowiedź ${playback.index + 1} z ${config.turns.length}`
                         : playback.status === "blocked" ? "Przeglądarka wstrzymała dźwięk. Kliknij „Posłuchaj całej rozmowy”, aby rozpocząć."
                         : playback.status === "unsupported" ? "Ta przeglądarka nie obsługuje odczytywania tekstu. Możesz nadal przeczytać dialog i wykonać ćwiczenie."
-                        : playback.status === "no-voice" ? "Brak głosu w języku tej lekcji. Dodaj głos w ustawieniach mowy urządzenia, a potem ponów odsłuch."
-                        : playback.status === "error" ? "Nie udało się odtworzyć dźwięku. Wybierz inny głos lub spróbuj ponownie."
+                        : playback.status === "no-voice" ? "Na tym urządzeniu nie znaleziono odpowiedniego głosu kobiecego lub męskiego w języku lekcji. Dodaj głosy w ustawieniach mowy urządzenia. Nadal możesz przeczytać dialog i wykonać ćwiczenie."
+                        : playback.status === "error" ? "Nie udało się odtworzyć dźwięku. Spróbuj ponownie."
                         : playback.status === "done" ? "Koniec odsłuchu. Możesz teraz wcielić się w swoją postać."
                         : "Kliknij „Posłuchaj całej rozmowy”, aby odtworzyć kwestie po kolei, lub odsłuchaj wybrany dymek."}
                 </p>
-                <details className="mt-4 rounded-xl border border-white/10 p-3 text-sm text-slate-300">
-                    <summary className="cursor-pointer font-bold">Głosy postaci</summary>
-                    <p className="mt-2 text-xs leading-5 text-slate-400">Głosy zależą od urządzenia. Dobieramy znane głosy żeńskie i męskie, ale możesz zmienić wybór i odsłuchać postać. Ustawienia zapamiętamy w tej przeglądarce.</p>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                        {config.characters.map((character) => {
-                            const voice = selectDialogVoice(voices, block.language, character, overrides[character.id]);
-                            const gender = characterVoiceGender(character);
-                            return <label key={character.id} className="space-y-2">
-                                <span className="block font-bold">{character.avatar} {character.name}{gender === "female" ? " — preferowany głos żeński" : gender === "male" ? " — preferowany głos męski" : ""}</span>
-                                <select aria-label={`Głos postaci ${character.name}`} value={voices.some((item) => item.voiceURI === overrides[character.id]) ? overrides[character.id] : ""} onChange={(event) => chooseVoice(character, event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-white">
-                                    <option value="">Automatycznie{voice ? `: ${voice.name}` : ""}</option>
-                                    {voices.map((item) => <option key={item.voiceURI} value={item.voiceURI}>{item.name} ({item.lang})</option>)}
-                                </select>
-                            </label>;
-                        })}
-                    </div>
-                </details>
             </div>
 
             <div className="space-y-5 p-5 sm:p-8">
