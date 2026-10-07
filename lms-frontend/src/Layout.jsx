@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import { BsCalendarCheck } from "react-icons/bs";
 import {
@@ -27,6 +27,9 @@ export default function Layout() {
         }
     }
 
+    const location = useLocation();
+    const isLessonPage = location.pathname.startsWith("/lesson/");
+
     const linkClass = ({ isActive }) =>
         `flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
             isActive
@@ -34,6 +37,13 @@ export default function Layout() {
                 : "text-gray-300 hover:bg-gray-800 hover:text-white"
         }`;
 
+    if (isLessonPage) {
+        return (
+            <div className="min-h-screen bg-gray-950 text-white">
+                <Outlet />
+            </div>
+        );
+    }
     return (
         <div className="flex h-screen bg-gray-950 text-white">
             <aside className="w-72 bg-gray-900 border-r border-gray-800 flex flex-col">

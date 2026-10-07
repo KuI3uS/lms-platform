@@ -1,24 +1,23 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams} from "react-router-dom";
 import { apiFetch } from "../api/api";
-import {
-    BsXCircle,
-    BsArrowRight
-} from "react-icons/bs";
+import Editor from "@monaco-editor/react";
+
 
 export default function LessonPage() {
     const { lessonId } = useParams();
-    const navigate = useNavigate();
 
     const [lesson, setLesson] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [answers, setAnswers] = useState({});
     const [results, setResults] = useState({});
     const [error, setError] = useState(null);
-    const [moduleLessons, setModuleLessons] = useState([]);
 
-    const [attempts, setAttempts] = useState({});
-    const [feedback, setFeedback] = useState({});
+    const [setModuleLessons] = useState([]);
+
+    const [setAttempts] = useState({});
+
+    const [setFeedback] = useState({});
 
     const [blocks, setBlocks] = useState([]);
     const [selectedBlock, setSelectedBlock] = useState(null);
@@ -156,7 +155,7 @@ export default function LessonPage() {
     }
 
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-[260px_1fr_320px] gap-8 text-white">
+        <div className="w-full h-full">
 
             <aside className="bg-gray-900 border border-gray-800 rounded-2xl p-4 h-fit sticky top-8">
                 <h2 className="text-lg font-bold mb-4">Lekcja</h2>
@@ -258,44 +257,6 @@ export default function LessonPage() {
                     </button>
                 )}
             </main>
-
-            <aside className="hidden xl:block sticky top-8 h-fit bg-gray-900 border border-gray-800 rounded-2xl p-5">
-                <h2 className="text-lg font-bold mb-4">Plan lekcji</h2>
-
-                <div className="space-y-2">
-                    {moduleLessons.map((l, index) => {
-                        const active = Number(lessonId) === l.id;
-
-                        return (
-                            <button
-                                key={l.id}
-                                disabled={!l.canAccess}
-                                onClick={() => {
-                                    if (l.canAccess) {
-                                        navigate(`/lesson/${l.id}`);
-                                    }
-                                }}
-                                className={`w-full text-left p-3 rounded-xl border transition ${
-                                    active
-                                        ? "bg-blue-600/20 border-blue-500 text-blue-300"
-                                        : l.canAccess
-                                            ? "bg-gray-800 border-gray-700 hover:border-blue-500"
-                                            : "bg-gray-800/50 border-gray-800 opacity-50 cursor-not-allowed"
-                                }`}
-                            >
-                                <div className="text-sm text-gray-400">
-                                    Lekcja {l.orderIndex ?? index + 1}
-                                </div>
-
-                                <div className="font-semibold flex items-center justify-between gap-2">
-                                    <span>{l.title}</span>
-                                    {l.canAccess ? <BsArrowRight /> : <BsXCircle />}
-                                </div>
-                            </button>
-                        );
-                    })}
-                </div>
-            </aside>
         </div>
     );
 }
@@ -332,18 +293,40 @@ function TaskBlock({ block, tasks, answers, setAnswers, results, check }) {
                 </div>
             )}
 
-            <textarea
-                className="w-full bg-gray-900 p-3 rounded-xl text-green-400 font-mono border border-gray-700 outline-none focus:border-blue-500"
-                rows={task.type === "CODE" ? 12 : 6}
-                placeholder={task.type === "CODE" ? "Dokończ kod..." : "Wpisz odpowiedź..."}
-                value={answers[task.id] || ""}
-                onChange={(e) =>
-                    setAnswers(prev => ({
-                        ...prev,
-                        [task.id]: e.target.value
-                    }))
-                }
-            />
+            {task.type === "CODE" ? (
+                <Editor
+                    height="500px"
+                    language="java"
+                    theme="vs-dark"
+                    value={answers[task.id] || task.starterCode || ""}
+                    onChange={(value) =>
+                        setAnswers(prev => ({
+                            ...prev,
+                            [task.id]: value || ""
+                        }))
+                    }
+                    options={{
+                        minimap: {
+                            enabled: false
+                        },
+                        fontSize: 15,
+                        automaticLayout: true,
+                        scrollBeyondLastLine: false
+                    }}
+                />
+            ) : (
+                <textarea
+                    className="w-full bg-gray-900 p-4 rounded-xl"
+                    rows={8}
+                    value={answers[task.id] || ""}
+                    onChange={(e) =>
+                        setAnswers(prev => ({
+                            ...prev,
+                            [task.id]: e.target.value
+                        }))
+                    }
+                />
+            )}
 
             <button
                 onClick={() => check(task.id)}
