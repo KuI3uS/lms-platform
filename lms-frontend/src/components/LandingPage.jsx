@@ -21,20 +21,18 @@
             <div className="landing-page">
                 <TutoringFloatingButton />
                 <nav>
-                    <a href="https://kui3us.github.io/portfolio/">Portfolio</a>
                     <a href="#home">Home</a>
                     <a href="#courses">Kursy</a>
-                    <a href="#how">Jakdziała</a>
+                    <a href="#how">Jak_działa</a>
                 </nav>
 
 
-                <div className="platform-entry">
-                    <div>
-                        <strong>Masz już konto?</strong>
-                        <p>Przejdź do kursów i kontynuuj naukę.</p>
-                    </div>
-                    <Link to="/login">
-                        Wejdź do platformy
+                <div className="hero-actions">
+                    <Link to="/register" className="btn-outline">
+                        Rozpocznij naukę
+                    </Link>
+                    <Link to="/login" className="btn-ghost">
+                        Mam już konto
                     </Link>
                 </div>
                 <header id="home" className="hero">
