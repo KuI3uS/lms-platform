@@ -36,6 +36,7 @@ public class SecurityConfig {
 
                         // AUTH
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/error").permitAll()
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tutoring/available").permitAll()
