@@ -58,24 +58,26 @@ export default function TutoringBookingPage() {
     };
 
     const getPaymentLink = (price) => {
-        if (price === 80) {
+        const p = Number(price);
+
+        if (p === 80) {
             return "https://checkout.revolut.com/pay/334e96d4-687b-46d9-8f1b-b5452be7d555";
         }
 
-        if (price === 160) {
+        if (p === 160) {
             return "https://checkout.revolut.com/pay/213d3279-941b-463d-9e73-8dbef67ae8ad";
         }
-        return "error";
+
+        return "https://checkout.revolut.com/pay/334e96d4-687b-46d9-8f1b-b5452be7d555";
     };
 
     const getQrImage = (price) => {
+        const p = Number(price);
 
-        if (price === 80) return "/images/80zl.png";
+        if (p === 80) return "/images/80zl.png";
+        if (p === 160) return "/images/160zl.png";
 
-        if (price === 160) return "/images/160zl.png";
-
-        return "error";
-
+        return "/images/80zl.png";
     };
 
     const updateForm = (field, value) => {
@@ -370,8 +372,6 @@ export default function TutoringBookingPage() {
                                     >
                                         <option value={1}>1 godzina</option>
                                         <option value={2}>2 godziny</option>
-                                        <option value={3}>3 godziny</option>
-                                        <option value={4}>4 godziny</option>
                                     </select>
                                 </div>
 

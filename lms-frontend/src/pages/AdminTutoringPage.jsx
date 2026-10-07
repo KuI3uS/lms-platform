@@ -25,17 +25,24 @@ export default function AdminTutoringPage() {
 
     const load = async () => {
         setLoading(true);
-        try {
-            const [termsData, bookingsData] = await Promise.all([
-                apiFetch("/admin/tutoring/availability"),
-                apiFetch("/admin/tutoring/bookings")
-            ]);
 
+        try {
+            const termsData = await apiFetch("/admin/tutoring/availability");
             setTerms(termsData || []);
-            setBookings(bookingsData || []);
-        } finally {
-            setLoading(false);
+        } catch (e) {
+            console.error("Błąd terminów:", e);
+            setTerms([]);
         }
+
+        try {
+            const bookingsData = await apiFetch("/admin/tutoring/bookings");
+            setBookings(bookingsData || []);
+        } catch (e) {
+            console.error("Błąd rezerwacji:", e);
+            setBookings([]);
+        }
+
+        setLoading(false);
     };
 
     const addTerm = async () => {
