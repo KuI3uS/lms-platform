@@ -214,9 +214,30 @@ export default function LessonPage() {
         }
     }
 
+    async function completeInteractiveBlock(blockId, progress) {
+        const response = await apiFetch(`/lesson-blocks/${blockId}/complete-interactive`, {
+            method: "POST",
+            body: JSON.stringify(progress)
+        });
+        if (!response.correct) return response;
+
+        setBlocks(previous => previous.map(block => (
+            Number(block.id) === Number(blockId)
+                ? { ...block, attempted: true, correct: true }
+                : block
+        )));
+        setSelectedBlock(previous => (
+            Number(previous?.id) === Number(blockId)
+                ? { ...previous, attempted: true, correct: true }
+                : previous
+        ));
+        window.dispatchEvent(new Event("eduhub:stats-changed"));
+        return response;
+    }
+
     async function finishLesson() {
         const taskBlocks = blocks.filter(
-            block => ["TASK", "QUIZ"].includes(block.type)
+            block => ["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO"].includes(block.type)
         );
 
         try {
@@ -312,8 +333,9 @@ export default function LessonPage() {
         ? moduleLessons[currentIndex + 1]
         : null;
     const nextLesson = nextLessonCandidate?.canAccess ? nextLessonCandidate : null;
+    const requiredTypes = ["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO"];
     const hasTasks = blocks.some(
-        block => ["TASK", "QUIZ"].includes(block.type)
+        block => requiredTypes.includes(block.type)
     );
     const selectedBlockIndex = blocks.findIndex(
         block => Number(block.id) === Number(selectedBlock?.id)
@@ -326,13 +348,13 @@ export default function LessonPage() {
         ? blocks[selectedBlockIndex + 1]
         : null;
     const assessmentBlocks = blocks.filter(
-        block => ["TASK", "QUIZ"].includes(block.type)
+        block => requiredTypes.includes(block.type)
     );
     const completedAssessmentCount = assessmentBlocks.filter(
         block => results[block.id]?.correct || block.correct
     ).length;
     const currentBlockCompleted = selectedBlock
-        ? !["TASK", "QUIZ"].includes(selectedBlock.type)
+        ? !requiredTypes.includes(selectedBlock.type)
             || results[selectedBlock.id]?.correct
             || selectedBlock.correct
         : true;
@@ -344,7 +366,7 @@ export default function LessonPage() {
         if (targetIndex <= 0) return true;
 
         return blocks.slice(0, targetIndex).every(block => (
-            !["TASK", "QUIZ"].includes(block.type)
+            !requiredTypes.includes(block.type)
             || results[block.id]?.correct
             || block.correct
         ));
@@ -390,6 +412,7 @@ export default function LessonPage() {
                             onAnswerChange={updateAnswer}
                             onReset={resetTask}
                             onCheck={checkTask}
+                            onInteractiveComplete={completeInteractiveBlock}
                         />
                     </div>
 

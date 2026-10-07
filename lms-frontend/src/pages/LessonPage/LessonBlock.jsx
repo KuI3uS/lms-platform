@@ -18,7 +18,8 @@ export default function LessonBlock({
                                         checkingTaskId,
                                         onAnswerChange,
                                         onReset,
-                                        onCheck
+                                        onCheck,
+                                        onInteractiveComplete
                                     }) {
 
     if (!block) {
@@ -48,13 +49,13 @@ export default function LessonBlock({
             return <LessonVideo block={block} />;
 
         case "AUDIO":
-            return <LessonAudio block={block} />;
+            return <LessonAudio block={block} onComplete={onInteractiveComplete} />;
 
         case "DIALOG":
-            return <LessonDialog block={block} />;
+            return <LessonDialog block={block} onComplete={onInteractiveComplete} />;
 
         case "VOCABULARY":
-            return <LessonVocabulary block={block} />;
+            return <LessonVocabulary block={block} onComplete={onInteractiveComplete} />;
 
         case "PDF":
         case "DOWNLOAD":

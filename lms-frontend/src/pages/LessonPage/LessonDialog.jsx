@@ -143,7 +143,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
     );
 }
 
-export default function LessonDialog({ block }) {
+export default function LessonDialog({ block, onComplete }) {
     const config = useMemo(() => parseDialogContent(block.content), [block.content]);
     const [mode, setMode] = useState("watch");
     const [results, setResults] = useState({});
@@ -154,6 +154,22 @@ export default function LessonDialog({ block }) {
     const coach = config.characters.find((character) => character.id !== studentCharacter.id) || config.characters[0];
     const studentTurns = config.turns.filter((turn) => turn.studentTurn || turn.speakerId === studentCharacter.id);
     const completed = studentTurns.filter((turn) => results[config.turns.indexOf(turn)]).length;
+
+    const recordResult = (index, result) => {
+        const nextResults = { ...results, [index]: result };
+        setResults(nextResults);
+        const completedTurns = studentTurns.filter((turn) => (
+            nextResults[config.turns.indexOf(turn)]
+        )).length;
+        if (!block.correct && completedTurns === studentTurns.length && studentTurns.length > 0) {
+            onComplete?.(block.id, {
+                completedItems: completedTurns,
+                score: Math.round(studentTurns.reduce((sum, turn) => (
+                    sum + (nextResults[config.turns.indexOf(turn)]?.score || 0)
+                ), 0) / studentTurns.length)
+            });
+        }
+    };
 
     return (
         <section className="overflow-hidden rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/[0.08] via-gray-900 to-gray-950">
@@ -199,7 +215,7 @@ export default function LessonDialog({ block }) {
                                 result={results[index]}
                                 onSpeak={() => play(index)}
                                 onStop={stop}
-                                onResult={(result) => setResults((previous) => ({ ...previous, [index]: result }))}
+                                onResult={(result) => recordResult(index, result)}
                             />
                         );
                     }
