@@ -2,6 +2,14 @@ package com.twojlogin.lms.entity;
 
 public enum BlockType {
 
+    /*
+     * Wartości historyczne. Mogą nadal występować w produkcyjnej bazie,
+     * dlatego nie wolno ich usuwać z enuma używanego przez Hibernate.
+     */
+    THEORY,
+
+    CONTENT,
+
     TEXT,
 
     TIP,
@@ -28,5 +36,9 @@ public enum BlockType {
 
     QUOTE,
 
-    DIVIDER
+    DIVIDER;
+
+    public BlockType normalized() {
+        return this == THEORY || this == CONTENT ? TEXT : this;
+    }
 }

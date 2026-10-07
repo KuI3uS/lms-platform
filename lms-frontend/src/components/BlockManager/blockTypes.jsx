@@ -151,7 +151,13 @@ export const BLOCK_TYPES_MAP = Object.fromEntries(
 );
 
 export function getBlockType(type) {
-    return BLOCK_TYPES_MAP[type === "DOWNLOAD" ? "PDF" : type];
+    const normalizedType = ["THEORY", "CONTENT"].includes(type)
+        ? "TEXT"
+        : type === "DOWNLOAD"
+            ? "PDF"
+            : type;
+
+    return BLOCK_TYPES_MAP[normalizedType];
 }
 
 export function getBlockIcon(type) {
