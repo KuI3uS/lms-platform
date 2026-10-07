@@ -6,6 +6,7 @@ import com.twojlogin.lms.entity.*;
 import com.twojlogin.lms.repository.TutoringAvailabilityRepository;
 import com.twojlogin.lms.repository.TutoringBookingRepository;
 import com.twojlogin.lms.repository.UserRepository;
+import com.twojlogin.lms.service.EmailService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,15 +24,17 @@ public class TutoringController {
     private final TutoringAvailabilityRepository availabilityRepository;
     private final TutoringBookingRepository bookingRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     public TutoringController(
             TutoringAvailabilityRepository availabilityRepository,
             TutoringBookingRepository bookingRepository,
-            UserRepository userRepository
+            UserRepository userRepository, EmailService emailService
     ) {
         this.availabilityRepository = availabilityRepository;
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     @GetMapping("/available")
@@ -89,15 +92,14 @@ public class TutoringController {
             throw new RuntimeException("Wybrany termin nie mieści się w dostępnych godzinach");
         }
 
-        boolean paidConflict = bookingRepository
-                .existsByStatusAndStartTimeLessThanAndEndTimeGreaterThan(
-                        TutoringStatus.PAID,
+        boolean conflict = bookingRepository
+                .existsByStatusInAndStartTimeLessThanAndEndTimeGreaterThan(
+                        List.of(TutoringStatus.PENDING_PAYMENT, TutoringStatus.PAID),
                         request.getEndTime(),
                         request.getStartTime()
                 );
-
-        if (paidConflict) {
-            throw new RuntimeException("Ten termin jest już zajęty");
+        if (conflict) {
+            throw new RuntimeException("Ten termin jest aktualnie zajęty lub oczekuje na płatność");
         }
 
         TutoringBooking booking = new TutoringBooking();
@@ -115,8 +117,13 @@ public class TutoringController {
 
         booking.setStatus(TutoringStatus.PENDING_PAYMENT);
         booking.setCreatedAt(LocalDateTime.now());
+        booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(10));
 
-        return bookingRepository.save(booking);
+        TutoringBooking saved = bookingRepository.save(booking);
+
+        emailService.sendTutoringPaymentEmail(saved);
+
+        return saved;
     }
 
     @PutMapping("/admin/{id}")
