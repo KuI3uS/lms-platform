@@ -9,12 +9,15 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @Service
 public class LearningStatsService {
+
+    private static final ZoneId WARSAW_ZONE = ZoneId.of("Europe/Warsaw");
 
     private final UserRepository userRepository;
     private final LessonProgressRepository lessonProgressRepository;
@@ -35,7 +38,7 @@ public class LearningStatsService {
         long completedLessons = lessonProgressRepository.countByUserIdAndCompletedTrue(user.getId());
         List<LocalDateTime> completedDates = lessonProgressRepository.findCompletedDatesByUserId(user.getId());
 
-        int streakDays = calculateStreak(completedDates, LocalDate.now());
+        int streakDays = calculateStreak(completedDates, LocalDate.now(WARSAW_ZONE));
         GamificationService.GamificationSnapshot stats =
                 gamificationService.snapshot(user);
 
@@ -50,6 +53,7 @@ public class LearningStatsService {
                 stats.taskStreak(),
                 stats.bestTaskStreak(),
                 stats.xpMultiplier(),
+                stats.taskStreakExpiresAt(),
                 completedLessons,
                 stats.discountBalance(),
                 stats.nextRewardLevel(),

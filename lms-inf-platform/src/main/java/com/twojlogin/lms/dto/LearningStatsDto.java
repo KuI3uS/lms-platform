@@ -1,6 +1,7 @@
 package com.twojlogin.lms.dto;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 public record LearningStatsDto(
         long xp,
@@ -13,6 +14,7 @@ public record LearningStatsDto(
         int taskStreak,
         int bestTaskStreak,
         int xpMultiplier,
+        Instant taskStreakExpiresAt,
         long completedLessons,
         BigDecimal discountBalance,
         int nextRewardLevel,

@@ -2,6 +2,7 @@ package com.twojlogin.lms.repository;
 
 import com.twojlogin.lms.entity.CourseOrder;
 import com.twojlogin.lms.entity.CourseOrderStatus;
+import com.twojlogin.lms.entity.CoursePurchaseType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,6 +17,13 @@ public interface CourseOrderRepository extends JpaRepository<CourseOrder, Long> 
             Long userId,
             Long courseId,
             CourseOrderStatus status
+    );
+
+    Optional<CourseOrder> findFirstByUserIdAndCourseIdAndStatusAndPurchaseTypeOrderByCreatedAtDesc(
+            Long userId,
+            Long courseId,
+            CourseOrderStatus status,
+            CoursePurchaseType purchaseType
     );
 
     List<CourseOrder> findByUserIdOrderByCreatedAtDesc(Long userId);

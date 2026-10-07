@@ -19,18 +19,35 @@ import { apiFetch } from "../api/api";
 import { fetchLearningStats } from "../api/learningStats";
 import { getCourseLanguageLabel } from "../utils/courseTaxonomy";
 
-const ANALYTICS_CACHE_TTL = 60_000;
+const ANALYTICS_CACHE_TTL = 5 * 60_000;
+const ANALYTICS_STORAGE_PREFIX = "eduhub-learning-analytics";
 const analyticsCache = new Map();
 
 function analyticsCacheKey() {
-    return localStorage.getItem("token") || "anonymous";
+    try {
+        const token = localStorage.getItem("token");
+        const payload = token ? JSON.parse(atob(token.split(".")[1])) : {};
+        return `${ANALYTICS_STORAGE_PREFIX}:${payload.sub || payload.email || "anonymous"}`;
+    } catch {
+        return `${ANALYTICS_STORAGE_PREFIX}:anonymous`;
+    }
 }
 
 function getCachedAnalytics() {
     const cached = analyticsCache.get(analyticsCacheKey());
-    return cached && Date.now() - cached.savedAt < ANALYTICS_CACHE_TTL
-        ? cached.value
-        : null;
+    if (cached && Date.now() - cached.savedAt < ANALYTICS_CACHE_TTL) {
+        return cached.value;
+    }
+    try {
+        const stored = JSON.parse(sessionStorage.getItem(analyticsCacheKey()));
+        if (stored && Date.now() - stored.savedAt < ANALYTICS_CACHE_TTL) {
+            analyticsCache.set(analyticsCacheKey(), stored);
+            return stored.value;
+        }
+    } catch {
+        // Brak pamięci sesji nie blokuje statystyk.
+    }
+    return null;
 }
 
 function formatDuration(seconds) {
@@ -63,10 +80,16 @@ export default function LearningCenterPage() {
         apiFetch("/learning/analytics")
             .then((analyticsResponse) => {
                 if (!active) return;
-                analyticsCache.set(analyticsCacheKey(), {
+                const cacheEntry = {
                     value: analyticsResponse,
                     savedAt: Date.now()
-                });
+                };
+                analyticsCache.set(analyticsCacheKey(), cacheEntry);
+                try {
+                    sessionStorage.setItem(analyticsCacheKey(), JSON.stringify(cacheEntry));
+                } catch {
+                    // Dane nadal pozostają w pamięci bieżącej strony.
+                }
                 setData(analyticsResponse);
             })
             .catch((loadError) => {
@@ -157,7 +180,7 @@ export default function LearningCenterPage() {
                             </p>
                         </div>
                         <p className="mt-4 text-sm leading-6 text-slate-400">
-                            5 poprawnych zadań uruchamia x2, a 10 poprawnych x3. Powtórne zaliczanie tego samego zadania nie nalicza XP.
+                            5 poprawnych zadań uruchamia x2, a 10 poprawnych x3. Seria wygasa 24 godziny po ostatnim poprawnym zadaniu.
                         </p>
                     </div>
 

@@ -31,8 +31,11 @@ const EMPTY_COURSE = {
     courseLanguage: "ENGLISH",
     cefrLevel: "A1",
     level: "Podstawy",
+    billingMode: "FREE",
     price: "0",
+    monthlyPrice: "0",
     paymentUrl: "",
+    monthlyPaymentUrl: "",
     thumbnailUrl: "",
     published: true
 };
@@ -79,7 +82,10 @@ export default function AddCoursePage() {
                         cefrLevel: data.cefrLevel || "A1",
                         level: data.level || "Podstawy",
                         price: data.price ?? "0",
+                        billingMode: data.billingMode || (Number(data.price || 0) > 0 ? "ONE_TIME" : "FREE"),
+                        monthlyPrice: data.monthlyPrice ?? "0",
                         paymentUrl: data.paymentUrl || getDefaultCoursePaymentUrl(data),
+                        monthlyPaymentUrl: data.monthlyPaymentUrl || "",
                         thumbnailUrl: data.thumbnailUrl || "",
                         published: Boolean(data.published)
                     });
@@ -126,7 +132,12 @@ export default function AddCoursePage() {
                 method: isEditing ? "PUT" : "POST",
                 body: JSON.stringify({
                     ...course,
-                    price: Number(course.price || 0)
+                    price: ["ONE_TIME", "FLEXIBLE"].includes(course.billingMode)
+                        ? Number(course.price || 0)
+                        : 0,
+                    monthlyPrice: ["SUBSCRIPTION", "FLEXIBLE"].includes(course.billingMode)
+                        ? Number(course.monthlyPrice || 0)
+                        : 0
                 })
             });
 
@@ -261,20 +272,39 @@ export default function AddCoursePage() {
                             </label>
                         </div>
 
-                        <label className="block space-y-2">
-                            <span className="text-sm font-bold text-slate-300">Link do płatności za kurs</span>
-                            <input
-                                name="paymentUrl"
-                                type="url"
-                                value={course.paymentUrl}
-                                onChange={updateField}
-                                placeholder="https://checkout.revolut.com/pay/..."
-                                className={fieldClass}
-                            />
-                            <span className="block text-xs leading-5 text-slate-500">
-                                Wymagany tylko dla kursu płatnego. Po płatności administrator potwierdza zamówienie i odblokowuje dostęp.
-                            </span>
-                        </label>
+                        <fieldset>
+                            <legend className="text-sm font-bold text-slate-300">Sposób dostępu do kursu</legend>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">Możesz udostępnić kurs bezpłatnie, jednorazowo, w abonamencie lub dać uczniowi wybór.</p>
+                            <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                                {[
+                                    ["FREE", "Bezpłatny", "Dostęp bez płatności"],
+                                    ["ONE_TIME", "Jednorazowo", "Dostęp bezterminowy"],
+                                    ["SUBSCRIPTION", "Abonament", "Dostęp na miesiąc"],
+                                    ["FLEXIBLE", "Wybór", "Obie opcje płatności"]
+                                ].map(([value, label, description]) => (
+                                    <label key={value} className={`cursor-pointer rounded-xl border p-3 transition ${course.billingMode === value ? "border-cyan-300 bg-cyan-300/10" : "border-white/10 bg-black/20 hover:border-white/20"}`}>
+                                        <input className="sr-only" type="radio" name="billingMode" value={value} checked={course.billingMode === value} onChange={updateField} />
+                                        <span className="block text-sm font-black">{label}</span>
+                                        <span className="mt-1 block text-[11px] leading-4 text-slate-500">{description}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </fieldset>
+
+                        {(course.billingMode === "ONE_TIME" || course.billingMode === "FLEXIBLE") && (
+                            <label className="block space-y-2">
+                                <span className="text-sm font-bold text-slate-300">Link do płatności jednorazowej</span>
+                                <input name="paymentUrl" type="url" value={course.paymentUrl} onChange={updateField} placeholder="https://checkout.revolut.com/pay/..." className={fieldClass} />
+                            </label>
+                        )}
+
+                        {(course.billingMode === "SUBSCRIPTION" || course.billingMode === "FLEXIBLE") && (
+                            <label className="block space-y-2">
+                                <span className="text-sm font-bold text-slate-300">Link do płatności miesięcznej</span>
+                                <input name="monthlyPaymentUrl" type="url" value={course.monthlyPaymentUrl} onChange={updateField} placeholder="https://checkout.revolut.com/pay/..." className={fieldClass} />
+                                <span className="block text-xs leading-5 text-slate-500">Po zatwierdzeniu płatności dostęp będzie aktywny przez jeden miesiąc.</span>
+                            </label>
+                        )}
 
                         <label className="block space-y-2">
                             <span className="text-sm font-bold text-slate-300">Opis</span>
@@ -336,18 +366,18 @@ export default function AddCoursePage() {
                                 </label>
                             )}
 
-                            <label className="space-y-2">
-                                <span className="text-sm font-bold text-slate-300">Cena (zł)</span>
-                                <input
-                                    name="price"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={course.price}
-                                    onChange={updateField}
-                                    className={fieldClass}
-                                />
-                            </label>
+                            {(course.billingMode === "ONE_TIME" || course.billingMode === "FLEXIBLE") && (
+                                <label className="space-y-2">
+                                    <span className="text-sm font-bold text-slate-300">Cena jednorazowa (zł)</span>
+                                    <input name="price" type="number" min="0.01" step="0.01" value={course.price} onChange={updateField} className={fieldClass} />
+                                </label>
+                            )}
+                            {(course.billingMode === "SUBSCRIPTION" || course.billingMode === "FLEXIBLE") && (
+                                <label className="space-y-2">
+                                    <span className="text-sm font-bold text-slate-300">Cena miesięczna (zł)</span>
+                                    <input name="monthlyPrice" type="number" min="0.01" step="0.01" value={course.monthlyPrice} onChange={updateField} className={fieldClass} />
+                                </label>
+                            )}
                         </div>
 
                         <label className="block space-y-2">

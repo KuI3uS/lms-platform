@@ -11,12 +11,15 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class CourseOrderService {
+
+    private static final ZoneId WARSAW_ZONE = ZoneId.of("Europe/Warsaw");
 
     private final CourseRepository courseRepository;
     private final CourseOrderRepository orderRepository;
@@ -48,6 +51,7 @@ public class CourseOrderService {
     public CourseOrderDto create(
             Long courseId,
             BigDecimal requestedDiscount,
+            CoursePurchaseType requestedPurchaseType,
             Authentication authentication
     ) {
         User user = accessService.currentUser(authentication);
@@ -68,7 +72,13 @@ public class CourseOrderService {
             );
         }
 
-        if (enrollmentRepository.existsByUserIdAndCourseIdAndActiveTrue(user.getId(), courseId)) {
+        CoursePurchaseType purchaseType = resolvePurchaseType(course, requestedPurchaseType);
+        CourseEnrollment existingEnrollment = enrollmentRepository
+                .findByUserIdAndCourseId(user.getId(), courseId)
+                .orElse(null);
+        if (existingEnrollment != null
+                && existingEnrollment.isActive()
+                && existingEnrollment.getAccessExpiresAt() == null) {
             return CourseOrderDto.from(findOrCreateAccessOrder(user, course), false);
         }
 
@@ -77,12 +87,18 @@ public class CourseOrderService {
                     user,
                     course,
                     BigDecimal.ZERO,
-                    BigDecimal.ZERO
+                    BigDecimal.ZERO,
+                    CoursePurchaseType.ONE_TIME
             );
             order.setStatus(CourseOrderStatus.PAID);
-            order.setPaidAt(LocalDateTime.now());
+            order.setPaidAt(now());
             CourseOrder saved = orderRepository.save(order);
-            activateEnrollment(user, course, EnrollmentSource.FREE);
+            activateEnrollment(
+                    user,
+                    course,
+                    EnrollmentSource.FREE,
+                    CoursePurchaseType.ONE_TIME
+            );
             notificationService.create(
                     user,
                     NotificationType.COURSE_ACCESS,
@@ -94,24 +110,29 @@ public class CourseOrderService {
         }
 
         CourseOrder pending = orderRepository
-                .findFirstByUserIdAndCourseIdAndStatusOrderByCreatedAtDesc(
+                .findFirstByUserIdAndCourseIdAndStatusAndPurchaseTypeOrderByCreatedAtDesc(
                         user.getId(),
                         courseId,
-                        CourseOrderStatus.PENDING
+                        CourseOrderStatus.PENDING,
+                        purchaseType
                 )
                 .orElse(null);
 
         if (pending == null) {
+            BigDecimal purchasePrice = purchaseType == CoursePurchaseType.SUBSCRIPTION
+                    ? course.getMonthlyPrice()
+                    : course.getPrice();
             BigDecimal discount = gamificationService.reserveDiscount(
                     user,
-                    course.getPrice(),
+                    purchasePrice,
                     requestedDiscount
             );
             pending = orderRepository.save(newOrder(
                     user,
                     course,
-                    course.getPrice(),
-                    discount
+                    purchasePrice,
+                    discount,
+                    purchaseType
             ));
         }
 
@@ -154,10 +175,23 @@ public class CourseOrderService {
 
         if (order.getStatus() != CourseOrderStatus.PAID) {
             order.setStatus(CourseOrderStatus.PAID);
-            order.setPaidAt(LocalDateTime.now());
+            order.setPaidAt(now());
             order.setConfirmedBy(admin);
+            CourseEnrollment enrollment = activateEnrollment(
+                    order.getUser(),
+                    order.getCourse(),
+                    EnrollmentSource.PURCHASE,
+                    order.getPurchaseType()
+            );
+            order.setAccessUntil(enrollment.getAccessExpiresAt());
+        } else if (order.getPurchaseType() == CoursePurchaseType.ONE_TIME) {
+            activateEnrollment(
+                    order.getUser(),
+                    order.getCourse(),
+                    EnrollmentSource.PURCHASE,
+                    CoursePurchaseType.ONE_TIME
+            );
         }
-        activateEnrollment(order.getUser(), order.getCourse(), EnrollmentSource.PURCHASE);
 
         notificationService.create(
                 order.getUser(),
@@ -206,7 +240,12 @@ public class CourseOrderService {
                         HttpStatus.NOT_FOUND,
                         "Nie znaleziono kursu"
                 ));
-        activateEnrollment(user, course, EnrollmentSource.ADMIN);
+        activateEnrollment(
+                user,
+                course,
+                EnrollmentSource.ADMIN,
+                CoursePurchaseType.ONE_TIME
+        );
         notificationService.create(
                 user,
                 NotificationType.COURSE_ACCESS,
@@ -228,10 +267,11 @@ public class CourseOrderService {
                             user,
                             course,
                             BigDecimal.ZERO,
-                            BigDecimal.ZERO
+                            BigDecimal.ZERO,
+                            CoursePurchaseType.ONE_TIME
                     );
                     order.setStatus(CourseOrderStatus.PAID);
-                    order.setPaidAt(LocalDateTime.now());
+                    order.setPaidAt(now());
                     return orderRepository.save(order);
                 });
     }
@@ -240,11 +280,12 @@ public class CourseOrderService {
             User user,
             Course course,
             BigDecimal originalAmount,
-            BigDecimal discountAmount
+            BigDecimal discountAmount,
+            CoursePurchaseType purchaseType
     ) {
         CourseOrder order = new CourseOrder();
         order.setReference("EDU-"
-                + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+                + now().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
                 + "-"
                 + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         order.setUser(user);
@@ -260,20 +301,63 @@ public class CourseOrderService {
         order.setAmount(original.subtract(discount));
         order.setCurrency("PLN");
         order.setStatus(CourseOrderStatus.PENDING);
-        order.setCreatedAt(LocalDateTime.now());
+        order.setPurchaseType(purchaseType);
+        order.setCreatedAt(now());
         return order;
     }
 
-    private void activateEnrollment(User user, Course course, EnrollmentSource source) {
+    private CourseEnrollment activateEnrollment(
+            User user,
+            Course course,
+            EnrollmentSource source,
+            CoursePurchaseType purchaseType
+    ) {
         CourseEnrollment enrollment = enrollmentRepository
                 .findByUserIdAndCourseId(user.getId(), course.getId())
                 .orElseGet(CourseEnrollment::new);
+        LocalDateTime now = now();
         enrollment.setUser(user);
         enrollment.setCourse(course);
         enrollment.setSource(source);
         enrollment.setActive(true);
-        enrollment.setEnrolledAt(LocalDateTime.now());
-        enrollmentRepository.save(enrollment);
+        enrollment.setEnrolledAt(now);
+        if (purchaseType == CoursePurchaseType.SUBSCRIPTION) {
+            LocalDateTime currentExpiry = enrollment.getAccessExpiresAt();
+            LocalDateTime extensionStart = currentExpiry != null && currentExpiry.isAfter(now)
+                    ? currentExpiry
+                    : now;
+            enrollment.setAccessExpiresAt(extensionStart.plusMonths(1));
+        } else {
+            enrollment.setAccessExpiresAt(null);
+        }
+        return enrollmentRepository.save(enrollment);
+    }
+
+    private CoursePurchaseType resolvePurchaseType(
+            Course course,
+            CoursePurchaseType requestedPurchaseType
+    ) {
+        if (accessService.isFree(course)) return CoursePurchaseType.ONE_TIME;
+        CoursePurchaseType purchaseType = requestedPurchaseType;
+        if (purchaseType == null) {
+            purchaseType = course.getBillingMode() == CourseBillingMode.SUBSCRIPTION
+                    ? CoursePurchaseType.SUBSCRIPTION
+                    : CoursePurchaseType.ONE_TIME;
+        }
+        boolean allowed = purchaseType == CoursePurchaseType.SUBSCRIPTION
+                ? course.getBillingMode().allowsSubscription()
+                : course.getBillingMode().allowsOneTime();
+        if (!allowed) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Ten sposób płatności nie jest dostępny dla kursu"
+            );
+        }
+        return purchaseType;
+    }
+
+    private LocalDateTime now() {
+        return LocalDateTime.now(WARSAW_ZONE);
     }
 
     private String courseTitle(Course course) {

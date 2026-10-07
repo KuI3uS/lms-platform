@@ -16,5 +16,8 @@ export function resolveCoursePaymentUrl(course, order) {
     if (order && Number(order.discountAmount || 0) > 0) {
         return "";
     }
+    if (order?.purchaseType === "SUBSCRIPTION") {
+        return order.paymentUrl || course?.monthlyPaymentUrl || "";
+    }
     return order?.paymentUrl || course?.paymentUrl || getDefaultCoursePaymentUrl(course);
 }

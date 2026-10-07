@@ -24,6 +24,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -31,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class CourseServiceTest {
@@ -92,8 +94,10 @@ class CourseServiceTest {
                 .thenReturn(List.of(new Object[]{1L, 10L}, new Object[]{2L, 4L}));
         when(lessonProgressRepository.countCompletedByUserIdAndCourseIds(7L, courseIds))
                 .thenReturn(List.of(new Object[]{1L, 2L}, new Object[]{2L, 3L}));
-        when(enrollmentRepository.findActiveCourseIdsByUserId(7L))
-                .thenReturn(List.of(2L));
+        when(enrollmentRepository.findAccessibleCoursesByUserId(
+                org.mockito.ArgumentMatchers.eq(7L),
+                any(LocalDateTime.class)
+        )).thenReturn(List.<Object[]>of(new Object[]{2L, null}));
         when(orderRepository.findPendingCourseIdsByUserId(7L))
                 .thenReturn(List.of(1L));
 

@@ -1,1149 +1,309 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import { fetchLearningStats } from "../api/learningStats";
-import {
-    getCourseCover,
-    getGeneratedCourseCover
-} from "../utils/courseCover";
-
+import { getCourseCover, getGeneratedCourseCover } from "../utils/courseCover";
 import {
     BsArrowRight,
-    BsBookHalf,
+    BsBook,
+    BsCheck2,
+    BsChevronRight,
+    BsClock,
     BsFire,
     BsLightningChargeFill,
+    BsLock,
     BsPlayFill,
-    BsStars,
-    BsTrophyFill
+    BsStars
 } from "react-icons/bs";
 
-const DASHBOARD_CACHE_PREFIX = "eduhub-dashboard-cache";
+const CACHE_PREFIX = "eduhub-dashboard-v3";
 
-function getDashboardCacheKey() {
-    const token = localStorage.getItem("token");
-    if (!token) return `${DASHBOARD_CACHE_PREFIX}:anonymous`;
-
+function dashboardCacheKey() {
     try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        return `${DASHBOARD_CACHE_PREFIX}:${payload.sub || payload.email || "user"}`;
+        const payload = JSON.parse(atob(localStorage.getItem("token").split(".")[1]));
+        return `${CACHE_PREFIX}:${payload.sub || payload.email || "user"}`;
     } catch {
-        return `${DASHBOARD_CACHE_PREFIX}:user`;
+        return `${CACHE_PREFIX}:anonymous`;
     }
 }
 
-function readDashboardCache() {
+function readCache() {
     try {
-        return JSON.parse(sessionStorage.getItem(getDashboardCacheKey())) || {};
+        return JSON.parse(sessionStorage.getItem(dashboardCacheKey())) || {};
     } catch {
         return {};
     }
 }
 
-function updateDashboardCache(data) {
+function writeCache(next) {
     try {
-        sessionStorage.setItem(
-            getDashboardCacheKey(),
-            JSON.stringify({ ...readDashboardCache(), ...data })
-        );
+        sessionStorage.setItem(dashboardCacheKey(), JSON.stringify({ ...readCache(), ...next }));
     } catch {
-        // Brak miejsca w pamięci przeglądarki nie może blokować dashboardu.
+        // Dashboard działa również bez pamięci podręcznej.
     }
+}
+
+function greeting() {
+    const hour = Number(new Intl.DateTimeFormat("pl-PL", {
+        timeZone: "Europe/Warsaw",
+        hour: "2-digit",
+        hour12: false
+    }).format(new Date()));
+    if (hour < 12) return "Dzień dobry";
+    if (hour < 18) return "Dobrego popołudnia";
+    return "Dobry wieczór";
+}
+
+function getIdentity() {
+    try {
+        const payload = JSON.parse(atob(localStorage.getItem("token").split(".")[1]));
+        const email = payload.sub || payload.email || "";
+        return email.split("@")[0].split(/[._-]/)[0] || "Uczniu";
+    } catch {
+        return "Uczniu";
+    }
+}
+
+function formatDate(value) {
+    if (!value) return null;
+    return new Intl.DateTimeFormat("pl-PL", {
+        timeZone: "Europe/Warsaw",
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(new Date(value));
+}
+
+function chooseCurrentCourse(courses) {
+    return [...courses]
+        .filter((course) => course.canAccess && Number(course.lessonCount || 0) > 0)
+        .sort((a, b) => {
+            const aStarted = a.progress > 0 && a.progress < 100 ? 1 : 0;
+            const bStarted = b.progress > 0 && b.progress < 100 ? 1 : 0;
+            if (aStarted !== bStarted) return bStarted - aStarted;
+            if ((a.progress || 0) !== (b.progress || 0)) return (b.progress || 0) - (a.progress || 0);
+            return (b.lessonCount || 0) - (a.lessonCount || 0);
+        })[0] || null;
 }
 
 export default function DashboardPage() {
-
     const navigate = useNavigate();
-    const [initialCache] = useState(readDashboardCache);
-
-    const [courses, setCourses] = useState(initialCache.courses || []);
-    const [submissions, setSubmissions] = useState(initialCache.submissions || []);
-    const [results, setResults] = useState(initialCache.results || []);
-    const [learningStats, setLearningStats] = useState(initialCache.learningStats || null);
-    const [loading, setLoading] = useState(!Array.isArray(initialCache.courses));
-    const [detailsLoading, setDetailsLoading] = useState(
-        !Array.isArray(initialCache.submissions)
-        || !Array.isArray(initialCache.results)
-        || !initialCache.learningStats
-    );
+    const [cached] = useState(readCache);
+    const [courses, setCourses] = useState(cached.courses || []);
+    const [stats, setStats] = useState(cached.stats || null);
+    const [loading, setLoading] = useState(!cached.courses);
+    const [error, setError] = useState("");
 
     useEffect(() => {
         let active = true;
-
-        apiFetch("/courses/my")
-            .then((coursesData) => {
-                if (!active) return;
-                const nextCourses = coursesData || [];
-                setCourses(nextCourses);
-                updateDashboardCache({ courses: nextCourses });
-            })
-            .catch((error) => console.error("Nie udało się pobrać kursów", error))
-            .finally(() => {
-                if (active) setLoading(false);
-            });
-
         Promise.all([
-            apiFetch("/submissions/my").catch(() => []),
-            apiFetch("/my-results").catch(() => []),
-            fetchLearningStats().catch(() => null)
-        ]).then(([submissionsData, resultsData, statsData]) => {
+            apiFetch("/courses/my"),
+            fetchLearningStats()
+        ]).then(([courseData, statsData]) => {
             if (!active) return;
-            const nextSubmissions = submissionsData || [];
-            const nextResults = resultsData || [];
-            setSubmissions(nextSubmissions);
-            setResults(nextResults);
-            setLearningStats(statsData);
-            updateDashboardCache({
-                submissions: nextSubmissions,
-                results: nextResults,
-                learningStats: statsData
-            });
+            const nextCourses = courseData || [];
+            setCourses(nextCourses);
+            setStats(statsData || null);
+            writeCache({ courses: nextCourses, stats: statsData || null });
+        }).catch((loadError) => {
+            if (active) setError(loadError.message || "Nie udało się odświeżyć planu nauki.");
         }).finally(() => {
-            if (active) setDetailsLoading(false);
+            if (active) setLoading(false);
         });
-
-        return () => {
-            active = false;
-        };
+        return () => { active = false; };
     }, []);
 
+    const currentCourse = useMemo(() => chooseCurrentCourse(courses), [courses]);
+    const availableCourses = useMemo(
+        () => courses.filter((course) => course.canAccess && Number(course.lessonCount || 0) > 0),
+        [courses]
+    );
+    const suggestedCourses = useMemo(
+        () => courses.filter((course) => course.id !== currentCourse?.id).slice(0, 3),
+        [courses, currentCourse]
+    );
+    const levelProgress = Math.min(100, Math.round(
+        Number(stats?.xpIntoLevel || 0) * 100 / Math.max(1, Number(stats?.xpForNextLevel || 1))
+    ));
+    const courseProgress = Math.min(100, Math.max(0, Number(currentCourse?.progress || 0)));
+
+    const openCourse = (course) => navigate(
+        course.canAccess ? `/modules/${course.id}` : `/checkout/${course.id}`
+    );
+
     if (loading) {
-
         return (
-
-            <div className="flex items-center justify-center h-[70vh]">
-
-                <div className="
-                    w-16
-                    h-16
-                    rounded-full
-                    border-4
-                    border-cyan-500
-                    border-t-transparent
-                    animate-spin
-                "/>
-
+            <div className="mx-auto grid min-h-[70vh] max-w-7xl place-items-center">
+                <div className="text-center">
+                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-cyan-300/20 border-t-cyan-300" />
+                    <p className="mt-4 text-sm font-bold text-slate-500">Układamy Twój plan na dziś…</p>
+                </div>
             </div>
-
         );
-
     }
 
-    const checked =
-        submissions.filter(s => s.status === "CHECKED").length;
-
-    const firstCourse =
-        courses[0];
-
-    const lastSubmissions = submissions.slice(0, 5);
-
-    const xp = Number(learningStats?.xp || 0);
-
-    const level = Number(learningStats?.level || 1);
-
-    const progress = Number(learningStats?.xpIntoLevel || 0);
-    const progressTarget = Math.max(1, Number(learningStats?.xpForNextLevel || 1));
-
-    const statusStyle = (status) => {
-
-        if (status === "CHECKED")
-            return "bg-green-500/10 text-green-300 border-green-500/30";
-
-        if (status === "TO_FIX")
-            return "bg-orange-500/10 text-orange-300 border-orange-500/30";
-
-        return "bg-cyan-500/10 text-cyan-300 border-cyan-500/30";
-    };
-
     return (
-
-        <div className="space-y-10 text-white">
-
-            {/* ================================================= */}
-
-            {/* HERO DASHBOARD */}
-
-            {/* ================================================= */}
-
-            <section
-                className="
-                    relative
-                    overflow-hidden
-                    rounded-[42px]
-                    border
-                    border-cyan-500/20
-                    bg-gradient-to-br
-                    from-slate-950
-                    via-[#081325]
-                    to-cyan-950
-                    p-12
-                "
-            >
-
-                <div className="
-                    absolute
-                    -left-24
-                    -top-24
-                    w-96
-                    h-96
-                    rounded-full
-                    bg-cyan-500/10
-                    blur-3xl
-                "/>
-
-                <div className="
-                    absolute
-                    -right-32
-                    bottom-0
-                    w-[500px]
-                    h-[500px]
-                    rounded-full
-                    bg-blue-600/10
-                    blur-3xl
-                "/>
-
-                <div className="relative z-10">
-
-                    <div className="grid xl:grid-cols-[1.5fr_0.9fr] gap-10">
-
-                        {/* ================================= */}
-
-                        {/* LEWA STRONA */}
-
-                        {/* ================================= */}
-
-                        <div>
-
-                            <div className="
-                                inline-flex
-                                items-center
-                                gap-2
-                                rounded-full
-                                border
-                                border-cyan-500/20
-                                bg-cyan-500/10
-                                px-5
-                                py-2
-                                text-cyan-300
-                                font-semibold
-                            ">
-
-                                <BsStars/>
-
-                                EDUHUB 2026
-
-                            </div>
-
-                            <h1 className="
-                                mt-8
-                                text-6xl
-                                font-black
-                                leading-tight
-                            ">
-
-                                Witaj ponownie.
-
-                                <br/>
-
-                                Kontynuuj naukę.
-
-                            </h1>
-
-                            <p className="
-                                mt-8
-                                max-w-3xl
-                                text-xl
-                                leading-9
-                                text-gray-300
-                            ">
-
-                                Rozwiązuj kolejne zadania,
-                                zdobywaj doświadczenie,
-                                rozwijaj umiejętności programistyczne
-                                i odblokowuj następne moduły.
-
-                            </p>
-
-                            {firstCourse && (
-
-                                <button
-
-                                    onClick={() =>
-                                        navigate(`/modules/${firstCourse.id}`)
-                                    }
-
-                                    className="
-                                        mt-10
-                                        rounded-2xl
-                                        bg-gradient-to-r
-                                        from-cyan-500
-                                        to-blue-600
-                                        px-8
-                                        py-5
-                                        font-bold
-                                        flex
-                                        items-center
-                                        gap-3
-                                        hover:scale-[1.02]
-                                        transition
-                                        shadow-[0_20px_60px_rgba(6,182,212,0.25)]
-                                    "
-
-                                >
-
-                                    <BsPlayFill size={20}/>
-
-                                    Kontynuuj naukę
-
-                                    <BsArrowRight/>
-
-                                </button>
-
-                            )}
-
-                        </div>
-
-                        {/* ================================= */}
-
-                        {/* PRAWA STRONA */}
-
-                        {/* ================================= */}
-
-                        <div className="grid gap-5">
-
-                            <div className="
-                                rounded-3xl
-                                border
-                                border-white/10
-                                bg-white/[0.05]
-                                backdrop-blur-xl
-                                p-7
-                            ">
-
-                                <div className="flex items-center gap-4">
-
-                                    <div className="
-                                        w-16
-                                        h-16
-                                        rounded-2xl
-                                        bg-gradient-to-br
-                                        from-cyan-500
-                                        to-blue-600
-                                        flex
-                                        items-center
-                                        justify-center
-                                    ">
-
-                                        <BsLightningChargeFill size={28}/>
-
-                                    </div>
-
-                                    <div>
-
-                                        <p className="text-gray-400">
-
-                                            Aktualny poziom
-
-                                        </p>
-
-                                        <h2 className="text-4xl font-black">
-
-                                            {detailsLoading ? "—" : level}
-
-                                        </h2>
-
-                                    </div>
-
-                                </div>
-
-                                <div className="mt-7">
-
-                                    <div className="
-                                        flex
-                                        justify-between
-                                        mb-3
-                                        text-sm
-                                    ">
-
-                                        <span className="text-gray-400">
-
-                                            XP
-
-                                        </span>
-
-                                        <span>
-
-                                            {detailsLoading
-                                                ? "Ładowanie…"
-                                                : `${xp} XP · ${progress} / ${progressTarget}`}
-
-                                        </span>
-
-                                    </div>
-
-                                    <div className="
-                                        h-3
-                                        rounded-full
-                                        bg-black/30
-                                        overflow-hidden
-                                    ">
-
-                                        <div
-                                            className="
-                                                h-full
-                                                rounded-full
-                                                bg-gradient-to-r
-                                                from-cyan-500
-                                                to-blue-600
-                                            "
-                                            style={{
-                                                width: `${detailsLoading ? 0 : Math.min(100, progress * 100 / progressTarget)}%`
-                                            }}
-                                        />
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-4">
-                                {/* QUICK STATS */}
-
-                                <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl p-5">
-
-                                    <div className="flex items-center justify-between">
-
-                                        <div>
-
-                                            <p className="text-gray-400 text-sm">
-
-                                                Kursy
-
-                                            </p>
-
-                                            <h3 className="text-3xl font-black mt-2">
-
-                                                {courses.length}
-
-                                            </h3>
-
-                                        </div>
-
-                                        <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-400">
-
-                                            <BsBookHalf size={24}/>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                                <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl p-5">
-
-                                    <div className="flex items-center justify-between">
-
-                                        <div>
-
-                                            <p className="text-gray-400 text-sm">
-
-                                                Seria
-
-                                            </p>
-
-                                            <h3 className="text-3xl font-black mt-2">
-
-                                                {detailsLoading
-                                                    ? "—"
-                                                    : `${learningStats?.taskStreak || 0} · x${learningStats?.xpMultiplier || 1}`}
-
-                                            </h3>
-
-                                        </div>
-
-                                        <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400">
-
-                                            <BsFire size={24}/>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                                <div className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl p-5">
-
-                                    <div className="flex items-center justify-between">
-
-                                        <div>
-
-                                            <p className="text-gray-400 text-sm">
-
-                                                Osiągnięcia
-
-                                            </p>
-
-                                            <h3 className="text-3xl font-black mt-2">
-
-                                                {detailsLoading ? "—" : checked}
-
-                                            </h3>
-
-                                        </div>
-
-                                        <div className="w-14 h-14 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-yellow-400">
-
-                                            <BsTrophyFill size={24}/>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-                </div>
-
-            </section>
-
-
-            {/* ========================================= */}
-
-            {/* CONTINUE LEARNING */}
-
-            {/* ========================================= */}
-
-            <section className="space-y-6">
-
-                <div className="flex justify-between items-center">
-
-                    <div>
-
-                        <h2 className="text-3xl font-black">
-
-                            Continue Learning
-
-                        </h2>
-
-                        <p className="text-gray-400 mt-2">
-
-                            Wróć do ostatnio rozpoczętej ścieżki.
-
-                        </p>
-
-                    </div>
-
-                </div>
-
-                {firstCourse && (
-
-                    <div
-                        className="
-                        relative
-                        overflow-hidden
-                        rounded-[36px]
-                        border
-                        border-white/10
-                        bg-gradient-to-br
-                        from-[#111827]
-                        via-[#0F172A]
-                        to-[#111827]
-                        p-10
-                    "
-                    >
-
-                        <div className="absolute -right-24 -top-24 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl"/>
-
-                        <div className="grid lg:grid-cols-[1.4fr_420px] gap-10 items-center">
-
-                            <div>
-
-                                <div className="inline-flex rounded-full bg-cyan-500/10 text-cyan-300 px-5 py-2 font-semibold">
-
-                                    Aktualna ścieżka
-
-                                </div>
-
-                                <h2 className="text-5xl font-black mt-6">
-
-                                    {firstCourse.title || firstCourse.name}
-
-                                </h2>
-
-                                <p className="mt-6 text-gray-400 text-lg leading-8 max-w-2xl">
-
-                                    {firstCourse.description ||
-                                        "Rozpocznij naukę i odblokowuj kolejne lekcje."}
-
-                                </p>
-
-                                <button
-
-                                    onClick={() =>
-                                        navigate(`/modules/${firstCourse.id}`)
-                                    }
-
-                                    className="
-                                        mt-10
-                                        rounded-2xl
-                                        bg-gradient-to-r
-                                        from-cyan-500
-                                        to-blue-600
-                                        px-8
-                                        py-5
-                                        font-bold
-                                        flex
-                                        items-center
-                                        gap-3
-                                        hover:scale-[1.02]
-                                        transition
-                                    "
-
-                                >
-
-                                    <BsPlayFill/>
-
-                                    Kontynuuj
-
-                                    <BsArrowRight/>
-
-                                </button>
-
-                            </div>
-
-                            <div className="space-y-6">
-
-                                <div>
-
-                                    <div className="flex justify-between text-sm mb-3">
-
-                                        <span className="text-gray-400">
-
-                                            Postęp kursu
-
-                                        </span>
-
-                                        <span>
-
-                                            {firstCourse.progress ?? 0}%
-
-                                        </span>
-
-                                    </div>
-
-                                    <div className="h-4 rounded-full bg-black/30 overflow-hidden">
-
-                                        <div
-
-                                            className="
-                                                h-full
-                                                rounded-full
-                                                bg-gradient-to-r
-                                                from-cyan-500
-                                                to-blue-600
-                                            "
-
-                                            style={{
-                                                width: `${firstCourse.progress ?? 0}%`
-                                            }}
-
-                                        />
-
-                                    </div>
-
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-
-                                    <div className="rounded-2xl bg-black/20 p-5">
-
-                                        <p className="text-gray-400 text-sm">
-
-                                            Lekcje
-
-                                        </p>
-
-                                        <h3 className="text-3xl font-black mt-2">
-
-                                            {firstCourse.lessonCount ?? "-"}
-
-                                        </h3>
-
-                                    </div>
-
-                                    <div className="rounded-2xl bg-black/20 p-5">
-
-                                        <p className="text-gray-400 text-sm">
-
-                                            Projekty
-
-                                        </p>
-
-                                        <h3 className="text-3xl font-black mt-2">
-
-                                            {firstCourse.projectCount ?? "-"}
-
-                                        </h3>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                )}
-
-            </section>
-
-            {/* ========================================= */}
-
-            {/* RECOMMENDED COURSES */}
-
-            {/* ========================================= */}
-
-            <section className="space-y-6">
-
-                <div className="flex justify-between items-center">
-
-                    <h2 className="text-3xl font-black">
-
-                        Polecane ścieżki
-
-                    </h2>
-
-                </div>
-
-                <div className="grid lg:grid-cols-3 gap-6">
-
-                    {courses.slice(0,3).map(course=>(
-
-                        <button
-
-                            key={course.id}
-
-                            onClick={()=>navigate(`/modules/${course.id}`)}
-
-                            className="
-                                group
-                                text-left
-                                rounded-[30px]
-                                border
-                                border-white/10
-                                bg-white/[0.04]
-                                overflow-hidden
-                                hover:border-cyan-500
-                                transition
-                            "
-
-                        >
-
-                            <img
-
-                                src={getCourseCover(course)}
-
-                                alt={course.title || course.name}
-
-                                loading="lazy"
-
-                                decoding="async"
-
-                                onError={({ currentTarget }) => {
-                                    currentTarget.onerror = null;
-                                    currentTarget.src = getGeneratedCourseCover(course);
-                                }}
-
-                                className="
-                                    w-full
-                                    h-52
-                                    object-cover
-                                    group-hover:scale-105
-                                    transition
-                                "
-
-                            />
-
-                            <div className="p-6">
-
-                                <h3 className="text-2xl font-black">
-
-                                    {course.title || course.name}
-
-                                </h3>
-
-                                <p className="mt-3 text-gray-400 line-clamp-3">
-
-                                    {course.description}
-
-                                </p>
-
-                            </div>
-
-                        </button>
-
-                    ))}
-
-                </div>
-
-            </section>
-
-            {/* ========================================= */}
-
-            {/* RECENT ACTIVITY + WEEKLY */}
-
-            {/* ========================================= */}
-
-            {/* RECENT ACTIVITY */}
-
-            <div className="space-y-5">
-
-                <h2 className="text-3xl font-black">
-
-                    Ostatnia aktywność
-
-                </h2>
-
-                {detailsLoading ? (
-                    <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 text-center">
-                        <div className="mx-auto h-6 w-40 animate-pulse rounded-full bg-white/10" />
-                    </div>
-                ) : lastSubmissions.length === 0 ? (
-
-                    <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-8 text-center">
-
-                        <p className="text-gray-400">
-
-                            Nie wysłałeś jeszcze żadnych prac.
-
-                        </p>
-
-                    </div>
-
-                ) : (
-
-                    lastSubmissions.map((submission) => (
-
-                        <ActivityCard
-                            key={submission.id}
-                            submission={submission}
-                            statusStyle={statusStyle}
-                        />
-
-                    ))
-
-                )}
-
-            </div>
-
-            {/* PRAWA KOLUMNA */}
-
-            <div className="space-y-6">
-
-                <div className="rounded-[32px] border border-white/10 bg-white/[0.04] backdrop-blur-xl p-8">
-
-                    <h2 className="text-2xl font-black">
-
-                        Weekly Progress
-
-                    </h2>
-
-                    <p className="text-gray-400 mt-2">
-
-                        Aktywność z ostatnich dni.
-
-                    </p>
-
-                    <div className="mt-8 space-y-5">
-
-                        <ProgressRow
-                            label="Przesłane prace"
-                            value={submissions.length}
-                            max={10}
-                        />
-
-                        <ProgressRow
-                            label="Sprawdzone"
-                            value={checked}
-                            max={10}
-                        />
-
-                        <ProgressRow
-                            label="Testy"
-                            value={results.length}
-                            max={10}
-                        />
-
-                    </div>
-
-                </div>
-
-                <div className="rounded-[32px] border border-white/10 bg-white/[0.04] backdrop-blur-xl p-8">
-
-                    <h2 className="text-2xl font-black">
-
-                        Achievements
-
-                    </h2>
-
-                    <div className="space-y-4 mt-6">
-
-                        <AchievementCard
-
-                            title="Pierwszy krok"
-
-                            description="Rozpocznij pierwszy kurs."
-
-                            active={courses.length > 0}
-
-                        />
-
-                        <AchievementCard
-
-                            title="Pierwsza praca"
-
-                            description="Wyślij rozwiązanie."
-
-                            active={submissions.length > 0}
-
-                        />
-
-                        <AchievementCard
-
-                            title="Pierwsza ocena"
-
-                            description="Odbierz ocenę nauczyciela."
-
-                            active={checked > 0}
-
-                        />
-
-                        <AchievementCard
-                            title="Mistrz nauki"
-                            description="Ukończ cały kurs."
-                            active={false}
-                        />
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-);
-
-}
-
-/* ========================================================= */
-/* COMPONENTS */
-/* ========================================================= */
-
-function ProgressRow({ label, value, max }) {
-
-    const percent = Math.min((value / max) * 100, 100);
-
-
-
-    return (
-
-        <div>
-
-            <div className="flex justify-between text-sm mb-2">
-
-                <span className="text-gray-400">
-
-                    {label}
-
-                </span>
-
-                <span className="font-bold">
-
-                    {value}
-
-                </span>
-
-            </div>
-
-            <div className="h-3 rounded-full bg-black/30 overflow-hidden">
-
-                <div
-
-                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600"
-
-                    style={{ width: `${percent}%` }}
-
-                />
-
-            </div>
-
-        </div>
-
-    );
-
-}
-
-function ActivityCard({ submission, statusStyle }) {
-
-    return (
-
-        <div className="rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6">
-
-            <div className="flex justify-between items-start gap-5">
-
+        <div className="app-enter mx-auto max-w-7xl space-y-6 pb-8 text-white">
+            <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-
-                    <h3 className="text-xl font-black">
-
-                        {submission.lesson?.title || "Lekcja"}
-
-                    </h3>
-
-                    <p className="text-gray-400 mt-2">
-
-                        {submission.submittedAt
-                            ?.replace("T", " ")
-                            .substring(0, 16)}
-
-                    </p>
-
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">{greeting()}, {getIdentity()}</p>
+                    <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Co dziś zbudujemy?</h1>
+                    <p className="mt-2 text-sm text-slate-500">Mały krok, prawdziwy kod, widoczny postęp.</p>
                 </div>
+                <button type="button" onClick={() => navigate("/courses")} className="flex items-center gap-2 self-start rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-black text-slate-300 transition hover:border-cyan-400/30 hover:text-white sm:self-auto">
+                    Wszystkie ścieżki <BsArrowRight />
+                </button>
+            </header>
 
-                <span
-
-                    className={`
-                        px-4
-                        py-2
-                        rounded-full
-                        border
-                        text-sm
-                        font-semibold
-                        ${statusStyle(submission.status)}
-                    `}
-
-                >
-
-                    {submission.status}
-
-                </span>
-
-            </div>
-
-            {submission.grade && (
-
-                <div className="mt-6">
-
-                    <p className="text-gray-400 text-sm">
-
-                        Ocena
-
-                    </p>
-
-                    <h3 className="text-3xl font-black mt-2">
-
-                        {submission.grade}
-
-                    </h3>
-
+            {error && (
+                <div role="alert" className="rounded-xl border border-amber-400/20 bg-amber-400/[0.06] px-4 py-3 text-sm text-amber-100">
+                    Pokazujemy ostatnio zapisany plan. Odśwież stronę, aby pobrać najnowsze dane.
                 </div>
-
             )}
 
-            {submission.teacherComment && (
-
-                <div className="mt-6 rounded-2xl bg-black/20 border border-white/5 p-5">
-
-                    <p className="text-cyan-300 font-semibold mb-2">
-
-                        Komentarz nauczyciela
-
-                    </p>
-
-                    <p className="text-gray-300 whitespace-pre-wrap">
-
-                        {submission.teacherComment}
-
-                    </p>
-
+            <section className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(300px,.65fr)]">
+                <div className="relative min-h-[330px] overflow-hidden rounded-[28px] border border-cyan-300/15 bg-[linear-gradient(125deg,rgba(8,47,73,.9),rgba(15,23,42,.96)_52%,rgba(30,27,75,.92))] p-6 sm:p-8">
+                    <div className="dashboard-orb absolute -right-20 -top-24 h-72 w-72 rounded-full bg-cyan-300/10 blur-3xl" />
+                    <div className="absolute bottom-0 right-8 hidden h-64 w-64 rounded-full border border-cyan-300/10 md:block" />
+                    <div className="relative z-10 flex h-full max-w-3xl flex-col">
+                        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-cyan-200">
+                            <BsStars /> Misja na dziś
+                        </div>
+                        {currentCourse ? (
+                            <>
+                                <h2 className="mt-5 max-w-2xl text-3xl font-black leading-tight sm:text-5xl">{currentCourse.title || currentCourse.name}</h2>
+                                <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
+                                    {currentCourse.progress > 0
+                                        ? "Wróć dokładnie tam, gdzie skończyłeś. Kolejny etap już czeka."
+                                        : "Twoja ścieżka jest gotowa. Zacznij od pierwszej krótkiej lekcji."}
+                                </p>
+                                <div className="mt-auto pt-7">
+                                    <div className="mb-2 flex max-w-xl items-center justify-between text-xs font-bold text-slate-400">
+                                        <span>{currentCourse.completedLessonCount || 0} / {currentCourse.lessonCount || 0} lekcji</span>
+                                        <span>{courseProgress}%</span>
+                                    </div>
+                                    <div className="h-2 max-w-xl overflow-hidden rounded-full bg-black/30">
+                                        <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-blue-500 transition-all duration-700" style={{ width: `${courseProgress}%` }} />
+                                    </div>
+                                    <button type="button" onClick={() => openCourse(currentCourse)} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-black text-slate-950 shadow-[0_12px_36px_rgba(103,232,249,.2)] transition hover:-translate-y-0.5 hover:bg-cyan-200">
+                                        <BsPlayFill /> {courseProgress > 0 ? "Kontynuuj" : "Rozpocznij"} <BsArrowRight />
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <h2 className="mt-5 text-3xl font-black sm:text-5xl">Wybierz swoją pierwszą misję</h2>
+                                <p className="mt-4 max-w-xl leading-7 text-slate-300">Znajdź ścieżkę, która prowadzi od krótkich lekcji do własnego projektu.</p>
+                                <button type="button" onClick={() => navigate("/courses")} className="mt-8 inline-flex w-fit items-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 font-black text-slate-950">
+                                    Odkryj kursy <BsArrowRight />
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
 
-            )}
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+                    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-5">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">Poziom</p>
+                                <p className="mt-1 text-3xl font-black">{stats?.level || 1}</p>
+                            </div>
+                            <div className="relative grid h-16 w-16 place-items-center rounded-full" style={{ background: `conic-gradient(#22d3ee ${levelProgress}%, rgba(255,255,255,.07) 0)` }}>
+                                <div className="grid h-12 w-12 place-items-center rounded-full bg-[#0a0e17] text-xs font-black">{levelProgress}%</div>
+                            </div>
+                        </div>
+                        <p className="mt-4 text-sm text-slate-500"><strong className="text-slate-200">{stats?.xp || 0} XP</strong> · jeszcze {Math.max(0, Number(stats?.xpForNextLevel || 0) - Number(stats?.xpIntoLevel || 0))} XP do awansu</p>
+                    </div>
 
+                    <div className={`rounded-2xl border p-5 ${stats?.taskStreak > 0 ? "border-orange-400/15 bg-orange-400/[0.055]" : "border-white/[0.08] bg-white/[0.035]"}`}>
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-600">Seria zadań</p>
+                                <p className="mt-2 text-3xl font-black">{stats?.taskStreak || 0} <span className="text-sm text-orange-200">×{stats?.xpMultiplier || 1}</span></p>
+                            </div>
+                            <div className="grid h-11 w-11 place-items-center rounded-xl bg-orange-400/10 text-orange-300"><BsFire size={20} /></div>
+                        </div>
+                        <p className="mt-4 text-xs leading-5 text-slate-500">
+                            {stats?.taskStreak > 0
+                                ? `Aktywna do ${formatDate(stats.taskStreakExpiresAt) || "24 godzin od ostatniego zadania"}.`
+                                : "Rozwiąż zadanie, aby uruchomić 24-godzinną serię."}
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="rounded-[26px] border border-white/[0.08] bg-white/[0.025] p-5 sm:p-6">
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-300">Twoja mapa</p>
+                            <h2 className="mt-2 text-2xl font-black">Ścieżki w zasięgu</h2>
+                        </div>
+                        <span className="rounded-lg bg-white/[0.05] px-3 py-1.5 text-xs font-bold text-slate-500">{availableCourses.length} aktywne</span>
+                    </div>
+
+                    <div className="mt-6 space-y-2">
+                        {availableCourses.length === 0 ? (
+                            <button type="button" onClick={() => navigate("/courses")} className="flex w-full items-center justify-between rounded-2xl border border-dashed border-white/10 p-5 text-left text-slate-400 hover:border-cyan-400/30">
+                                <span>Dodaj pierwszą ścieżkę do swojej mapy</span><BsArrowRight />
+                            </button>
+                        ) : availableCourses.slice(0, 4).map((course, index) => {
+                            const complete = Number(course.progress || 0) >= 100;
+                            const active = course.id === currentCourse?.id;
+                            return (
+                                <button key={course.id} type="button" onClick={() => openCourse(course)} className={`group flex w-full items-center gap-4 rounded-2xl border p-3 text-left transition ${active ? "border-cyan-300/25 bg-cyan-300/[0.055]" : "border-transparent hover:border-white/10 hover:bg-white/[0.035]"}`}>
+                                    <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl border text-sm font-black ${complete ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : active ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-200" : "border-white/10 bg-white/[0.04] text-slate-500"}`}>
+                                        {complete ? <BsCheck2 size={20} /> : index + 1}
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                        <span className="block truncate font-black">{course.title || course.name}</span>
+                                        <span className="mt-1 block text-xs text-slate-500">{course.completedLessonCount || 0} z {course.lessonCount || 0} lekcji · {course.progress || 0}%</span>
+                                    </span>
+                                    <BsChevronRight className="text-slate-600 transition group-hover:translate-x-1 group-hover:text-cyan-300" />
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="rounded-[26px] border border-violet-400/15 bg-gradient-to-b from-violet-400/[0.07] to-white/[0.025] p-6">
+                    <div className="grid h-11 w-11 place-items-center rounded-xl bg-violet-400/10 text-violet-300"><BsLightningChargeFill /></div>
+                    <p className="mt-5 text-xs font-black uppercase tracking-[0.2em] text-violet-300">Dzienny rytm</p>
+                    <h2 className="mt-2 text-2xl font-black">20 minut skupienia</h2>
+                    <p className="mt-3 text-sm leading-6 text-slate-500">Jedna lekcja i jedno zadanie wystarczą, żeby dziś ruszyć do przodu.</p>
+                    <div className="mt-6 flex items-center gap-3 rounded-xl bg-black/20 p-3 text-sm text-slate-400"><BsClock className="text-cyan-300" /> Cel na dziś: 1 lekcja</div>
+                </div>
+            </section>
+
+            {suggestedCourses.length > 0 && (
+                <section>
+                    <div className="mb-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">Następne możliwości</p>
+                            <h2 className="mt-2 text-2xl font-black">Odkrywaj bez chaosu</h2>
+                        </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-3">
+                        {suggestedCourses.map((course) => (
+                            <button key={course.id} type="button" onClick={() => openCourse(course)} className="group flex overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025] text-left transition hover:-translate-y-1 hover:border-cyan-300/20">
+                                <img
+                                    src={getCourseCover(course)}
+                                    alt=""
+                                    loading="lazy"
+                                    onError={({ currentTarget }) => { currentTarget.onerror = null; currentTarget.src = getGeneratedCourseCover(course); }}
+                                    className="h-28 w-28 shrink-0 object-cover opacity-80 transition group-hover:opacity-100"
+                                />
+                                <span className="flex min-w-0 flex-1 flex-col justify-center p-4">
+                                    <span className="line-clamp-2 font-black">{course.title || course.name}</span>
+                                    <span className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">{course.canAccess ? <BsBook /> : <BsLock />} {course.lessonCount || 0} lekcji</span>
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                </section>
+            )}
         </div>
-
     );
-
-}
-
-function AchievementCard({ title, description, active }) {
-
-    return (
-
-        <div
-
-            className={`
-                rounded-2xl
-                border
-                p-5
-                transition
-
-                ${
-                active
-                    ? "border-cyan-500/30 bg-cyan-500/10"
-                    : "border-white/10 bg-black/20 opacity-60"
-            }
-            `}
-
-        >
-
-            <h3 className="font-black text-lg">
-
-                {title}
-
-            </h3>
-
-            <p className="text-gray-400 mt-2">
-
-                {description}
-
-            </p>
-
-            <div className="mt-5">
-
-                <span
-
-                    className={`
-                        inline-flex
-                        rounded-full
-                        px-4
-                        py-2
-                        text-sm
-                        font-semibold
-
-                        ${
-                        active
-                            ? "bg-cyan-500/20 text-cyan-300"
-                            : "bg-white/10 text-gray-400"
-                    }
-                    `}
-
-                >
-
-                    {active ? "Odblokowane" : "Zablokowane"}
-
-                </span>
-
-            </div>
-        </div>
-
-);
-
 }

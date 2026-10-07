@@ -11,9 +11,14 @@ import com.twojlogin.lms.repository.TaskAttemptRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
 
 @Service
 public class GamificationService {
@@ -22,13 +27,17 @@ public class GamificationService {
     public static final BigDecimal REWARD_PER_MILESTONE = new BigDecimal("50.00");
     public static final int REWARD_LEVEL_INTERVAL = 10;
     public static final BigDecimal MAX_COURSE_DISCOUNT_RATE = new BigDecimal("0.20");
+    public static final Duration TASK_STREAK_TTL = Duration.ofHours(24);
+    private static final ZoneId WARSAW_ZONE = ZoneId.of("Europe/Warsaw");
 
     private final GamificationProfileRepository profileRepository;
     private final LessonProgressRepository lessonProgressRepository;
     private final TaskAttemptRepository taskAttemptRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final Clock clock;
 
+    @Autowired
     public GamificationService(
             GamificationProfileRepository profileRepository,
             LessonProgressRepository lessonProgressRepository,
@@ -36,11 +45,30 @@ public class GamificationService {
             UserRepository userRepository,
             NotificationService notificationService
     ) {
+        this(
+                profileRepository,
+                lessonProgressRepository,
+                taskAttemptRepository,
+                userRepository,
+                notificationService,
+                Clock.system(WARSAW_ZONE)
+        );
+    }
+
+    GamificationService(
+            GamificationProfileRepository profileRepository,
+            LessonProgressRepository lessonProgressRepository,
+            TaskAttemptRepository taskAttemptRepository,
+            UserRepository userRepository,
+            NotificationService notificationService,
+            Clock clock
+    ) {
         this.profileRepository = profileRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.taskAttemptRepository = taskAttemptRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.clock = clock;
     }
 
     @Transactional
@@ -68,11 +96,13 @@ public class GamificationService {
 
         if (!correct) {
             profile.setCorrectTaskStreak(0);
+            profile.setCorrectTaskStreakUpdatedAt(null);
             profileRepository.save(profile);
             return currentResult(profile, 0, false);
         }
 
-        int streak = profile.getCorrectTaskStreak() + 1;
+        Instant now = clock.instant();
+        int streak = effectiveTaskStreak(profile, now) + 1;
         int multiplier = multiplierFor(streak);
         int baseXp = block.getPoints() == null || block.getPoints() <= 0
                 ? 10
@@ -81,6 +111,7 @@ public class GamificationService {
         int previousLevel = profile.getLevel();
 
         profile.setCorrectTaskStreak(streak);
+        profile.setCorrectTaskStreakUpdatedAt(now);
         profile.setBestCorrectTaskStreak(Math.max(
                 profile.getBestCorrectTaskStreak(),
                 streak
@@ -255,16 +286,22 @@ public class GamificationService {
             int xpEarned,
             boolean levelUp
     ) {
+        int effectiveStreak = effectiveTaskStreak(profile, clock.instant());
         return new AwardResult(
                 xpEarned,
-                multiplierFor(profile.getCorrectTaskStreak()),
-                profile.getCorrectTaskStreak(),
+                multiplierFor(effectiveStreak),
+                effectiveStreak,
                 profile.getLevel(),
                 levelUp
         );
     }
 
     private GamificationSnapshot snapshot(GamificationProfile profile) {
+        Instant now = clock.instant();
+        int effectiveStreak = effectiveTaskStreak(profile, now);
+        Instant streakExpiresAt = effectiveStreak > 0
+                ? profile.getCorrectTaskStreakUpdatedAt().plus(TASK_STREAK_TTL)
+                : null;
         long levelStartXp = xpRequiredForLevel(profile.getLevel());
         long nextLevelXp = xpRequiredForLevel(profile.getLevel() + 1);
         int nextRewardLevel =
@@ -278,13 +315,24 @@ public class GamificationService {
                 nextLevelXp,
                 Math.max(0, profile.getTotalXp() - levelStartXp),
                 Math.max(1, nextLevelXp - levelStartXp),
-                profile.getCorrectTaskStreak(),
+                effectiveStreak,
                 profile.getBestCorrectTaskStreak(),
-                multiplierFor(profile.getCorrectTaskStreak()),
+                multiplierFor(effectiveStreak),
+                streakExpiresAt,
                 profile.getDiscountBalance(),
                 nextRewardLevel,
                 REWARD_PER_MILESTONE
         );
+    }
+
+    private int effectiveTaskStreak(GamificationProfile profile, Instant now) {
+        if (profile.getCorrectTaskStreak() <= 0
+                || profile.getCorrectTaskStreakUpdatedAt() == null) {
+            return 0;
+        }
+        Instant expiresAt = profile.getCorrectTaskStreakUpdatedAt()
+                .plus(TASK_STREAK_TTL);
+        return now.isBefore(expiresAt) ? profile.getCorrectTaskStreak() : 0;
     }
 
     public record AwardResult(
@@ -306,6 +354,7 @@ public class GamificationService {
             int taskStreak,
             int bestTaskStreak,
             int xpMultiplier,
+            Instant taskStreakExpiresAt,
             BigDecimal discountBalance,
             int nextRewardLevel,
             BigDecimal nextRewardAmount

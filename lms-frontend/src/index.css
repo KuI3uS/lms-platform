@@ -31,7 +31,31 @@
 }
 
 body {
-    @apply bg-gray-900 text-white;
+    @apply bg-[#05070d] text-white antialiased;
+}
+
+@keyframes app-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes dashboard-orb {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(-16px, 12px, 0) scale(1.06); }
+}
+
+.app-enter {
+    animation: app-enter 360ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.dashboard-orb {
+    animation: dashboard-orb 9s ease-in-out infinite;
 }
 
 .native-code-editor {
@@ -65,7 +89,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .lesson-step-transition {
+    .lesson-step-transition,
+    .app-enter,
+    .dashboard-orb {
         animation: none;
     }
 }

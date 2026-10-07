@@ -12,6 +12,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,6 +29,7 @@ class GamificationServiceTest {
     private GamificationService service;
     private User user;
     private GamificationProfile profile;
+    private final Instant now = Instant.parse("2026-08-11T10:00:00Z");
 
     @BeforeEach
     void setUp() {
@@ -43,7 +47,8 @@ class GamificationServiceTest {
                 progressRepository,
                 attemptRepository,
                 userRepository,
-                notificationService
+                notificationService,
+                Clock.fixed(now, ZoneId.of("Europe/Warsaw"))
         );
 
         user = new User();
@@ -62,6 +67,7 @@ class GamificationServiceTest {
     @Test
     void appliesX2AfterFiveTasksAndNeverAwardsTheSameTaskTwice() {
         profile.setCorrectTaskStreak(4);
+        profile.setCorrectTaskStreakUpdatedAt(now.minusSeconds(60));
         LessonBlock block = new LessonBlock();
         block.setPoints(10);
         TaskAttempt attempt = new TaskAttempt();
@@ -86,6 +92,39 @@ class GamificationServiceTest {
         assertEquals(5, first.taskStreak());
         assertEquals(0, repeated.xpEarned());
         assertEquals(20, profile.getTotalXp());
+    }
+
+    @Test
+    void expiresTaskStreakExactlyAfterTwentyFourHours() {
+        profile.setCorrectTaskStreak(4);
+        profile.setCorrectTaskStreakUpdatedAt(
+                now.minus(GamificationService.TASK_STREAK_TTL)
+        );
+        LessonBlock block = new LessonBlock();
+        block.setPoints(10);
+
+        GamificationService.AwardResult result = service.recordTaskResult(
+                profile,
+                block,
+                new TaskAttempt(),
+                false,
+                true
+        );
+
+        assertEquals(1, result.taskStreak());
+        assertEquals(1, result.multiplier());
+        assertEquals(now, profile.getCorrectTaskStreakUpdatedAt());
+    }
+
+    @Test
+    void legacyStreakWithoutTimestampIsTreatedAsExpired() {
+        profile.setCorrectTaskStreak(8);
+
+        GamificationService.GamificationSnapshot snapshot = service.snapshot(user);
+
+        assertEquals(0, snapshot.taskStreak());
+        assertEquals(1, snapshot.xpMultiplier());
+        assertEquals(null, snapshot.taskStreakExpiresAt());
     }
 
     @Test
