@@ -38,6 +38,8 @@ const AdminModulesPage = lazy(() => import("./pages/AdminModulesPage"));
 const AdminQuestionsPage = lazy(() => import("./pages/AdminQuestionsPage"));
 const AdminStatisticsPage = lazy(() => import("./pages/AdminStatisticsPage"));
 const AdminSettingsPage = lazy(() => import("./pages/AdminSettingsPage"));
+const AdminAccessCodesPage = lazy(() => import("./pages/AdminAccessCodesPage"));
+const RedeemAccessCodePage = lazy(() => import("./pages/RedeemAccessCodePage"));
 
 function PageLoader() {
     return (
@@ -78,6 +80,7 @@ export default function App() {
                         <Route path="/exams/:attemptId" element={<ExamAttemptPage />} />
                         <Route path="/learning-center" element={<LearningCenterPage />} />
                         <Route path="/language-reviews" element={<LanguageReviewPage />} />
+                        <Route path="/access-code" element={<RedeemAccessCodePage />} />
 
                         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
                         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
@@ -93,6 +96,7 @@ export default function App() {
                         <Route path="/admin/lessons/:moduleId" element={<AdminRoute><AdminLessonPage /></AdminRoute>} />
                         <Route path="/admin/submissions" element={<AdminRoute><AdminSubmissionsPage /></AdminRoute>} />
                         <Route path="/admin/course-orders" element={<AdminRoute><AdminCourseOrdersPage /></AdminRoute>} />
+                        <Route path="/admin/access-codes" element={<AdminRoute><AdminAccessCodesPage /></AdminRoute>} />
 
                         <Route path="*" element={
                             <div className="p-10 text-white">404 - Strona nie istnieje</div>

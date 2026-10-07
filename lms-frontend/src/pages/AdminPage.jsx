@@ -6,7 +6,8 @@ import {
     BsClipboardCheck,
     BsBarChartFill,
     BsGearFill,
-    BsArrowRight
+    BsArrowRight,
+    BsKey
 } from "react-icons/bs";
 
 const cards = [
@@ -49,6 +50,14 @@ const cards = [
         icon: <BsBarChartFill size={30} />,
         color: "from-cyan-500 to-blue-600",
         to: "/admin/statistics"
+    },
+
+    {
+        title: "Kody dostępu",
+        description: "Generuj jednorazowe kody odblokowujące kurs na 30 dni lub bezterminowo.",
+        icon: <BsKey size={30} />,
+        color: "from-violet-500 to-blue-600",
+        to: "/admin/access-codes"
     },
 
     {

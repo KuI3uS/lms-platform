@@ -27,7 +27,7 @@ public class CourseEnrollment {
     private Course course;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 32, columnDefinition = "varchar(32)")
     private EnrollmentSource source;
 
     @Column(nullable = false)
