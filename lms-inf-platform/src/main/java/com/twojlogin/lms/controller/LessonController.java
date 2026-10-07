@@ -1,14 +1,9 @@
 package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.LessonDto;
-import com.twojlogin.lms.entity.CourseModule;
-import com.twojlogin.lms.entity.Lesson;
-import com.twojlogin.lms.entity.LessonProgress;
-import com.twojlogin.lms.entity.User;
-import com.twojlogin.lms.repository.CourseModuleRepository;
-import com.twojlogin.lms.repository.LessonProgressRepository;
-import com.twojlogin.lms.repository.LessonRepository;
-import com.twojlogin.lms.repository.UserRepository;
+import com.twojlogin.lms.entity.*;
+import com.twojlogin.lms.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -25,17 +20,20 @@ public class LessonController {
     private final LessonRepository lessonRepository;
     private final CourseModuleRepository moduleRepository;
 
+
+    private final LessonSubmissionRepository lessonSubmissionRepository;
     private final LessonProgressRepository lessonProgressRepository;
     private final UserRepository userRepository;
 
     public LessonController(
             LessonRepository lessonRepository,
-            CourseModuleRepository moduleRepository,
+            CourseModuleRepository moduleRepository, LessonSubmissionRepository lessonSubmissionRepository,
             LessonProgressRepository lessonProgressRepository,
             UserRepository userRepository
     ) {
         this.lessonRepository = lessonRepository;
         this.moduleRepository = moduleRepository;
+        this.lessonSubmissionRepository = lessonSubmissionRepository;
         this.lessonProgressRepository = lessonProgressRepository;
         this.userRepository = userRepository;
     }
@@ -62,11 +60,16 @@ public class LessonController {
 
     // DELETE lesson
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
+
+        List<LessonSubmission> submissions = lessonSubmissionRepository.findByLessonId(id);
+
+        lessonSubmissionRepository.deleteAll(submissions);
+
         lessonRepository.deleteById(id);
     }
-
     // UPDATE
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")

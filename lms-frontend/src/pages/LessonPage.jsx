@@ -17,6 +17,9 @@ export default function LessonPage() {
     const [error, setError] = useState(null);
     const [moduleLessons, setModuleLessons] = useState([]);
 
+    const [attempts, setAttempts] = useState({});
+    const [feedback, setFeedback] = useState({});
+
     const [blocks, setBlocks] = useState([]);
     const [selectedBlock, setSelectedBlock] = useState(null);
 
@@ -115,8 +118,21 @@ export default function LessonPage() {
 
             setResults(prev => ({
                 ...prev,
+                [taskId]: res.correct
+            }));
+
+            setFeedback(prev => ({
+                ...prev,
                 [taskId]: res
             }));
+
+            if (!res.correct) {
+                setAttempts(prev => ({
+                    ...prev,
+                    [taskId]: (prev[taskId] || 0) + 1
+                }));
+            }
+
         } catch (e) {
             console.error(e);
             alert("Błąd sprawdzania odpowiedzi");
