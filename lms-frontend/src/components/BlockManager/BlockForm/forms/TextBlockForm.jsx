@@ -119,6 +119,15 @@ export default function TextBlockForm({ block, setBlock }) {
                                 „# Tytuł” — śródtytuł
                             </span>
                             <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
+                                „1. krok” — instrukcja krok po kroku
+                            </span>
+                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
+                                „**ważne**” — wyróżnienie
+                            </span>
+                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
+                                „`przycisk`” — nazwa przycisku lub polecenia
+                            </span>
+                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
                                 „Pojęcie: opis” — definicja
                             </span>
                         </div>

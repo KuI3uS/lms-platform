@@ -4,7 +4,28 @@ const HEADING_PATTERN = /^(#{1,3})\s+(.+)$/;
 const DEFINITION_PATTERN = /^([^:]{2,48}):\s+(.+)$/;
 
 function cleanLine(line) {
-    return line.trim();
+    return line
+        .trim()
+        .replace(/^\*\*(.+)\*\*$/, "$1")
+        .replace(/^__(.+)__$/, "$1");
+}
+
+function InlineText({ text }) {
+    const parts = String(text || "").split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+
+    return parts.map((part, index) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+            return <strong key={index} className="font-black text-white">{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith("`") && part.endsWith("`")) {
+            return (
+                <code key={index} className="rounded-md border border-cyan-300/15 bg-cyan-400/10 px-1.5 py-0.5 font-mono text-[0.92em] text-cyan-100">
+                    {part.slice(1, -1)}
+                </code>
+            );
+        }
+        return part;
+    });
 }
 
 function isImplicitListItem(line) {
@@ -142,7 +163,7 @@ function SectionHeading({ section }) {
 
     return (
         <Tag className="pt-3 text-xl font-black leading-tight text-white sm:text-2xl">
-            {section.text}
+            <InlineText text={section.text} />
         </Tag>
     );
 }
@@ -170,9 +191,9 @@ export default function LessonArticleContent({
                     return (
                         <p
                             key={key}
-                            className={`${compact ? "text-base leading-7" : "pt-2 text-lg leading-8"} font-bold text-gray-100`}
+                            className={`${compact ? "text-base leading-7" : "rounded-2xl border border-blue-400/15 bg-blue-500/[0.07] px-5 py-4 text-lg leading-8"} font-bold text-blue-50`}
                         >
-                            {section.text}
+                            <InlineText text={section.text} />
                         </p>
                     );
                 }
@@ -183,24 +204,24 @@ export default function LessonArticleContent({
                     return (
                         <ListTag
                             key={key}
-                            className={`${compact ? "space-y-2" : "space-y-3 py-1"} list-none`}
+                            className={`${compact ? "space-y-2" : "grid gap-3 py-1 sm:grid-cols-2"} list-none`}
                         >
                             {section.items.map((item, itemIndex) => (
                                 <li
                                     key={`${item}-${itemIndex}`}
-                                    className={`flex items-start ${compact ? "gap-3 text-base leading-7" : "gap-4 text-[1.05rem] leading-8"} text-gray-300`}
+                                    className={`flex items-start ${compact ? "gap-3 text-base leading-7" : "gap-4 rounded-2xl border border-white/10 bg-black/20 p-4 text-[1.05rem] leading-8"} text-gray-300`}
                                 >
                                     <span
                                         aria-hidden="true"
                                         className={`shrink-0 ${
                                             section.type === "ordered-list"
                                                 ? "grid h-7 w-7 place-items-center rounded-full border border-blue-400/30 bg-blue-400/10 text-xs font-black text-blue-200"
-                                                : "mt-[0.65em] h-1.5 w-1.5 rounded-full bg-blue-300"
+                                                : "mt-1 grid h-6 w-6 place-items-center rounded-full bg-emerald-400/15 text-xs font-black text-emerald-200"
                                         }`}
                                     >
-                                        {section.type === "ordered-list" ? itemIndex + 1 : ""}
+                                        {section.type === "ordered-list" ? itemIndex + 1 : "✓"}
                                     </span>
-                                    <span>{item}</span>
+                                    <span><InlineText text={item} /></span>
                                 </li>
                             ))}
                         </ListTag>
@@ -216,10 +237,10 @@ export default function LessonArticleContent({
                             {section.items.map((item, itemIndex) => (
                                 <div key={`${item.term}-${itemIndex}`}>
                                     <dt className="font-black text-gray-100">
-                                        {item.term}
+                                        <InlineText text={item.term} />
                                     </dt>
                                     <dd className={`${compact ? "mt-1 leading-7" : "mt-1.5 text-[1.05rem] leading-8"} text-gray-300`}>
-                                        {item.description}
+                                        <InlineText text={item.description} />
                                     </dd>
                                 </div>
                             ))}
@@ -232,7 +253,7 @@ export default function LessonArticleContent({
                         key={key}
                         className={`${compact ? "text-base leading-7 sm:text-lg sm:leading-8" : "text-[1.05rem] leading-[1.95] sm:text-lg"} text-gray-300`}
                     >
-                        {section.text}
+                        <InlineText text={section.text} />
                     </p>
                 );
             })}
