@@ -79,6 +79,10 @@ export default function App() {
                         <AdminRoute><AddCoursePage /></AdminRoute>
                     } />
 
+                    <Route path="/admin/courses/:courseId/edit" element={
+                        <AdminRoute><AddCoursePage /></AdminRoute>
+                    } />
+
                     <Route path="/admin/add-question" element={
                         <AdminRoute><AddQuestionPage /></AdminRoute>
                     } />

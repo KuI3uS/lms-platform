@@ -1,9 +1,20 @@
 package com.twojlogin.lms.controller;
 
-import com.twojlogin.lms.entity.Course;
-import com.twojlogin.lms.repository.CourseRepository;
-import org.springframework.web.bind.annotation.*;
+import com.twojlogin.lms.dto.CourseRequest;
+import com.twojlogin.lms.dto.CourseSummaryDto;
+import com.twojlogin.lms.service.CourseService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -11,49 +22,54 @@ import java.util.List;
 @RequestMapping("/api/courses")
 public class CourseController {
 
-    private final CourseRepository courseRepository;
+    private final CourseService courseService;
 
-    public CourseController(CourseRepository courseRepository) {
-        this.courseRepository = courseRepository;
+    public CourseController(CourseService courseService) {
+        this.courseService = courseService;
     }
 
     @GetMapping
-    public List<Course> getAll() {
-        return courseRepository.findAll();
+    public List<CourseSummaryDto> getAll(Authentication authentication) {
+        return courseService.getAll(authentication);
+    }
+
+    @GetMapping("/my")
+    public List<CourseSummaryDto> myCourses(Authentication authentication) {
+        return courseService.getAll(authentication);
     }
 
     @GetMapping("/{id}")
-    public Course getById(@PathVariable Long id) {
-        return courseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
-    }
-
-
-    @GetMapping("/my")
-    public List<Course> myCourses() {
-        return courseRepository.findAll();
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}")
-    public Course update(@PathVariable Long id, @RequestBody Course course) {
-        Course existing = courseRepository.findById(id)
-                .orElseThrow();
-
-        existing.setName(course.getName());
-
-        return courseRepository.save(existing);
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        courseRepository.deleteById(id);
+    public CourseSummaryDto getById(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        return courseService.getById(id, authentication);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public Course create(@RequestBody Course course) {
-        return courseRepository.save(course);
+    @ResponseStatus(HttpStatus.CREATED)
+    public CourseSummaryDto create(
+            @RequestBody CourseRequest request,
+            Authentication authentication
+    ) {
+        return courseService.create(request, authentication);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public CourseSummaryDto update(
+            @PathVariable Long id,
+            @RequestBody CourseRequest request,
+            Authentication authentication
+    ) {
+        return courseService.update(id, request, authentication);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        courseService.delete(id);
     }
 }

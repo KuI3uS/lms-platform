@@ -20,6 +20,7 @@ public class Course {
     private BigDecimal price;
     private boolean published;
     private String thumbnailUrl;
+    private String level;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     @JsonIgnore
@@ -88,5 +89,13 @@ public class Course {
 
     public void setThumbnailUrl(String thumbnailUrl) {
         this.thumbnailUrl = thumbnailUrl;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
     }
 }

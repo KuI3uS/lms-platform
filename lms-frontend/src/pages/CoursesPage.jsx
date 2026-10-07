@@ -1,604 +1,357 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+    BsArrowClockwise,
+    BsCheckCircle,
+    BsCollection,
+    BsExclamationTriangle,
+    BsPencil,
+    BsPlayFill,
+    BsPlusCircle,
+    BsTrash
+} from "react-icons/bs";
 import { apiFetch } from "../api/api";
 import {
     getCourseCover,
     getGeneratedCourseCover
 } from "../utils/courseCover";
 
-import {
-    BsBook,
-    BsPlayFill,
-    BsTrash,
-    BsPencil
-} from "react-icons/bs";
-
-export default function CoursesPage() {
-
-    const [courses, setCourses] = useState([]);
-
-    const navigate = useNavigate();
-
+function getRoleFromToken() {
     const token = localStorage.getItem("token");
 
-    const role = token
-        ? JSON.parse(atob(token.split(".")[1])).role
-        : null;
+    if (!token) return null;
 
-    useEffect(() => {
-        apiFetch("/courses").then(setCourses);
-    }, []);
+    try {
+        return JSON.parse(atob(token.split(".")[1])).role || null;
+    } catch {
+        return null;
+    }
+}
 
-    const deleteCourse = async (id) => {
+function getErrorMessage(error) {
+    try {
+        const response = JSON.parse(error.message);
+        return response.detail || response.message || response.error || "Wystąpił nieoczekiwany błąd.";
+    } catch {
+        return error.message || "Wystąpił nieoczekiwany błąd.";
+    }
+}
 
-        if (!window.confirm("Usunąć kurs?"))
-            return;
+function Metric({ label, value }) {
+    return (
+        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl sm:p-7">
+            <p className="text-sm text-slate-400">{label}</p>
+            <p className="mt-3 text-3xl font-black sm:text-5xl">{value}</p>
+        </div>
+    );
+}
 
-        await apiFetch(`/courses/${id}`, {
-            method: "DELETE"
-        });
+function CourseSkeleton() {
+    return (
+        <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04]">
+            <div className="aspect-[3/2] animate-pulse bg-slate-800/80" />
+            <div className="space-y-5 p-6">
+                <div className="h-7 w-1/2 animate-pulse rounded-lg bg-slate-800" />
+                <div className="space-y-2">
+                    <div className="h-4 animate-pulse rounded bg-slate-800" />
+                    <div className="h-4 w-4/5 animate-pulse rounded bg-slate-800" />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                    {[0, 1, 2].map((item) => (
+                        <div key={item} className="h-20 animate-pulse rounded-2xl bg-slate-900" />
+                    ))}
+                </div>
+                <div className="h-12 animate-pulse rounded-2xl bg-slate-800" />
+            </div>
+        </div>
+    );
+}
 
-        setCourses(prev => prev.filter(c => c.id !== id));
-    };
+function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
+    const progress = Math.min(100, Math.max(0, course.progress ?? 0));
 
     return (
-
-        <div className="space-y-12 text-white">
-
-            {/* ===================================================== */}
-            {/* HERO */}
-            {/* ===================================================== */}
-
-            <section className="
-                relative
-                overflow-hidden
-                rounded-[42px]
-                border
-                border-cyan-500/20
-                bg-gradient-to-br
-                from-slate-950
-                via-blue-950
-                to-cyan-950
-                p-12
-                lg:p-16
-            ">
-
-                <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full bg-cyan-500/10 blur-3xl" />
-
-                <div className="absolute -bottom-40 right-0 w-[500px] h-[500px] rounded-full bg-blue-600/10 blur-3xl" />
-
-                <div className="relative z-10 max-w-4xl">
-
-                    <p className="
-                        uppercase
-                        tracking-[0.35em]
-                        text-cyan-300
-                        text-sm
-                        font-black
-                    ">
-                        EDUHUB • PROGRAMOWANIE
-                    </p>
-
-                    <h1 className="
-                        mt-6
-                        text-5xl
-                        lg:text-7xl
-                        font-black
-                        leading-tight
-                    ">
-                        Ucz się programowania
-                        <br />
-                        w nowoczesny sposób.
-                    </h1>
-
-                    <p className="
-                        mt-8
-                        text-xl
-                        leading-9
-                        text-gray-300
-                        max-w-3xl
-                    ">
-                        Interaktywne kursy, praktyczne projekty,
-                        automatyczne sprawdzanie zadań oraz ścieżka
-                        rozwoju od podstaw aż do poziomu Junior Developera.
-                    </p>
-
-                    <div className="flex flex-wrap gap-4 mt-10">
-
-                        <div className="
-                            rounded-full
-                            border
-                            border-cyan-500/30
-                            bg-cyan-500/10
-                            px-5
-                            py-3
-                            text-cyan-300
-                            font-semibold
-                        ">
-                            Interaktywne lekcje
-                        </div>
-
-                        <div className="
-                            rounded-full
-                            border
-                            border-blue-500/30
-                            bg-blue-500/10
-                            px-5
-                            py-3
-                            text-blue-300
-                            font-semibold
-                        ">
-                            Projekty praktyczne
-                        </div>
-
-                        <div className="
-                            rounded-full
-                            border
-                            border-green-500/30
-                            bg-green-500/10
-                            px-5
-                            py-3
-                            text-green-300
-                            font-semibold
-                        ">
-                            Zadania z automatyczną oceną
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-            {/* ===================================================== */}
-            {/* STATYSTYKI */}
-            {/* ===================================================== */}
-
-            <div className="grid md:grid-cols-3 gap-6">
-
-                <div className="
-                    rounded-[30px]
-                    border
-                    border-white/10
-                    bg-white/[0.04]
-                    backdrop-blur-xl
-                    p-7
-                ">
-
-                    <p className="text-gray-400">
-                        Dostępnych kursów
-                    </p>
-
-                    <h2 className="text-5xl font-black mt-4">
-                        {courses.length}
-                    </h2>
-
-                </div>
-
-                <div className="
-                    rounded-[30px]
-                    border
-                    border-white/10
-                    bg-white/[0.04]
-                    backdrop-blur-xl
-                    p-7
-                ">
-
-                    <p className="text-gray-400">
-                        Łącznie lekcji
-                    </p>
-
-                    <h2 className="text-5xl font-black mt-4">
-                        {courses.reduce(
-                            (sum, c) => sum + (c.lessonCount || 0),
-                            0
-                        )}
-                    </h2>
-
-                </div>
-
-                <div className="
-                    rounded-[30px]
-                    border
-                    border-white/10
-                    bg-white/[0.04]
-                    backdrop-blur-xl
-                    p-7
-                ">
-
-                    <p className="text-gray-400">
-                        Ścieżka nauki
-                    </p>
-
-                    <h2 className="text-4xl font-black mt-4">
-                        Beginner → Pro
-                    </h2>
-
-                </div>
-
+        <article className="group flex min-w-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-2xl transition duration-300 md:hover:-translate-y-1 md:hover:border-cyan-400/50 md:hover:shadow-[0_20px_60px_rgba(6,182,212,0.12)]">
+            <div className="relative overflow-hidden bg-slate-950">
+                <img
+                    src={getCourseCover(course)}
+                    alt={`Okładka kursu ${course.title || course.name}`}
+                    loading="lazy"
+                    decoding="async"
+                    onError={({ currentTarget }) => {
+                        currentTarget.onerror = null;
+                        currentTarget.src = getGeneratedCourseCover(course);
+                    }}
+                    className="aspect-[3/2] w-full object-cover transition duration-500 md:group-hover:scale-[1.03]"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#090d15]/70 via-transparent to-transparent" />
             </div>
 
-            {/* ===================================================== */}
-            {/* LISTA KURSÓW */}
-            {/* ===================================================== */}
+            <div className="flex flex-1 flex-col gap-5 p-5 sm:p-6">
+                <div>
+                    <h3 className="text-2xl font-black leading-tight">
+                        {course.title || course.name}
+                    </h3>
+                    <p className="mt-3 line-clamp-3 min-h-[4.5rem] leading-6 text-slate-400">
+                        {course.description || "Opis kursu zostanie uzupełniony wkrótce."}
+                    </p>
+                </div>
 
-            <section>
-
-                <div className="flex items-end justify-between mb-8">
-
-                    <div>
-
-                        <p className="text-cyan-300 uppercase tracking-[0.3em] text-sm font-bold">
-                            KURSY
-                        </p>
-
-                        <h2 className="text-4xl font-black mt-3">
-                            Dostępne ścieżki nauki
-                        </h2>
-
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                    <div className="min-w-0 rounded-2xl border border-white/5 bg-black/20 p-3 sm:p-4">
+                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">Lekcje</p>
+                        <p className="mt-2 text-xl font-black sm:text-2xl">{course.lessonCount ?? 0}</p>
                     </div>
-
+                    <div className="min-w-0 rounded-2xl border border-white/5 bg-black/20 p-3 sm:p-4">
+                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">Poziom</p>
+                        <p className="mt-2 truncate text-sm font-black sm:text-base" title={course.level || "Podstawy"}>
+                            {course.level || "Podstawy"}
+                        </p>
+                    </div>
+                    <div className="min-w-0 rounded-2xl border border-white/5 bg-black/20 p-3 sm:p-4">
+                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">Moduły</p>
+                        <p className="mt-2 text-xl font-black sm:text-2xl">{course.moduleCount ?? 0}</p>
+                    </div>
                 </div>
 
-                <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-8">
-
-                    {courses.map((course) => {
-
-                        const progress = course.progress ?? 0;
-
-                        return (
-
-                            <div
-                                key={course.id}
-                                className="
-                group
-                relative
-                overflow-hidden
-                rounded-[34px]
-                border
-                border-white/10
-                bg-white/[0.04]
-                backdrop-blur-2xl
-                transition-all
-                duration-500
-                hover:-translate-y-3
-                hover:border-cyan-400/60
-                hover:shadow-[0_20px_80px_rgba(6,182,212,0.18)]
-            "
-                            >
-
-                                {/* Glow */}
-
-                                <div className="
-                absolute
-                -top-24
-                -right-24
-                w-64
-                h-64
-                rounded-full
-                bg-cyan-500/10
-                blur-3xl
-                opacity-0
-                group-hover:opacity-100
-                transition
-                duration-700
-            " />
-
-                                {/* Obraz */}
-
-                                <div className="relative overflow-hidden">
-
-                                    <img
-                                        src={getCourseCover(course)}
-                                        alt={course.title || course.name}
-                                        loading="lazy"
-                                        decoding="async"
-                                        onError={({ currentTarget }) => {
-                                            currentTarget.onerror = null;
-                                            currentTarget.src = getGeneratedCourseCover(course);
-                                        }}
-                                        className="
-                        w-full
-                        h-64
-                        object-cover
-                        transition
-                        duration-700
-                        group-hover:scale-105
-                    "
-                                    />
-
-                                    <div className="
-                    absolute
-                    inset-0
-                    bg-gradient-to-t
-                    from-[#05070d]
-                    via-transparent
-                    to-transparent
-                " />
-
-                                    {/* Badge */}
-
-                                    <div className="
-                    absolute
-                    top-5
-                    left-5
-                    flex
-                    gap-2
-                ">
-
-                    <span className="
-                        rounded-full
-                        bg-cyan-500/15
-                        border
-                        border-cyan-500/30
-                        px-4
-                        py-2
-                        text-xs
-                        font-bold
-                        text-cyan-300
-                    ">
-                        Bestseller
-                    </span>
-
-                                        <span className="
-                        rounded-full
-                        bg-green-500/15
-                        border
-                        border-green-500/30
-                        px-4
-                        py-2
-                        text-xs
-                        font-bold
-                        text-green-300
-                    ">
-                        Nowość
-                    </span>
-
-                                    </div>
-
-                                </div>
-
-                                {/* Content */}
-
-                                <div className="relative p-7 space-y-6">
-
-                                    <div>
-
-                                        <h3 className="
-                        text-2xl
-                        font-black
-                        leading-tight
-                    ">
-                                            {course.title || course.name}
-                                        </h3>
-
-                                        <p className="
-                        mt-4
-                        text-gray-400
-                        leading-7
-                        line-clamp-3
-                    ">
-                                            {course.description}
-                                        </p>
-
-                                    </div>
-
-                                    {/* Info */}
-
-                                    <div className="
-                    grid
-                    grid-cols-3
-                    gap-4
-                ">
-
-                                        <div className="
-                        rounded-2xl
-                        border
-                        border-white/5
-                        bg-black/20
-                        p-4
-                    ">
-
-                                            <p className="text-xs uppercase tracking-widest text-gray-500">
-                                                Lekcje
-                                            </p>
-
-                                            <h4 className="mt-2 text-2xl font-black">
-                                                {course.lessonCount ?? 0}
-                                            </h4>
-
-                                        </div>
-
-                                        <div className="
-                        rounded-2xl
-                        border
-                        border-white/5
-                        bg-black/20
-                        p-4
-                    ">
-
-                                            <p className="text-xs uppercase tracking-widest text-gray-500">
-                                                Poziom
-                                            </p>
-
-                                            <h4 className="mt-2 text-2xl font-black">
-                                                {course.level || "Podstawy"}
-                                            </h4>
-
-                                        </div>
-
-                                        <div className="
-                        rounded-2xl
-                        border
-                        border-white/5
-                        bg-black/20
-                        p-4
-                    ">
-
-                                            <p className="text-xs uppercase tracking-widest text-gray-500">
-                                                Moduły
-                                            </p>
-
-                                            <h4 className="mt-2 text-2xl font-black">
-                                                {course.moduleCount ?? "-"}
-                                            </h4>
-
-                                        </div>
-
-                                    </div>
-
-                                    {/* Progress */}
-
-                                    <div>
-
-                                        <div className="
-                        flex
-                        justify-between
-                        mb-3
-                        text-sm
-                        text-gray-400
-                    ">
-
-                                            <span>Postęp kursu</span>
-
-                                            <span>{progress}%</span>
-
-                                        </div>
-
-                                        <div className="
-                        h-3
-                        rounded-full
-                        overflow-hidden
-                        bg-gray-800
-                    ">
-
-                                            <div
-                                                className="
-                                h-full
-                                rounded-full
-                                bg-gradient-to-r
-                                from-cyan-500
-                                via-blue-500
-                                to-indigo-500
-                                transition-all
-                                duration-700
-                            "
-                                                style={{
-                                                    width: `${progress}%`
-                                                }}
-                                            />
-
-                                        </div>
-
-                                    </div>
-
-                                    {/* Buttons */}
-
-                                    <div className="flex gap-3 pt-2">
-
-                                        <button
-                                            onClick={() => navigate(`/modules/${course.id}`)}
-                                            className="
-                            flex-1
-                            rounded-2xl
-                            bg-gradient-to-r
-                            from-cyan-500
-                            to-blue-600
-                            py-4
-                            font-bold
-                            flex
-                            items-center
-                            justify-center
-                            gap-3
-                            transition
-                            hover:scale-[1.02]
-                            shadow-xl
-                        "
-                                        >
-                                            <BsPlayFill size={18} />
-                                            Rozpocznij naukę
-                                        </button>
-
-                                        <button
-                                            className="
-                            w-16
-                            rounded-2xl
-                            border
-                            border-white/10
-                            bg-black/20
-                            flex
-                            items-center
-                            justify-center
-                            transition
-                            hover:border-cyan-400
-                            hover:bg-cyan-500/10
-                        "
-                                        >
-                                            <BsBook size={18} />
-                                        </button>
-
-                                    </div>
-
-                                    {/* Admin */}
-
-                                    {role === "ADMIN" && (
-
-                                        <div className="
-                        flex
-                        gap-3
-                        pt-5
-                        border-t
-                        border-white/10
-                    ">
-
-                                            <button
-                                                className="
-                                flex-1
-                                rounded-2xl
-                                border
-                                border-yellow-500/30
-                                bg-yellow-500/10
-                                py-3
-                                transition
-                                hover:bg-yellow-500/20
-                            "
-                                            >
-                                                <BsPencil size={18} />
-                                            </button>
-
-                                            <button
-                                                onClick={() => deleteCourse(course.id)}
-                                                className="
-                                flex-1
-                                rounded-2xl
-                                border
-                                border-red-500/30
-                                bg-red-500/10
-                                py-3
-                                transition
-                                hover:bg-red-500/20
-                            "
-                                            >
-                                                <BsTrash size={18} />
-                                            </button>
-
-                                        </div>
-
-                                    )}
-
-                                </div>
-
-                            </div>
-
-                        );
-
-                    })}
+                <div>
+                    <div className="mb-2 flex justify-between text-sm text-slate-400">
+                        <span>Postęp kursu</span>
+                        <span className="font-bold text-slate-200">{progress}%</span>
+                    </div>
+                    <div className="h-2.5 overflow-hidden rounded-full bg-slate-800">
+                        <div
+                            className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-700"
+                            style={{ width: `${progress}%` }}
+                        />
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">
+                        Ukończono {course.completedLessonCount ?? 0} z {course.lessonCount ?? 0} lekcji
+                    </p>
                 </div>
 
+                <button
+                    type="button"
+                    onClick={onOpen}
+                    className="mt-auto flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-3.5 font-black transition hover:brightness-110"
+                >
+                    <BsPlayFill />
+                    {progress > 0 ? "Kontynuuj naukę" : "Rozpocznij naukę"}
+                </button>
+
+                {isAdmin && (
+                    <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
+                        <button
+                            type="button"
+                            onClick={onEdit}
+                            className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm font-bold text-amber-200 transition hover:bg-amber-500/20"
+                        >
+                            <BsPencil />
+                            Edytuj
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onDelete}
+                            disabled={deleting}
+                            className="flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm font-bold text-red-200 transition hover:bg-red-500/20 disabled:cursor-wait disabled:opacity-50"
+                        >
+                            {deleting ? (
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-red-100 border-t-transparent" />
+                            ) : (
+                                <BsTrash />
+                            )}
+                            Usuń
+                        </button>
+                    </div>
+                )}
+            </div>
+        </article>
+    );
+}
+
+export default function CoursesPage() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const isAdmin = getRoleFromToken() === "ADMIN";
+
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [deletingCourseId, setDeletingCourseId] = useState(null);
+
+    const loadCourses = async () => {
+        try {
+            setLoading(true);
+            setError("");
+            const data = await apiFetch("/courses");
+            setCourses(data || []);
+        } catch (loadError) {
+            setError(getErrorMessage(loadError));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        let active = true;
+
+        apiFetch("/courses")
+            .then((data) => {
+                if (active) setCourses(data || []);
+            })
+            .catch((loadError) => {
+                if (active) setError(getErrorMessage(loadError));
+            })
+            .finally(() => {
+                if (active) setLoading(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    const deleteCourse = async (course) => {
+        const title = course.title || course.name;
+        if (!window.confirm(`Usunąć kurs „${title}”?`)) return;
+
+        try {
+            setDeletingCourseId(course.id);
+            setError("");
+            await apiFetch(`/courses/${course.id}`, { method: "DELETE" });
+            setCourses((current) => current.filter((item) => item.id !== course.id));
+        } catch (deleteError) {
+            setError(getErrorMessage(deleteError));
+        } finally {
+            setDeletingCourseId(null);
+        }
+    };
+
+    const totalLessons = courses.reduce(
+        (sum, course) => sum + (course.lessonCount || 0),
+        0
+    );
+    const averageProgress = courses.length
+        ? Math.round(courses.reduce((sum, course) => sum + (course.progress || 0), 0) / courses.length)
+        : 0;
+
+    return (
+        <div className="space-y-8 text-white sm:space-y-12">
+            {location.state?.message && (
+                <div role="status" className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-emerald-200">
+                    <BsCheckCircle className="shrink-0" />
+                    {location.state.message}
+                </div>
+            )}
+
+            <section className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 p-6 sm:p-10 lg:rounded-[42px] lg:p-14">
+                <div className="absolute -left-24 -top-32 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl" />
+                <div className="absolute -bottom-40 right-0 h-96 w-96 rounded-full bg-blue-600/10 blur-3xl" />
+
+                <div className="relative z-10 max-w-4xl">
+                    <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300 sm:text-sm sm:tracking-[0.35em]">
+                        EDUHUB • PROGRAMOWANIE
+                    </p>
+                    <h1 className="mt-5 text-3xl font-black leading-tight sm:text-5xl lg:text-6xl">
+                        Ucz się programowania
+                        <br className="hidden sm:block" /> w nowoczesny sposób.
+                    </h1>
+                    <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:mt-7 sm:text-xl sm:leading-9">
+                        Interaktywne kursy, praktyczne projekty i automatyczne sprawdzanie zadań prowadzą Cię od podstaw do samodzielnego programowania.
+                    </p>
+
+                    <div className="mt-7 flex flex-wrap gap-2.5 text-sm font-semibold sm:mt-9 sm:gap-3">
+                        <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-cyan-200">Interaktywne lekcje</span>
+                        <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-blue-200">Projekty praktyczne</span>
+                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-emerald-200">Automatyczna ocena</span>
+                    </div>
+                </div>
             </section>
 
+            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
+                <Metric label="Dostępnych kursów" value={loading ? "—" : courses.length} />
+                <Metric label="Łącznie lekcji" value={loading ? "—" : totalLessons} />
+                <Metric label="Średni postęp" value={loading ? "—" : `${averageProgress}%`} />
+            </div>
+
+            <section>
+                <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300 sm:text-sm">Kursy</p>
+                        <h2 className="mt-2 text-3xl font-black sm:text-4xl">Dostępne ścieżki nauki</h2>
+                    </div>
+
+                    {isAdmin && (
+                        <button
+                            type="button"
+                            onClick={() => navigate("/admin/add-course")}
+                            className="flex items-center justify-center gap-2 self-start rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm font-black text-cyan-200 transition hover:bg-cyan-500/20 sm:self-auto"
+                        >
+                            <BsPlusCircle />
+                            Dodaj kurs
+                        </button>
+                    )}
+                </div>
+
+                {error && courses.length > 0 && (
+                    <div role="alert" className="mb-5 flex items-start gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-red-200">
+                        <BsExclamationTriangle className="mt-0.5 shrink-0" />
+                        <span>{error}</span>
+                    </div>
+                )}
+
+                {loading ? (
+                    <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+                        {[0, 1, 2].map((item) => <CourseSkeleton key={item} />)}
+                    </div>
+                ) : error && courses.length === 0 ? (
+                    <div className="rounded-3xl border border-red-500/20 bg-red-500/5 px-6 py-12 text-center sm:px-10">
+                        <BsExclamationTriangle className="mx-auto text-4xl text-red-300" />
+                        <h3 className="mt-4 text-2xl font-black">Nie udało się pobrać kursów</h3>
+                        <p className="mx-auto mt-2 max-w-xl text-slate-400">{error}</p>
+                        <button
+                            type="button"
+                            onClick={loadCourses}
+                            className="mx-auto mt-6 flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 font-bold transition hover:bg-white/15"
+                        >
+                            <BsArrowClockwise /> Spróbuj ponownie
+                        </button>
+                    </div>
+                ) : courses.length === 0 ? (
+                    <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.03] px-6 py-14 text-center sm:px-10">
+                        <BsCollection className="mx-auto text-5xl text-slate-600" />
+                        <h3 className="mt-5 text-2xl font-black">Brak dostępnych kursów</h3>
+                        <p className="mx-auto mt-2 max-w-xl text-slate-400">
+                            {isAdmin
+                                ? "Utwórz pierwszy kurs, a następnie dodaj do niego moduły i lekcje."
+                                : "Nowe ścieżki nauki pojawią się tutaj po ich opublikowaniu."}
+                        </p>
+                        {isAdmin && (
+                            <button
+                                type="button"
+                                onClick={() => navigate("/admin/add-course")}
+                                className="mx-auto mt-6 flex items-center gap-2 rounded-xl bg-cyan-500 px-5 py-3 font-black text-slate-950 transition hover:bg-cyan-400"
+                            >
+                                <BsPlusCircle /> Utwórz pierwszy kurs
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+                        {courses.map((course) => (
+                            <CourseCard
+                                key={course.id}
+                                course={course}
+                                isAdmin={isAdmin}
+                                deleting={deletingCourseId === course.id}
+                                onOpen={() => navigate(`/modules/${course.id}`)}
+                                onEdit={() => navigate(`/admin/courses/${course.id}/edit`)}
+                                onDelete={() => deleteCourse(course)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </section>
         </div>
-
     );
-
 }
