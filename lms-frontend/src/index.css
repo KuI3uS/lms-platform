@@ -34,27 +34,16 @@ body {
     @apply bg-gray-900 text-white;
 }
 
-/*
- * Monaco używa technicznego pola textarea do obsługi klawiatury. Safari potrafi
- * narysować mu białe tło i uchwyt zmiany rozmiaru nad pierwszą linią kodu.
- * Właściwy tryb pola ustawia komponent Monaco. Tutaj usuwamy wyłącznie
- * natywne tło i uchwyt Safari, nie ukrywając kursora ani pola klawiatury.
- */
-.monaco-editor textarea.inputarea {
-    background: transparent !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    caret-color: transparent !important;
-    color: transparent !important;
-    -webkit-text-fill-color: transparent !important;
-    outline: 0 !important;
-    resize: none !important;
-    text-shadow: none !important;
+.native-code-editor {
+    caret-color: #38bdf8;
+    color: #e2e8f0;
+    -webkit-text-fill-color: #e2e8f0;
+    user-select: text;
+    -webkit-user-select: text;
 }
 
-.monaco-editor .cursors-layer > .cursor {
-    background-color: #f8fafc !important;
-    border-color: #f8fafc !important;
-    min-width: 3px !important;
-    opacity: 1 !important;
+.native-code-editor::selection {
+    background: #2563eb;
+    color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
 }
