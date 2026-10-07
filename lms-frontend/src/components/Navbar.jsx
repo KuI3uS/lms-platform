@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { apiFetch, logout } from "../api/api";
 import {
@@ -7,7 +8,8 @@ import {
     BsFire,
     BsList,
     BsPersonCircle,
-    BsRocketTakeoff
+    BsRocketTakeoff,
+    BsX
 } from "react-icons/bs";
 
 export default function Navbar({ onMenuClick }) {
@@ -65,6 +67,17 @@ export default function Navbar({ onMenuClick }) {
         };
     }, []);
 
+    useEffect(() => {
+        if (!notificationsOpen) return undefined;
+
+        const closeOnEscape = (event) => {
+            if (event.key === "Escape") setNotificationsOpen(false);
+        };
+
+        document.addEventListener("keydown", closeOnEscape);
+        return () => document.removeEventListener("keydown", closeOnEscape);
+    }, [notificationsOpen]);
+
     const streakLabel = learningStats.streakDays === 1 ? "dzień" : "dni";
 
     const openNotification = async (notification) => {
@@ -99,8 +112,82 @@ export default function Navbar({ onMenuClick }) {
         }
     };
 
+    const notificationsLayer = notificationsOpen && typeof document !== "undefined"
+        ? createPortal(
+            <>
+                <button
+                    type="button"
+                    aria-label="Zamknij powiadomienia"
+                    onClick={() => setNotificationsOpen(false)}
+                    className="fixed inset-0 z-[9998] cursor-default bg-slate-950/25 backdrop-blur-[1px]"
+                />
+                <section
+                    role="dialog"
+                    aria-label="Powiadomienia"
+                    className="fixed right-3 top-[4.5rem] z-[9999] w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden rounded-3xl border border-white/15 bg-slate-950 shadow-2xl shadow-black/80 sm:right-5 sm:top-[5.5rem]"
+                >
+                    <div className="flex items-center justify-between border-b border-white/10 p-4">
+                        <div>
+                            <p className="font-black">Powiadomienia</p>
+                            <p className="text-xs text-slate-500">{notifications.unreadCount} nieprzeczytanych</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            {notifications.unreadCount > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={markAllRead}
+                                    className="text-xs font-bold text-cyan-300"
+                                >
+                                    Oznacz wszystkie
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                aria-label="Zamknij"
+                                onClick={() => setNotificationsOpen(false)}
+                                className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 transition hover:bg-white/10 hover:text-white"
+                            >
+                                <BsX size={22} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="max-h-[min(30rem,calc(100vh-7rem))] overflow-y-auto p-2">
+                        {notifications.notifications.length === 0 ? (
+                            <p className="p-6 text-center text-sm text-slate-500">Brak powiadomień.</p>
+                        ) : (
+                            notifications.notifications.slice(0, 10).map((notification) => (
+                                <button
+                                    key={notification.id}
+                                    type="button"
+                                    onClick={() => openNotification(notification)}
+                                    className={`block w-full rounded-2xl p-3 text-left transition hover:bg-white/5 ${
+                                        notification.read ? "opacity-65" : "bg-blue-500/5"
+                                    }`}
+                                >
+                                    <div className="flex gap-3">
+                                        <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
+                                            notification.read ? "bg-slate-700" : "bg-cyan-400"
+                                        }`} />
+                                        <span className="min-w-0">
+                                            <span className="block text-sm font-black">{notification.title}</span>
+                                            <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">
+                                                {notification.message}
+                                            </span>
+                                        </span>
+                                    </div>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </section>
+            </>,
+            document.body
+        )
+        : null;
+
     return (
-        <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-slate-950/90 px-3 backdrop-blur-xl sm:h-20 sm:px-5 lg:px-8">
+        <>
+        <header className="relative z-40 flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-slate-950/90 px-3 backdrop-blur-xl sm:h-20 sm:px-5 lg:px-8">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                 <button
                     type="button"
@@ -147,53 +234,6 @@ export default function Navbar({ onMenuClick }) {
                         )}
                     </button>
 
-                    {notificationsOpen && (
-                        <div className="absolute right-0 top-14 z-50 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl shadow-black/60">
-                            <div className="flex items-center justify-between border-b border-white/10 p-4">
-                                <div>
-                                    <p className="font-black">Powiadomienia</p>
-                                    <p className="text-xs text-slate-500">{notifications.unreadCount} nieprzeczytanych</p>
-                                </div>
-                                {notifications.unreadCount > 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={markAllRead}
-                                        className="text-xs font-bold text-cyan-300"
-                                    >
-                                        Oznacz wszystkie
-                                    </button>
-                                )}
-                            </div>
-                            <div className="max-h-96 overflow-y-auto p-2">
-                                {notifications.notifications.length === 0 ? (
-                                    <p className="p-6 text-center text-sm text-slate-500">Brak powiadomień.</p>
-                                ) : (
-                                    notifications.notifications.slice(0, 10).map((notification) => (
-                                        <button
-                                            key={notification.id}
-                                            type="button"
-                                            onClick={() => openNotification(notification)}
-                                            className={`block w-full rounded-2xl p-3 text-left transition hover:bg-white/5 ${
-                                                notification.read ? "opacity-65" : "bg-blue-500/5"
-                                            }`}
-                                        >
-                                            <div className="flex gap-3">
-                                                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
-                                                    notification.read ? "bg-slate-700" : "bg-cyan-400"
-                                                }`} />
-                                                <span className="min-w-0">
-                                                    <span className="block text-sm font-black">{notification.title}</span>
-                                                    <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">
-                                                        {notification.message}
-                                                    </span>
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    )}
                 </div>
                 <div className="hidden items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900 px-4 py-2 xl:flex">
                     <BsPersonCircle className="text-blue-400" size={22} />
@@ -213,5 +253,7 @@ export default function Navbar({ onMenuClick }) {
                 </button>
             </div>
         </header>
+        {notificationsLayer}
+        </>
     );
 }

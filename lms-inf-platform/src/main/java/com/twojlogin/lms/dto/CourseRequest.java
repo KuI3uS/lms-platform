@@ -10,6 +10,9 @@ public record CourseRequest(
         boolean published,
         String thumbnailUrl,
         String level,
-        String paymentUrl
+        String paymentUrl,
+        String category,
+        String courseLanguage,
+        String cefrLevel
 ) {
 }

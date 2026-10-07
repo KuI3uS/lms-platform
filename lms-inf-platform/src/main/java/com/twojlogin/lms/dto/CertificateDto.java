@@ -9,7 +9,10 @@ public record CertificateDto(
         Long courseId,
         String courseTitle,
         String studentName,
-        LocalDateTime issuedAt
+        LocalDateTime issuedAt,
+        String category,
+        String courseLanguage,
+        String cefrLevel
 ) {
     public static CertificateDto from(CourseCertificate certificate) {
         String fullName = ((certificate.getUser().getFirstName() == null
@@ -26,7 +29,10 @@ public record CertificateDto(
                         ? certificate.getCourse().getName()
                         : certificate.getCourse().getTitle(),
                 fullName.isBlank() ? certificate.getUser().getEmail() : fullName,
-                certificate.getIssuedAt()
+                certificate.getIssuedAt(),
+                certificate.getCourse().getCategory(),
+                certificate.getCourse().getCourseLanguage(),
+                certificate.getCourse().getCefrLevel()
         );
     }
 }

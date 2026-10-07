@@ -4,8 +4,11 @@ import {
     BsArrowLeft,
     BsBookHalf,
     BsCheckCircle,
+    BsCodeSlash,
     BsCollection,
-    BsSave
+    BsLaptop,
+    BsSave,
+    BsTranslate
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
 import {
@@ -13,11 +16,20 @@ import {
     getGeneratedCourseCover
 } from "../utils/courseCover";
 import { getDefaultCoursePaymentUrl } from "../utils/paymentLinks";
+import {
+    CEFR_LEVELS,
+    COURSE_CATEGORIES,
+    COURSE_LANGUAGES,
+    getCourseLanguageLabel
+} from "../utils/courseTaxonomy";
 
 const EMPTY_COURSE = {
     name: "",
     title: "",
     description: "",
+    category: "PROGRAMMING",
+    courseLanguage: "ENGLISH",
+    cefrLevel: "A1",
     level: "Podstawy",
     price: "0",
     paymentUrl: "",
@@ -62,6 +74,9 @@ export default function AddCoursePage() {
                         name: data.name || "",
                         title: data.title || "",
                         description: data.description || "",
+                        category: data.category || "PROGRAMMING",
+                        courseLanguage: data.courseLanguage || "ENGLISH",
+                        cefrLevel: data.cefrLevel || "A1",
                         level: data.level || "Podstawy",
                         price: data.price ?? "0",
                         paymentUrl: data.paymentUrl || getDefaultCoursePaymentUrl(data),
@@ -96,6 +111,10 @@ export default function AddCoursePage() {
 
         if (!course.name.trim()) {
             setError("Podaj nazwę kursu.");
+            return;
+        }
+        if (course.category === "LANGUAGE" && (!course.courseLanguage || !course.cefrLevel)) {
+            setError("Wybierz język i poziom CEFR.");
             return;
         }
 
@@ -173,6 +192,48 @@ export default function AddCoursePage() {
                             </div>
                         )}
 
+                        <fieldset>
+                            <legend className="text-sm font-bold text-slate-300">Rodzaj ścieżki nauki</legend>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                                Kategoria decyduje, w której części katalogu pojawi się kurs i jak będzie wyglądał certyfikat.
+                            </p>
+                            <div className="mt-3 grid gap-3 md:grid-cols-3">
+                                {COURSE_CATEGORIES.map((category) => {
+                                    const Icon = category.value === "LANGUAGE"
+                                        ? BsTranslate
+                                        : category.value === "DIGITAL_SKILLS"
+                                            ? BsLaptop
+                                            : BsCodeSlash;
+                                    const selected = course.category === category.value;
+
+                                    return (
+                                        <label
+                                            key={category.value}
+                                            className={`cursor-pointer rounded-2xl border p-4 transition ${
+                                                selected
+                                                    ? "border-cyan-400 bg-cyan-500/10 shadow-lg shadow-cyan-500/10"
+                                                    : "border-white/10 bg-black/20 hover:border-white/20"
+                                            }`}
+                                        >
+                                            <input
+                                                className="sr-only"
+                                                type="radio"
+                                                name="category"
+                                                value={category.value}
+                                                checked={selected}
+                                                onChange={updateField}
+                                            />
+                                            <Icon className={selected ? "text-cyan-300" : "text-slate-500"} size={22} />
+                                            <span className="mt-3 block text-sm font-black">{category.label}</span>
+                                            <span className="mt-1 block text-xs leading-5 text-slate-500">
+                                                {category.description}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </fieldset>
+
                         <div className="grid gap-5 sm:grid-cols-2">
                             <label className="space-y-2">
                                 <span className="flex items-center gap-2 text-sm font-bold text-slate-300">
@@ -227,20 +288,53 @@ export default function AddCoursePage() {
                             />
                         </label>
 
-                        <div className="grid gap-5 sm:grid-cols-2">
-                            <label className="space-y-2">
-                                <span className="text-sm font-bold text-slate-300">Poziom</span>
-                                <select
-                                    name="level"
-                                    value={course.level}
-                                    onChange={updateField}
-                                    className={fieldClass}
-                                >
-                                    <option>Podstawy</option>
-                                    <option>Średniozaawansowany</option>
-                                    <option>Zaawansowany</option>
-                                </select>
-                            </label>
+                        <div className={`grid gap-5 ${course.category === "LANGUAGE" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+                            {course.category === "LANGUAGE" ? (
+                                <>
+                                    <label className="space-y-2">
+                                        <span className="text-sm font-bold text-slate-300">Język</span>
+                                        <select
+                                            name="courseLanguage"
+                                            value={course.courseLanguage}
+                                            onChange={updateField}
+                                            className={fieldClass}
+                                        >
+                                            {COURSE_LANGUAGES.map((language) => (
+                                                <option key={language.value} value={language.value}>
+                                                    {language.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <label className="space-y-2">
+                                        <span className="text-sm font-bold text-slate-300">Poziom CEFR</span>
+                                        <select
+                                            name="cefrLevel"
+                                            value={course.cefrLevel}
+                                            onChange={updateField}
+                                            className={fieldClass}
+                                        >
+                                            {CEFR_LEVELS.map((level) => (
+                                                <option key={level} value={level}>{level}</option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                </>
+                            ) : (
+                                <label className="space-y-2">
+                                    <span className="text-sm font-bold text-slate-300">Poziom</span>
+                                    <select
+                                        name="level"
+                                        value={course.level}
+                                        onChange={updateField}
+                                        className={fieldClass}
+                                    >
+                                        <option>Podstawy</option>
+                                        <option>Średniozaawansowany</option>
+                                        <option>Zaawansowany</option>
+                                    </select>
+                                </label>
+                            )}
 
                             <label className="space-y-2">
                                 <span className="text-sm font-bold text-slate-300">Cena (zł)</span>
@@ -304,7 +398,19 @@ export default function AddCoursePage() {
                                 <h2 className="mt-2 text-xl font-black">
                                     {course.title || course.name || "Nazwa kursu"}
                                 </h2>
-                                <p className="mt-2 text-sm text-slate-500">{course.level}</p>
+                                <p className="mt-2 text-sm text-slate-500">
+                                    {course.category === "LANGUAGE" ? "Ścieżka językowa" : course.level}
+                                </p>
+                                {course.category === "LANGUAGE" && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <span className="rounded-full bg-violet-500/15 px-3 py-1 text-xs font-black text-violet-200">
+                                            {getCourseLanguageLabel(course.courseLanguage)}
+                                        </span>
+                                        <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs font-black text-cyan-200">
+                                            CEFR {course.cefrLevel}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

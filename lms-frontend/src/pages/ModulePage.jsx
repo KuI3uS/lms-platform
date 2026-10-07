@@ -8,16 +8,24 @@ import {
     BsPlusCircle,
     BsTrash,
     BsGearFill,
-    BsStars
+    BsStars,
+    BsCodeSlash,
+    BsTranslate
 } from "react-icons/bs";
+import {
+    getCourseCategory,
+    getCourseLanguageLabel
+} from "../utils/courseTaxonomy";
 
 export default function ModulePage() {
     const { courseId } = useParams();
     const navigate = useNavigate();
 
     const [modules, setModules] = useState([]);
+    const [course, setCourse] = useState(null);
     const [newModule, setNewModule] = useState("");
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     const token = localStorage.getItem("token");
     let role = null;
@@ -30,9 +38,13 @@ export default function ModulePage() {
 
     const loadRoadmap = useCallback(async () => {
         setLoading(true);
+        setError("");
 
         try {
-            const modulesData = await apiFetch(`/modules/course/${courseId}`);
+            const [courseData, modulesData] = await Promise.all([
+                apiFetch(`/courses/${courseId}`),
+                apiFetch(`/modules/course/${courseId}`)
+            ]);
 
             const modulesWithLessons = await Promise.all(
                 (modulesData || []).map(async (module) => {
@@ -58,9 +70,11 @@ export default function ModulePage() {
                 })
             );
 
+            setCourse(courseData);
             setModules(modulesWithLessons);
         } catch (e) {
             console.error(e);
+            setError(e.message || "Nie udało się pobrać ścieżki kursu.");
         } finally {
             setLoading(false);
         }
@@ -104,11 +118,20 @@ export default function ModulePage() {
     const progress = allLessons.length > 0
         ? Math.round((completedCount / allLessons.length) * 100)
         : 0;
+    const isLanguageCourse = getCourseCategory(course) === "LANGUAGE";
 
     if (loading) {
         return (
             <div className="flex items-center justify-center h-96">
                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="mx-auto max-w-3xl rounded-3xl border border-red-500/30 bg-red-500/10 p-8 text-center text-red-200">
+                {error}
             </div>
         );
     }
@@ -121,16 +144,27 @@ export default function ModulePage() {
 
                 <div className="relative z-10">
                     <p className="text-blue-300 font-semibold mb-2">
-                        Ścieżka nauki
+                        {isLanguageCourse ? (
+                            <span className="inline-flex items-center gap-2">
+                                <BsTranslate />
+                                {getCourseLanguageLabel(course?.courseLanguage)} · CEFR {course?.cefrLevel}
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center gap-2">
+                                <BsCodeSlash />
+                                Ścieżka technologiczna
+                            </span>
+                        )}
                     </p>
 
                     <h1 className="text-4xl font-black">
-                        Roadmap kursu
+                        {course?.title || course?.name || "Roadmap kursu"}
                     </h1>
 
                     <p className="text-gray-300 mt-3 max-w-2xl">
-                        Ucz się krok po kroku. Każda lekcja prowadzi do kolejnego etapu,
-                        a zadania praktyczne przygotowują Cię do prawdziwych projektów.
+                        {isLanguageCourse
+                            ? "Rozwijaj słownictwo, gramatykę i komunikację krok po kroku. Każdy moduł przybliża Cię do ukończenia poziomu i certyfikatu."
+                            : "Ucz się krok po kroku. Każda lekcja prowadzi do kolejnego etapu, a zadania praktyczne przygotowują Cię do prawdziwych projektów."}
                     </p>
 
                     <div className="mt-6 bg-gray-950/60 border border-white/10 rounded-2xl p-5 max-w-xl">
