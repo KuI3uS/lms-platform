@@ -115,6 +115,30 @@ img {
     overflow: hidden;
 }
 
+.platform-preview{
+
+    width:100%;
+
+    height:auto;
+
+    display:block;
+
+    border-radius:18px;
+
+    box-shadow:
+
+            0 15px 40px rgba(0,0,0,.25);
+
+    transition:.35s;
+
+}
+
+.platform-preview:hover{
+
+    transform:translateY(-6px) scale(1.02);
+
+}
+
 .hero::before {
     content: "";
 
