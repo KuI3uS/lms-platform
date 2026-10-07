@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import {
     BsArrowLeft,
     BsCheckCircleFill,
+    BsClipboardCheck,
     BsCreditCard,
     BsHourglassSplit,
     BsLockFill,
@@ -10,6 +12,7 @@ import {
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
 import { getCourseCover } from "../utils/courseCover";
+import { resolveCoursePaymentUrl } from "../utils/paymentLinks";
 
 function formatPrice(value) {
     return new Intl.NumberFormat("pl-PL", {
@@ -25,11 +28,16 @@ export default function CourseCheckoutPage() {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
+    const [copied, setCopied] = useState(false);
     const [error, setError] = useState("");
 
     const title = useMemo(
         () => course?.title || course?.name || "Kurs EduHub",
         [course]
+    );
+    const paymentUrl = useMemo(
+        () => resolveCoursePaymentUrl(course, order),
+        [course, order]
     );
 
     useEffect(() => {
@@ -91,13 +99,25 @@ export default function CourseCheckoutPage() {
                 navigate(`/modules/${courseId}`, { replace: true });
                 return;
             }
-            if (created.paymentUrl) {
-                window.open(created.paymentUrl, "_blank", "noopener,noreferrer");
+            const createdPaymentUrl = resolveCoursePaymentUrl(course, created);
+            if (createdPaymentUrl) {
+                window.open(createdPaymentUrl, "_blank", "noopener,noreferrer");
             }
         } catch (purchaseError) {
             setError(purchaseError.message || "Nie udało się utworzyć zamówienia.");
         } finally {
             setBusy(false);
+        }
+    };
+
+    const copyPaymentLink = async () => {
+        if (!paymentUrl) return;
+        try {
+            await navigator.clipboard.writeText(paymentUrl);
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 2000);
+        } catch {
+            setError("Nie udało się skopiować linku. Otwórz płatność i skopiuj adres z przeglądarki.");
         }
     };
 
@@ -183,15 +203,38 @@ export default function CourseCheckoutPage() {
                                 <p className="text-xs uppercase tracking-wider text-slate-500">Numer zamówienia</p>
                                 <p className="mt-1 break-all font-mono font-bold text-cyan-300">{order.reference}</p>
                             </div>
-                            {order.paymentUrl ? (
-                                <a
-                                    href={order.paymentUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-blue-600 px-5 py-4 font-black"
-                                >
-                                    <BsCreditCard /> Otwórz płatność
-                                </a>
+                            {paymentUrl ? (
+                                <>
+                                    <div className="rounded-3xl border border-white/10 bg-white p-4">
+                                        <QRCodeSVG
+                                            value={paymentUrl}
+                                            size={224}
+                                            level="H"
+                                            marginSize={2}
+                                            title={`Płatność za kurs ${title}`}
+                                            className="mx-auto h-auto w-full max-w-56"
+                                        />
+                                    </div>
+                                    <p className="text-center text-sm leading-6 text-slate-400">
+                                        Zeskanuj kod aparatem telefonu albo otwórz płatność w nowej karcie.
+                                    </p>
+                                    <a
+                                        href={paymentUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-blue-600 px-5 py-4 font-black"
+                                    >
+                                        <BsCreditCard /> Otwórz płatność Revolut
+                                    </a>
+                                    <button
+                                        type="button"
+                                        onClick={copyPaymentLink}
+                                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-bold text-slate-300 transition hover:border-cyan-400/40 hover:text-white"
+                                    >
+                                        <BsClipboardCheck />
+                                        {copied ? "Link skopiowany" : "Skopiuj link do płatności"}
+                                    </button>
+                                </>
                             ) : (
                                 <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
                                     Administrator nie skonfigurował jeszcze linku do płatności dla tego kursu.
