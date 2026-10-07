@@ -2,6 +2,7 @@ import { BsCollection } from "react-icons/bs";
 
 import BlockList from "./BlockList";
 import BlockForm from "./BlockForm/BlockForm";
+import ChatGptLessonImport from "./ChatGptLessonImport";
 
 export default function BlockManager({
 
@@ -54,6 +55,11 @@ export default function BlockManager({
 
                 onDelete={lessonBlocks.deleteBlock}
 
+            />
+
+            <ChatGptLessonImport
+                lessonId={lessonId}
+                lessonBlocks={lessonBlocks}
             />
 
             <BlockForm
