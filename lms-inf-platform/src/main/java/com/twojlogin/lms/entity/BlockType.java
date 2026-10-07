@@ -32,6 +32,8 @@ public enum BlockType {
 
     WORD_LAB,
 
+    LISTENING,
+
     SENTENCE_BUILDER,
 
     PDF,
