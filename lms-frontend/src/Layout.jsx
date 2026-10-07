@@ -37,7 +37,7 @@ export default function Layout() {
         <div className="flex h-screen bg-gray-950 text-white">
             <aside className="w-72 bg-gray-900 border-r border-gray-800 flex flex-col">
                 <div className="p-6 border-b border-gray-800">
-                    <Link to="/">
+                    <Link to="/courses">
                         <h1 className="text-2xl font-bold">LMS Panel</h1>
                         <p className="text-sm text-gray-400 mt-1">
                             Rola: {role || "USER"}
@@ -51,7 +51,7 @@ export default function Layout() {
                         <span>Dashboard</span>
                     </NavLink>
 
-                    <NavLink to="/" className={linkClass}>
+                    <NavLink to="/courses" className={linkClass}>
                         <BsBook />
                         <span>Kursy</span>
                     </NavLink>

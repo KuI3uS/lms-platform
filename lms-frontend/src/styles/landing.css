@@ -69,7 +69,7 @@ img {
    NAVBAR
 ========================= */
 
-nav {
+.landing-page nav  {
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -87,13 +87,13 @@ nav {
     border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
-nav a {
+.landing-page nav  a {
     color: #d1d5db;
     font-weight: 600;
     transition: 0.2s;
 }
 
-nav a:hover {
+.landing-page nav a:hover {
     color: var(--accent);
 }
 
@@ -371,7 +371,7 @@ footer {
 
 @media (max-width: 768px) {
 
-    nav {
+    .landing-page nav  {
         gap: 18px;
         flex-wrap: wrap;
     }
