@@ -12,16 +12,30 @@ export default function LessonListPage() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        setLoading(true);
-        setError(null);
+        const load = async () => {
+            setLoading(true);
+            setError(null);
 
-        apiFetch(`/lessons/module/${moduleId}`)
-            .then(data => setLessons(data || []))
-            .catch(e => {
+            try {
+                const data = await apiFetch(`/lessons/module/${moduleId}`);
+
+                const lessonsWithAccess = await Promise.all(
+                    (data || []).map(async (lesson) => {
+                        const canAccess = await apiFetch(`/lessons/${lesson.id}/access`);
+                        return { ...lesson, canAccess };
+                    })
+                );
+
+                setLessons(lessonsWithAccess);
+            } catch (e) {
                 console.error(e);
                 setError(e.message);
-            })
-            .finally(() => setLoading(false));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        load();
     }, [moduleId]);
 
     if (loading) {
@@ -55,27 +69,55 @@ export default function LessonListPage() {
                 </div>
             ) : (
                 <div className="grid gap-4">
-                    {lessons.map((l, index) => (
+                    {lessons.map((lesson, index) => (
                         <button
-                            key={l.id}
-                            onClick={() => navigate(`/lesson/${l.id}`)}
-                            className="bg-gray-900 border border-gray-800 hover:border-blue-600/60 rounded-2xl p-5 text-left transition group"
+                            key={lesson.id}
+                            type="button"
+                            disabled={!lesson.canAccess}
+                            onClick={() => {
+                                if (!lesson.canAccess) return;
+                                navigate(`/lesson/${lesson.id}`);
+                            }}
+                            className={`bg-gray-900 border rounded-2xl p-5 text-left transition group ${
+                                lesson.canAccess
+                                    ? "border-gray-800 hover:border-blue-600/60 cursor-pointer"
+                                    : "border-red-900/40 opacity-50 cursor-not-allowed"
+                            }`}
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center">
+                                <div
+                                    className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                                        lesson.canAccess
+                                            ? "bg-blue-600/20 text-blue-400"
+                                            : "bg-red-600/20 text-red-400"
+                                    }`}
+                                >
                                     <BsBook size={20} />
                                 </div>
 
                                 <div className="flex-1">
-                                    <h2 className="text-lg font-semibold group-hover:text-blue-400 transition">
-                                        {l.orderIndex ?? index + 1}. {l.title}
+                                    <h2
+                                        className={`text-lg font-semibold transition ${
+                                            lesson.canAccess
+                                                ? "group-hover:text-blue-400"
+                                                : "text-gray-400"
+                                        }`}
+                                    >
+                                        {lesson.orderIndex ?? index + 1}. {lesson.title}
                                     </h2>
+
                                     <p className="text-sm text-gray-500">
-                                        Otwórz lekcję
+                                        {lesson.canAccess
+                                            ? "Otwórz lekcję"
+                                            : "🔒 Zablokowana — ukończ poprzednią lekcję"}
                                     </p>
                                 </div>
 
-                                <BsArrowRight className="text-gray-500 group-hover:text-blue-400 transition" />
+                                {lesson.canAccess ? (
+                                    <BsArrowRight className="text-gray-500 group-hover:text-blue-400 transition" />
+                                ) : (
+                                    <span className="text-red-400 text-xl">🔒</span>
+                                )}
                             </div>
                         </button>
                     ))}
