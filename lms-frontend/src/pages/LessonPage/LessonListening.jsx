@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BsCheckCircleFill, BsHeadphones, BsPlayFill, BsXCircleFill } from "react-icons/bs";
 import { languageAnswerScore, parseVocabularyContent } from "../../utils/languageInteractiveBlocks";
+import { speakWithBrowser } from "../../utils/browserSpeech";
 
 export default function LessonListening({ block, onComplete }) {
     const config = useMemo(() => parseVocabularyContent(block.content), [block.content]);
@@ -19,9 +20,7 @@ export default function LessonListening({ block, onComplete }) {
             audioRef.current = audio;
             await audio.play();
         } catch {
-            const utterance = new SpeechSynthesisUtterance(item.term);
-            utterance.lang = block.language || "en-GB";
-            window.speechSynthesis.speak(utterance);
+            speakWithBrowser(item.term, block.language);
         }
     };
     const check = () => {

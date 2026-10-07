@@ -5,51 +5,13 @@ import {
     BsSoundwave,
     BsStopFill
 } from "react-icons/bs";
+import { englishLetter, letterPronunciation, pronunciationScore, recognitionTranscripts } from "../utils/pronunciation";
+import { speakWithBrowser } from "../utils/browserSpeech";
 import { apiFetch } from "../api/api";
 import { useFeedback } from "../context/FeedbackContext";
 
-function normalize(value) {
-    return (value || "")
-        .toLocaleLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^\p{L}\p{N}' ]/gu, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-function distance(first, second) {
-    const rows = Array.from({ length: second.length + 1 }, (_, index) => index);
-    for (let firstIndex = 1; firstIndex <= first.length; firstIndex++) {
-        let previous = rows[0];
-        rows[0] = firstIndex;
-        for (let secondIndex = 1; secondIndex <= second.length; secondIndex++) {
-            const current = rows[secondIndex];
-            rows[secondIndex] = Math.min(
-                rows[secondIndex] + 1,
-                rows[secondIndex - 1] + 1,
-                previous + (first[firstIndex - 1] === second[secondIndex - 1] ? 0 : 1)
-            );
-            previous = current;
-        }
-    }
-    return rows[second.length];
-}
-
-function pronunciationScore(target, transcript) {
-    const expected = normalize(target);
-    const received = normalize(transcript);
-    if (!expected || !received) return 0;
-    const compactExpected = expected.replace(/[ '\s]/g, "");
-    const compactReceived = received.replace(/[ '\s]/g, "");
-    if (compactExpected === compactReceived) return 100;
-    return Math.max(0, Math.round(
-        (1 - distance(expected, received) / Math.max(expected.length, received.length)) * 100
-    ));
-}
-
 function recordingLimit(phrase) {
-    const units = normalize(phrase).split(" ").filter(Boolean).length;
+    const units = (phrase || "").trim().split(/\s+/).filter(Boolean).length;
     return Math.min(20000, Math.max(7000, 3500 + units * 1100));
 }
 
@@ -61,8 +23,11 @@ export default function PronunciationTrainer({
                                                   compact = false,
                                                   onReviewed
                                               }) {
+    const speechLanguage = language || "en-US";
+    const letter = englishLetter(phrase, speechLanguage);
     const { showToast } = useFeedback();
     const recognitionRef = useRef(null);
+    const audioRef = useRef(null);
     const silenceTimerRef = useRef(null);
     const maxTimerRef = useRef(null);
     const [listening, setListening] = useState(false);
@@ -84,15 +49,21 @@ export default function PronunciationTrainer({
     useEffect(() => () => {
         clearRecognitionTimers();
         recognitionRef.current?.abort();
+        window.speechSynthesis?.cancel();
+        audioRef.current?.pause();
     }, []);
 
     const speak = () => {
-        if (!phrase || !("speechSynthesis" in window)) return;
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(phrase);
-        utterance.lang = language || "en-US";
-        utterance.rate = 0.88;
-        window.speechSynthesis.speak(utterance);
+        if (listening) return;
+        if (audioUrl && audioRef.current) {
+            window.speechSynthesis?.cancel();
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(() => showToast("Nie udało się odtworzyć nagrania.", "warning"));
+            return;
+        }
+        if (!speakWithBrowser(phrase, speechLanguage)) {
+            showToast("Odsłuch nie jest dostępny w tej przeglądarce.", "warning");
+        }
     };
 
     const saveScore = async (nextScore) => {
@@ -116,8 +87,10 @@ export default function PronunciationTrainer({
             showToast("Ta przeglądarka nie udostępnia rozpoznawania mowy. Możesz nadal korzystać z odsłuchu.", "warning");
             return;
         }
+        window.speechSynthesis?.cancel();
+        audioRef.current?.pause();
         const recognition = new Recognition();
-        recognition.lang = language || "en-US";
+        recognition.lang = speechLanguage;
         recognition.interimResults = true;
         recognition.maxAlternatives = 3;
         // Safari/Chrome potrafią uznać krótką pauzę między literami za koniec
@@ -130,7 +103,7 @@ export default function PronunciationTrainer({
         const evaluateTranscript = () => {
             if (evaluated || !latestTranscript.trim()) return;
             evaluated = true;
-            const nextScore = pronunciationScore(phrase, latestTranscript);
+            const nextScore = pronunciationScore(phrase, latestTranscript, speechLanguage);
             setTranscript(latestTranscript);
             setScore(nextScore);
             saveScore(nextScore);
@@ -151,10 +124,9 @@ export default function PronunciationTrainer({
             );
         };
         recognition.onresult = (event) => {
-            latestTranscript = Array.from(event.results || [])
-                .map((result) => result?.[0]?.transcript || "")
-                .join(" ")
-                .trim();
+            latestTranscript = recognitionTranscripts(event.results)
+                .map((text) => ({ text, score: pronunciationScore(phrase, text, speechLanguage) }))
+                .sort((first, second) => second.score - first.score)[0]?.text || "";
             window.clearTimeout(silenceTimerRef.current);
             silenceTimerRef.current = window.setTimeout(() => recognition.stop(), 1100);
         };
@@ -171,13 +143,13 @@ export default function PronunciationTrainer({
     return (
         <div className={`rounded-3xl border border-violet-400/20 bg-violet-500/[0.07] ${compact ? "p-4" : "p-5 sm:p-7"}`}>
             {audioUrl && (
-                <audio controls preload="none" className="mb-5 w-full" src={audioUrl}>
+                <audio ref={audioRef} controls preload="none" className="mb-5 w-full" src={audioUrl}>
                     Twoja przeglądarka nie obsługuje odtwarzania audio.
                 </audio>
             )}
 
             <div className="flex flex-wrap gap-3">
-                <button type="button" onClick={speak} className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 font-black text-cyan-100 hover:bg-cyan-300/15">
+                <button type="button" onClick={speak} disabled={listening} className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 font-black text-cyan-100 hover:bg-cyan-300/15">
                     <BsPlayFill /> Odsłuchaj lektora
                 </button>
                 <button type="button" onClick={listening ? stop : start} className={`inline-flex items-center gap-2 rounded-xl px-4 py-3 font-black text-white ${listening ? "bg-red-600" : "bg-violet-600 hover:bg-violet-500"}`}>
@@ -186,6 +158,9 @@ export default function PronunciationTrainer({
                 </button>
             </div>
 
+            {letter && (
+                <p className="mt-4 text-sm text-slate-400">Wymowa {letter}: <strong className="text-white">/{letterPronunciation(phrase, speechLanguage)}/</strong>. Powiedz tylko nazwę litery.</p>
+            )}
             {listening && (
                 <p className="mt-4 flex items-center gap-2 text-sm font-bold text-violet-200"><BsSoundwave className="animate-pulse" /> Słucham… Nagranie zakończy się automatycznie po krótkiej ciszy.</p>
             )}

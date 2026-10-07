@@ -55,15 +55,18 @@ public class DialogAudioService {
             );
         }
 
+        String spoken = EnglishAlphabetSpeech.forSynthesis(normalized, language);
+        // Key the cache by what the narrator actually says. Old “capital A”
+        // recordings stored under the raw letter are no longer reused.
         String key = hash(String.join("|",
                 properties.fingerprint(),
                 language == null ? "" : language,
                 gender.name(),
-                normalized
+                spoken
         ));
         return cacheRepository.findByCacheKey(key)
                 .map(value -> new AudioResult(value.getAudio(), value.getContentType(), key, true))
-                .orElseGet(() -> create(normalized, gender, key));
+                .orElseGet(() -> create(spoken, gender, key));
     }
 
     private AudioResult create(String text, VoiceGender gender, String key) {

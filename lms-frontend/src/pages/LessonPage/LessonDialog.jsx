@@ -13,6 +13,7 @@ import {
     parseDialogContent
 } from "../../utils/languageInteractiveBlocks";
 import useDialogSpeech from "./useDialogSpeech";
+import { pronunciationScore, recognitionTranscripts } from "../../utils/pronunciation";
 
 const COMMON_POLISH_PROMPTS = new Map([
     ["good morning", "Dzień dobry"],
@@ -126,7 +127,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
             evaluated = true;
             const expectedAnswers = [turn.text, ...(turn.acceptedAnswers || [])];
             const best = latestAlternatives
-                .map((transcript) => ({ transcript, score: languageAnswerScore(expectedAnswers, transcript) }))
+                .map((transcript) => ({ transcript, score: Math.max(...expectedAnswers.map((expected) => pronunciationScore(expected, transcript, language || "en-GB"))) }))
                 .sort((first, second) => second.score - first.score)[0] || { transcript: "", score: 0 };
             setAnswer(best.transcript);
             onResult({ answer: best.transcript, score: best.score, source: "voice", accepted: best.score >= 70 });
@@ -148,9 +149,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
             });
         };
         recognition.onresult = (event) => {
-            latestAlternatives = Array.from(event.results?.[event.results.length - 1] || [])
-                .map((item) => item.transcript)
-                .filter(Boolean);
+            latestAlternatives = recognitionTranscripts(event.results);
             window.clearTimeout(silenceTimerRef.current);
             silenceTimerRef.current = window.setTimeout(() => recognition.stop(), 1100);
         };

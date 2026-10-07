@@ -27,6 +27,19 @@ test("Mia gets an available female voice, Alex gets a male voice", () => {
     assert.equal(selectDialogVoice(voices, "fr-FR", characters[0]), null);
 });
 
+test("alphabet dialogue narrates letter names rather than capital letters", () => {
+    const { player, utterances } = fixture();
+    player.play([
+        { speakerId: 'mia', text: 'Is that A-L-E-X?' },
+        { speakerId: 'alex', text: 'A-L-E-X.' }
+    ], characters, 'en-GB');
+    assert.equal(utterances[0].text, 'Is that ay, ell, ee, ex?');
+    utterances[0].onend();
+    assert.equal(utterances[1].text, 'ay, ell, ee, ex');
+    assert.equal(utterances[1].voice.name, 'Daniel');
+    player.stop();
+});
+
 test("prefers natural voices and never substitutes a male or novelty voice for Mia", () => {
     const natural = { name: "Microsoft Sonia Online (Natural)", lang: "en-GB", voiceURI: "sonia" };
     assert.equal(selectDialogVoice([...voices, natural], "en-GB", characters[0]), natural);

@@ -1,5 +1,12 @@
 import { BsHeadphones, BsMic, BsTranslate } from "react-icons/bs";
 
+const SPELLING_EXERCISES = [
+    { title: "Poproś o przeliterowanie nazwiska", content: "Could you spell your last name for me, please?", description: "Poproś uprzejmie rozmówcę o przeliterowanie nazwiska. Posłuchaj i powtórz całe zdanie." },
+    { title: "Upewnij się: B czy P?", content: "Did you say B as in Bravo or P as in Peter?", description: "Upewnij się, którą literę usłyszałeś. Powtórz całe pytanie, wyraźnie rozróżniając B i P." },
+    { title: "Poproś o wolniejsze literowanie", content: "Would you mind spelling that a little more slowly?", description: "Poproś uprzejmie o wolniejsze literowanie. Zwróć uwagę na płynność całego pytania." },
+    { title: "Potwierdź adres e-mail", content: "Let me read your email address back to make sure I have it right.", description: "Zapowiedz ponowne odczytanie adresu e-mail, żeby sprawdzić jego poprawność. Powtórz całe zdanie." }
+];
+
 const FIELD = "w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-violet-300/50";
 
 export default function AudioBlockForm({ block, setBlock }) {
@@ -15,6 +22,19 @@ export default function AudioBlockForm({ block, setBlock }) {
                 <div className="grid h-11 w-11 place-items-center rounded-xl bg-violet-400/15 text-xl text-violet-200"><BsHeadphones /></div>
                 <div><h3 className="font-black">Audio i ćwiczenie wymowy</h3><p className="text-sm text-gray-400">Uczeń odsłucha zwrot, nagra wypowiedź i otrzyma wynik.</p></div>
             </div>
+
+            <label className="block space-y-2">
+                <span className="font-semibold">Gotowe zwroty: alfabet w rozmowie</span>
+                <select value="" onChange={(event) => {
+                    const exercise = SPELLING_EXERCISES[Number(event.target.value)];
+                    if (event.target.value === "" || !exercise) return;
+                    setBlock((previous) => ({ ...previous, ...exercise, mediaType: "audio", mediaUrl: "", language: "en-GB" }));
+                }} className={FIELD}>
+                    <option value="">Wybierz zwrot do ćwiczenia…</option>
+                    {SPELLING_EXERCISES.map((exercise, index) => <option key={exercise.title} value={index}>{exercise.title}</option>)}
+                </select>
+                <span className="block text-xs text-slate-400">Wybór zastąpi tytuł, instrukcję i zwrot oraz usunie poprzedni adres audio. Zmiany zatwierdzisz przyciskiem „Zapisz zmiany”.</span>
+            </label>
 
             <label className="block space-y-2"><span className="font-semibold">Tytuł ćwiczenia</span><input value={block.title || ""} onChange={(event) => update("title", event.target.value)} placeholder="np. Przywitanie w kawiarni" className={FIELD} /></label>
             <label className="block space-y-2"><span className="font-semibold">Krótka instrukcja</span><textarea value={block.description || ""} onChange={(event) => update("description", event.target.value)} placeholder="Posłuchaj, a następnie powtórz całe zdanie." className={`${FIELD} min-h-24`} /></label>

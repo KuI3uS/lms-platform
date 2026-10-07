@@ -1,3 +1,5 @@
+import { speechText } from "./pronunciation.js";
+
 const FEMALE_NAMES = /\b(samantha|serena|karen|moira|tessa|victoria|susan|zira|hazel|aria|jenny|sonia|libby|ava|emma|michelle|sara|flo|shelley|kathy|zosia|paulina|katja|denise|elvira|female)\b/i;
 const MALE_NAMES = /\b(daniel|alex|david|mark|george|guy|ryan|james|andrew|brian|christopher|eric|roger|thomas|tomasz|marek|conrad|alvaro|male)\b/i;
 const QUALITY_NAMES = /\b(natural|neural|premium|enhanced|online)\b/i;
@@ -67,7 +69,7 @@ export function createDialogPlayer({ synthesis, Utterance, onState, startTimeout
             const character = characters.find((item) => item.id === turn.speakerId) || characters[0];
             const voice = selectDialogVoice(synthesis.getVoices(), language, character);
             if (!voice) { fail("no-voice", index); return; }
-            const utterance = new Utterance(turn.text);
+            const utterance = new Utterance(speechText(turn.text, language || "en-GB"));
             current = utterance; // Keep a reference until the utterance finishes.
             utterance.voice = voice;
             utterance.lang = voice.lang;

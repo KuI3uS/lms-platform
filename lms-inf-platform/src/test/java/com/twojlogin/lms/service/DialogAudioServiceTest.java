@@ -87,4 +87,16 @@ class DialogAudioServiceTest {
         verify(repository, never()).findByCacheKey(anyString());
         verify(client, never()).generate(anyString(), org.mockito.ArgumentMatchers.any());
     }
+
+    @Test
+    void sendsLetterNamesToNarratorAndSharesCacheWithTheirSpokenForm() {
+        when(repository.findByCacheKey(anyString())).thenReturn(Optional.empty());
+        when(client.generate("ay", VoiceGender.FEMALE)).thenReturn(new byte[]{1});
+
+        DialogAudioService.AudioResult letter = service.getOrCreate("A", "en-GB", VoiceGender.FEMALE);
+        DialogAudioService.AudioResult spoken = service.getOrCreate("ay", "en-GB", VoiceGender.FEMALE);
+
+        assertThat(letter.etag()).isEqualTo(spoken.etag());
+        verify(client, never()).generate("A", VoiceGender.FEMALE);
+    }
 }

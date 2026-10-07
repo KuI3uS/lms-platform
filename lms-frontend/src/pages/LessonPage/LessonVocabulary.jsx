@@ -4,15 +4,7 @@ import {
     languageAnswerScore,
     parseVocabularyContent
 } from "../../utils/languageInteractiveBlocks";
-
-function speakWithBrowser(text, language) {
-    if (!text || typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = language || "en-GB";
-    utterance.rate = 0.86;
-    window.speechSynthesis.speak(utterance);
-}
+import { speakWithBrowser } from "../../utils/browserSpeech";
 
 export default function LessonVocabulary({ block, onComplete }) {
     const config = useMemo(() => parseVocabularyContent(block.content), [block.content]);
