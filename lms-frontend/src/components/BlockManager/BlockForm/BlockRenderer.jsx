@@ -21,6 +21,10 @@ export default function BlockRenderer({
         case "WARNING":
         case "INFO":
         case "SUMMARY":
+
+            console.log(block);
+
+            console.log(block.type);
             return (
                 <TextBlockForm
                     block={block}
