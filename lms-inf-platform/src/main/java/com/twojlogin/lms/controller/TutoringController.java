@@ -7,7 +7,6 @@ import com.twojlogin.lms.repository.TutoringAvailabilityRepository;
 import com.twojlogin.lms.repository.TutoringBookingRepository;
 import com.twojlogin.lms.repository.UserRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,8 +55,7 @@ public class TutoringController {
 
     @PostMapping("/book")
     public TutoringBooking book(
-            @RequestBody TutoringBookRequest request,
-            Authentication authentication
+            @RequestBody TutoringBookRequest request
     ) {
         if (request.getStartTime() == null || request.getEndTime() == null) {
             throw new RuntimeException("Wybierz datę i godzinę korepetycji");
@@ -117,15 +115,6 @@ public class TutoringController {
 
         booking.setStatus(TutoringStatus.PENDING_PAYMENT);
         booking.setCreatedAt(LocalDateTime.now());
-
-        if (
-                authentication != null
-                        && authentication.isAuthenticated()
-                        && !(authentication instanceof AnonymousAuthenticationToken)
-        ) {
-            User user = userRepository.findByEmail(authentication.getName()).orElse(null);
-            booking.setStudent(user);
-        }
 
         return bookingRepository.save(booking);
     }
