@@ -30,7 +30,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./ForgotPassword";
 import ResetPassword from "./ResetPassword";
 import LandingPage from "./components/LandingPage";
-import TutoringPage from "./pages/TutoringPage";
 
 import AdminTutoringPage from "./pages/AdminTutoringPage";
 import TutoringBookingPage from "./pages/TutoringBookingPage";
@@ -67,7 +66,6 @@ export default function App() {
                     {/* ===== TEST ===== */}
                     <Route path="/test/:moduleId" element={<TestPage />} />
                     <Route path="/results" element={<ResultsPage />} />
-                    <Route path="/tutoring" element={<TutoringPage />} />
 
                     {/* ===== ADMIN ===== */}
                     <Route path="/admin" element={
