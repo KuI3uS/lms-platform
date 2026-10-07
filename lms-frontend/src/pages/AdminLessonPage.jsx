@@ -17,8 +17,6 @@ export default function AdminLessonPage() {
     });
 
     const [editingId, setEditingId] = useState(null);
-
-    // 🔥 TASK STATE
     const [taskForms, setTaskForms] = useState({});
     const [editingTaskId, setEditingTaskId] = useState({});
 
@@ -223,7 +221,7 @@ export default function AdminLessonPage() {
     return (
         <div className="max-w-4xl mx-auto text-white space-y-6">
 
-            <h1 className="text-3xl font-bold">📚 Admin Lekcje + Zadania</h1>
+            <h1 className="text-3xl font-bold">Admin Lekcje + Zadania</h1>
 
             {/* ===== FORM LEKCJI ===== */}
             <div className="bg-gray-800 p-6 rounded space-y-3">
@@ -253,7 +251,7 @@ export default function AdminLessonPage() {
                     onClick={editingId ? update : create}
                     className="bg-green-600 px-4 py-2 rounded"
                 >
-                    {editingId ? "💾 Zapisz" : "➕ Dodaj lekcję"}
+                    {editingId ? "Zapisz" : "Dodaj lekcję"}
                 </button>
 
             </div>
@@ -298,7 +296,7 @@ export default function AdminLessonPage() {
                                 </div>
                             ))}
 
-                            {/* ===== FORM TASKA ===== */}
+
                             <div className="bg-gray-800 p-4 rounded space-y-2">
 
                                 <textarea
@@ -336,8 +334,8 @@ export default function AdminLessonPage() {
                                     className="bg-green-600 px-4 py-2 rounded"
                                 >
                                     {editingTaskId[l.id]
-                                        ? "💾 Zapisz zadanie"
-                                        : "➕ Dodaj zadanie"}
+                                        ? "Zapisz zadanie"
+                                        : "Dodaj zadanie"}
                                 </button>
 
                             </div>

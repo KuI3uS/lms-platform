@@ -2,8 +2,10 @@ package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.entity.LessonSubmission;
 import com.twojlogin.lms.repository.LessonSubmissionRepository;
+import com.twojlogin.lms.util.ClassNameNormalizer;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -16,11 +18,6 @@ public class LessonSubmissionController {
 
     public LessonSubmissionController(LessonSubmissionRepository submissionRepository) {
         this.submissionRepository = submissionRepository;
-    }
-
-    @GetMapping
-    public List<LessonSubmission> getAll() {
-        return submissionRepository.findAllByOrderBySubmittedAtDesc();
     }
 
     @GetMapping("/{id}")
@@ -41,5 +38,35 @@ public class LessonSubmissionController {
         submission.setTeacherComment(updated.getTeacherComment());
 
         return submissionRepository.save(submission);
+    }
+
+    @GetMapping
+    public List<LessonSubmission> getAll(
+            @RequestParam(required = false) String className,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String status
+    ) {
+        if (className != null && !className.isBlank()) {
+            return submissionRepository.findByUserSchoolClassNameOrderBySubmittedAtDesc(
+                    ClassNameNormalizer.normalize(className)
+            );
+        }
+
+        if (email != null && !email.isBlank()) {
+            return submissionRepository.findByUserEmailContainingIgnoreCaseOrderBySubmittedAtDesc(email);
+        }
+
+        if (status != null && !status.isBlank()) {
+            return submissionRepository.findByStatusOrderBySubmittedAtDesc(status);
+        }
+
+        return submissionRepository.findAllByOrderBySubmittedAtDesc();
+    }
+
+    @GetMapping("/my-submissions")
+    public List<LessonSubmission> mySubmissions(Authentication authentication) {
+        String email = authentication.getName();
+
+        return submissionRepository.findByUserEmailOrderBySubmittedAtDesc(email);
     }
 }

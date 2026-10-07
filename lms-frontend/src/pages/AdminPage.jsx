@@ -12,7 +12,7 @@ export default function AdminPage() {
                     to="/admin/users"
                     className="bg-gray-800 p-6 rounded-xl hover:bg-gray-700 transition"
                 >
-                    👥 Użytkownicy
+                    Użytkownicy
                 </Link>
 
             </div>
