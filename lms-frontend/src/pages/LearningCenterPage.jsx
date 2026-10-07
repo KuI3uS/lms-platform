@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     BsAwardFill,
-    BsBagFill,
     BsBarChartFill,
     BsBookHalf,
     BsCheckCircleFill,
@@ -18,6 +17,7 @@ import {
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
 import { fetchLearningStats } from "../api/learningStats";
+import LeagueBadge from "../components/LeagueBadge";
 import { getCourseLanguageLabel } from "../utils/courseTaxonomy";
 
 const ANALYTICS_CACHE_TTL = 5 * 60_000;
@@ -148,14 +148,7 @@ export default function LearningCenterPage() {
         `/rewards/purchase/${item.code}`,
         item.type === "DISCOUNT"
             ? `Kupon ${item.discountPercent}% trafił do Twojego portfela.`
-            : item.type === "BOOSTER"
-                ? `Aktywowano ${item.title}.`
-                : `${item.title} jest już w Twojej kolekcji.`
-    );
-
-    const equipReward = (item) => updateRewardCenter(
-        `/rewards/equip/${item.code}`,
-        `Założono: ${item.title}.`
+            : `Aktywowano ${item.title}.`
     );
 
     if (loading) {
@@ -193,7 +186,7 @@ export default function LearningCenterPage() {
                         </div>
                         <h1 className="mt-4 max-w-3xl text-4xl font-black sm:text-6xl">Uczysz się. Awansujesz. Tworzysz.</h1>
                         <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-400">
-                            Klejnoty zdobywasz wyłącznie za realne ukończenie lekcji. Wymieniaj je na dodatki, boostery XP i kupony na kursy.
+                            Klejnoty zdobywasz wyłącznie za realne ukończenie lekcji. Wymieniaj je na boostery XP i kupony na kursy.
                         </p>
                         <div className="mt-7 flex flex-wrap gap-3">
                             <span className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 font-black text-cyan-100">
@@ -204,19 +197,12 @@ export default function LearningCenterPage() {
                             </span>
                         </div>
                     </div>
-                    <AvatarPreview
-                        avatar={rewards?.avatar || {
-                            outfit: stats?.equippedOutfit,
-                            accessory: stats?.equippedAccessory,
-                            aura: stats?.equippedAura,
-                            glowLevel: 0
-                        }}
-                        league={rewards?.league || {
-                            name: stats?.leagueName,
-                            color: stats?.leagueColor,
-                            symbol: stats?.leagueSymbol
-                        }}
-                    />
+                    <div className="relative mx-auto flex min-h-[260px] w-full max-w-[280px] flex-col items-center justify-center overflow-hidden rounded-[40px] border border-white/10 bg-black/20 p-7">
+                        <div className="absolute inset-10 rounded-full bg-orange-400/10 blur-3xl" />
+                        <LeagueBadge name={stats?.leagueName || "Miedź"} size="xl" className="relative" />
+                        <p className="relative mt-3 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Aktualna liga</p>
+                        <p className="relative mt-1 text-xl font-black">{stats?.leagueName || "Miedź"}</p>
+                    </div>
                 </div>
             </section>
 
@@ -274,15 +260,13 @@ export default function LearningCenterPage() {
                     <div className="rounded-3xl border p-6" style={{ borderColor: `${stats.leagueColor}33`, backgroundColor: `${stats.leagueColor}0d` }}>
                         <p className="text-xs font-black uppercase tracking-widest" style={{ color: stats.leagueColor }}>Liga pierwiastków</p>
                         <div className="mt-3 flex items-center gap-3">
-                            <span className="grid h-12 w-12 place-items-center rounded-2xl border text-lg font-black" style={{ borderColor: `${stats.leagueColor}55`, color: stats.leagueColor, boxShadow: `0 0 24px ${stats.leagueColor}22` }}>
-                                {stats.leagueSymbol}
-                            </span>
+                            <LeagueBadge name={stats.leagueName} size="sm" />
                             <p className="text-3xl font-black">{stats.leagueName}</p>
                         </div>
                         <p className="mt-4 text-sm leading-6 text-slate-400">
                             {stats.nextLeagueLevel
-                                ? `Następna liga od poziomu ${stats.nextLeagueLevel}. Awatar będzie świecić mocniej.`
-                                : "Najwyższa liga. Twój profil ma pełną poświatę Pryzmatu."}
+                                ? `Następna odznaka ligi od poziomu ${stats.nextLeagueLevel}.`
+                                : "Najwyższa liga i najrzadsza odznaka Pryzmatu."}
                         </p>
                     </div>
                 </section>
@@ -294,8 +278,6 @@ export default function LearningCenterPage() {
                     busy={rewardBusy}
                     message={rewardMessage}
                     onPurchase={purchaseReward}
-                    onEquip={equipReward}
-                    onReset={(code) => updateRewardCenter(`/rewards/equip/${code}`, "Przywrócono podstawowy wygląd.")}
                 />
             )}
 
@@ -453,55 +435,10 @@ function Stat({ icon, label, value, color }) {
     );
 }
 
-function AvatarPreview({ avatar = {}, league = {} }) {
-    const color = league.color || "#22d3ee";
-    const glow = Math.max(0, Number(avatar.glowLevel || 0));
-    const orbitOutfit = avatar.outfit === "OUTFIT_ORBIT";
-    const novaOutfit = avatar.outfit === "OUTFIT_NOVA";
-    const visor = avatar.accessory === "ACCESSORY_VISOR";
-    const headphones = avatar.accessory === "ACCESSORY_HEADPHONES";
-    const prismAura = avatar.aura === "AURA_PRISM";
-    const pulseAura = avatar.aura === "AURA_PULSE";
-
-    return (
-        <div className="mx-auto w-full max-w-[280px]">
-            <div
-                className={`relative grid aspect-square place-items-center overflow-hidden rounded-[42px] border bg-black/25 ${pulseAura ? "animate-pulse" : ""}`}
-                style={{
-                    borderColor: `${color}55`,
-                    boxShadow: glow > 0
-                        ? `0 0 ${18 + glow * 9}px ${color}${Math.min(80, 24 + glow * 8).toString(16).padStart(2, "0")}`
-                        : "none"
-                }}
-            >
-                <div className="absolute inset-7 rounded-full opacity-25 blur-2xl" style={{ background: prismAura ? "conic-gradient(#22d3ee,#a78bfa,#f472b6,#facc15,#22d3ee)" : color }} />
-                <div className="relative mt-4 flex flex-col items-center">
-                    {headphones && <div className="absolute top-5 h-16 w-24 rounded-t-full border-[7px] border-emerald-300/80 border-b-0" />}
-                    <div className="relative z-10 h-20 w-20 rounded-[28px] border-4 border-slate-950 bg-gradient-to-br from-slate-100 to-slate-400">
-                        <div className="absolute left-4 top-8 h-2 w-2 rounded-full bg-slate-900" />
-                        <div className="absolute right-4 top-8 h-2 w-2 rounded-full bg-slate-900" />
-                        {visor && <div className="absolute left-1.5 right-1.5 top-6 h-7 rounded-xl border border-cyan-200/70 bg-cyan-300/45 shadow-lg shadow-cyan-300/50" />}
-                    </div>
-                    <div className={`relative -mt-2 h-24 w-32 rounded-[32px_32px_20px_20px] border-4 border-slate-950 ${orbitOutfit ? "bg-gradient-to-br from-violet-400 via-indigo-600 to-slate-900" : novaOutfit ? "bg-gradient-to-br from-cyan-300 via-blue-500 to-blue-950" : "bg-gradient-to-br from-slate-500 to-slate-800"}`}>
-                        <span className="absolute left-1/2 top-5 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-xl border border-white/15 bg-black/25 text-sm font-black" style={{ color }}>
-                            {league.symbol || "C"}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <div className="mt-3 text-center">
-                <p className="text-xs font-black uppercase tracking-[0.2em]" style={{ color }}>Liga {league.name || "Węgiel"}</p>
-                <p className="mt-1 text-xs text-slate-600">Poświata rośnie wraz z poziomem</p>
-            </div>
-        </div>
-    );
-}
-
-function RewardShop({ rewards, busy, message, onPurchase, onEquip, onReset }) {
+function RewardShop({ rewards, busy, message, onPurchase }) {
     const groups = [
         { type: "DISCOUNT", title: "Kupony na kursy", description: "Jednorazowe zniżki kupowane za konsekwentną naukę." },
-        { type: "BOOSTER", title: "Boostery XP", description: "Przyspieszają rozwój poziomu, ale nie zwiększają liczby klejnotów." },
-        { type: "COSMETIC", title: "Atelier awatara", description: "Stroje, dodatki i aury widoczne na Twoim profilu." }
+        { type: "BOOSTER", title: "Boostery XP", description: "Przyspieszają rozwój poziomu, ale nie zwiększają liczby klejnotów." }
     ];
 
     return (
@@ -557,9 +494,7 @@ function RewardShop({ rewards, busy, message, onPurchase, onEquip, onReset }) {
 
             <div className="space-y-10 border-t border-white/[0.08] p-6 sm:p-8">
                 {groups.map((group) => {
-                    const items = rewards.catalog.filter((item) => group.type === "COSMETIC"
-                        ? ["OUTFIT", "ACCESSORY", "AURA"].includes(item.type)
-                        : item.type === group.type);
+                    const items = rewards.catalog.filter((item) => item.type === group.type);
                     return (
                         <div key={group.type}>
                             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -567,12 +502,6 @@ function RewardShop({ rewards, busy, message, onPurchase, onEquip, onReset }) {
                                     <h3 className="text-2xl font-black">{group.title}</h3>
                                     <p className="mt-1 text-sm text-slate-500">{group.description}</p>
                                 </div>
-                                {group.type === "COSMETIC" && (
-                                    <div className="flex gap-2">
-                                        <button type="button" disabled={Boolean(busy)} onClick={() => onReset("OUTFIT_CORE")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-slate-400 hover:text-white">Strój bazowy</button>
-                                        <button type="button" disabled={Boolean(busy)} onClick={() => onReset("AURA_NONE")} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-slate-400 hover:text-white">Bez aury</button>
-                                    </div>
-                                )}
                             </div>
                             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                                 {items.map((item) => (
@@ -582,7 +511,6 @@ function RewardShop({ rewards, busy, message, onPurchase, onEquip, onReset }) {
                                         gemBalance={rewards.gemBalance}
                                         busy={busy}
                                         onPurchase={onPurchase}
-                                        onEquip={onEquip}
                                     />
                                 ))}
                             </div>
@@ -596,21 +524,21 @@ function RewardShop({ rewards, busy, message, onPurchase, onEquip, onReset }) {
 
 function LeagueRoadmap({ currentLeague }) {
     const leagues = [
-        { name: "Węgiel", symbol: "C", level: "1–4", color: "#64748b" },
-        { name: "Miedź", symbol: "Cu", level: "5–9", color: "#f97316" },
-        { name: "Srebro", symbol: "Ag", level: "10–14", color: "#cbd5e1" },
-        { name: "Złoto", symbol: "Au", level: "15–24", color: "#facc15" },
-        { name: "Platyna", symbol: "Pt", level: "25–39", color: "#22d3ee" },
-        { name: "Kryształ", symbol: "Kr", level: "40–59", color: "#a78bfa" },
-        { name: "Pryzmat", symbol: "∞", level: "60+", color: "#f472b6" }
+        { name: "Miedź", level: "1–4", color: "#fb923c" },
+        { name: "Srebro", level: "5–9", color: "#e2e8f0" },
+        { name: "Złoto", level: "10–14", color: "#facc15" },
+        { name: "Platyna", level: "15–24", color: "#22d3ee" },
+        { name: "Kryształ", level: "25–39", color: "#a78bfa" },
+        { name: "Diament", level: "40–59", color: "#38bdf8" },
+        { name: "Pryzmat", level: "60+", color: "#f472b6" }
     ];
 
     return (
         <div className="border-t border-white/[0.08] px-6 py-7 sm:px-8">
             <div className="flex items-end justify-between gap-4">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">Droga pierwiastków</p>
-                    <h3 className="mt-2 text-xl font-black">Im wyższa liga, tym silniejsza poświata awatara</h3>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">Droga lig</p>
+                    <h3 className="mt-2 text-xl font-black">Każdy próg ma własną, coraz rzadszą odznakę</h3>
                 </div>
             </div>
             <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
@@ -618,7 +546,7 @@ function LeagueRoadmap({ currentLeague }) {
                     const active = currentLeague === league.name;
                     return (
                         <div key={league.name} className={`min-w-[132px] rounded-2xl border p-4 ${active ? "bg-white/[0.08]" : "bg-black/15 opacity-65"}`} style={{ borderColor: `${league.color}${active ? "77" : "22"}`, boxShadow: active ? `0 0 24px ${league.color}22` : "none" }}>
-                            <span className="grid h-9 w-9 place-items-center rounded-xl border text-xs font-black" style={{ borderColor: `${league.color}55`, color: league.color }}>{league.symbol}</span>
+                            <LeagueBadge name={league.name} size="md" muted={!active} />
                             <p className="mt-3 text-sm font-black" style={{ color: active ? league.color : undefined }}>{league.name}</p>
                             <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-600">Poziom {league.level}</p>
                         </div>
@@ -629,26 +557,20 @@ function LeagueRoadmap({ currentLeague }) {
     );
 }
 
-function RewardCard({ item, gemBalance, busy, onPurchase, onEquip }) {
-    const cosmetic = ["OUTFIT", "ACCESSORY", "AURA"].includes(item.type);
+function RewardCard({ item, gemBalance, busy, onPurchase }) {
     const canAfford = Number(gemBalance) >= item.cost;
-    const action = cosmetic && item.owned ? () => onEquip(item) : () => onPurchase(item);
-    const disabled = Boolean(busy) || !item.available || item.equipped || (!item.owned && !canAfford);
+    const disabled = Boolean(busy) || !item.available || !canAfford;
     const label = !item.available
         ? `Poziom ${item.requiredLevel}`
-        : item.equipped
-            ? "Założone"
-            : cosmetic && item.owned
-                ? "Załóż"
-                : !canAfford
-                    ? "Za mało klejnotów"
-                    : "Kup";
+        : !canAfford
+            ? "Za mało klejnotów"
+            : "Kup";
 
     return (
-        <article className={`group rounded-3xl border p-5 transition ${item.equipped ? "border-cyan-300/35 bg-cyan-300/[0.08]" : "border-white/[0.08] bg-black/20 hover:-translate-y-1 hover:border-white/20"}`}>
+        <article className="group rounded-3xl border border-white/[0.08] bg-black/20 p-5 transition hover:-translate-y-1 hover:border-white/20">
             <div className="flex items-start justify-between gap-4">
-                <span className={`grid h-12 w-12 place-items-center rounded-2xl text-xl ${item.type === "DISCOUNT" ? "bg-emerald-400/10 text-emerald-300" : item.type === "BOOSTER" ? "bg-violet-400/10 text-violet-300" : "bg-cyan-400/10 text-cyan-300"}`}>
-                    {item.type === "DISCOUNT" ? `${item.discountPercent}%` : item.type === "BOOSTER" ? <BsLightningChargeFill /> : <BsBagFill />}
+                <span className={`grid h-12 w-12 place-items-center rounded-2xl text-xl ${item.type === "DISCOUNT" ? "bg-emerald-400/10 text-emerald-300" : "bg-violet-400/10 text-violet-300"}`}>
+                    {item.type === "DISCOUNT" ? `${item.discountPercent}%` : <BsLightningChargeFill />}
                 </span>
                 {item.quantity > 0 && <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-black text-emerald-300">Masz {item.quantity}</span>}
             </div>
@@ -659,10 +581,10 @@ function RewardCard({ item, gemBalance, busy, onPurchase, onEquip }) {
                 <button
                     type="button"
                     disabled={disabled}
-                    onClick={action}
+                    onClick={() => onPurchase(item)}
                     className="rounded-xl bg-white px-4 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-600"
                 >
-                    {busy === `/rewards/purchase/${item.code}` || busy === `/rewards/equip/${item.code}` ? "Chwila…" : label}
+                    {busy === `/rewards/purchase/${item.code}` ? "Chwila…" : label}
                 </button>
             </div>
         </article>

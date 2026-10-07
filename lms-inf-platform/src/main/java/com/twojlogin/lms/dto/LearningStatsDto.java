@@ -26,10 +26,6 @@ public record LearningStatsDto(
         Instant xpBoostExpiresAt,
         String leagueName,
         String leagueColor,
-        String leagueSymbol,
-        Integer nextLeagueLevel,
-        String equippedOutfit,
-        String equippedAccessory,
-        String equippedAura
+        Integer nextLeagueLevel
 ) {
 }

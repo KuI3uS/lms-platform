@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch, logout } from "../api/api";
 import { fetchLearningStats, invalidateLearningStats } from "../api/learningStats";
+import LeagueBadge from "./LeagueBadge";
 import {
     BsBell,
     BsBoxArrowRight,
@@ -196,8 +197,15 @@ export default function Navbar({ onMenuClick }) {
                     <div className="hidden items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.08] px-3 py-2 text-xs font-black text-cyan-100 md:flex">
                         <BsGem className="text-cyan-300" /> {Number(learningStats.gemBalance || 0).toLocaleString("pl-PL")}
                     </div>
-                    <div className="hidden rounded-xl border px-3 py-2 text-xs font-black lg:block" style={{ borderColor: `${learningStats.leagueColor || "#60a5fa"}33`, color: learningStats.leagueColor || "#bfdbfe", backgroundColor: `${learningStats.leagueColor || "#60a5fa"}0d` }}>
-                        {learningStats.leagueSymbol || "C"} · {learningStats.leagueName || "Węgiel"} · L{learningStats.level || 1}
+                    <div
+                        title={`Liga ${learningStats.leagueName || "Miedź"} · poziom ${learningStats.level || 1}`}
+                        className="hidden items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.035] py-1 pl-1 pr-3 lg:flex"
+                    >
+                        <LeagueBadge name={learningStats.leagueName || "Miedź"} size="xs" />
+                        <span className="text-left leading-tight">
+                            <span className="block text-[10px] font-black uppercase tracking-wider text-slate-500">Liga</span>
+                            <span className="block text-xs font-black text-white">{learningStats.leagueName || "Miedź"}</span>
+                        </span>
                     </div>
                     <button
                         type="button"

@@ -66,11 +66,7 @@ public class LearningStatsService {
                 stats.xpBoostExpiresAt(),
                 stats.leagueName(),
                 stats.leagueColor(),
-                stats.leagueSymbol(),
-                stats.nextLeagueLevel(),
-                stats.equippedOutfit(),
-                stats.equippedAccessory(),
-                stats.equippedAura()
+                stats.nextLeagueLevel()
         );
     }
 

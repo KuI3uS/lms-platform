@@ -3,13 +3,10 @@ package com.twojlogin.lms.service;
 import com.twojlogin.lms.dto.RewardCenterDto;
 import com.twojlogin.lms.entity.GamificationProfile;
 import com.twojlogin.lms.entity.User;
-import com.twojlogin.lms.repository.AvatarItemOwnershipRepository;
 import com.twojlogin.lms.repository.GamificationProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,8 +25,6 @@ class RewardCenterServiceTest {
         GamificationService gamificationService = mock(GamificationService.class);
         GamificationProfileRepository profileRepository =
                 mock(GamificationProfileRepository.class);
-        AvatarItemOwnershipRepository ownershipRepository =
-                mock(AvatarItemOwnershipRepository.class);
         authentication = mock(Authentication.class);
 
         User user = new User();
@@ -45,13 +40,10 @@ class RewardCenterServiceTest {
         when(gamificationService.profileForUpdate(user)).thenReturn(profile);
         when(profileRepository.save(any(GamificationProfile.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        when(ownershipRepository.findByUserId(user.getId())).thenReturn(List.of());
-
         service = new RewardCenterService(
                 accessService,
                 gamificationService,
-                profileRepository,
-                ownershipRepository
+                profileRepository
         );
     }
 

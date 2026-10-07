@@ -61,15 +61,6 @@ public class GamificationProfile {
 
     private Instant xpBoostExpiresAt;
 
-    @Column(length = 60)
-    private String equippedOutfit = "OUTFIT_CORE";
-
-    @Column(length = 60)
-    private String equippedAccessory = "ACCESSORY_NONE";
-
-    @Column(length = 60)
-    private String equippedAura = "AURA_NONE";
-
     @Version
     private long version;
 
@@ -213,27 +204,4 @@ public class GamificationProfile {
         this.xpBoostExpiresAt = xpBoostExpiresAt;
     }
 
-    public String getEquippedOutfit() {
-        return equippedOutfit == null ? "OUTFIT_CORE" : equippedOutfit;
-    }
-
-    public void setEquippedOutfit(String equippedOutfit) {
-        this.equippedOutfit = equippedOutfit;
-    }
-
-    public String getEquippedAccessory() {
-        return equippedAccessory == null ? "ACCESSORY_NONE" : equippedAccessory;
-    }
-
-    public void setEquippedAccessory(String equippedAccessory) {
-        this.equippedAccessory = equippedAccessory;
-    }
-
-    public String getEquippedAura() {
-        return equippedAura == null ? "AURA_NONE" : equippedAura;
-    }
-
-    public void setEquippedAura(String equippedAura) {
-        this.equippedAura = equippedAura;
-    }
 }

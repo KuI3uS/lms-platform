@@ -27,12 +27,4 @@ public class RewardCenterController {
     ) {
         return rewardCenterService.purchase(itemCode, authentication);
     }
-
-    @PostMapping("/equip/{itemCode}")
-    public RewardCenterDto equip(
-            @PathVariable String itemCode,
-            Authentication authentication
-    ) {
-        return rewardCenterService.equip(itemCode, authentication);
-    }
 }

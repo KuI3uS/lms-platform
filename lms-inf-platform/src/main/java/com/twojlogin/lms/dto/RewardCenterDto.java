@@ -17,13 +17,11 @@ public record RewardCenterDto(
         int xpBoostPercent,
         Instant xpBoostExpiresAt,
         VoucherWalletDto vouchers,
-        AvatarDto avatar,
         List<RewardItemDto> catalog
 ) {
     public record LeagueDto(
             String name,
-            String color,
-            String symbol
+            String color
     ) {
     }
 
@@ -31,14 +29,6 @@ public record RewardCenterDto(
             int discount5,
             int discount10,
             int discount20
-    ) {
-    }
-
-    public record AvatarDto(
-            String outfit,
-            String accessory,
-            String aura,
-            int glowLevel
     ) {
     }
 
@@ -53,8 +43,6 @@ public record RewardCenterDto(
             int boostPercent,
             int boostHours,
             String visualStyle,
-            boolean owned,
-            boolean equipped,
             int quantity,
             boolean available
     ) {
