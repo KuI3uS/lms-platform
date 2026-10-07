@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../../api/api";
 
 const emptyLesson = {
@@ -14,34 +14,21 @@ const emptyLesson = {
 export default function useLessons(moduleId) {
 
     const [lessons, setLessons] = useState([]);
-
     const [lessonForm, setLessonForm] = useState(emptyLesson);
-
     const [editingLessonId, setEditingLessonId] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-    const [loading, setLoading] = useState(true);
+    const loadLessons = useCallback(async () => {
 
-    useEffect(() => {
-
-        if (!moduleId) {
-            return;
-        }
-
-        loadLessons();
-
-    }, [moduleId]);
-
-    async function loadLessons() {
+        if (!moduleId) return;
 
         try {
 
             setLoading(true);
 
-            const data = await apiFetch(
-                `/lessons/module/${moduleId}`
-            );
+            const data = await apiFetch(`/lessons/module/${moduleId}`);
 
-            setLessons(data || []);
+            setLessons(Array.isArray(data) ? data : []);
 
         } finally {
 
@@ -49,28 +36,30 @@ export default function useLessons(moduleId) {
 
         }
 
-    }
+    }, [moduleId]);
+
+    useEffect(() => {
+
+        loadLessons();
+
+    }, [loadLessons]);
 
     async function createLesson() {
 
         if (!lessonForm.title.trim()) {
 
             alert("Podaj nazwę lekcji.");
-
             return;
 
         }
 
-        await apiFetch(
-            `/lessons/module/${moduleId}`,
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    ...lessonForm,
-                    orderIndex: lessons.length
-                })
-            }
-        );
+        await apiFetch(`/lessons/module/${moduleId}`, {
+            method: "POST",
+            body: JSON.stringify({
+                ...lessonForm,
+                orderIndex: lessons.length + 1
+            })
+        });
 
         resetLessonForm();
 
@@ -80,17 +69,12 @@ export default function useLessons(moduleId) {
 
     async function updateLesson() {
 
-        if (!editingLessonId) {
-            return;
-        }
+        if (!editingLessonId) return;
 
-        await apiFetch(
-            `/lessons/${editingLessonId}`,
-            {
-                method: "PUT",
-                body: JSON.stringify(lessonForm)
-            }
-        );
+        await apiFetch(`/lessons/${editingLessonId}`, {
+            method: "PUT",
+            body: JSON.stringify(lessonForm)
+        });
 
         resetLessonForm();
 
@@ -104,12 +88,9 @@ export default function useLessons(moduleId) {
             return;
         }
 
-        await apiFetch(
-            `/lessons/${id}`,
-            {
-                method: "DELETE"
-            }
-        );
+        await apiFetch(`/lessons/${id}`, {
+            method: "DELETE"
+        });
 
         await loadLessons();
 
@@ -148,9 +129,11 @@ export default function useLessons(moduleId) {
         editingLessonId,
 
         loadLessons,
+
         createLesson,
         updateLesson,
         deleteLesson,
+
         editLesson,
         resetLessonForm
 
