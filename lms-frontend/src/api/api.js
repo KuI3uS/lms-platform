@@ -25,11 +25,20 @@ export async function apiFetch(url, options = {}) {
         throw new Error("Unauthorized");
     }
 
+    const text = await res.text();
+
+    console.log("API RESPONSE:", text);
+
     if (!res.ok) {
-        const text = await res.text();
         throw new Error(text || "Request failed");
     }
 
-    const text = await res.text();
-    return text ? JSON.parse(text) : null;
+    if (!text) return null;
+
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        console.error("JSON PARSE ERROR:", text);
+        throw e;
+    }
 }

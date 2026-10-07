@@ -1,8 +1,11 @@
 package com.twojlogin.lms.controller;
 
+import com.twojlogin.lms.dto.AnswerRequest;
 import com.twojlogin.lms.entity.CourseModule;
+import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.Task;
 import com.twojlogin.lms.repository.CourseModuleRepository;
+import com.twojlogin.lms.repository.LessonRepository;
 import com.twojlogin.lms.repository.TaskRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -14,73 +17,72 @@ import java.util.List;
 public class TaskController {
 
     private final TaskRepository taskRepository;
-    private final CourseModuleRepository moduleRepository;
+    private final LessonRepository lessonRepository;
 
     public TaskController(TaskRepository taskRepository,
-                          CourseModuleRepository moduleRepository) {
+                          LessonRepository lessonRepository) {
         this.taskRepository = taskRepository;
-        this.moduleRepository = moduleRepository;
+        this.lessonRepository = lessonRepository;
     }
 
+    // 🔥 CREATE
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/module/{moduleId}")
-    public Task create(@PathVariable Long moduleId,
+    @PostMapping("/lesson/{lessonId}")
+    public Task create(@PathVariable Long lessonId,
                        @RequestBody Task task) {
 
-        CourseModule module = moduleRepository.findById(moduleId)
-                .orElseThrow(() -> new RuntimeException("Module not found"));
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow();
 
-        task.setModule(module);
+        // 🔥 KLUCZOWE
+        int nextOrder = taskRepository.countByLessonId(lessonId);
+        task.setOrderIndex(nextOrder);
+
+        task.setLesson(lesson);
         return taskRepository.save(task);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/module/{moduleId}")
-    public List<Task> getByModule(@PathVariable Long moduleId) {
-        return taskRepository.findByModuleIdOrderByOrderIndexAsc(moduleId);
+    // 🔥 GET tasks
+    @GetMapping("/lesson/{lessonId}")
+    public List<Task> getByLesson(@PathVariable Long lessonId) {
+        return taskRepository.findByLessonIdOrderByOrderIndexAsc(lessonId);
     }
-
-    @GetMapping("/{id}")
-    public Task getOne(@PathVariable Long id) {
-        return taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-    }
-
+    // 🔥 DELETE
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         taskRepository.deleteById(id);
     }
 
-    @PostMapping("/{id}/check")
-    public boolean checkAnswer(@PathVariable Long id,
-                               @RequestBody String answer) {
-
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-
-        String expected = task.getExpectedAnswer().trim().toLowerCase();
-        String user = answer.trim().toLowerCase();
-
-        return expected.equals(user);
-    }
-
+    // 🔥 UPDATE
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public Task update(@PathVariable Long id, @RequestBody Task updated) {
+    public Task update(@PathVariable Long id,
+                       @RequestBody Task updated) {
 
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow();
 
-        task.setTitle(updated.getTitle());
-        task.setTheory(updated.getTheory());
-        task.setExample(updated.getExample());
         task.setTaskContent(updated.getTaskContent());
         task.setExpectedAnswer(updated.getExpectedAnswer());
-        task.setTaskType(updated.getTaskType());
-        task.setOrderIndex(updated.getOrderIndex());
 
         return taskRepository.save(task);
+    }
+
+    // 🔥 CHECK ANSWER
+    @PostMapping("/{id}/check")
+    public boolean checkAnswer(@PathVariable Long id,
+                               @RequestBody AnswerRequest request) {
+
+        Task task = taskRepository.findById(id)
+                .orElseThrow();
+
+        if (request.getAnswer() == null) return false;
+
+        String expected = task.getExpectedAnswer() == null ? "" : task.getExpectedAnswer();
+
+        return expected.trim()
+                .equalsIgnoreCase(request.getAnswer().trim());
     }
 
 }

@@ -7,7 +7,12 @@ import java.util.List;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    List<Task> findByModuleIdOrderByOrderIndexAsc(Long moduleId);
+    List<Task> findByLessonIdOrderByOrderIndexAsc(Long lessonId);
+    void deleteByLessonId(Long lessonId);
 
 
+
+
+    List<Task> findByLessonId(Long lessonId);
+    int countByLessonId(Long lessonId);
 }

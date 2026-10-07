@@ -4,7 +4,10 @@ import com.twojlogin.lms.entity.Course;
 import com.twojlogin.lms.entity.CourseModule;
 import com.twojlogin.lms.repository.CourseModuleRepository;
 import com.twojlogin.lms.repository.CourseRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 
@@ -35,5 +38,20 @@ public class CourseModuleController {
     @GetMapping("/course/{courseId}")
     public List<CourseModule> getByCourse(@PathVariable Long courseId) {
         return moduleRepository.findByCourseId(courseId);
+    }
+
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            moduleRepository.deleteById(id);
+            return ResponseEntity.ok().build();
+
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Nie możesz usunąć modułu — najpierw usuń zadania");
+        }
     }
 }
