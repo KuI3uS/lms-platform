@@ -5,6 +5,8 @@ import com.twojlogin.lms.entity.Submission;
 import com.twojlogin.lms.repository.SchoolClassRepository;
 import com.twojlogin.lms.repository.SubmissionRepository;
 import com.twojlogin.lms.repository.UserRepository;
+import com.twojlogin.lms.repository.LessonProgressRepository;
+import com.twojlogin.lms.repository.TaskAttemptRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,13 +25,19 @@ public class UserController {
     private final UserRepository userRepository;
     private final SubmissionRepository submissionRepository;
     private final SchoolClassRepository schoolClassRepository;
+    private final LessonProgressRepository lessonProgressRepository;
+    private final TaskAttemptRepository taskAttemptRepository;
 
     public UserController(UserRepository userRepository,
                           SubmissionRepository submissionRepository,
-                          SchoolClassRepository schoolClassRepository) {
+                          SchoolClassRepository schoolClassRepository,
+                          LessonProgressRepository lessonProgressRepository,
+                          TaskAttemptRepository taskAttemptRepository) {
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
         this.schoolClassRepository = schoolClassRepository;
+        this.lessonProgressRepository = lessonProgressRepository;
+        this.taskAttemptRepository = taskAttemptRepository;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -53,6 +61,8 @@ public class UserController {
     @Transactional
     public void deleteUser(@PathVariable Long id) {
         submissionRepository.deleteByUserId(id);
+        taskAttemptRepository.deleteByUserId(id);
+        lessonProgressRepository.deleteByUserId(id);
         userRepository.deleteById(id);
     }
 

@@ -23,11 +23,11 @@ export default function MonacoEditorBox({
 
             {/* Header */}
 
-            <div className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-white/10 backdrop-blur-xl">
+            <div className="relative z-10 flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4 backdrop-blur-xl sm:px-6">
 
                 <div className="flex items-center gap-4">
 
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
+                    <div className="hidden h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg sm:flex">
 
                         <BsCodeSlash
                             size={22}
@@ -54,7 +54,7 @@ export default function MonacoEditorBox({
 
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="hidden items-center gap-3 md:flex">
 
                     <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
 
@@ -92,7 +92,7 @@ export default function MonacoEditorBox({
 
             <Editor
 
-                height="600px"
+                height="min(600px, 65vh)"
 
                 language={language}
 

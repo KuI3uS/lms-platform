@@ -203,7 +203,7 @@ export default function TaskBlockForm({
 
                         <BsLightbulb />
 
-                        Podpowiedź
+                        Podstawowa podpowiedź (1. błędna próba)
 
                     </label>
 
@@ -211,6 +211,45 @@ export default function TaskBlockForm({
                         value={task.hint || ""}
                         onChange={(e)=>update("hint", e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-32"
+                        placeholder="Delikatnie naprowadź ucznia bez podawania gotowego rozwiązania."
+                    />
+
+                </div>
+
+                <div className="space-y-2">
+
+                    <label className="flex items-center gap-2 text-gray-300">
+
+                        <BsLightbulb />
+
+                        Dokładniejsza podpowiedź (od 2. błędnej próby)
+
+                    </label>
+
+                    <textarea
+                        value={task.detailedHint || ""}
+                        onChange={(e)=>update("detailedHint", e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-32"
+                        placeholder="Wskaż konkretny fragment, składnię albo kolejny krok rozwiązania."
+                    />
+
+                </div>
+
+                <div className="space-y-2">
+
+                    <label className="flex items-center gap-2 text-gray-300">
+
+                        <BsCheckCircle />
+
+                        Wyjaśnienie rozwiązania (od 4. błędnej próby)
+
+                    </label>
+
+                    <textarea
+                        value={task.solutionExplanation || ""}
+                        onChange={(e)=>update("solutionExplanation", e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-36"
+                        placeholder="Wyjaśnij, dlaczego poprawne rozwiązanie działa. System pokaże wtedy również przykładowy kod."
                     />
 
                 </div>

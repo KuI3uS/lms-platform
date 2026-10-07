@@ -50,6 +50,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/tasks/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/questions/**").authenticated()
 
+                        // STUDENT LESSON PROGRESS
+                        .requestMatchers(HttpMethod.POST, "/api/lessons/*/complete").authenticated()
+
 
                         // ADMIN WRITE
                         .requestMatchers(HttpMethod.POST, "/api/courses/**").hasRole("ADMIN")

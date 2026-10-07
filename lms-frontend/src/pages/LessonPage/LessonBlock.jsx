@@ -5,11 +5,12 @@ import LessonTask from "./LessonTask";
 
 export default function LessonBlock({
                                         block,
-                                        blocks,
                                         answers,
-                                        setAnswers,
                                         results,
-                                        checkTask
+                                        checkingTaskId,
+                                        onAnswerChange,
+                                        onReset,
+                                        onCheck
                                     }) {
 
     if (!block) {
@@ -40,9 +41,11 @@ export default function LessonBlock({
                 <LessonTask
                     block={block}
                     answers={answers}
-                    setAnswers={setAnswers}
-                    results={results}
-                    checkTask={checkTask}
+                    result={results[block.id]}
+                    checking={checkingTaskId === block.id}
+                    onAnswerChange={onAnswerChange}
+                    onReset={onReset}
+                    onCheck={onCheck}
                 />
             );
 

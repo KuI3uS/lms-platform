@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../../api/api";
 
@@ -8,376 +8,297 @@ import LessonBlock from "./LessonBlock";
 import LessonFooter from "./LessonFooter";
 
 export default function LessonPage() {
-
     const { lessonId } = useParams();
     const navigate = useNavigate();
 
     const [lesson, setLesson] = useState(null);
     const [blocks, setBlocks] = useState([]);
     const [moduleLessons, setModuleLessons] = useState([]);
-
     const [selectedBlock, setSelectedBlock] = useState(null);
 
     const [answers, setAnswers] = useState({});
     const [results, setResults] = useState({});
+    const [checkingTaskId, setCheckingTaskId] = useState(null);
+    const [finishing, setFinishing] = useState(false);
+    const [finishResult, setFinishResult] = useState(null);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-
-        loadLesson();
-
-    }, [lessonId]);
-
-    async function loadLesson() {
-
+    const loadLesson = useCallback(async () => {
         try {
-
             setLoading(true);
-
+            setError(null);
             setLesson(null);
             setBlocks([]);
             setModuleLessons([]);
             setSelectedBlock(null);
-
             setAnswers({});
             setResults({});
+            setFinishResult(null);
 
-            const lessonData =
-                await apiFetch(`/lessons/${lessonId}`);
-
+            const lessonData = await apiFetch(`/lessons/${lessonId}`);
             setLesson(lessonData);
 
             if (lessonData?.moduleId) {
-
-                const lessons =
-                    await apiFetch(`/lessons/module/${lessonData.moduleId}`);
-
+                const lessons = await apiFetch(`/lessons/module/${lessonData.moduleId}`);
                 const mapped = await Promise.all(
-
-                    lessons.map(async lesson => {
-
+                    lessons.map(async moduleLesson => {
                         try {
-
-                            const canAccess =
-                                await apiFetch(`/lessons/${lesson.id}/access`);
-
-                            return {
-                                ...lesson,
-                                canAccess
-                            };
-
+                            const canAccess = await apiFetch(`/lessons/${moduleLesson.id}/access`);
+                            return { ...moduleLesson, canAccess };
                         } catch {
-
-                            return {
-                                ...lesson,
-                                canAccess: false
-                            };
-
+                            return { ...moduleLesson, canAccess: false };
                         }
-
                     })
-
                 );
 
                 setModuleLessons(
-                    mapped.sort(
-                        (a, b) =>
-                            (a.orderIndex ?? 0) -
-                            (b.orderIndex ?? 0)
-                    )
+                    mapped.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
                 );
-
             }
 
-            const lessonBlocks =
-                await apiFetch(`/lesson-blocks/lesson/${lessonId}`);
-
-            const sorted =
-                [...lessonBlocks].sort(
-                    (a, b) =>
-                        (a.orderIndex ?? 0) -
-                        (b.orderIndex ?? 0)
-                );
+            const lessonBlocks = await apiFetch(`/lesson-blocks/lesson/${lessonId}`);
+            const sorted = [...lessonBlocks].sort(
+                (a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
+            );
 
             setBlocks(sorted);
-
             setSelectedBlock(sorted[0] || null);
 
             const initialAnswers = {};
-
             sorted
-                .filter(b => b.type === "TASK")
+                .filter(block => block.type === "TASK")
                 .forEach(block => {
-
-                    initialAnswers[block.id] =
-                        block.starterCode || "";
-
+                    initialAnswers[block.id] = block.starterCode || "";
                 });
-
             setAnswers(initialAnswers);
-
-        }
-
-        catch (e) {
-
-            console.error(e);
-
-            setError(e.message);
-
-        }
-
-        finally {
-
+        } catch (requestError) {
+            console.error(requestError);
+            setError(requestError.message);
+        } finally {
             setLoading(false);
-
         }
+    }, [lessonId]);
 
+    useEffect(() => {
+        // Pobranie danych po zmianie identyfikatora lekcji jest właściwym użyciem efektu.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadLesson();
+    }, [loadLesson]);
+
+    function markLessonCompleted() {
+        setModuleLessons(previous => {
+            const currentIndex = previous.findIndex(
+                item => Number(item.id) === Number(lessonId)
+            );
+
+            return previous.map((item, index) => ({
+                ...item,
+                completed: index === currentIndex ? true : item.completed,
+                canAccess: index === currentIndex + 1 ? true : item.canAccess
+            }));
+        });
+    }
+
+    function updateAnswer(blockId, value) {
+        setAnswers(previous => ({ ...previous, [blockId]: value }));
+        setResults(previous => {
+            if (!(blockId in previous)) return previous;
+            const next = { ...previous };
+            delete next[blockId];
+            return next;
+        });
+        setFinishResult(null);
+    }
+
+    function resetTask(block) {
+        updateAnswer(block.id, block.starterCode || "");
     }
 
     async function checkTask(blockId) {
-
         try {
+            setCheckingTaskId(blockId);
 
-            const result =
-                await apiFetch(`/lesson-blocks/${blockId}/check`, {
-
-                    method: "POST",
-
-                    body: JSON.stringify({
-
-                        answer: answers[blockId] || ""
-
-                    })
-
-                });
-
-            setResults(prev => ({
-
-                ...prev,
-
-                [blockId]:
-                    typeof result === "boolean"
-                        ? result
-                        : result.correct
-
-            }));
-
-        }
-
-        catch (e) {
-
-            console.error(e);
-
-            alert("Nie udało się sprawdzić zadania.");
-
-        }
-
-    }
-
-    async function submitLesson() {
-
-        try {
-
-            const taskBlocks =
-                blocks.filter(
-                    b => b.type === "TASK"
-                );
-
-            await apiFetch("/lesson-submit", {
-
+            const response = await apiFetch(`/lesson-blocks/${blockId}/check`, {
                 method: "POST",
-
-                body: JSON.stringify({
-
-                    lessonId: Number(lessonId),
-
-                    lessonTitle: lesson.title,
-
-                    answers: taskBlocks.map(block => ({
-
-                        taskId: block.id,
-
-                        taskContent: block.instruction,
-
-                        studentAnswer:
-                            answers[block.id] || ""
-
-                    }))
-
-                })
-
+                body: JSON.stringify({ answer: answers[blockId] || "" })
             });
 
-            await apiFetch(
-                `/lessons/${lessonId}/complete`,
-                {
-                    method: "POST"
+            const normalizedResponse = typeof response === "boolean"
+                ? {
+                    correct: response,
+                    message: response
+                        ? "Świetnie — rozwiązanie jest poprawne."
+                        : "Rozwiązanie wymaga poprawy.",
+                    attemptCount: 1,
+                    hintLevel: 0,
+                    diagnostics: []
                 }
-            );
+                : response;
 
-            alert("Lekcja ukończona.");
+            setResults(previous => ({ ...previous, [blockId]: normalizedResponse }));
 
-            loadLesson();
+            if (normalizedResponse.lessonCompleted) {
+                markLessonCompleted();
+            }
 
+            return normalizedResponse;
+        } catch (requestError) {
+            console.error(requestError);
+            const failure = {
+                correct: false,
+                message: requestError.message || "Nie udało się sprawdzić zadania.",
+                diagnostics: [],
+                error: true
+            };
+            setResults(previous => ({ ...previous, [blockId]: failure }));
+            return failure;
+        } finally {
+            setCheckingTaskId(null);
         }
+    }
 
-        catch (e) {
+    async function finishLesson() {
+        const taskBlocks = blocks.filter(block => block.type === "TASK");
 
-            console.error(e);
+        try {
+            setFinishing(true);
+            setFinishResult(null);
 
-            alert("Nie udało się wysłać lekcji.");
+            if (taskBlocks.length === 0) {
+                await apiFetch(`/lessons/${lessonId}/complete`, { method: "POST" });
+                markLessonCompleted();
+                setFinishResult({
+                    success: true,
+                    message: "Lekcja została ukończona.",
+                    summary: "Postęp modułu został zaktualizowany."
+                });
+                return;
+            }
 
+            const checkedResults = [];
+
+            for (const block of taskBlocks) {
+                const currentResult = results[block.id];
+                const result = currentResult?.correct
+                    ? currentResult
+                    : await checkTask(block.id);
+                checkedResults.push({ block, result });
+            }
+
+            const incorrect = checkedResults.filter(item => !item.result?.correct);
+            const correctCount = checkedResults.length - incorrect.length;
+
+            if (incorrect.length > 0) {
+                setSelectedBlock(incorrect[0].block);
+                setFinishResult({
+                    success: false,
+                    message: `Popraw ${incorrect.length} ${incorrect.length === 1 ? "zadanie" : "zadania"} i spróbuj ponownie.`,
+                    summary: `Poprawne odpowiedzi: ${correctCount} / ${checkedResults.length}. Pierwsze błędne zadanie zostało otwarte.`
+                });
+                return;
+            }
+
+            await apiFetch(`/lessons/${lessonId}/complete`, { method: "POST" });
+            markLessonCompleted();
+            setFinishResult({
+                success: true,
+                message: "Wszystkie odpowiedzi są poprawne. Lekcja została ukończona!",
+                summary: `Poprawne odpowiedzi: ${correctCount} / ${checkedResults.length}. Postęp modułu został zaktualizowany.`
+            });
+        } catch (requestError) {
+            console.error(requestError);
+            setFinishResult({
+                success: false,
+                message: "Nie udało się zakończyć rozwiązania.",
+                summary: requestError.message
+            });
+        } finally {
+            setFinishing(false);
         }
-
     }
 
     function goBack() {
-
-        if (lesson?.moduleId) {
-
-            navigate(`/lessons/${lesson.moduleId}`);
-
-        }
-
-        else {
-
-            navigate("/courses");
-
-        }
-
+        navigate(lesson?.moduleId ? `/lessons/${lesson.moduleId}` : "/courses");
     }
 
     if (loading) {
-
         return (
-
-            <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-
-                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"/>
-
+            <div className="flex min-h-screen items-center justify-center bg-gray-950">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"/>
             </div>
-
         );
-
     }
 
     if (error) {
-
         return (
-
-            <div className="min-h-screen bg-gray-950 p-8 text-red-400">
-
-                {error}
-
+            <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-gray-950 p-8 text-center text-red-400">
+                <p>{error}</p>
+                <button
+                    type="button"
+                    onClick={loadLesson}
+                    className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700"
+                >
+                    Spróbuj ponownie
+                </button>
             </div>
-
         );
-
     }
 
     if (!lesson) return null;
 
-    const currentIndex =
-        moduleLessons.findIndex(
-            l => Number(l.id) === Number(lessonId)
-        );
-
-    const previousLesson =
-        currentIndex > 0
-            ? moduleLessons[currentIndex - 1]
-            : null;
-
-    const nextLesson =
-        currentIndex < moduleLessons.length - 1
-            ? moduleLessons[currentIndex + 1]
-            : null;
+    const currentIndex = moduleLessons.findIndex(
+        item => Number(item.id) === Number(lessonId)
+    );
+    const previousLesson = currentIndex > 0 ? moduleLessons[currentIndex - 1] : null;
+    const nextLesson = currentIndex >= 0 && currentIndex < moduleLessons.length - 1
+        ? moduleLessons[currentIndex + 1]
+        : null;
+    const hasTasks = blocks.some(block => block.type === "TASK");
 
     return (
-
         <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(147,51,234,0.15),transparent_35%),#030712] text-white">
-
-            <div className="max-w-7xl mx-auto p-6 space-y-6">
-
+            <div className="mx-auto max-w-7xl space-y-6 p-3 sm:p-6">
                 <LessonHero
-
                     lesson={lesson}
-
                     moduleLessons={moduleLessons}
-
                     onBack={goBack}
-
                 />
 
-                <div className="grid xl:grid-cols-[320px_1fr] gap-6">
-
+                <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
                     <LessonSidebar
-
                         blocks={blocks}
-
                         selectedBlock={selectedBlock}
-
                         setSelectedBlock={setSelectedBlock}
-
                         moduleLessons={moduleLessons}
-
                         currentLessonId={lessonId}
-
                     />
 
-                    <main className="space-y-6">
-
+                    <main className="min-w-0 space-y-6">
                         <LessonBlock
-
                             block={selectedBlock}
-
-                            blocks={blocks}
-
                             answers={answers}
-
-                            setAnswers={setAnswers}
-
                             results={results}
-
-                            checkTask={checkTask}
-
+                            checkingTaskId={checkingTaskId}
+                            onAnswerChange={updateAnswer}
+                            onReset={resetTask}
+                            onCheck={checkTask}
                         />
 
                         <LessonFooter
-
-                            hasTasks={
-                                blocks.some(
-                                    b => b.type === "TASK"
-                                )
-                            }
-
-                            onSubmit={submitLesson}
-
+                            hasTasks={hasTasks}
+                            onFinish={finishLesson}
+                            finishing={finishing}
+                            finishResult={finishResult}
                             previousLesson={previousLesson}
-
                             nextLesson={nextLesson}
-
-                            onPrevious={() =>
-                                previousLesson &&
-                                navigate(`/lesson/${previousLesson.id}`)
-                            }
-
-                            onNext={() =>
-                                nextLesson &&
-                                navigate(`/lesson/${nextLesson.id}`)
-                            }
-
+                            onPrevious={() => previousLesson && navigate(`/lesson/${previousLesson.id}`)}
+                            onNext={() => nextLesson?.canAccess && navigate(`/lesson/${nextLesson.id}`)}
                         />
-
                     </main>
-
                 </div>
-
             </div>
-
         </div>
-
     );
-
 }

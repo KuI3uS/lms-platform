@@ -14,6 +14,8 @@ const emptyBlock = {
     starterCode: "",
     expectedAnswer: "",
     hint: "",
+    detailedHint: "",
+    solutionExplanation: "",
 
     language: "java",
 
