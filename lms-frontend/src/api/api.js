@@ -1,4 +1,5 @@
-const API_URL = "https://lms-platform-1-dcxg.onrender.com/api";
+export const API_URL = import.meta.env.VITE_API_URL
+    || "https://lms-platform-1-dcxg.onrender.com/api";
 
 export function getToken() {
     return localStorage.getItem("token");
@@ -27,10 +28,15 @@ export async function apiFetch(url, options = {}) {
 
     const text = await res.text();
 
-    console.log("API RESPONSE:", text);
-
     if (!res.ok) {
-        throw new Error(text || "Request failed");
+        let message = text || "Request failed";
+        try {
+            const errorBody = JSON.parse(text);
+            message = errorBody.message || errorBody.error || message;
+        } catch {
+            // Odpowiedź błędu nie musi być JSON-em.
+        }
+        throw new Error(message);
     }
 
     if (!text) return null;

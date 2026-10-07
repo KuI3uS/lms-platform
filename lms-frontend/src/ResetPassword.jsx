@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { API_URL } from "./api/api";
 
 export default function ResetPassword() {
     const [params] = useSearchParams();
@@ -17,7 +18,7 @@ export default function ResetPassword() {
         try {
             setLoading(true);
 
-            const res = await fetch("https://lms-platform-1-dcxg.onrender.com/api/auth/reset-password", {
+            const res = await fetch(`${API_URL}/auth/reset-password`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

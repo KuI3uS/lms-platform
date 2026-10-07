@@ -1,5 +1,7 @@
 package com.twojlogin.lms.controller;
 
+import com.twojlogin.lms.dto.LessonSubmissionDto;
+import com.twojlogin.lms.dto.LessonSubmissionUpdateRequest;
 import com.twojlogin.lms.entity.LessonSubmission;
 import com.twojlogin.lms.repository.LessonSubmissionRepository;
 import com.twojlogin.lms.util.ClassNameNormalizer;
@@ -23,23 +25,23 @@ public class LessonSubmissionController {
     }
 
     @GetMapping("/{id}")
-    public LessonSubmission getOne(@PathVariable Long id) {
-        return submissionRepository.findById(id).orElseThrow();
+    public LessonSubmissionDto getOne(@PathVariable Long id) {
+        return LessonSubmissionDto.forAdmin(submissionRepository.findById(id).orElseThrow());
     }
 
     @PutMapping("/{id}")
-    public LessonSubmission update(
+    public LessonSubmissionDto update(
             @PathVariable Long id,
-            @RequestBody LessonSubmission updated
+            @RequestBody LessonSubmissionUpdateRequest updated
     ) {
         LessonSubmission submission = submissionRepository.findById(id)
                 .orElseThrow();
 
-        submission.setStatus(updated.getStatus());
-        submission.setGrade(updated.getGrade());
-        submission.setTeacherComment(updated.getTeacherComment());
+        submission.setStatus(updated.status());
+        submission.setGrade(updated.grade());
+        submission.setTeacherComment(updated.teacherComment());
 
-        return submissionRepository.save(submission);
+        return LessonSubmissionDto.forAdmin(submissionRepository.save(submission));
     }
 
     @DeleteMapping("/{id}")
@@ -48,32 +50,36 @@ public class LessonSubmissionController {
     }
 
     @GetMapping
-    public List<LessonSubmission> getAll(
+    public List<LessonSubmissionDto> getAll(
             @RequestParam(required = false) String className,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String status
     ) {
         if (className != null && !className.isBlank()) {
-            return submissionRepository.findByUserSchoolClassNameOrderBySubmittedAtDesc(
+            return toAdminDtos(submissionRepository.findByUserSchoolClassNameOrderBySubmittedAtDesc(
                     ClassNameNormalizer.normalize(className)
-            );
+            ));
         }
 
         if (email != null && !email.isBlank()) {
-            return submissionRepository.findByUserEmailContainingIgnoreCaseOrderBySubmittedAtDesc(email);
+            return toAdminDtos(submissionRepository.findByUserEmailContainingIgnoreCaseOrderBySubmittedAtDesc(email));
         }
 
         if (status != null && !status.isBlank()) {
-            return submissionRepository.findByStatusOrderBySubmittedAtDesc(status);
+            return toAdminDtos(submissionRepository.findByStatusOrderBySubmittedAtDesc(status));
         }
 
-        return submissionRepository.findAllByOrderBySubmittedAtDesc();
+        return toAdminDtos(submissionRepository.findAllByOrderBySubmittedAtDesc());
     }
 
     @GetMapping("/my-submissions")
-    public List<LessonSubmission> mySubmissions(Authentication authentication) {
+    public List<LessonSubmissionDto> mySubmissions(Authentication authentication) {
         String email = authentication.getName();
 
-        return submissionRepository.findByUserEmailOrderBySubmittedAtDesc(email);
+        return toAdminDtos(submissionRepository.findByUserEmailOrderBySubmittedAtDesc(email));
+    }
+
+    private List<LessonSubmissionDto> toAdminDtos(List<LessonSubmission> submissions) {
+        return submissions.stream().map(LessonSubmissionDto::forAdmin).toList();
     }
 }

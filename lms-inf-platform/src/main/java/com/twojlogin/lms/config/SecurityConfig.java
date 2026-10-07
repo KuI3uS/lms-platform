@@ -11,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.PermissionsPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 @Configuration
 @EnableMethodSecurity
@@ -32,6 +34,18 @@ public class SecurityConfig {
         http
                 .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+                        ))
+                        .frameOptions(frame -> frame.deny())
+                        .referrerPolicy(referrer -> referrer.policy(
+                                ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER
+                        ))
+                        .addHeaderWriter(new PermissionsPolicyHeaderWriter(
+                                "camera=(), microphone=(), geolocation=()"
+                        ))
+                )
                 .authorizeHttpRequests(auth -> auth
 
                         // AUTH
@@ -86,6 +100,7 @@ public class SecurityConfig {
                         // ADMIN ONLY
 
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/class/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/submissions/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/tutoring/**").hasRole("ADMIN")
 

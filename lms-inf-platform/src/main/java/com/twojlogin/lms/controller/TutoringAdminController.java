@@ -1,6 +1,8 @@
 package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.AvailabilityRequest;
+import com.twojlogin.lms.dto.TutoringAvailabilityDto;
+import com.twojlogin.lms.dto.TutoringBookingDto;
 import com.twojlogin.lms.entity.TutoringAvailability;
 import com.twojlogin.lms.entity.TutoringBooking;
 import com.twojlogin.lms.repository.TutoringAvailabilityRepository;
@@ -24,7 +26,7 @@ public class TutoringAdminController {
     }
 
     @PostMapping("/availability")
-    public TutoringAvailability create(
+    public TutoringAvailabilityDto create(
             @RequestBody AvailabilityRequest request
     ) {
 
@@ -34,12 +36,14 @@ public class TutoringAdminController {
         availability.setStartTime(request.getStartTime());
         availability.setEndTime(request.getEndTime());
 
-        return availabilityRepository.save(availability);
+        return TutoringAvailabilityDto.from(availabilityRepository.save(availability));
     }
     @GetMapping("/availability")
-    public List<TutoringAvailability> all() {
+    public List<TutoringAvailabilityDto> all() {
         return availabilityRepository
-                .findByAvailableTrueOrderByStartTimeAsc();
+                .findByAvailableTrueOrderByStartTimeAsc().stream()
+                .map(TutoringAvailabilityDto::from)
+                .toList();
     }
     @DeleteMapping("/availability/{id}")
     public void delete(@PathVariable Long id) {
@@ -47,7 +51,9 @@ public class TutoringAdminController {
     }
 
     @GetMapping("/bookings")
-    public List<TutoringBooking> bookings() {
-        return bookingRepository.findAllByOrderByStartTimeAsc();
+    public List<TutoringBookingDto> bookings() {
+        return bookingRepository.findAllByOrderByStartTimeAsc().stream()
+                .map(TutoringBookingDto::from)
+                .toList();
     }
 }

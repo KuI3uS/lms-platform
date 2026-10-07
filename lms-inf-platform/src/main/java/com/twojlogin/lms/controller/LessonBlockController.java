@@ -61,7 +61,7 @@ public class LessonBlockController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/lesson/{lessonId}")
-    public LessonBlock create(
+    public LessonBlockDto create(
             @PathVariable Long lessonId,
             @RequestBody LessonBlock block
     ) {
@@ -87,12 +87,12 @@ public class LessonBlockController {
             block.setPoints(0);
         }
 
-        return blockRepository.save(block);
+        return LessonBlockDto.from(blockRepository.save(block), true);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public LessonBlock update(
+    public LessonBlockDto update(
             @PathVariable Long id,
             @RequestBody LessonBlock updated
     ) {
@@ -129,7 +129,7 @@ public class LessonBlockController {
         block.setPublished(updated.getPublished());
         block.setPoints(updated.getPoints());
 
-        return blockRepository.save(block);
+        return LessonBlockDto.from(blockRepository.save(block), true);
     }
 
     @Transactional

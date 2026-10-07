@@ -1,6 +1,6 @@
 package com.twojlogin.lms.controller;
 
-import com.twojlogin.lms.entity.LessonSubmission;
+import com.twojlogin.lms.dto.LessonSubmissionDto;
 import com.twojlogin.lms.repository.LessonSubmissionRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +20,10 @@ public class StudentSubmissionController {
     }
 
     @GetMapping("/my")
-    public List<LessonSubmission> mySubmissions(Authentication authentication) {
-        return submissionRepository.findByUserEmailOrderBySubmittedAtDesc(authentication.getName());
+    public List<LessonSubmissionDto> mySubmissions(Authentication authentication) {
+        return submissionRepository.findByUserEmailOrderBySubmittedAtDesc(authentication.getName())
+                .stream()
+                .map(LessonSubmissionDto::forStudent)
+                .toList();
     }
 }

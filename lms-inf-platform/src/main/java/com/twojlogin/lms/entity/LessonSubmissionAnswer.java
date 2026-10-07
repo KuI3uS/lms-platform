@@ -22,6 +22,7 @@ public class LessonSubmissionAnswer {
 
     @Lob
     @Column(columnDefinition = "TEXT")
+    @JsonIgnore
     private String expectedAnswer;
 
     private Boolean correct;

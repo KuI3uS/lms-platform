@@ -1,6 +1,7 @@
 package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.CreateQuestionRequest;
+import com.twojlogin.lms.dto.QuestionDto;
 import com.twojlogin.lms.entity.Answer;
 import com.twojlogin.lms.entity.CourseModule;
 import com.twojlogin.lms.entity.Question;
@@ -26,7 +27,7 @@ public class QuestionController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/module/{moduleId}")
-    public Question create(@PathVariable Long moduleId,
+    public QuestionDto create(@PathVariable Long moduleId,
                            @RequestBody CreateQuestionRequest request) {
 
         CourseModule module = moduleRepository.findById(moduleId)
@@ -46,12 +47,14 @@ public class QuestionController {
 
         question.setAnswers(answers);
 
-        return questionRepository.save(question);
+        return QuestionDto.from(questionRepository.save(question));
     }
 
     @GetMapping("/module/{moduleId}")
-    public List<Question> getByModule(@PathVariable Long moduleId) {
-        return questionRepository.findByModuleId(moduleId);
+    public List<QuestionDto> getByModule(@PathVariable Long moduleId) {
+        return questionRepository.findByModuleId(moduleId).stream()
+                .map(QuestionDto::from)
+                .toList();
     }
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")

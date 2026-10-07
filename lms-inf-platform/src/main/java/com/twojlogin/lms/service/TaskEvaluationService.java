@@ -383,8 +383,10 @@ public class TaskEvaluationService {
                 .orElseGet(LessonProgress::new);
         progress.setUser(user);
         progress.setLesson(lesson);
+        if (!progress.isCompleted() || progress.getCompletedAt() == null) {
+            progress.setCompletedAt(LocalDateTime.now());
+        }
         progress.setCompleted(true);
-        progress.setCompletedAt(LocalDateTime.now());
         lessonProgressRepository.save(progress);
 
         return true;

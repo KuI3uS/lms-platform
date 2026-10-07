@@ -1,7 +1,9 @@
 package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.entity.Role;
-import com.twojlogin.lms.entity.Submission;
+import com.twojlogin.lms.dto.AuthenticatedUserDto;
+import com.twojlogin.lms.dto.SubmissionResultDto;
+import com.twojlogin.lms.dto.UserDto;
 import com.twojlogin.lms.repository.SchoolClassRepository;
 import com.twojlogin.lms.repository.SubmissionRepository;
 import com.twojlogin.lms.repository.UserRepository;
@@ -9,9 +11,8 @@ import com.twojlogin.lms.repository.LessonProgressRepository;
 import com.twojlogin.lms.repository.TaskAttemptRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import com.twojlogin.lms.entity.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.twojlogin.lms.entity.SchoolClass;
 import com.twojlogin.lms.util.ClassNameNormalizer;
@@ -42,18 +43,18 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDto> getAllUsers() {
+        return userRepository.findAll().stream().map(UserDto::from).toList();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/users/{id}/role")
-    public User changeRole(@PathVariable Long id, @RequestParam String role) {
+    public UserDto changeRole(@PathVariable Long id, @RequestParam String role) {
         User user = userRepository.findById(id)
                 .orElseThrow();
 
         user.setRole(Role.valueOf(role));
-        return userRepository.save(user);
+        return UserDto.from(userRepository.save(user));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -66,35 +67,30 @@ public class UserController {
         userRepository.deleteById(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/class/{id}/users")
-    public List<User> getUsersByClass(@PathVariable Long id) {
-        return userRepository.findBySchoolClassId(id);
+    public List<UserDto> getUsersByClass(@PathVariable Long id) {
+        return userRepository.findBySchoolClassId(id).stream().map(UserDto::from).toList();
     }
 
     @GetMapping("/me")
-    public UserDetails me() {
-        return (UserDetails) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
+    public AuthenticatedUserDto me(Authentication authentication) {
+        User user = userRepository.findByEmail(authentication.getName()).orElseThrow();
+        return AuthenticatedUserDto.from(user);
     }
 
     @GetMapping("/my-results")
-    public List<Submission> myResults() {
-
-        UserDetails userDetails = (UserDetails) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-
-        User user = userRepository.findByEmail(userDetails.getUsername())
+    public List<SubmissionResultDto> myResults(Authentication authentication) {
+        User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow();
 
-        return submissionRepository.findByUserId(user.getId());
+        return submissionRepository.findByUserId(user.getId()).stream()
+                .map(SubmissionResultDto::from)
+                .toList();
     }
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/users/{id}/class")
-    public User changeClass(@PathVariable Long id, @RequestParam String className) {
+    public UserDto changeClass(@PathVariable Long id, @RequestParam String className) {
         User user = userRepository.findById(id)
                 .orElseThrow();
 
@@ -110,6 +106,6 @@ public class UserController {
 
         user.setSchoolClass(schoolClass);
 
-        return userRepository.save(user);
+        return UserDto.from(userRepository.save(user));
     }
 }

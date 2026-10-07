@@ -50,14 +50,14 @@ public class LessonController {
     // CREATE
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/module/{moduleId}")
-    public Lesson create(@PathVariable Long moduleId,
+    public LessonDto create(@PathVariable Long moduleId,
                          @RequestBody Lesson lesson) {
 
         CourseModule module = moduleRepository.findById(moduleId)
                 .orElseThrow();
 
         lesson.setModule(module);
-        return lessonRepository.save(lesson);
+        return new LessonDto(lessonRepository.save(lesson));
     }
 
     // GET lessons
@@ -94,7 +94,7 @@ public class LessonController {
     // UPDATE
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public Lesson update(@PathVariable Long id,
+    public LessonDto update(@PathVariable Long id,
                          @RequestBody Lesson updated) {
 
         Lesson lesson = lessonRepository.findById(id)
@@ -109,33 +109,14 @@ public class LessonController {
         lesson.setPublished(updated.isPublished());
         lesson.setFreePreview(updated.isFreePreview());
 
-        return lessonRepository.save(lesson);
+        return new LessonDto(lessonRepository.save(lesson));
     }
 
     @GetMapping("/{id}")
-    public java.util.Map<String, Object> getOne(@PathVariable Long id) {
+    public LessonDto getOne(@PathVariable Long id) {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
-
-        java.util.Map<String, Object> result = new java.util.HashMap<>();
-
-        result.put("id", lesson.getId());
-        result.put("title", lesson.getTitle());
-        result.put("theory", lesson.getTheory());
-        result.put("example", lesson.getExample());
-        result.put("content", lesson.getContent());
-        result.put("imageUrl", lesson.getImageUrl());
-        result.put("freePreview", lesson.isFreePreview());
-        result.put("published", lesson.isPublished());
-        result.put("orderIndex", lesson.getOrderIndex());
-
-        if (lesson.getModule() != null) {
-            result.put("moduleId", lesson.getModule().getId());
-        } else {
-            result.put("moduleId", null);
-        }
-
-        return result;
+        return new LessonDto(lesson);
     }
 
     @GetMapping("/{id}/access")
@@ -204,8 +185,10 @@ public class LessonController {
 
         progress.setUser(user);
         progress.setLesson(lesson);
+        if (!progress.isCompleted() || progress.getCompletedAt() == null) {
+            progress.setCompletedAt(LocalDateTime.now());
+        }
         progress.setCompleted(true);
-        progress.setCompletedAt(LocalDateTime.now());
 
         lessonProgressRepository.save(progress);
 
