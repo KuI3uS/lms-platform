@@ -24,17 +24,16 @@
                     <a href="#home">Home</a>
                     <a href="#courses">Kursy</a>
                     <a href="#how">Jak_działa</a>
+                    <div className="hero-actions">
+                        <Link to="/register" className="btn-outline">
+                            Rozpocznij naukę
+                        </Link>
+                        <Link to="/login" className="btn-ghost">
+                            Mam już konto
+                        </Link>
+                    </div>
+
                 </nav>
-
-
-                <div className="hero-actions">
-                    <Link to="/register" className="btn-outline">
-                        Rozpocznij naukę
-                    </Link>
-                    <Link to="/login" className="btn-ghost">
-                        Mam już konto
-                    </Link>
-                </div>
                 <header id="home" className="hero">
                     <div className="hero-content">
                         <h1>
