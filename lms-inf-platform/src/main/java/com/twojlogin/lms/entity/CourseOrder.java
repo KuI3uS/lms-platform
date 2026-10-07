@@ -54,6 +54,7 @@ public class CourseOrder {
     private LocalDateTime paidAt;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 32, columnDefinition = "varchar(32)")
     private CoursePurchaseType purchaseType;
 
     private LocalDateTime accessUntil;

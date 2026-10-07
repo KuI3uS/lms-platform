@@ -20,6 +20,7 @@ public class Course {
     private BigDecimal price;
     private BigDecimal monthlyPrice;
     @Enumerated(EnumType.STRING)
+    @Column(length = 32, columnDefinition = "varchar(32)")
     private CourseBillingMode billingMode;
     private boolean published;
     private String thumbnailUrl;
