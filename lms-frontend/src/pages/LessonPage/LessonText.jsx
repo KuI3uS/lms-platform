@@ -5,6 +5,7 @@ import {
     BsInfoCircle,
     BsLightbulb
 } from "react-icons/bs";
+import LessonArticleContent from "./LessonArticleContent";
 
 const CALLOUTS = {
     TIP: {
@@ -84,9 +85,12 @@ export default function LessonText({ block }) {
                         <h2 className="mt-1 text-2xl font-black text-white">
                             {block.title || callout.title}
                         </h2>
-                        <p className="mt-3 whitespace-pre-line text-base leading-7 text-gray-200 sm:text-lg sm:leading-8">
-                            {block.content || "Brak treści."}
-                        </p>
+                        <div className="mt-4">
+                            <LessonArticleContent
+                                content={block.content}
+                                compact
+                            />
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -94,8 +98,8 @@ export default function LessonText({ block }) {
     }
 
     return (
-        <article className="rounded-3xl border border-gray-800 bg-gray-900 p-6 sm:p-9">
-            <header className="mb-7 flex items-center gap-4 border-b border-gray-800 pb-6">
+        <article className="overflow-hidden rounded-3xl border border-gray-800 bg-gray-900">
+            <header className="flex items-center gap-4 border-b border-gray-800 px-6 py-6 sm:px-10 sm:py-8">
                 <div className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-500/15 text-xl text-blue-200">
                     <BsBook />
                 </div>
@@ -108,8 +112,8 @@ export default function LessonText({ block }) {
                     </h2>
                 </div>
             </header>
-            <div className="whitespace-pre-line text-lg leading-9 text-gray-300">
-                {block.content || "Brak treści."}
+            <div className="px-6 py-8 sm:px-10 sm:py-11 lg:px-14">
+                <LessonArticleContent content={block.content} />
             </div>
         </article>
     );
