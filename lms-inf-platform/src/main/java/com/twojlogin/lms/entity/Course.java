@@ -81,4 +81,12 @@ public class Course {
     public void setPublished(boolean published) {
         this.published = published;
     }
+
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
 }
