@@ -18,6 +18,82 @@ function EditorLoader() {
     );
 }
 
+function htmlTagText(source, tag) {
+    const match = String(source || "").match(
+        new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)<\\/${tag}\\s*>`, "i")
+    );
+
+    return match
+        ? match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+        : "";
+}
+
+function htmlAttribute(source, tag, attribute) {
+    const tagMatch = String(source || "").match(
+        new RegExp(`<${tag}\\b([^>]*)>`, "i")
+    );
+    if (!tagMatch) return "";
+
+    const attributeMatch = tagMatch[1].match(
+        new RegExp(`${attribute}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "i")
+    );
+
+    return attributeMatch
+        ? attributeMatch[1] || attributeMatch[2] || attributeMatch[3] || ""
+        : "";
+}
+
+function htmlTagTexts(source, tag) {
+    const values = [];
+    const expression = new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)<\\/${tag}\\s*>`, "gi");
+    let match;
+
+    while ((match = expression.exec(String(source || ""))) !== null) {
+        const value = match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        if (value) values.push(value);
+    }
+
+    return values;
+}
+
+function buildHtmlRequirements(source) {
+    const html = String(source || "");
+    const requirements = [];
+
+    if (/<!doctype\s+html\s*>/i.test(html)) {
+        requirements.push("Zastosuj deklarację dokumentu HTML5: <!DOCTYPE html>.");
+    }
+
+    const language = htmlAttribute(html, "html", "lang");
+    if (language) {
+        requirements.push(`Ustaw język dokumentu za pomocą <html lang="${language}">.`);
+    }
+
+    const charset = htmlAttribute(html, "meta", "charset");
+    if (charset) {
+        requirements.push(`W sekcji <head> ustaw kodowanie znaków: <meta charset="${charset}">.`);
+    }
+
+    const title = htmlTagText(html, "title");
+    if (title) requirements.push(`Ustaw tytuł karty przeglądarki na: „${title}”.`);
+
+    ["h1", "h2", "h3"].forEach(tag => {
+        htmlTagTexts(html, tag).forEach(value => {
+            requirements.push(`Dodaj nagłówek <${tag}> z treścią: „${value}”.`);
+        });
+    });
+
+    htmlTagTexts(html, "p").forEach(value => {
+        requirements.push(`Dodaj akapit <p> z treścią: „${value}”.`);
+    });
+
+    if (/<body\b/i.test(html) && requirements.length === 0) {
+        requirements.push("Umieść wymaganą treść wewnątrz elementu <body>.");
+    }
+
+    return requirements;
+}
+
 export default function TaskBlockForm({
 
                                           block: task,
@@ -33,6 +109,27 @@ export default function TaskBlockForm({
             [field]: value
         }));
 
+    }
+
+    const isHtml = (task.language || "java") === "html";
+    const hasEmptyRequirements = isHtml
+        && /Wymagania:\s*$/i.test(task.instruction || "");
+
+    function fillHtmlRequirements() {
+        const requirements = buildHtmlRequirements(task.expectedAnswer);
+        if (requirements.length === 0) return;
+
+        const instruction = String(task.instruction || "")
+            .replace(/\n*Wymagania:\s*(?:\n[\s\S]*)?$/i, "")
+            .trimEnd();
+        const requirementList = requirements
+            .map(requirement => `- ${requirement}`)
+            .join("\n");
+
+        update(
+            "instruction",
+            `${instruction}${instruction ? "\n\n" : ""}Wymagania:\n${requirementList}`
+        );
     }
 
     return (
@@ -119,6 +216,12 @@ export default function TaskBlockForm({
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-40"
                         placeholder="Treść zadania..."
                     />
+
+                    {hasEmptyRequirements && (
+                        <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.08] px-4 py-3 text-sm text-amber-100">
+                            Nagłówek „Wymagania” jest pusty. Uzupełnij go ręcznie albo użyj przycisku pod poprawną odpowiedzią.
+                        </p>
+                    )}
 
                 </div>
 
@@ -229,6 +332,23 @@ export default function TaskBlockForm({
                             onChange={(value) => update("expectedAnswer", value)}
                         />
                     </Suspense>
+
+                    {isHtml && (
+                        <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] p-4 text-sm leading-6 text-cyan-50">
+                            <p className="font-black">Elastyczne sprawdzanie HTML</p>
+                            <p className="mt-1 text-cyan-100/75">
+                                System użyje tego rozwiązania jako listy wymagań. Sprawdzi deklarację HTML5, znaczniki, ich liczbę, atrybuty oraz treść elementów. Nie będzie wymagał identycznych wcięć, układu linii ani wielkości liter.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={fillHtmlRequirements}
+                                disabled={!String(task.expectedAnswer || "").trim()}
+                                className="mt-3 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 font-black text-cyan-100 transition hover:bg-cyan-300/20 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                Uzupełnij wymagania z rozwiązania
+                            </button>
+                        </div>
+                    )}
 
                 </div>
 

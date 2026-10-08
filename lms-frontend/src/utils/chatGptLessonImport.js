@@ -700,6 +700,8 @@ JAK BUDOWAĆ PRAKTYKĘ
 - Daj zwykle 2–4 samodzielne zadania: najpierw jedno krótkie zastosowanie, potem zadanie z nowym kontekstem, a na końcu małe zadanie łączące poznane elementy.
 - Dla SQL możesz najpierw pokazać np. utworzenie bazy „szkola”, a potem polecić samodzielne utworzenie innej bazy, np. „firma”, z jasno opisanymi wymaganiami. Nie podawaj w poleceniu gotowego CREATE DATABASE dla zadania.
 - Przy pracy w XAMPP, phpMyAdmin, systemie Windows, Linux lub innym zewnętrznym narzędziu opisz także rezultat, który uczeń ma uzyskać i sposób, w jaki może go sprawdzić. Jeżeli odpowiedzią jest kod SQL lub HTML, użyj bloku Zadanie z odpowiednim językiem.
+- W każdym zadaniu HTML po zdaniu wprowadzającym dodaj w polu „Polecenie” sekcję „Wymagania:” i wypisz osobno wszystkie elementy oceniane przez system: deklarację dokumentu, wymagane znaczniki, atrybuty, teksty i liczbę powtarzających się elementów. Nie pozostawiaj nagłówka „Wymagania:” bez treści.
+- Dla HTML „Poprawna odpowiedź” jest wzorcem struktury, a nie tekstem do porównania znak po znaku. Może mieć inne wcięcia i wielkość liter niż rozwiązanie ucznia, ale musi zawierać każdy element wymieniony w wymaganiach.
 - Nie oceniaj pamięciowego przepisywania. Oceniaj zastosowanie reguły, analizę wyniku, wykrycie błędu lub stworzenie działającego rozwiązania.
 `}
 

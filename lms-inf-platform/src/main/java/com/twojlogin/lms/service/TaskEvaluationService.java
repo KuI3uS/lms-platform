@@ -22,10 +22,24 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class TaskEvaluationService {
+
+    private static final Pattern HTML_OPENING_TAG = Pattern.compile(
+            "(?is)<([a-z][a-z0-9:-]*)\\b([^>]*)>"
+    );
+    private static final Pattern HTML_ATTRIBUTE = Pattern.compile(
+            "(?is)([a-z_:][a-z0-9_.:-]*)(?:\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s>]+)))?"
+    );
+    private static final Pattern HTML_LEAF_ELEMENT = Pattern.compile(
+            "(?is)<(title|h[1-6]|p|li|button|label|a|span|strong|em)\\b[^>]*>([^<]*)</\\1\\s*>"
+    );
 
     private final LessonBlockRepository blockRepository;
     private final TaskAttemptRepository attemptRepository;
@@ -114,6 +128,8 @@ public class TaskEvaluationService {
                     ))
                     : !hasText(block.getLanguage()) && !hasText(block.getStarterCode())
                         ? evaluateTextAnswer(studentAnswer, block.getExpectedAnswer())
+                        : "html".equalsIgnoreCase(block.getLanguage())
+                            ? evaluateHtml(studentAnswer, block.getExpectedAnswer())
                         : hasText(block.getHiddenTests())
                                 && "java".equalsIgnoreCase(block.getLanguage())
                             ? codeExecutionService.evaluateJava(
@@ -235,6 +251,174 @@ public class TaskEvaluationService {
                 .toLowerCase(Locale.ROOT)
                 .replaceAll("[.!?,;:]+$", "")
                 .replaceAll("\\s+", " ");
+    }
+
+    private List<TaskDiagnosticDto> evaluateHtml(String student, String expected) {
+        if (student.isBlank()) {
+            return List.of(new TaskDiagnosticDto(
+                    "EMPTY_ANSWER",
+                    null,
+                    "Kod HTML jest pusty.",
+                    "Utwórz dokument zgodnie z wymaganiami i sprawdź go ponownie."
+            ));
+        }
+
+        List<TaskDiagnosticDto> diagnostics = new ArrayList<>();
+        Set<String> keys = new HashSet<>();
+
+        if (containsHtmlDoctype(expected) && !containsHtmlDoctype(student)) {
+            addDiagnostic(diagnostics, keys, new TaskDiagnosticDto(
+                    "MISSING_HTML_DOCTYPE",
+                    1,
+                    "Brakuje deklaracji dokumentu HTML5.",
+                    "Dodaj deklarację <!DOCTYPE html> na początku dokumentu."
+            ));
+        }
+
+        Map<String, List<String>> expectedTags = htmlOpeningTags(expected);
+        Map<String, List<String>> studentTags = htmlOpeningTags(student);
+
+        expectedTags.forEach((tag, expectedOccurrences) -> {
+            List<String> studentOccurrences = studentTags.getOrDefault(tag, List.of());
+            if (studentOccurrences.size() < expectedOccurrences.size()) {
+                int missing = expectedOccurrences.size() - studentOccurrences.size();
+                addDiagnostic(diagnostics, keys, new TaskDiagnosticDto(
+                        "MISSING_HTML_ELEMENT",
+                        null,
+                        "Brakuje " + htmlElementLabel(tag, missing) + ".",
+                        "Dodaj wymagany element <" + tag + "> w odpowiedniej części dokumentu."
+                ));
+            }
+
+            Map<String, String> requiredAttributes = new LinkedHashMap<>();
+            expectedOccurrences.forEach(attributes ->
+                    requiredAttributes.putAll(htmlAttributes(attributes))
+            );
+            requiredAttributes.forEach((attribute, expectedValue) -> {
+                boolean present = studentOccurrences.stream()
+                        .map(this::htmlAttributes)
+                        .anyMatch(attributes -> attributes.containsKey(attribute)
+                                && normalizeHtmlText(attributes.get(attribute))
+                                .equals(normalizeHtmlText(expectedValue)));
+                if (!present) {
+                    Integer line = findHtmlTagLine(student, tag);
+                    String formattedValue = expectedValue.isBlank()
+                            ? attribute
+                            : attribute + "=\"" + expectedValue + "\"";
+                    addDiagnostic(diagnostics, keys, new TaskDiagnosticDto(
+                            "MISSING_HTML_ATTRIBUTE",
+                            line,
+                            "Element <" + tag + "> nie ma wymaganego atrybutu " + formattedValue + ".",
+                            "Uzupełnij znacznik <" + tag + "> o atrybut " + formattedValue + "."
+                    ));
+                }
+            });
+
+            long expectedClosings = htmlClosingTagCount(expected, tag);
+            long studentClosings = htmlClosingTagCount(student, tag);
+            if (expectedClosings > 0 && studentClosings < Math.min(expectedClosings, studentOccurrences.size())) {
+                addDiagnostic(diagnostics, keys, new TaskDiagnosticDto(
+                        "UNCLOSED_HTML_ELEMENT",
+                        findHtmlTagLine(student, tag),
+                        "Element <" + tag + "> nie został prawidłowo zamknięty.",
+                        "Dodaj brakujący znacznik </" + tag + ">."
+                ));
+            }
+        });
+
+        Map<String, List<String>> expectedText = htmlLeafText(expected);
+        Map<String, List<String>> studentText = htmlLeafText(student);
+        expectedText.forEach((tag, expectedValues) -> {
+            List<String> actualValues = studentText.getOrDefault(tag, List.of());
+            for (int index = 0; index < expectedValues.size(); index++) {
+                if (index >= actualValues.size()) continue;
+
+                String expectedValue = expectedValues.get(index);
+                String actualValue = actualValues.get(index);
+                if (!normalizeHtmlText(actualValue).equals(normalizeHtmlText(expectedValue))) {
+                    addDiagnostic(diagnostics, keys, new TaskDiagnosticDto(
+                            "INCORRECT_HTML_CONTENT",
+                            findHtmlTagLine(student, tag, index),
+                            "Element <" + tag + "> nie zawiera wymaganej treści: „" + expectedValue.trim() + "”.",
+                            "Sprawdź treść wewnątrz znacznika <" + tag + ">. Wielkość liter i odstępy nie mają znaczenia."
+                    ));
+                }
+            }
+        });
+
+        return diagnostics;
+    }
+
+    private boolean containsHtmlDoctype(String html) {
+        return Pattern.compile("(?is)<!doctype\\s+html\\s*>")
+                .matcher(html == null ? "" : html)
+                .find();
+    }
+
+    private Map<String, List<String>> htmlOpeningTags(String html) {
+        Map<String, List<String>> tags = new LinkedHashMap<>();
+        Matcher matcher = HTML_OPENING_TAG.matcher(html == null ? "" : html);
+        while (matcher.find()) {
+            String tag = matcher.group(1).toLowerCase(Locale.ROOT);
+            tags.computeIfAbsent(tag, ignored -> new ArrayList<>()).add(matcher.group(2));
+        }
+        return tags;
+    }
+
+    private Map<String, String> htmlAttributes(String source) {
+        Map<String, String> attributes = new LinkedHashMap<>();
+        Matcher matcher = HTML_ATTRIBUTE.matcher(source == null ? "" : source);
+        while (matcher.find()) {
+            String name = matcher.group(1).toLowerCase(Locale.ROOT);
+            String value = matcher.group(2) != null ? matcher.group(2)
+                    : matcher.group(3) != null ? matcher.group(3)
+                    : matcher.group(4) != null ? matcher.group(4)
+                    : "";
+            attributes.put(name, value);
+        }
+        return attributes;
+    }
+
+    private Map<String, List<String>> htmlLeafText(String html) {
+        Map<String, List<String>> values = new LinkedHashMap<>();
+        Matcher matcher = HTML_LEAF_ELEMENT.matcher(html == null ? "" : html);
+        while (matcher.find()) {
+            String tag = matcher.group(1).toLowerCase(Locale.ROOT);
+            values.computeIfAbsent(tag, ignored -> new ArrayList<>()).add(matcher.group(2));
+        }
+        return values;
+    }
+
+    private long htmlClosingTagCount(String html, String tag) {
+        return Pattern.compile("(?is)</\\s*" + Pattern.quote(tag) + "\\s*>")
+                .matcher(html == null ? "" : html)
+                .results()
+                .count();
+    }
+
+    private Integer findHtmlTagLine(String html, String tag) {
+        return findHtmlTagLine(html, tag, 0);
+    }
+
+    private Integer findHtmlTagLine(String html, String tag, int occurrence) {
+        Matcher matcher = Pattern.compile("(?is)<\\s*" + Pattern.quote(tag) + "\\b")
+                .matcher(html == null ? "" : html);
+        for (int index = 0; index <= occurrence; index++) {
+            if (!matcher.find()) return null;
+        }
+        return (int) (html.substring(0, matcher.start()).chars().filter(character -> character == '\n').count() + 1);
+    }
+
+    private String normalizeHtmlText(String value) {
+        return String.valueOf(value == null ? "" : value)
+                .replaceAll("\\s+", " ")
+                .trim()
+                .toLowerCase(Locale.ROOT);
+    }
+
+    private String htmlElementLabel(String tag, int count) {
+        if (count == 1) return "elementu <" + tag + ">";
+        return count + " elementów <" + tag + ">";
     }
 
     private List<TaskDiagnosticDto> evaluate(

@@ -37,7 +37,12 @@ const DIAGNOSTIC_LABELS = {
     RUNNER_UNAVAILABLE: "Środowisko chwilowo niedostępne",
     HIDDEN_TEST_FAILED: "Ukryty test nie przeszedł",
     MAIN_CLASS_REQUIRED: "Brak klasy Main",
-    SOURCE_TOO_LARGE: "Kod jest zbyt długi"
+    SOURCE_TOO_LARGE: "Kod jest zbyt długi",
+    MISSING_HTML_DOCTYPE: "Brak deklaracji HTML5",
+    MISSING_HTML_ELEMENT: "Brak elementu HTML",
+    MISSING_HTML_ATTRIBUTE: "Brak atrybutu HTML",
+    UNCLOSED_HTML_ELEMENT: "Niedomknięty element HTML",
+    INCORRECT_HTML_CONTENT: "Niepoprawna treść elementu"
 };
 
 export default function LessonTask({
@@ -70,6 +75,12 @@ export default function LessonTask({
                 <p className="mt-5 whitespace-pre-line text-base leading-7 text-gray-300 sm:text-lg sm:leading-8">
                     {block.instruction}
                 </p>
+
+                {block.language?.toLowerCase() === "html" && (
+                    <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.07] p-4 text-sm leading-6 text-cyan-50 sm:text-base">
+                        <strong>Jak działa sprawdzanie:</strong> liczy się poprawna struktura, wymagane znaczniki, atrybuty i treść. Wielkość liter, wcięcia oraz podział kodu na linie nie wpływają na wynik. Po sprawdzeniu zobaczysz dokładnie, czego brakuje i w której linii szukać błędu.
+                    </div>
+                )}
             </div>
 
             <div className="space-y-6 p-4 sm:p-8">

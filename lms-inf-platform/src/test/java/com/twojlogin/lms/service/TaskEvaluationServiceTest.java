@@ -269,6 +269,113 @@ class TaskEvaluationServiceTest {
     }
 
     @Test
+    void acceptsEquivalentHtmlIgnoringCaseIndentationAndLineLayout() {
+        block.setLanguage("html");
+        block.setStarterCode("");
+        block.setExpectedAnswer("""
+                <!DOCTYPE html>
+                <html lang="pl">
+                <head><meta charset="UTF-8"><title>Portal ucznia</title></head>
+                <body>
+                    <h1>Technikum informatyczne</h1>
+                    <p>Przygotowuję się do egzaminu INF.03.</p>
+                </body>
+                </html>
+                """);
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+
+        TaskCheckResponse response = service.check(
+                block.getId(),
+                "<!doctype HTML><HTML LANG='PL'><HEAD><META CHARSET=utf-8>"
+                        + "<TITLE>PORTAL UCZNIA</TITLE></HEAD><BODY>"
+                        + "<H1>technikum informatyczne</H1>"
+                        + "<P>Przygotowuję się do egzaminu INF.03.</P>"
+                        + "</BODY></HTML>",
+                authentication
+        );
+
+        assertTrue(response.correct());
+    }
+
+    @Test
+    void reportsSpecificMissingHtmlRequirements() {
+        block.setLanguage("html");
+        block.setStarterCode("");
+        block.setExpectedAnswer("""
+                <!DOCTYPE html>
+                <html lang="pl">
+                <head><meta charset="UTF-8"><title>Portal ucznia</title></head>
+                <body><h1>Technikum informatyczne</h1><p>Treść akapitu.</p></body>
+                </html>
+                """);
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+
+        TaskCheckResponse response = service.check(
+                block.getId(),
+                """
+                <html>
+                <head><title>Inny tytuł</title></head>
+                <body><h1>Technikum informatyczne</h1></body>
+                </html>
+                """,
+                authentication
+        );
+
+        assertFalse(response.correct());
+        assertTrue(response.diagnostics().stream().anyMatch(diagnostic ->
+                diagnostic.type().equals("MISSING_HTML_DOCTYPE")
+        ));
+        assertTrue(response.diagnostics().stream().anyMatch(diagnostic ->
+                diagnostic.type().equals("MISSING_HTML_ATTRIBUTE")
+                        && diagnostic.message().contains("lang=\"pl\"")
+        ));
+        assertTrue(response.diagnostics().stream().anyMatch(diagnostic ->
+                diagnostic.type().equals("MISSING_HTML_ELEMENT")
+                        && diagnostic.message().contains("<meta>")
+        ));
+        assertTrue(response.diagnostics().stream().anyMatch(diagnostic ->
+                diagnostic.type().equals("INCORRECT_HTML_CONTENT")
+                        && diagnostic.message().contains("Portal ucznia")
+        ));
+    }
+
+    @Test
+    void reportsTheLineOfTheSpecificIncorrectHtmlElement() {
+        block.setLanguage("html");
+        block.setStarterCode("");
+        block.setExpectedAnswer("""
+                <!DOCTYPE html>
+                <html lang="pl">
+                <head><meta charset="UTF-8"><title>Portal ucznia</title></head>
+                <body>
+                    <p>Pierwszy akapit.</p>
+                    <p>Drugi akapit.</p>
+                </body>
+                </html>
+                """);
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+
+        TaskCheckResponse response = service.check(
+                block.getId(),
+                """
+                <!DOCTYPE html>
+                <html lang="pl">
+                <head><meta charset="UTF-8"><title>Portal ucznia</title></head>
+                <body>
+                    <p>Pierwszy akapit.</p>
+                    <p>Niepoprawna treść.</p>
+                </body>
+                </html>
+                """,
+                authentication
+        );
+
+        assertFalse(response.correct());
+        assertEquals(6, response.diagnostics().get(0).line());
+        assertEquals("INCORRECT_HTML_CONTENT", response.diagnostics().get(0).type());
+    }
+
+    @Test
     void rejectsAnUnchangedStarterTemplate() {
         String starter = """
                 // Dane wejściowe:
