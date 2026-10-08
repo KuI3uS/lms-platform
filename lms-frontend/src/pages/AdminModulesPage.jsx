@@ -17,6 +17,7 @@ export default function AdminModulesPage() {
     const [courseId, setCourseId] = useState("");
     const [modules, setModules] = useState([]);
     const [newModuleName, setNewModuleName] = useState("");
+    const [newSectionTitle, setNewSectionTitle] = useState("");
     const [newModuleLevel, setNewModuleLevel] = useState("A1");
     const [loading, setLoading] = useState(true);
     const [savingId, setSavingId] = useState(null);
@@ -92,11 +93,13 @@ export default function AdminModulesPage() {
                 body: JSON.stringify({
                     name: newModuleName.trim(),
                     lessonsLocked: true,
-                    cefrLevel: isLanguageCourse ? newModuleLevel : null
+                    cefrLevel: isLanguageCourse ? newModuleLevel : null,
+                    sectionTitle: newSectionTitle.trim() || null
                 })
             });
             setModules((current) => [...current, created]);
             setNewModuleName("");
+            setNewSectionTitle("");
         } catch (saveError) {
             setError(saveError.message || "Nie udało się dodać modułu.");
         }
@@ -111,7 +114,8 @@ export default function AdminModulesPage() {
                 body: JSON.stringify({
                     name: module.name.trim(),
                     lessonsLocked: module.lessonsLocked,
-                    cefrLevel: isLanguageCourse ? module.cefrLevel : null
+                    cefrLevel: isLanguageCourse ? module.cefrLevel : null,
+                    sectionTitle: module.sectionTitle?.trim() || null
                 })
             });
             updateLocal(module.id, saved);
@@ -183,32 +187,49 @@ export default function AdminModulesPage() {
                     ))}
                 </select>
 
-                <form onSubmit={addModule} className="mt-5 flex flex-col gap-3 sm:flex-row">
-                    <input
-                        value={newModuleName}
-                        onChange={(event) => setNewModuleName(event.target.value)}
-                        placeholder={isLanguageCourse ? "Nazwa rozdziału, np. W restauracji" : "Nazwa nowego modułu"}
-                        className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-emerald-400"
-                    />
-                    {isLanguageCourse && (
-                        <select
-                            value={newModuleLevel}
-                            onChange={(event) => setNewModuleLevel(event.target.value)}
-                            aria-label="Poziom CEFR nowego rozdziału"
-                            className="rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 font-black outline-none focus:border-emerald-400"
+                <form onSubmit={addModule} className="mt-5 space-y-3">
+                    <div>
+                        <label className="text-xs font-black uppercase tracking-[0.16em] text-violet-300">
+                            Nowa część kursu — opcjonalnie
+                        </label>
+                        <input
+                            value={newSectionTitle}
+                            onChange={(event) => setNewSectionTitle(event.target.value)}
+                            maxLength={200}
+                            placeholder="Np. CZĘŚĆ XX — Rekrutacja Junior Java Developer"
+                            className="mt-2 w-full rounded-2xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold outline-none focus:border-violet-400"
+                        />
+                        <p className="mt-2 text-xs text-slate-500">
+                            Uzupełnij tylko wtedy, gdy ten moduł rozpoczyna nową część. Nagłówek pojawi się nad nim jako separator.
+                        </p>
+                    </div>
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                        <input
+                            value={newModuleName}
+                            onChange={(event) => setNewModuleName(event.target.value)}
+                            placeholder={isLanguageCourse ? "Nazwa rozdziału, np. W restauracji" : "Nazwa nowego modułu"}
+                            className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-emerald-400"
+                        />
+                        {isLanguageCourse && (
+                            <select
+                                value={newModuleLevel}
+                                onChange={(event) => setNewModuleLevel(event.target.value)}
+                                aria-label="Poziom CEFR nowego rozdziału"
+                                className="rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 font-black outline-none focus:border-emerald-400"
+                            >
+                                {availableLevels.map((level) => (
+                                    <option key={level} value={level}>CEFR {level}</option>
+                                ))}
+                            </select>
+                        )}
+                        <button
+                            type="submit"
+                            disabled={!courseId || !newModuleName.trim()}
+                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 font-black disabled:opacity-40"
                         >
-                            {availableLevels.map((level) => (
-                                <option key={level} value={level}>CEFR {level}</option>
-                            ))}
-                        </select>
-                    )}
-                    <button
-                        type="submit"
-                        disabled={!courseId || !newModuleName.trim()}
-                        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 font-black disabled:opacity-40"
-                    >
-                        <BsPlusCircle /> {isLanguageCourse ? "Dodaj rozdział" : "Dodaj moduł"}
-                    </button>
+                            <BsPlusCircle /> {isLanguageCourse ? "Dodaj rozdział" : "Dodaj moduł"}
+                        </button>
+                    </div>
                 </form>
             </section>
 
@@ -232,6 +253,16 @@ export default function AdminModulesPage() {
                                     {index + 1}
                                 </div>
                                 <div className="min-w-0 flex-1">
+                                    <label className="text-xs font-black uppercase tracking-[0.14em] text-violet-300">
+                                        Nagłówek części nad tym modułem
+                                    </label>
+                                    <input
+                                        value={module.sectionTitle || ""}
+                                        onChange={(event) => updateLocal(module.id, { sectionTitle: event.target.value })}
+                                        maxLength={200}
+                                        placeholder="Brak — ten moduł kontynuuje obecną część"
+                                        className="mb-3 mt-2 w-full rounded-xl border border-violet-400/15 bg-violet-500/[0.05] px-4 py-3 text-sm font-bold text-violet-100 outline-none focus:border-violet-400"
+                                    />
                                     <input
                                         value={module.name}
                                         onChange={(event) => updateLocal(module.id, { name: event.target.value })}

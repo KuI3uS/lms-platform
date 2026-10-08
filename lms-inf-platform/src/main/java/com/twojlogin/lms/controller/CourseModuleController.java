@@ -58,6 +58,7 @@ public class CourseModuleController {
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
         applyCefrLevel(module, course);
+        module.setSectionTitle(normalizeSectionTitle(module.getSectionTitle()));
         module.setCourse(course);
         return CourseModuleDto.from(moduleRepository.save(module));
     }
@@ -68,7 +69,7 @@ public class CourseModuleController {
             Authentication authentication
     ) {
         accessService.requireCourseAccess(courseId, authentication);
-        return moduleRepository.findByCourseId(courseId).stream()
+        return moduleRepository.findByCourseIdOrderByIdAsc(courseId).stream()
                 .map(CourseModuleDto::from)
                 .toList();
     }
@@ -97,6 +98,7 @@ public class CourseModuleController {
 
         module.setName(updated.getName());
         module.setLessonsLocked(updated.isLessonsLocked());
+        module.setSectionTitle(normalizeSectionTitle(updated.getSectionTitle()));
         applyCefrLevel(
                 module,
                 module.getCourse(),
@@ -127,5 +129,18 @@ public class CourseModuleController {
             );
         }
         module.setCefrLevel(level);
+    }
+
+    private String normalizeSectionTitle(String value) {
+        if (value == null || value.isBlank()) return null;
+
+        String normalized = value.strip().replaceAll("\\s+", " ");
+        if (normalized.length() > 200) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Nagłówek części może mieć maksymalnie 200 znaków"
+            );
+        }
+        return normalized;
     }
 }

@@ -7,7 +7,8 @@ public record CourseModuleDto(
         String name,
         boolean lessonsLocked,
         Long courseId,
-        String cefrLevel
+        String cefrLevel,
+        String sectionTitle
 ) {
     public static CourseModuleDto from(CourseModule module) {
         return new CourseModuleDto(
@@ -15,7 +16,8 @@ public record CourseModuleDto(
                 module.getName(),
                 module.isLessonsLocked(),
                 module.getCourse() == null ? null : module.getCourse().getId(),
-                module.getCefrLevel()
+                module.getCefrLevel(),
+                module.getSectionTitle()
         );
     }
 }

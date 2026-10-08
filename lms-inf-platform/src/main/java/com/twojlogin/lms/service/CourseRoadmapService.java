@@ -168,7 +168,8 @@ public class CourseRoadmapService {
                 module.isLessonsLocked(),
                 module.getCefrLevel(),
                 levelUnlocked,
-                lessonItems
+                lessonItems,
+                module.getSectionTitle()
         );
     }
 }

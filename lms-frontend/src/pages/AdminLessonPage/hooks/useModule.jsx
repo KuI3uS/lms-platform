@@ -8,7 +8,8 @@ export default function useModule(moduleId) {
     const [moduleSettings, setModuleSettings] = useState({
         name: "",
         lessonsLocked: false,
-        cefrLevel: null
+        cefrLevel: null,
+        sectionTitle: ""
     });
 
     const [loading, setLoading] = useState(true);
@@ -25,7 +26,8 @@ export default function useModule(moduleId) {
             setModuleSettings({
                 name: data?.name || "",
                 lessonsLocked: data?.lessonsLocked || false,
-                cefrLevel: data?.cefrLevel || null
+                cefrLevel: data?.cefrLevel || null,
+                sectionTitle: data?.sectionTitle || ""
             });
             if (data?.courseId) {
                 setCourse(await apiFetch(`/courses/${data.courseId}`));

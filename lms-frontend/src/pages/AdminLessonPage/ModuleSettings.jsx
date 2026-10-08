@@ -181,6 +181,28 @@ export default function ModuleSettings({
 
                 </div>
 
+                {/* COURSE PART HEADING */}
+
+                <div className="rounded-3xl border border-violet-400/20 bg-violet-500/[0.06] p-6 backdrop-blur-xl">
+                    <label className="mb-3 flex items-center gap-3 font-semibold text-violet-300">
+                        <BsCollection />
+                        Nagłówek części nad tym modułem
+                    </label>
+                    <p className="mb-5 text-sm leading-6 text-gray-400">
+                        Uzupełnij tylko wtedy, gdy ten moduł rozpoczyna nową część kursu. Uczeń zobaczy wyraźny separator nad modułem.
+                    </p>
+                    <input
+                        value={moduleSettings.sectionTitle || ""}
+                        maxLength={200}
+                        onChange={(event) => setModuleSettings(previous => ({
+                            ...previous,
+                            sectionTitle: event.target.value
+                        }))}
+                        placeholder="np. CZĘŚĆ XX — Rekrutacja Junior Java Developer"
+                        className="w-full rounded-2xl border border-violet-300/15 bg-black/20 px-5 py-4 font-bold outline-none transition focus:border-violet-400"
+                    />
+                </div>
+
                 {/* LOCK */}
 
                 <div

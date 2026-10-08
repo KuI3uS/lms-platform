@@ -47,6 +47,7 @@ export default function ModulePage() {
     const [modules, setModules] = useState([]);
     const [course, setCourse] = useState(null);
     const [newModule, setNewModule] = useState("");
+    const [newSectionTitle, setNewSectionTitle] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [moduleExpansion, setModuleExpansion] = useState({});
@@ -120,13 +121,15 @@ export default function ModulePage() {
             method: "POST",
             body: JSON.stringify({
                 name: newModule,
-                lessonsLocked: true
+                lessonsLocked: true,
+                sectionTitle: newSectionTitle.trim() || null
             })
         });
 
         setModules(prev => [...prev, { ...module, lessons: [] }]);
         roadmapCache.delete(String(courseId));
         setNewModule("");
+        setNewSectionTitle("");
     };
 
     const deleteModule = async (module) => {
@@ -312,21 +315,30 @@ export default function ModulePage() {
             </header>
 
             {role === "ADMIN" && (
-                <section className="mx-auto flex max-w-3xl gap-3 px-2">
+                <section className="mx-auto max-w-3xl space-y-3 px-2">
                     <input
-                        value={newModule}
-                        onChange={e => setNewModule(e.target.value)}
-                        placeholder="Nazwa nowej sekcji, np. Zmienne i typy danych"
-                        className="flex-1 rounded-xl border border-gray-800 bg-gray-900/70 px-4 py-3 outline-none transition focus:border-blue-500"
+                        value={newSectionTitle}
+                        onChange={e => setNewSectionTitle(e.target.value)}
+                        maxLength={200}
+                        placeholder="Opcjonalny nagłówek części, np. CZĘŚĆ I — Java od zera"
+                        className="w-full rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold text-violet-100 outline-none transition focus:border-violet-400"
                     />
+                    <div className="flex gap-3">
+                        <input
+                            value={newModule}
+                            onChange={e => setNewModule(e.target.value)}
+                            placeholder="Nazwa nowego modułu, np. Zmienne i typy danych"
+                            className="min-w-0 flex-1 rounded-xl border border-gray-800 bg-gray-900/70 px-4 py-3 outline-none transition focus:border-blue-500"
+                        />
 
-                    <button
-                        onClick={createModule}
-                        className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-semibold transition hover:bg-green-700"
-                    >
-                        <BsPlusCircle />
-                        Dodaj
-                    </button>
+                        <button
+                            onClick={createModule}
+                            className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-semibold transition hover:bg-green-700"
+                        >
+                            <BsPlusCircle />
+                            Dodaj
+                        </button>
+                    </div>
                 </section>
             )}
 
@@ -378,10 +390,21 @@ export default function ModulePage() {
                         const lessonsPanelId = `module-${courseId}-${module.id}-lessons`;
 
                         return (
-                            <article
-                                key={module.id}
-                                className="relative rounded-2xl border border-white/10 bg-white/[0.02]"
-                            >
+                            <div key={module.id} className={module.sectionTitle ? "pt-7" : ""}>
+                                {module.sectionTitle && (
+                                    <header className="relative mb-5 overflow-hidden rounded-[28px] border border-violet-400/25 bg-gradient-to-br from-violet-500/15 via-blue-500/10 to-cyan-400/[0.06] p-6 sm:p-8">
+                                        <div className="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-violet-500/15 blur-3xl" />
+                                        <p className="relative text-[11px] font-black uppercase tracking-[0.28em] text-violet-300">
+                                            Nowa część kursu
+                                        </p>
+                                        <h2 className="relative mt-3 text-2xl font-black leading-tight text-white sm:text-3xl">
+                                            {module.sectionTitle}
+                                        </h2>
+                                    </header>
+                                )}
+                                <article
+                                    className="relative rounded-2xl border border-white/10 bg-white/[0.02]"
+                                >
                                 <header className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                                     <div className="flex min-w-0 flex-1 items-center gap-4">
                                         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-500/15 text-base font-black text-blue-200 ring-1 ring-blue-300/20">
@@ -555,7 +578,8 @@ export default function ModulePage() {
                                         </ol>
                                     ))}
                                 </div>
-                            </article>
+                                </article>
+                            </div>
                         );
                     })
                 )}

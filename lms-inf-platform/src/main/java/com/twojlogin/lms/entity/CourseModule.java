@@ -15,6 +15,9 @@ public class CourseModule {
     private Long id;
     private String name;
 
+    @Column(length = 200)
+    private String sectionTitle;
+
     private boolean lessonsLocked;
 
     private String cefrLevel;
@@ -45,6 +48,14 @@ public class CourseModule {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getSectionTitle() {
+        return sectionTitle;
+    }
+
+    public void setSectionTitle(String sectionTitle) {
+        this.sectionTitle = sectionTitle;
     }
 
     public Course getCourse() {

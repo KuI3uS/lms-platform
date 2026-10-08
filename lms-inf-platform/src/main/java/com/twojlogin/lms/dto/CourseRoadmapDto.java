@@ -19,7 +19,8 @@ public record CourseRoadmapDto(
             boolean lessonsLocked,
             String cefrLevel,
             boolean levelUnlocked,
-            List<LessonItem> lessons
+            List<LessonItem> lessons,
+            String sectionTitle
     ) {
     }
 

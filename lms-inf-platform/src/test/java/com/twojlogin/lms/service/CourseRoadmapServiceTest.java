@@ -57,6 +57,7 @@ class CourseRoadmapServiceTest {
         CourseModule module = new CourseModule();
         module.setId(20L);
         module.setName("Podstawy");
+        module.setSectionTitle("CZĘŚĆ I — Java od zera");
         module.setLessonsLocked(true);
         module.setCourse(course);
 
@@ -88,6 +89,10 @@ class CourseRoadmapServiceTest {
 
         assertEquals("Java od podstaw", roadmap.title());
         assertEquals(1, roadmap.modules().size());
+        assertEquals(
+                "CZĘŚĆ I — Java od zera",
+                roadmap.modules().get(0).sectionTitle()
+        );
         List<CourseRoadmapDto.LessonItem> lessons =
                 roadmap.modules().get(0).lessons();
         assertTrue(lessons.get(0).completed());
