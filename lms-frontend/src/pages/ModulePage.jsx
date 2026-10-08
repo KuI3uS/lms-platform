@@ -29,6 +29,7 @@ import {
 } from "../utils/courseTaxonomy";
 import { useAuth } from "../context/AuthContext";
 import { useFeedback } from "../context/FeedbackContext";
+import CourseSectionHeading from "../components/CourseSectionHeading";
 import {
     canAccessLessonStep,
     getActiveLessonStepIndex,
@@ -147,6 +148,24 @@ export default function ModulePage() {
         } catch (deleteError) {
             setError(deleteError.message || "Nie udało się usunąć modułu.");
         }
+    };
+
+    const saveSectionTitle = async (module, sectionTitle) => {
+        const current = await apiFetch(`/modules/${module.id}`);
+        const saved = await apiFetch(`/modules/${module.id}`, {
+            method: "PUT",
+            body: JSON.stringify({
+                name: current.name,
+                lessonsLocked: current.lessonsLocked,
+                cefrLevel: current.cefrLevel,
+                sectionTitle
+            })
+        });
+        setModules(previous => previous.map(item => (
+            item.id === module.id ? { ...item, ...saved } : item
+        )));
+        roadmapCache.delete(String(courseId));
+        showToast(sectionTitle ? "Nagłówek został zapisany." : "Nagłówek został usunięty.", "success");
     };
 
     const isLanguageCourse = getCourseCategory(course) === "LANGUAGE";
@@ -323,6 +342,9 @@ export default function ModulePage() {
                         placeholder="Opcjonalny nagłówek części, np. CZĘŚĆ I — Java od zera"
                         className="w-full rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold text-violet-100 outline-none transition focus:border-violet-400"
                     />
+                    <p className="text-xs text-gray-400">
+                        Nagłówek możesz też dodać później — wybierz „Dodaj nagłówek” nad dowolnym etapem poniżej.
+                    </p>
                     <div className="flex gap-3">
                         <input
                             value={newModule}
@@ -390,18 +412,14 @@ export default function ModulePage() {
                         const lessonsPanelId = `module-${courseId}-${module.id}-lessons`;
 
                         return (
-                            <div key={module.id} className={module.sectionTitle ? "pt-7" : ""}>
-                                {module.sectionTitle && (
-                                    <header className="relative mb-5 overflow-hidden rounded-[28px] border border-violet-400/25 bg-gradient-to-br from-violet-500/15 via-blue-500/10 to-cyan-400/[0.06] p-6 sm:p-8">
-                                        <div className="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-violet-500/15 blur-3xl" />
-                                        <p className="relative text-[11px] font-black uppercase tracking-[0.28em] text-violet-300">
-                                            Nowa część kursu
-                                        </p>
-                                        <h2 className="relative mt-3 text-2xl font-black leading-tight text-white sm:text-3xl">
-                                            {module.sectionTitle}
-                                        </h2>
-                                    </header>
-                                )}
+                            <div key={`${courseId}:${module.id}`} className={module.sectionTitle ? "pt-7" : ""}>
+                                <CourseSectionHeading
+                                    title={module.sectionTitle}
+                                    moduleName={module.name}
+                                    stageNumber={moduleIndex + 1}
+                                    canEdit={role === "ADMIN"}
+                                    onSave={title => saveSectionTitle(module, title)}
+                                />
                                 <article
                                     className="relative rounded-2xl border border-white/10 bg-white/[0.02]"
                                 >
