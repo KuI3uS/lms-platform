@@ -10,6 +10,7 @@ import {
     BsPlusCircle,
     BsTrash,
     BsGearFill,
+    BsPencilSquare,
     BsCodeSlash,
     BsTranslate,
     BsFileText,
@@ -49,6 +50,9 @@ export default function ModulePage() {
     const [course, setCourse] = useState(null);
     const [newModule, setNewModule] = useState("");
     const [newSectionTitle, setNewSectionTitle] = useState("");
+    const [editingModuleId, setEditingModuleId] = useState(null);
+    const [moduleDraft, setModuleDraft] = useState(null);
+    const [savingModuleId, setSavingModuleId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [moduleExpansion, setModuleExpansion] = useState({});
@@ -166,6 +170,52 @@ export default function ModulePage() {
         )));
         roadmapCache.delete(String(courseId));
         showToast(sectionTitle ? "Nagłówek został zapisany." : "Nagłówek został usunięty.", "success");
+    };
+
+    const startEditingModule = module => {
+        setEditingModuleId(module.id);
+        setModuleDraft({
+            name: module.name || "",
+            sectionTitle: module.sectionTitle || "",
+            lessonsLocked: Boolean(module.lessonsLocked),
+            cefrLevel: module.cefrLevel || null
+        });
+    };
+
+    const cancelEditingModule = () => {
+        setEditingModuleId(null);
+        setModuleDraft(null);
+    };
+
+    const saveEditedModule = async module => {
+        if (!moduleDraft?.name?.trim()) {
+            showToast("Nazwa etapu nie może być pusta.", "warning");
+            return;
+        }
+
+        try {
+            setSavingModuleId(module.id);
+            setError("");
+            const saved = await apiFetch(`/modules/${module.id}`, {
+                method: "PUT",
+                body: JSON.stringify({
+                    name: moduleDraft.name.trim(),
+                    sectionTitle: moduleDraft.sectionTitle?.trim() || null,
+                    lessonsLocked: moduleDraft.lessonsLocked,
+                    cefrLevel: moduleDraft.cefrLevel
+                })
+            });
+            setModules(current => current.map(item => (
+                item.id === module.id ? { ...item, ...saved } : item
+            )));
+            roadmapCache.delete(String(courseId));
+            cancelEditingModule();
+            showToast("Etap został zapisany.", "success");
+        } catch (saveError) {
+            setError(saveError.message || "Nie udało się zapisać etapu.");
+        } finally {
+            setSavingModuleId(null);
+        }
     };
 
     const isLanguageCourse = getCourseCategory(course) === "LANGUAGE";
@@ -474,6 +524,14 @@ export default function ModulePage() {
                                                 <button
                                                     type="button"
                                                     aria-label={`Edytuj etap ${module.name}`}
+                                                    onClick={() => startEditingModule(module)}
+                                                    className="grid h-9 w-9 place-items-center rounded-full bg-blue-500/10 text-blue-300 transition hover:bg-blue-500 hover:text-white"
+                                                >
+                                                    <BsPencilSquare />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Zarządzaj lekcjami etapu ${module.name}`}
                                                     onClick={() => navigate(`/admin/lessons/${module.id}`)}
                                                     className="grid h-9 w-9 place-items-center rounded-full bg-yellow-500/10 text-yellow-300 transition hover:bg-yellow-500 hover:text-white"
                                                 >
@@ -491,6 +549,77 @@ export default function ModulePage() {
                                         )}
                                     </div>
                                 </header>
+
+                                {role === "ADMIN" && editingModuleId === module.id && moduleDraft && (
+                                    <section className="border-t border-blue-400/15 bg-blue-500/[0.04] p-5 sm:p-6">
+                                        <div className="grid gap-5">
+                                            <div>
+                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-blue-300">
+                                                    Nazwa etapu
+                                                </label>
+                                                <input
+                                                    value={moduleDraft.name}
+                                                    maxLength={255}
+                                                    onChange={event => setModuleDraft(current => ({
+                                                        ...current,
+                                                        name: event.target.value
+                                                    }))}
+                                                    className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 font-bold outline-none focus:border-blue-400"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-violet-300">
+                                                    Nagłówek części nad etapem — opcjonalnie
+                                                </label>
+                                                <input
+                                                    value={moduleDraft.sectionTitle}
+                                                    maxLength={200}
+                                                    onChange={event => setModuleDraft(current => ({
+                                                        ...current,
+                                                        sectionTitle: event.target.value
+                                                    }))}
+                                                    placeholder="Np. CZĘŚĆ XX — Rekrutacja Junior Java Developer"
+                                                    className="mt-2 w-full rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold text-violet-100 outline-none focus:border-violet-400"
+                                                />
+                                            </div>
+
+                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                                <label className="flex items-center gap-3 text-sm font-bold text-gray-300">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={moduleDraft.lessonsLocked}
+                                                        onChange={event => setModuleDraft(current => ({
+                                                            ...current,
+                                                            lessonsLocked: event.target.checked
+                                                        }))}
+                                                        className="h-4 w-4 accent-blue-500"
+                                                    />
+                                                    Odblokowuj lekcje kolejno
+                                                </label>
+
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={cancelEditingModule}
+                                                        disabled={savingModuleId === module.id}
+                                                        className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-black text-gray-300 transition hover:bg-white/[0.06] disabled:opacity-40"
+                                                    >
+                                                        Anuluj
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => saveEditedModule(module)}
+                                                        disabled={savingModuleId === module.id || !moduleDraft.name.trim()}
+                                                        className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white transition hover:bg-blue-500 disabled:opacity-40"
+                                                    >
+                                                        {savingModuleId === module.id ? "Zapisywanie..." : "Zapisz etap"}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                )}
 
                                 <div
                                     id={lessonsPanelId}
