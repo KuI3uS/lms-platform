@@ -21,7 +21,12 @@ import {
     BsHeadphones,
     BsQuestionCircle,
     BsGrid3X3Gap,
-    BsChatDots
+    BsChatDots,
+    BsTools,
+    BsBug,
+    BsEye,
+    BsClipboardCheck,
+    BsChatLeftText
 } from "react-icons/bs";
 import {
     CEFR_LEVELS,
@@ -886,6 +891,16 @@ function stepIcon(type) {
         case "TASK":
         case "QUIZ":
             return <BsQuestionCircle />;
+        case "PRACTICAL_LAB":
+            return <BsTools />;
+        case "DEBUGGING":
+            return <BsBug />;
+        case "PREDICT_OUTPUT":
+            return <BsEye />;
+        case "CODE_REVIEW":
+            return <BsClipboardCheck />;
+        case "OPEN_RESPONSE":
+            return <BsChatLeftText />;
         default:
             return <BsFileText />;
     }
@@ -908,6 +923,11 @@ function stepTypeLabel(type) {
         SENTENCE_BUILDER: "Układanie zdania",
         EXAMPLE: "Przykład",
         TASK: "Zadanie",
+        PRACTICAL_LAB: "Laboratorium praktyczne",
+        DEBUGGING: "Debugowanie",
+        PREDICT_OUTPUT: "Przewidź wynik",
+        CODE_REVIEW: "Code Review",
+        OPEN_RESPONSE: "Odpowiedź otwarta",
         QUIZ: "Quiz"
     };
 

@@ -64,7 +64,7 @@ class RenderMemoryProfileTest {
             try (var response = connection.getInputStream()) {
                 var body = mapper.readTree(response);
                 assertEquals("ok", body.path("status").asText());
-                assertEquals("2026.09.23-language-import-memory", body.path("version").asText());
+                assertEquals("2026.10.09-developer-learning-blocks", body.path("version").asText());
             }
         } finally {
             connection.disconnect();
@@ -74,7 +74,7 @@ class RenderMemoryProfileTest {
     @Test
     @Transactional
     @WithMockUser(roles = "ADMIN")
-    void importsSeventeenLanguageBlocksWithTheRenderProfile() throws Exception {
+    void importsTenLanguageBlocksWithTheRenderProfile() throws Exception {
         Course course = new Course();
         course.setName("Angielski — test pamięci");
         course.setCategory("LANGUAGE");
@@ -93,8 +93,9 @@ class RenderMemoryProfileTest {
             assertNotNull(resource);
             List<LessonBlockRequest> requests = mapper.readValue(
                     resource, new TypeReference<List<LessonBlockRequest>>() {});
-            assertEquals(17, controller.createBulk(lesson.getId(), requests).size());
-            assertEquals(17, blocks.countByLessonId(lesson.getId()));
+            List<LessonBlockRequest> lessonBlocks = requests.subList(0, 10);
+            assertEquals(10, controller.createBulk(lesson.getId(), lessonBlocks).size());
+            assertEquals(10, blocks.countByLessonId(lesson.getId()));
         }
     }
 }

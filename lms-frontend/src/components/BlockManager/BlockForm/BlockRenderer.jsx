@@ -13,6 +13,8 @@ import DialogBlockForm from "./forms/DialogBlockForm";
 import VocabularyBlockForm from "./forms/VocabularyBlockForm";
 import SentenceBuilderBlockForm from "./forms/SentenceBuilderBlockForm";
 import ListeningBlockForm from "./forms/ListeningBlockForm";
+import PracticalLabBlockForm from "./forms/PracticalLabBlockForm";
+import ReflectiveBlockForm from "./forms/ReflectiveBlockForm";
 
 export default function BlockRenderer({
                                           block,
@@ -109,6 +111,21 @@ export default function BlockRenderer({
                     setBlock={setBlock}
                 />
             );
+
+        case "DEBUGGING":
+            return <TaskBlockForm block={block} setBlock={setBlock} mode="DEBUGGING" />;
+
+        case "PREDICT_OUTPUT":
+            return <TaskBlockForm block={block} setBlock={setBlock} mode="PREDICT_OUTPUT" />;
+
+        case "PRACTICAL_LAB":
+            return <PracticalLabBlockForm block={block} setBlock={setBlock} />;
+
+        case "CODE_REVIEW":
+            return <ReflectiveBlockForm block={block} setBlock={setBlock} mode="CODE_REVIEW" />;
+
+        case "OPEN_RESPONSE":
+            return <ReflectiveBlockForm block={block} setBlock={setBlock} mode="OPEN_RESPONSE" />;
 
         case "QUIZ":
             return (

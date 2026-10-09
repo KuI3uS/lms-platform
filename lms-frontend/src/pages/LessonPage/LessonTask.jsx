@@ -22,6 +22,7 @@ const DIAGNOSTIC_LABELS = {
     INVALID_JAVA_STATEMENT: "Niepoprawna instrukcja",
     INCORRECT_QUIZ_ANSWER: "Niepoprawna odpowiedź",
     INCORRECT_TEXT_ANSWER: "Spróbuj jeszcze raz",
+    INCORRECT_PREDICTED_OUTPUT: "Inny wynik programu",
     MISSING_OUTPUT: "Brak wyniku programu",
     MISSING_SEMICOLON: "Brak średnika",
     MISSING_REQUIRED_ELEMENT: "Niepełne rozwiązanie",
@@ -45,6 +46,34 @@ const DIAGNOSTIC_LABELS = {
     INCORRECT_HTML_CONTENT: "Niepoprawna treść elementu"
 };
 
+const TASK_PRESENTATION = {
+    TASK: {
+        eyebrow: "Zadanie",
+        fallbackTitle: "Ćwiczenie praktyczne",
+        action: "Sprawdź"
+    },
+    DEBUGGING: {
+        eyebrow: "Debugowanie",
+        fallbackTitle: "Napraw program",
+        action: "Sprawdź poprawkę"
+    },
+    PREDICT_OUTPUT: {
+        eyebrow: "Przewidź wynik",
+        fallbackTitle: "Co wypisze program?",
+        action: "Sprawdź przewidywanie"
+    },
+    CODE_REVIEW: {
+        eyebrow: "Analiza kodu / Code Review",
+        fallbackTitle: "Przeanalizuj kod",
+        action: "Zapisz i porównaj"
+    },
+    OPEN_RESPONSE: {
+        eyebrow: "Odpowiedź otwarta",
+        fallbackTitle: "Wyjaśnij własnymi słowami",
+        action: "Zapisz i porównaj"
+    }
+};
+
 export default function LessonTask({
                                        block,
                                        answers,
@@ -55,15 +84,19 @@ export default function LessonTask({
                                        onCheck
                                    }) {
 
-    const value = answers[block.id] ?? block.starterCode ?? "";
-    const isCodeTask = Boolean(block.language || block.starterCode);
+    const presentation = TASK_PRESENTATION[block.type] || TASK_PRESENTATION.TASK;
+    const isPrediction = block.type === "PREDICT_OUTPUT";
+    const isReflection = block.type === "CODE_REVIEW" || block.type === "OPEN_RESPONSE";
+    const hasReadOnlyCode = (isPrediction || block.type === "CODE_REVIEW") && Boolean(block.starterCode);
+    const isEditableCodeTask = !isPrediction && !isReflection && Boolean(block.language || block.starterCode);
+    const value = answers[block.id] ?? (isEditableCodeTask ? block.starterCode ?? "" : "");
 
     return (
         <section className="overflow-hidden rounded-3xl border border-yellow-500/20 bg-gradient-to-br from-yellow-500/10 via-gray-900 to-gray-950">
             <div className="border-b border-gray-800 p-5 sm:p-8">
-                <p className="mb-2 font-bold text-yellow-300">Zadanie</p>
+                <p className="mb-2 font-bold text-yellow-300">{presentation.eyebrow}</p>
                 <h2 className="text-2xl font-black leading-tight text-white sm:text-3xl">
-                    {block.title || "Ćwiczenie praktyczne"}
+                    {block.title || presentation.fallbackTitle}
                 </h2>
 
                 {block.description && (
@@ -76,7 +109,7 @@ export default function LessonTask({
                     {block.instruction}
                 </p>
 
-                {block.language?.toLowerCase() === "html" && (
+                {isEditableCodeTask && block.language?.toLowerCase() === "html" && (
                     <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.07] p-4 text-sm leading-6 text-cyan-50 sm:text-base">
                         <strong>Jak działa sprawdzanie:</strong> liczy się poprawna struktura, wymagane znaczniki, atrybuty i treść. Wielkość liter, wcięcia oraz podział kodu na linie nie wpływają na wynik. Po sprawdzeniu zobaczysz dokładnie, czego brakuje i w której linii szukać błędu.
                     </div>
@@ -84,7 +117,18 @@ export default function LessonTask({
             </div>
 
             <div className="space-y-6 p-4 sm:p-8">
-                {isCodeTask ? (
+                {hasReadOnlyCode && (
+                    <div className="overflow-hidden rounded-3xl border border-cyan-400/20 bg-[#07111f]">
+                        <div className="border-b border-white/10 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
+                            Kod do analizy · {(block.language || "text").toUpperCase()}
+                        </div>
+                        <pre className="max-h-[520px] overflow-auto p-5 text-sm leading-7 text-cyan-50 sm:text-base">
+                            <code>{block.starterCode}</code>
+                        </pre>
+                    </div>
+                )}
+
+                {isEditableCodeTask ? (
                     <Suspense fallback={<EditorLoader />}>
                         <MonacoEditorBox
                             language={block.language || "java"}
@@ -95,7 +139,11 @@ export default function LessonTask({
                 ) : (
                     <textarea
                         className="min-h-40 w-full rounded-3xl border border-gray-700 bg-gray-950 p-6 text-gray-200 outline-none focus:border-blue-500"
-                        placeholder="Wpisz swoją odpowiedź..."
+                        placeholder={isPrediction
+                            ? "Wpisz dokładny wynik programu..."
+                            : isReflection
+                                ? "Zapisz własną analizę lub odpowiedź..."
+                                : "Wpisz swoją odpowiedź..."}
                         value={value}
                         onChange={(event) => onAnswerChange(block.id, event.target.value)}
                     />
@@ -109,7 +157,7 @@ export default function LessonTask({
                         className="flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 font-bold transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
                     >
                         <BsPlayFill />
-                        {checking ? "Sprawdzam..." : "Sprawdź"}
+                        {checking ? "Sprawdzam..." : presentation.action}
                     </button>
 
                     <button
@@ -149,10 +197,12 @@ export default function LessonTask({
                                         result.correct ? "text-emerald-200" : "text-white"
                                     }`}>
                                         {result.correct
-                                            ? isCodeTask
+                                            ? isEditableCodeTask
                                                 ? "Dobra robota — kod działa"
-                                                : "Dobra robota — odpowiedź jest poprawna"
-                                            : isCodeTask
+                                                : isReflection
+                                                    ? "Odpowiedź zapisana — czas na samoocenę"
+                                                    : "Dobra robota — odpowiedź jest poprawna"
+                                            : isEditableCodeTask
                                                 ? "Sprawdź wskazane miejsca"
                                                 : "Spróbuj poprawić odpowiedź"}
                                     </p>
@@ -234,12 +284,14 @@ export default function LessonTask({
                             </div>
                         )}
 
-                        {!result.correct && result.solutionPreview && (
+                        {result.solutionPreview && (
                             <div className="mx-4 mb-4 sm:mx-5 sm:mb-5">
-                                <p className="mb-2 font-bold text-yellow-100">Przykładowe poprawne rozwiązanie</p>
-                                <pre className="overflow-x-auto rounded-xl border border-white/10 bg-gray-950 p-4 text-sm text-gray-100">
-                                    <code>{result.solutionPreview}</code>
-                                </pre>
+                                <p className="mb-2 font-bold text-yellow-100">
+                                    {isReflection ? "Model odpowiedzi i kryteria samooceny" : "Przykładowe poprawne rozwiązanie"}
+                                </p>
+                                <div className="whitespace-pre-wrap rounded-xl border border-white/10 bg-gray-950 p-4 text-sm leading-7 text-gray-100">
+                                    {result.solutionPreview}
+                                </div>
                             </div>
                         )}
                     </div>

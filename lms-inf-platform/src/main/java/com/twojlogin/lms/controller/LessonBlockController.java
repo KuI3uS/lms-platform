@@ -38,8 +38,8 @@ import java.util.stream.Collectors;
 public class LessonBlockController {
 
     private static final int MAX_BLOCKS_PER_LESSON = 10;
-    private static final int MAX_BLOCKS_PER_LANGUAGE_LESSON = 30;
-    private static final int MAX_VOCABULARY_ITEMS = 30;
+    private static final int MAX_BLOCKS_PER_LANGUAGE_LESSON = 10;
+    private static final int MAX_VOCABULARY_ITEMS = 20;
     private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 
     private final LessonBlockRepository blockRepository;
@@ -389,11 +389,43 @@ public class LessonBlockController {
                     "Tytuł bloku może mieć maksymalnie 255 znaków."
             );
         }
-        if ((request.type() == BlockType.TASK || request.type() == BlockType.QUIZ)
+        if ((request.type() == BlockType.TASK
+                || request.type() == BlockType.QUIZ
+                || request.type() == BlockType.DEBUGGING
+                || request.type() == BlockType.PREDICT_OUTPUT
+                || request.type() == BlockType.CODE_REVIEW
+                || request.type() == BlockType.OPEN_RESPONSE)
                 && isBlank(request.expectedAnswer())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Dodaj poprawną odpowiedź do zadania."
+            );
+        }
+        if ((request.type() == BlockType.TASK
+                || request.type() == BlockType.DEBUGGING
+                || request.type() == BlockType.PREDICT_OUTPUT
+                || request.type() == BlockType.CODE_REVIEW
+                || request.type() == BlockType.OPEN_RESPONSE
+                || request.type() == BlockType.PRACTICAL_LAB)
+                && isBlank(request.instruction())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Dodaj polecenie lub cel aktywności."
+            );
+        }
+        if (request.type() == BlockType.PRACTICAL_LAB && isBlank(request.content())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Dodaj sposób weryfikacji i kryteria ukończenia laboratorium."
+            );
+        }
+        if ((request.type() == BlockType.DEBUGGING
+                || request.type() == BlockType.PREDICT_OUTPUT
+                || request.type() == BlockType.CODE_REVIEW)
+                && isBlank(request.starterCode())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Dodaj kod potrzebny do wykonania aktywności."
             );
         }
         if ((request.type() == BlockType.DIALOG || request.type() == BlockType.VOCABULARY || request.type() == BlockType.WORD_LAB || request.type() == BlockType.LISTENING || request.type() == BlockType.SENTENCE_BUILDER)
@@ -461,7 +493,7 @@ public class LessonBlockController {
                 if (!items.isArray() || items.isEmpty() || items.size() > MAX_VOCABULARY_ITEMS) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
-                            "Trening słówek musi zawierać od 1 do 30 pozycji."
+                            "Trening słówek musi zawierać od 1 do 20 pozycji."
                     );
                 }
                 for (JsonNode item : items) {

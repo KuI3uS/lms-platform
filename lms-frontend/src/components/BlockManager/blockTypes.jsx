@@ -15,7 +15,12 @@ import {
     BsChatDots,
     BsTranslate,
     BsGrid3X3Gap,
-    BsStars
+    BsStars,
+    BsTools,
+    BsBug,
+    BsEye,
+    BsClipboardCheck,
+    BsChatLeftText
 } from "react-icons/bs";
 
 export const BLOCK_TYPES = [
@@ -170,6 +175,56 @@ export const BLOCK_TYPES = [
         iconBox: "bg-blue-400/15 text-blue-200"
     },
     {
+        value: "PRACTICAL_LAB",
+        label: "Laboratorium praktyczne",
+        description: "Praca w IntelliJ, terminalu, GitHubie, Postmanie lub Dockerze z kryteriami ukończenia.",
+        icon: <BsTools />,
+        surface: "bg-emerald-500/10",
+        border: "border-emerald-500/25",
+        selected: "border-emerald-300 bg-emerald-500/20 shadow-emerald-950/30",
+        iconBox: "bg-emerald-400/15 text-emerald-200"
+    },
+    {
+        value: "DEBUGGING",
+        label: "Debugowanie",
+        description: "Kod z błędem, objaw, zadanie naprawcze, testy i progresywne podpowiedzi.",
+        icon: <BsBug />,
+        surface: "bg-rose-500/10",
+        border: "border-rose-500/25",
+        selected: "border-rose-300 bg-rose-500/20 shadow-rose-950/30",
+        iconBox: "bg-rose-400/15 text-rose-200"
+    },
+    {
+        value: "PREDICT_OUTPUT",
+        label: "Przewidź wynik",
+        description: "Uczeń analizuje kod i zapisuje wynik przed uruchomieniem programu.",
+        icon: <BsEye />,
+        surface: "bg-cyan-500/10",
+        border: "border-cyan-500/25",
+        selected: "border-cyan-300 bg-cyan-500/20 shadow-cyan-950/30",
+        iconBox: "bg-cyan-400/15 text-cyan-200"
+    },
+    {
+        value: "CODE_REVIEW",
+        label: "Analiza kodu / Code Review",
+        description: "Fragment kodu, pytanie problemowe oraz model odpowiedzi i kryteria samooceny.",
+        icon: <BsClipboardCheck />,
+        surface: "bg-violet-500/10",
+        border: "border-violet-500/25",
+        selected: "border-violet-300 bg-violet-500/20 shadow-violet-950/30",
+        iconBox: "bg-violet-400/15 text-violet-200"
+    },
+    {
+        value: "OPEN_RESPONSE",
+        label: "Odpowiedź otwarta",
+        description: "Samodzielna wypowiedź porównywana po wysłaniu z modelem i kryteriami.",
+        icon: <BsChatLeftText />,
+        surface: "bg-indigo-500/10",
+        border: "border-indigo-500/25",
+        selected: "border-indigo-300 bg-indigo-500/20 shadow-indigo-950/30",
+        iconBox: "bg-indigo-400/15 text-indigo-200"
+    },
+    {
         value: "QUIZ",
         label: "Quiz",
         description: "Pytanie jednokrotnego wyboru z odpowiedziami.",
@@ -228,7 +283,7 @@ const LANGUAGE_OVERRIDES = {
     VIDEO: { label: "Wymowa lub film", description: "Krótki materiał do słuchania i powtarzania." },
     AUDIO: { label: "Audio i wymowa", description: "Odsłuch, nagranie mikrofonem i automatyczna powtórka." },
     DIALOG: { label: "Dialog interaktywny", description: "Rozmowa bohaterów z rolą ucznia, odsłuchem i łagodną korektą." },
-    VOCABULARY: { label: "Trening słówek", description: "Od 1 do 30 słów w jednym bloku, z odsłuchem i pisaniem." },
+    VOCABULARY: { label: "Trening słówek", description: "Od 1 do 20 słów w jednym bloku, z odsłuchem i pisaniem." },
     SENTENCE_BUILDER: { label: "Układanie zdania", description: "Ułóż tłumaczenie z 2–6 pomieszanych kafelków." },
     WORD_LAB: { label: "Laboratorium słów", description: "Uczeń przypomina znaczenie, mówi na głos i poprawia każde słowo." },
     LISTENING: { label: "Rozpoznawanie ze słuchu", description: "Odsłuch bez podglądu odpowiedzi: litery, słowa, liczby i dyktanda." },

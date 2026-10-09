@@ -7,6 +7,7 @@ import {
     BsGlobe
 } from "react-icons/bs";
 import { lazy, Suspense } from "react";
+import { CODE_LANGUAGE_OPTIONS } from "../../../../utils/codeLanguages";
 
 const MonacoEditorBox = lazy(() => import("../../../../pages/LessonPage/MonacoEditor"));
 
@@ -98,7 +99,9 @@ export default function TaskBlockForm({
 
                                           block: task,
 
-                                          setBlock
+                                          setBlock,
+
+                                          mode = "TASK"
 
                                       }) {
 
@@ -111,7 +114,14 @@ export default function TaskBlockForm({
 
     }
 
-    const isHtml = (task.language || "java") === "html";
+    const isDebugging = mode === "DEBUGGING";
+    const isPrediction = mode === "PREDICT_OUTPUT";
+    const isHtml = !isPrediction && (task.language || "java") === "html";
+    const formTitle = isDebugging
+        ? "Debugowanie"
+        : isPrediction
+            ? "Przewidź wynik"
+            : "Zadanie";
     const hasEmptyRequirements = isHtml
         && /Wymagania:\s*$/i.test(task.instruction || "");
 
@@ -141,13 +151,17 @@ export default function TaskBlockForm({
                 <h2 className="text-2xl font-bold">
 
                     {task.id
-                        ? "Edytuj zadanie"
-                        : "Nowe zadanie"}
+                        ? `Edytuj: ${formTitle.toLowerCase()}`
+                        : `Nowy blok: ${formTitle.toLowerCase()}`}
 
                 </h2>
 
                 <p className="text-gray-400 mt-1">
-                    Skonfiguruj zadanie praktyczne dla uczniów.
+                    {isDebugging
+                        ? "Dodaj kod z błędem, objaw, testy i progresywne podpowiedzi."
+                        : isPrediction
+                            ? "Uczeń analizuje kod i podaje wynik przed jego uruchomieniem."
+                            : "Skonfiguruj zadanie praktyczne dla uczniów."}
                 </p>
 
             </div>
@@ -187,7 +201,7 @@ export default function TaskBlockForm({
 
                         <BsCardText />
 
-                        Opis
+                        {isDebugging ? "Objaw błędu" : "Opis"}
 
                     </label>
 
@@ -195,7 +209,7 @@ export default function TaskBlockForm({
                         value={task.description || ""}
                         onChange={(e)=>update("description", e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-28"
-                        placeholder="Krótki opis zadania..."
+                        placeholder={isDebugging ? "Np. Program kompiluje się, ale zwraca błędną sumę..." : "Krótki opis zadania..."}
                     />
 
                 </div>
@@ -206,7 +220,7 @@ export default function TaskBlockForm({
 
                         <BsCardText />
 
-                        Polecenie
+                        {isDebugging ? "Zadanie naprawcze" : isPrediction ? "Pytanie do kodu" : "Polecenie"}
 
                     </label>
 
@@ -214,7 +228,7 @@ export default function TaskBlockForm({
                         value={task.instruction || ""}
                         onChange={(e)=>update("instruction", e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-40"
-                        placeholder="Treść zadania..."
+                        placeholder={isDebugging ? "Wyjaśnij, co uczeń ma naprawić i po czym pozna poprawny rezultat." : isPrediction ? "Np. Jaki dokładnie tekst wypisze ten program?" : "Treść zadania..."}
                     />
 
                     {hasEmptyRequirements && (
@@ -241,7 +255,7 @@ export default function TaskBlockForm({
 
                     <label className="flex items-center gap-2 text-gray-300">
                         <BsCodeSlash />
-                        Kod startowy
+                        {isDebugging ? "Kod z błędem" : isPrediction ? "Kod do przeanalizowania" : "Kod startowy"}
                     </label>
 
                     <Suspense fallback={<EditorLoader />}>
@@ -254,7 +268,7 @@ export default function TaskBlockForm({
 
                 </div>
 
-                {(task.language || "java") === "java" && (
+                {!isPrediction && (task.language || "java") === "java" && (
                     <div className="space-y-2 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-4">
                         <label className="flex items-center gap-2 font-black text-cyan-200">
                             <BsCheckCircle /> Ukryte testy uruchomieniowe
@@ -287,17 +301,9 @@ export default function TaskBlockForm({
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
                     >
 
-                        <option value="java">Java</option>
-
-                        <option value="javascript">JavaScript</option>
-
-                        <option value="python">Python</option>
-
-                        <option value="csharp">C#</option>
-
-                        <option value="sql">SQL</option>
-
-                        <option value="html">HTML</option>
+                        {CODE_LANGUAGE_OPTIONS.map(option => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
 
                     </select>
 
@@ -321,7 +327,7 @@ export default function TaskBlockForm({
 
                         <BsCheckCircle />
 
-                        Poprawna odpowiedź
+                        {isPrediction ? "Poprawny wynik programu" : isDebugging ? "Poprawiony kod" : "Poprawna odpowiedź"}
 
                     </label>
 

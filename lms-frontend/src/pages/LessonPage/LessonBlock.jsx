@@ -13,6 +13,7 @@ import LessonVocabulary from "./LessonVocabulary";
 import LessonSentenceBuilder from "./LessonSentenceBuilder";
 import LessonWordLab from "./LessonWordLab";
 import LessonListening from "./LessonListening";
+import LessonPracticalLab from "./LessonPracticalLab";
 
 export default function LessonBlock({
                                         block,
@@ -92,7 +93,21 @@ export default function LessonBlock({
                 />
             );
 
+        case "PRACTICAL_LAB":
+            return (
+                <LessonPracticalLab
+                    block={block}
+                    result={results[block.id]}
+                    checking={checkingTaskId === block.id}
+                    onCheck={onCheck}
+                />
+            );
+
         case "TASK":
+        case "DEBUGGING":
+        case "PREDICT_OUTPUT":
+        case "CODE_REVIEW":
+        case "OPEN_RESPONSE":
             return (
                 <LessonTask
                     block={block}

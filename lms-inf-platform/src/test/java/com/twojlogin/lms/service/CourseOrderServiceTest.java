@@ -162,7 +162,7 @@ class CourseOrderServiceTest {
         when(enrollmentRepository.findByUserIdAndCourseId(7L, 5L))
                 .thenReturn(Optional.empty());
 
-        LocalDateTime before = LocalDateTime.now(ZoneId.of("Europe/Warsaw")).plusMonths(1);
+        LocalDateTime before = LocalDateTime.now(ZoneId.of("Europe/Warsaw")).plusDays(30);
         CourseOrderDto first = service.confirm(10L, authentication);
         LocalDateTime firstExpiry = first.accessUntil();
         CourseOrderDto repeated = service.confirm(10L, authentication);

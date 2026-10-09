@@ -1080,16 +1080,16 @@ export default function useLessonBlocks() {
 
         if (block.type === "WORD_LAB") {
             const vocabulary = parseVocabularyContent(block.content);
-            if (vocabulary.items.length < 1 || vocabulary.items.length > 30) {
-                showToast("Laboratorium słów musi zawierać od 1 do 30 pozycji.", "warning");
+            if (vocabulary.items.length < 1 || vocabulary.items.length > 20) {
+                showToast("Laboratorium słów musi zawierać od 1 do 20 pozycji.", "warning");
                 return false;
             }
         }
 
         if (block.type === "LISTENING") {
             const listening = parseVocabularyContent(block.content);
-            if (listening.items.length < 1 || listening.items.length > 30) {
-                showToast("Rozpoznawanie ze słuchu musi zawierać od 1 do 30 nagrań.", "warning");
+            if (listening.items.length < 1 || listening.items.length > 20) {
+                showToast("Rozpoznawanie ze słuchu musi zawierać od 1 do 20 nagrań.", "warning");
                 return false;
             }
         }
@@ -1126,11 +1126,11 @@ export default function useLessonBlocks() {
 
 
             if (
-                vocabulary.items.length > 30
+                vocabulary.items.length > 20
             ) {
 
                 showToast(
-                    "Jeden trening może zawierać maksymalnie 30 słówek.",
+                    "Jeden trening może zawierać maksymalnie 20 słówek.",
                     "warning"
                 );
 
@@ -1201,16 +1201,14 @@ export default function useLessonBlocks() {
         /**
          * Zadanie.
          */
-        if (
-            block.type === "TASK"
-        ) {
+        if (["TASK", "DEBUGGING", "PREDICT_OUTPUT", "CODE_REVIEW", "OPEN_RESPONSE"].includes(block.type)) {
 
             if (
                 !block.instruction?.trim()
             ) {
 
                 showToast(
-                    "Dodaj polecenie do zadania.",
+                    "Dodaj polecenie do aktywności.",
                     "warning"
                 );
 
@@ -1223,10 +1221,34 @@ export default function useLessonBlocks() {
             ) {
 
                 showToast(
-                    "Dodaj poprawną odpowiedź do zadania.",
+                    block.type === "OPEN_RESPONSE" || block.type === "CODE_REVIEW"
+                        ? "Dodaj model odpowiedzi i kryteria samooceny."
+                        : "Dodaj poprawną odpowiedź do aktywności.",
                     "warning"
                 );
 
+                return false;
+            }
+        }
+
+        if (["DEBUGGING", "PREDICT_OUTPUT", "CODE_REVIEW"].includes(block.type)
+            && !block.starterCode?.trim()) {
+            const message = block.type === "DEBUGGING"
+                ? "Dodaj kod z błędem, który uczeń ma naprawić."
+                : block.type === "PREDICT_OUTPUT"
+                    ? "Dodaj kod, którego wynik uczeń ma przewidzieć."
+                    : "Dodaj kod do analizy.";
+            showToast(message, "warning");
+            return false;
+        }
+
+        if (block.type === "PRACTICAL_LAB") {
+            if (!block.instruction?.trim()) {
+                showToast("Dodaj cel i wymagania laboratorium.", "warning");
+                return false;
+            }
+            if (!block.content?.trim()) {
+                showToast("Dodaj sposób weryfikacji i kryteria ukończenia.", "warning");
                 return false;
             }
         }

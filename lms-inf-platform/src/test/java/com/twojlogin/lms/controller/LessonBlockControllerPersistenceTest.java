@@ -1,5 +1,7 @@
 package com.twojlogin.lms.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.twojlogin.lms.dto.LessonBlockDto;
 import com.twojlogin.lms.dto.LessonBlockRequest;
 import com.twojlogin.lms.entity.BlockType;
@@ -52,7 +54,11 @@ class LessonBlockControllerPersistenceTest {
         byte[] body;
         try (var resource = getClass().getResourceAsStream("/hello-language-import.json")) {
             assertNotNull(resource);
-            body = resource.readAllBytes();
+            List<LessonBlockRequest> imported = objectMapper.readValue(
+                    resource,
+                    new TypeReference<List<LessonBlockRequest>>() {}
+            );
+            body = objectMapper.writeValueAsBytes(imported.subList(0, 10));
         }
         var mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders
                 .standaloneSetup(createController())
@@ -64,7 +70,7 @@ class LessonBlockControllerPersistenceTest {
                         .content(body))
                 .andReturn();
         assertEquals(200, result.getResponse().getStatus(), result.getResponse().getContentAsString());
-        assertEquals(17, blockRepository.countByLessonId(lesson.getId()));
+        assertEquals(10, blockRepository.countByLessonId(lesson.getId()));
     }
 
     @Autowired
@@ -81,6 +87,8 @@ class LessonBlockControllerPersistenceTest {
 
     @Autowired
     private CourseModuleRepository moduleRepository;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void createsACompleteTaskBlockWithoutEntityDeserialization() {
@@ -196,7 +204,12 @@ class LessonBlockControllerPersistenceTest {
         for (BlockType type : BlockType.values()) {
             Lesson lesson = createLesson("Lekcja " + type, type.ordinal() + 10);
             String requiredAnswer =
-                    type == BlockType.TASK || type == BlockType.QUIZ
+                    type == BlockType.TASK
+                            || type == BlockType.QUIZ
+                            || type == BlockType.DEBUGGING
+                            || type == BlockType.PREDICT_OUTPUT
+                            || type == BlockType.CODE_REVIEW
+                            || type == BlockType.OPEN_RESPONSE
                             ? "poprawna odpowiedź"
                             : null;
 
@@ -214,8 +227,14 @@ class LessonBlockControllerPersistenceTest {
                             type,
                             content,
                             null,
-                            type == BlockType.TASK ? "Wykonaj zadanie" : null,
-                            null,
+                            switch (type) {
+                                case TASK, DEBUGGING, PREDICT_OUTPUT, CODE_REVIEW, OPEN_RESPONSE, PRACTICAL_LAB -> "Wykonaj aktywność";
+                                default -> null;
+                            },
+                            switch (type) {
+                                case DEBUGGING, PREDICT_OUTPUT, CODE_REVIEW -> "int value = 1;";
+                                default -> null;
+                            },
                             requiredAnswer,
                             null,
                             null,
@@ -285,7 +304,7 @@ class LessonBlockControllerPersistenceTest {
     }
 
     @Test
-    void allowsTwentyBlocksOnlyForLanguageLessons() {
+    void limitsLanguageLessonsToTenBlocks() {
         Course course = new Course();
         course.setName("Angielski");
         course.setCategory("LANGUAGE");
@@ -304,7 +323,7 @@ class LessonBlockControllerPersistenceTest {
         Long lessonId = lesson.getId();
 
         LessonBlockController controller = createController();
-        List<LessonBlockRequest> requests = IntStream.range(0, 20)
+        List<LessonBlockRequest> requests = IntStream.range(0, 10)
                 .mapToObj(index -> request(
                         "Krok " + (index + 1),
                         BlockType.TEXT,
@@ -315,19 +334,19 @@ class LessonBlockControllerPersistenceTest {
 
         List<LessonBlockDto> saved = controller.createBulk(lessonId, requests);
 
-        assertEquals(20, saved.size());
-        assertEquals(20, blockRepository.countByLessonId(lessonId));
+        assertEquals(10, saved.size());
+        assertEquals(10, blockRepository.countByLessonId(lessonId));
 
         ResponseStatusException error = assertThrows(
                 ResponseStatusException.class,
                 () -> controller.create(
                         lessonId,
-                        request("Krok 21", BlockType.TEXT, "Treść", null)
+                        request("Krok 11", BlockType.TEXT, "Treść", null)
                 )
         );
 
         assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
-        assertEquals(20, blockRepository.countByLessonId(lessonId));
+        assertEquals(10, blockRepository.countByLessonId(lessonId));
     }
 
     @Test

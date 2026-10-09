@@ -1,7 +1,7 @@
-const ASSESSMENT_TYPES = new Set(["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER", "WORD_LAB", "LISTENING"]);
+import { ASSESSMENT_BLOCK_TYPES } from "./lessonBlockRewards";
 
 export function isAssessmentStep(step) {
-    return ASSESSMENT_TYPES.has(step?.type);
+    return ASSESSMENT_BLOCK_TYPES.has(step?.type);
 }
 
 export function isPersistentlyCompletedStep(step) {

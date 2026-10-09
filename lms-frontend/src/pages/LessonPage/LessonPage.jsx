@@ -7,6 +7,7 @@ import {
     canAccessLessonStep,
     getActiveLessonStepIndex
 } from "../../utils/lessonSteps";
+import { ASSESSMENT_BLOCK_TYPES } from "../../utils/lessonBlockRewards";
 
 import LessonHero from "./LessonHero";
 import LessonSidebar from "./LessonSidebar";
@@ -89,11 +90,11 @@ export default function LessonPage() {
             const initialAnswers = {};
             const initialResults = {};
             sorted
-                .filter(block => ["TASK", "QUIZ"].includes(block.type))
+                .filter(block => ASSESSMENT_BLOCK_TYPES.has(block.type))
                 .forEach(block => {
-                    initialAnswers[block.id] = block.type === "QUIZ"
-                        ? block.lastAnswer || ""
-                        : block.lastAnswer ?? block.starterCode ?? "";
+                    const startsFromCode = block.type === "TASK" || block.type === "DEBUGGING";
+                    initialAnswers[block.id] = block.lastAnswer
+                        ?? (startsFromCode ? block.starterCode ?? "" : "");
 
                     if (block.attempted) {
                         initialResults[block.id] = {
@@ -151,17 +152,23 @@ export default function LessonPage() {
     function resetTask(block) {
         updateAnswer(
             block.id,
-            block.type === "QUIZ" ? "" : block.starterCode || ""
+            block.type === "TASK" || block.type === "DEBUGGING"
+                ? block.starterCode || ""
+                : ""
         );
     }
 
-    async function checkTask(blockId) {
+    async function checkTask(blockId, answerOverride) {
+        const submittedAnswer = answerOverride ?? answers[blockId] ?? "";
+        if (answerOverride !== undefined) {
+            setAnswers(previous => ({ ...previous, [blockId]: submittedAnswer }));
+        }
         try {
             setCheckingTaskId(blockId);
 
             const response = await apiFetch(`/lesson-blocks/${blockId}/check`, {
                 method: "POST",
-                body: JSON.stringify({ answer: answers[blockId] || "" })
+                body: JSON.stringify({ answer: submittedAnswer })
             });
 
             const normalizedResponse = typeof response === "boolean"
@@ -184,7 +191,7 @@ export default function LessonPage() {
                         attempted: true,
                         correct: normalizedResponse.correct,
                         attemptCount: normalizedResponse.attemptCount,
-                        lastAnswer: answers[blockId] || ""
+                        lastAnswer: submittedAnswer
                     }
                     : block
             )));
@@ -195,7 +202,7 @@ export default function LessonPage() {
                         attempted: true,
                         correct: normalizedResponse.correct,
                         attemptCount: normalizedResponse.attemptCount,
-                        lastAnswer: answers[blockId] || ""
+                        lastAnswer: submittedAnswer
                     }
                     : previous
             ));
@@ -242,9 +249,7 @@ export default function LessonPage() {
     }
 
     async function finishLesson() {
-        const taskBlocks = blocks.filter(
-            block => ["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER", "WORD_LAB", "LISTENING"].includes(block.type)
-        );
+        const taskBlocks = blocks.filter(block => ASSESSMENT_BLOCK_TYPES.has(block.type));
 
         try {
             setFinishing(true);
@@ -339,9 +344,9 @@ export default function LessonPage() {
         ? moduleLessons[currentIndex + 1]
         : null;
     const nextLesson = nextLessonCandidate?.canAccess ? nextLessonCandidate : null;
-    const requiredTypes = ["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER", "WORD_LAB", "LISTENING"];
+    const requiredTypes = ASSESSMENT_BLOCK_TYPES;
     const hasTasks = blocks.some(
-        block => requiredTypes.includes(block.type)
+        block => requiredTypes.has(block.type)
     );
     const selectedBlockIndex = blocks.findIndex(
         block => Number(block.id) === Number(selectedBlock?.id)
@@ -354,13 +359,13 @@ export default function LessonPage() {
         ? blocks[selectedBlockIndex + 1]
         : null;
     const assessmentBlocks = blocks.filter(
-        block => requiredTypes.includes(block.type)
+        block => requiredTypes.has(block.type)
     );
     const completedAssessmentCount = assessmentBlocks.filter(
         block => results[block.id]?.correct || block.correct
     ).length;
     const currentBlockCompleted = selectedBlock
-        ? !requiredTypes.includes(selectedBlock.type)
+        ? !requiredTypes.has(selectedBlock.type)
             || results[selectedBlock.id]?.correct
             || selectedBlock.correct
         : true;
@@ -372,7 +377,7 @@ export default function LessonPage() {
         if (targetIndex <= 0) return true;
 
         return blocks.slice(0, targetIndex).every(block => (
-            !requiredTypes.includes(block.type)
+            !requiredTypes.has(block.type)
             || results[block.id]?.correct
             || block.correct
         ));

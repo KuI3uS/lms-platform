@@ -44,6 +44,16 @@ public enum BlockType {
 
     TASK,
 
+    PRACTICAL_LAB,
+
+    DEBUGGING,
+
+    PREDICT_OUTPUT,
+
+    CODE_REVIEW,
+
+    OPEN_RESPONSE,
+
     QUIZ,
 
     QUOTE,

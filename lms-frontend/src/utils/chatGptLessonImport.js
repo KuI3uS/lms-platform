@@ -19,6 +19,16 @@ const TYPE_MAP = {
     podsumowanie: "SUMMARY",
     quiz: "QUIZ",
     zadanie: "TASK",
+    "laboratorium praktyczne": "PRACTICAL_LAB",
+    "zadanie praktyczne": "PRACTICAL_LAB",
+    debugowanie: "DEBUGGING",
+    "napraw kod": "DEBUGGING",
+    "przewidz wynik": "PREDICT_OUTPUT",
+    "przewidywanie wyniku": "PREDICT_OUTPUT",
+    "analiza kodu": "CODE_REVIEW",
+    "analiza kodu / code review": "CODE_REVIEW",
+    "code review": "CODE_REVIEW",
+    "odpowiedz otwarta": "OPEN_RESPONSE",
     "przyklad kodu": "EXAMPLE",
     obraz: "IMAGE",
     film: "VIDEO",
@@ -60,6 +70,9 @@ const FIELD_ALIASES = [
     ["tytul cwiczenia sluchowego", "title"],
     ["tytul ukladanki", "title"],
     ["tytul przykladu", "title"],
+    ["tytul debugowania", "title"],
+    ["tytul analizy", "title"],
+    ["tytul odpowiedzi otwartej", "title"],
     ["nazwa pliku", "title"],
     ["naglowek cytatu", "title"],
     ["nazwa kolejnej czesci (opcjonalnie)", "title"],
@@ -71,6 +84,7 @@ const FIELD_ALIASES = [
     ["najwazniejsze punkty", "content"],
     ["zwrot do wypowiedzenia", "content"],
     ["kod przykladu", "content"],
+    ["weryfikacja i kryteria ukonczenia", "content"],
     ["tresc cytatu", "content"],
     ["odpowiedzi — kazda w nowym wierszu", "content"],
     ["odpowiedzi - kazda w nowym wierszu", "content"],
@@ -92,6 +106,9 @@ const FIELD_ALIASES = [
     ["wprowadzenie (opcjonalnie)", "description"],
     ["opis", "description"],
     ["opis sytuacji", "description"],
+    ["srodowisko i sytuacja", "description"],
+    ["objaw bledu", "description"],
+    ["kontekst", "description"],
     ["instrukcja dla ucznia", "description"],
     ["wprowadzenie", "description"],
     ["pytanie", "question"],
@@ -100,6 +117,10 @@ const FIELD_ALIASES = [
     ["odpowiedz c", "answerC"],
     ["odpowiedz d", "answerD"],
     ["poprawna odpowiedz", "correctAnswer"],
+    ["poprawny wynik programu", "correctAnswer"],
+    ["poprawiony kod", "correctAnswer"],
+    ["model odpowiedzi i kryteria samooceny", "correctAnswer"],
+    ["model odpowiedzi", "correctAnswer"],
     ["akceptowane odpowiedzi", "correctAnswer"],
     ["pierwsza wskazowka", "hint"],
     ["wskazowka po pierwszym bledzie", "hint"],
@@ -110,7 +131,14 @@ const FIELD_ALIASES = [
     ["wyjasnienie rozwiazania", "solutionExplanation"],
     ["wyjasnienie rozwiazania (od 4. blednej proby)", "solutionExplanation"],
     ["polecenie", "instruction"],
+    ["cel i wymagania", "instruction"],
+    ["zadanie naprawcze", "instruction"],
+    ["pytanie do kodu", "instruction"],
+    ["pytanie i kryteria odpowiedzi", "instruction"],
     ["kod startowy", "starterCode"],
+    ["kod z bledem", "starterCode"],
+    ["kod do przeanalizowania", "starterCode"],
+    ["kod do analizy", "starterCode"],
     ["ukryte testy uruchomieniowe", "hiddenTests"],
     ["jezyk", "language"],
     ["jezyk rozpoznawania", "language"],
@@ -239,6 +267,18 @@ function normalizeLanguage(value, fallback = "") {
         csharp: "csharp",
         sql: "sql",
         html: "html",
+        bash: "bash",
+        shell: "bash",
+        powershell: "powershell",
+        json: "json",
+        yaml: "yaml",
+        yml: "yaml",
+        xml: "xml",
+        dockerfile: "dockerfile",
+        http: "http",
+        markdown: "markdown",
+        text: "text",
+        tekst: "text",
         "en-us": "en-US",
         "en-gb": "en-GB",
         "angielski (stany zjednoczone)": "en-US",
@@ -256,15 +296,12 @@ function normalizeLanguage(value, fallback = "") {
 
 function resolveType(rawType, heading) {
     const normalizedType = normalize(rawType || heading);
-    const practical = normalizedType.includes("zadanie praktyczne");
-    if (practical) return { type: "TEXT", practical: true, languageExercise: false };
 
     const typeKey = Object.keys(TYPE_MAP).find(
         (key) => normalizedType === key || normalizedType.startsWith(`${key} `)
     );
     return {
         type: TYPE_MAP[typeKey],
-        practical: false,
         languageExercise: normalizedType.startsWith("cwiczenie jezykowe")
     };
 }
@@ -321,11 +358,6 @@ function parseStep(step, warnings, errors) {
         points: 0
     };
 
-    if (resolved.practical) {
-        block.content = `Zadanie praktyczne\n\n${fields.content || fields.instruction || ""}`.trim();
-        warnings.push(`Krok ${step.number}: zadanie praktyczne zostanie zapisane jako czytelny blok materiału.`);
-    }
-
     if (resolved.type === "SUMMARY") {
         block.content = summaryContent(fields) || fields.content;
     }
@@ -361,18 +393,38 @@ function parseStep(step, warnings, errors) {
         }
     }
 
-    if (resolved.type === "TASK") {
+    if (["TASK", "DEBUGGING", "PREDICT_OUTPUT", "CODE_REVIEW", "OPEN_RESPONSE"].includes(resolved.type)) {
         block.instruction = fields.instruction || fields.content;
         block.expectedAnswer = fields.correctAnswer || "";
-        block.language = resolved.languageExercise
+        block.language = resolved.languageExercise || resolved.type === "OPEN_RESPONSE"
             ? ""
             : normalizeLanguage(fields.language, "java");
         if (!block.expectedAnswer) {
-            block.type = "TEXT";
-            block.content = `Zadanie\n\n${block.instruction}`.trim();
-            block.instruction = "";
-            warnings.push(`Krok ${step.number}: zadanie bez poprawnej odpowiedzi zostanie zapisane jako materiał.`);
+            if (resolved.type === "TASK") {
+                block.type = "TEXT";
+                block.content = `Zadanie\n\n${block.instruction}`.trim();
+                block.instruction = "";
+                warnings.push(`Krok ${step.number}: zadanie bez poprawnej odpowiedzi zostanie zapisane jako materiał.`);
+            } else {
+                errors.push(`Krok ${step.number}: blok „${block.title}” wymaga pola z poprawną lub modelową odpowiedzią.`);
+            }
         }
+    }
+
+    if (resolved.type === "PRACTICAL_LAB") {
+        block.instruction = fields.instruction || "";
+        block.content = fields.content || "";
+        block.language = "";
+        if (!block.instruction) {
+            errors.push(`Krok ${step.number}: laboratorium wymaga pola „Cel i wymagania”.`);
+        }
+        if (!block.content) {
+            errors.push(`Krok ${step.number}: laboratorium wymaga pola „Weryfikacja i kryteria ukończenia”.`);
+        }
+    }
+
+    if (["DEBUGGING", "PREDICT_OUTPUT", "CODE_REVIEW"].includes(resolved.type) && !block.starterCode) {
+        errors.push(`Krok ${step.number}: blok „${block.title}” wymaga kodu do analizy.`);
     }
 
     if (resolved.type === "EXAMPLE") {
@@ -425,7 +477,7 @@ function parseStep(step, warnings, errors) {
         block.mediaType = resolved.type === "WORD_LAB" ? "word-lab" : resolved.type === "LISTENING" ? "listening" : "vocabulary";
         if (items.length < 1) {
             errors.push(`Krok ${step.number}: trening słówek wymaga przynajmniej jednej pozycji.`);
-        } else if (items.length > 30) {
+        } else if (items.length > 20) {
             errors.push(`Krok ${step.number}: trening słówek zawiera ${items.length} pozycji, a maksymalnie może zawierać 20.`);
         }
         if (items.some((item) => !item.term || !item.translation)) {
@@ -501,11 +553,8 @@ export function parseChatGptLesson(source, maxBlocks = MAX_LESSON_BLOCKS, varian
 
     if (cleanSource.trim() && errors.length === 0) {
         const interactiveCount = blocks.filter((block) => REWARDED_BLOCK_TYPES.has(block.type)).length;
-        if (blocks.length < Math.min(10, maxBlocks)) {
-            warnings.push("Ta lekcja jest krótka. Dla pełnej, zaawansowanej lekcji zalecamy co najmniej 10 zróżnicowanych bloków.");
-        }
-        if (interactiveCount < Math.min(6, Math.ceil(blocks.length / 2))) {
-            warnings.push("Lekcja ma mało aktywnej praktyki. Dodaj więcej zadań, wymowy, dialogów, układanek lub quizów zamiast kolejnych bloków teorii.");
+        if (interactiveCount < Math.ceil(blocks.length * 0.6)) {
+            warnings.push("Lekcja ma mniej niż 60% aktywnej praktyki. Dodaj odpowiedni blok zadaniowy zamiast kolejnego fragmentu teorii.");
         }
         if (variant === "LANGUAGE") {
             const types = new Set(blocks.map((block) => block.type));
@@ -528,7 +577,7 @@ export function getChatGptLessonPrompt(maxBlocks = MAX_LESSON_BLOCKS, variant = 
     const languageLesson = variant === "LANGUAGE";
     const allowedTypes = languageLesson
         ? "Tekst, Wskazówka, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Rozpoznawanie ze słuchu, Dialog interaktywny, Trening słówek, Laboratorium słów, Układanie zdania, Zadanie, Quiz"
-        : "Tekst, Wskazówka, Ostrzeżenie, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Przykład kodu, Zadanie, Quiz, Plik, Cytat, Separator";
+        : "Tekst, Wskazówka, Ostrzeżenie, Informacja, Podsumowanie, Obraz, Film, Audio i wymowa, Przykład kodu, Zadanie, Laboratorium praktyczne, Debugowanie, Przewidź wynik, Analiza kodu / Code Review, Odpowiedź otwarta, Quiz, Plik, Cytat, Separator";
     const interactiveLanguageTemplates = languageLesson ? `
 DIALOG INTERAKTYWNY — cały dialog jest jednym blokiem bez względu na liczbę wypowiedzi. Może mieć 2, 20 albo 60 wypowiedzi. Nie dziel jednej scenki na osobne bloki.
 KROK [NUMER]
@@ -630,7 +679,7 @@ METODYKA LEKCJI JĘZYKOWEJ
 - Używaj naturalnego, współczesnego angielskiego. Wybierz jedną odmianę, en-GB albo en-US, i zachowaj ją konsekwentnie w zapisie, audio, słownictwie i dialogach.
 - Dla A1 używaj częstych słów, krótkich komunikatów, konkretnych sytuacji i polskich podpór. Na kolejnych poziomach stopniowo ograniczaj polski i zwiększaj samodzielność, długość wypowiedzi oraz niejednoznaczność sytuacji.
 - Zbuduj progresję: zrozumiały materiał wejściowy → zauważenie znaczenia lub reguły → kontrolowana praktyka → samodzielne przypomnienie → szyk zdania → wypowiedź na głos → dialog → transfer do nowej sytuacji → krótka powtórka.
-- Co najmniej 60% bloków ma wymagać działania ucznia. Dla lekcji około 45 minut twórz zwykle 12–18 bloków, w tym 7–12 bloków aktywnych. Krótszą lekcję twórz tylko wtedy, gdy użytkownik wyraźnie o nią poprosi.
+- Co najmniej 60% bloków ma wymagać działania ucznia. Dla lekcji około 45 minut użyj maksymalnie 10 bloków. Jeżeli materiał wymaga więcej, podziel go na kolejne lekcje.
 - Każdy nowy zwrot wykorzystaj co najmniej trzy razy w różnych czynnościach, np. rozpoznanie, układanie zdania i samodzielna wypowiedź. Nie powtarzaj jednak identycznego pytania ani identycznego przykładu.
 - Najpierw rozpoznaj rodzaj kompetencji. Laboratorium słów stosuj wyłącznie dla prawdziwego słownictwa mającego znaczenie lub tłumaczenie, np. „house → dom”. Nigdy nie twórz pozycji „N → litera N”, „B → litera B” ani podobnych sztucznych tłumaczeń.
 - Dla alfabetu, liczb, godzin, minimal pairs, dyktanda oraz rozpoznawania zapisu ze słuchu używaj bloku „Rozpoznawanie ze słuchu”, który ukrywa odpowiedź. Dla alfabetu buduj kolejno: poznanie pojedynczych liter → rozpoznanie ze słuchu → trudne pary → zapis usłyszanego literowania → samodzielne literowanie krótkiego słowa.
@@ -646,14 +695,14 @@ METODYKA LEKCJI JĘZYKOWEJ
 METODYKA LEKCJI PRZEDMIOTOWEJ
 - Najpierw ustal jedną obserwowalną umiejętność końcową i dowód jej opanowania. Jeśli danych brakuje, wywnioskuj rozsądny poziom z tematu oraz miejsca w kursie.
 - Zbuduj progresję: aktywacja wcześniejszej wiedzy → krótkie wyjaśnienie → przykład → zadanie kontrolowane → samodzielne zastosowanie w nowym kontekście → diagnoza błędu → transfer → podsumowanie.
-- Co najmniej 60% bloków ma wymagać działania ucznia. Dla lekcji około 45 minut twórz zwykle 10–18 bloków i 2–5 zróżnicowanych zadań praktycznych.
+- Co najmniej 60% bloków ma wymagać działania ucznia. Dla lekcji około 45 minut użyj maksymalnie 10 bloków. Jeżeli materiał wymaga więcej, podziel go na kolejne lekcje.
 - Trudność zwiększaj jednym wymiarem naraz. Przykład i zadanie muszą korzystać z innych danych, nazw lub sytuacji.
 - Sprawdzaj rozumienie i zastosowanie, nie przepisywanie gotowego rozwiązania ani pamięciowe odtworzenie definicji.
 `;
     return `Jesteś metodykiem i nauczycielem. Przygotuj kompletną lekcję do importu w EduHub.
 
 NAJWAŻNIEJSZA ZASADA LEKCJI
-- Jedna lekcja rozwija jedną konkretną umiejętność i zawiera od 10 do maksymalnie ${maxBlocks} bloków, chyba że użytkownik wyraźnie poprosi o krótszą formę.
+- Jedna lekcja rozwija jedną konkretną umiejętność i zawiera tylko tyle bloków, ile naprawdę potrzeba — nigdy więcej niż ${maxBlocks}.
 - Najpierw zaplanuj lekcję wewnętrznie, ale nie pokazuj planu ani komentarzy. Zwróć tylko gotowe bloki.
 - Zachowaj logiczny rytm: krótkie wyjaśnienie problemu, demonstracja jednego nowego pojęcia na innym przykładzie, samodzielna praktyka o rosnącej trudności, sprawdzenie zrozumienia i krótkie podsumowanie.
 - Nie próbuj używać wszystkich dostępnych typów bloków. Każdy blok musi mieć wyraźny cel; usuń treści powtarzające to samo innymi słowami.
@@ -718,7 +767,7 @@ Dozwolone typy bloków: ${allowedTypes}.
 Używaj wyłącznie pól pokazanych poniżej. Nie zmieniaj ich nazw.
 Wartość nagrody zapisuj pod polem „Punkty”. Nie używaj osobnego pola „XP”.
 Każdy blok musi zawierać pole „Punkty” z samą liczbą całkowitą.
-Za Zadanie, Quiz, Audio i wymowę, Dialog interaktywny, Trening słówek, Laboratorium słów, Rozpoznawanie ze słuchu i Układanie zdania przyznaj domyślnie ${DEFAULT_EXERCISE_XP} punktów za pierwsze zaliczenie całego bloku. Możesz dobrać większą nagrodę za trudniejsze ćwiczenie, maksymalnie 1000 punktów. Nie wpisuj 0 w ćwiczeniach.
+Za Zadanie, Laboratorium praktyczne, Debugowanie, Przewidź wynik, Analizę kodu / Code Review, Odpowiedź otwartą, Quiz, Audio i wymowę, Dialog interaktywny, Trening słówek, Laboratorium słów, Rozpoznawanie ze słuchu i Układanie zdania przyznaj domyślnie ${DEFAULT_EXERCISE_XP} punktów za pierwsze zaliczenie całego bloku. Możesz dobrać większą nagrodę za trudniejsze ćwiczenie, maksymalnie 1000 punktów. Nie wpisuj 0 w ćwiczeniach.
 Dla pozostałych typów (w tym Tekstu i Podsumowania) wpisuj 0. Samo czytanie materiału nie przyznaje osobnej nagrody; bonus za ukończenie lekcji nalicza EduHub.
 
 TEKST
@@ -851,7 +900,7 @@ Punkty
 Tytuł przykładu
 [tytuł]
 Język
-[java, javascript, python, csharp, sql albo html]
+[java, javascript, python, csharp, sql, html, bash, powershell, json, yaml, xml, dockerfile, http, markdown albo text]
 Co pokazuje ten przykład?
 [opis]
 Kod przykładu
@@ -872,7 +921,7 @@ Kod startowy
 Ukryte testy uruchomieniowe
 [jeden test w wierszu: wejście => oczekiwane wyjście; użyj <brak>, jeśli nie ma wejścia]
 Język
-[java, javascript, python, csharp, sql albo html]
+[java, javascript, python, csharp, sql, html, bash, powershell, json, yaml, xml, dockerfile, http, markdown albo text]
 Poprawna odpowiedź
 [pełna poprawna odpowiedź lub kod]
 Podstawowa podpowiedź (1. błędna próba)
@@ -883,6 +932,115 @@ Wyjaśnienie rozwiązania (od 4. błędnej próby)
 [wyjaśnienie]
 Punkty
 [liczba od ${DEFAULT_EXERCISE_XP} do 1000]
+
+LABORATORIUM PRAKTYCZNE — czynność wykonywana poza edytorem EduHub, np. w IntelliJ, terminalu, GitHubie, Mavenie, PostgreSQL, Postmanie, Dockerze lub Spring Boot
+KROK [NUMER]
+Typ bloku
+Laboratorium praktyczne
+Punkty
+[liczba od ${DEFAULT_EXERCISE_XP} do 1000]
+Tytuł laboratorium
+[tytuł]
+Środowisko i sytuacja
+[narzędzia, przygotowany projekt oraz realistyczny kontekst]
+Cel i wymagania
+[jednoznaczny rezultat oraz lista samodzielnie wykonywanych wymagań]
+Weryfikacja i kryteria ukończenia
+[dokładne kroki sprawdzenia rezultatu i warunki, które muszą być spełnione]
+Podstawowa podpowiedź (1. błędna próba)
+[naprowadzenie bez gotowej komendy]
+Dokładniejsza podpowiedź (od 2. błędnej próby)
+[konkretna pomoc dla ucznia, który utknął]
+
+DEBUGOWANIE — uczeń dostaje działający niepoprawnie albo niekompilujący się kod i sam go naprawia
+KROK [NUMER]
+Typ bloku
+Debugowanie
+Punkty
+[liczba od ${DEFAULT_EXERCISE_XP} do 1000]
+Tytuł debugowania
+[tytuł]
+Objaw błędu
+[co użytkownik lub developer obserwuje, bez zdradzania przyczyny]
+Zadanie naprawcze
+[oczekiwane zachowanie i granice zmiany]
+Kod z błędem
+[minimalny kod zawierający celowy błąd]
+Ukryte testy uruchomieniowe
+[dla Java jeden test w wierszu: wejście => oczekiwane wyjście]
+Język
+[jeden z obsługiwanych języków]
+Poprawiony kod
+[pełne poprawne rozwiązanie]
+Podstawowa podpowiedź (1. błędna próba)
+[wskaż obszar, nie poprawkę]
+Dokładniejsza podpowiedź (od 2. błędnej próby)
+[wskaż konkretny problem]
+Wyjaśnienie rozwiązania (od 4. błędnej próby)
+[przyczyna błędu, poprawka i sposób zapobiegania]
+
+PRZEWIDŹ WYNIK — uczeń analizuje kod bez uruchamiania i wpisuje dokładny wynik
+KROK [NUMER]
+Typ bloku
+Przewidź wynik
+Punkty
+[liczba od ${DEFAULT_EXERCISE_XP} do 1000]
+Tytuł
+[tytuł]
+Opis
+[krótki kontekst]
+Pytanie do kodu
+[poproś o dokładny wynik, kolejność albo stan]
+Kod do przeanalizowania
+[krótki kod ćwiczący jedną rzecz]
+Język
+[jeden z obsługiwanych języków]
+Poprawny wynik programu
+[dokładny wynik z zachowaniem kolejności linii i wielkości liter]
+Podstawowa podpowiedź (1. błędna próba)
+[pierwszy krok śledzenia]
+Dokładniejsza podpowiedź (od 2. błędnej próby)
+[konkretna zmiana wartości lub kolejność wykonania]
+Wyjaśnienie rozwiązania (od 4. błędnej próby)
+[prześledzenie wykonania krok po kroku]
+
+ANALIZA KODU / CODE REVIEW — nie wymaga jednej frazy; po własnej odpowiedzi uczeń zobaczy model i kryteria samooceny
+KROK [NUMER]
+Typ bloku
+Analiza kodu / Code Review
+Punkty
+[liczba od ${DEFAULT_EXERCISE_XP} do 1000]
+Tytuł analizy
+[tytuł]
+Kontekst
+[cel kodu i ograniczenia]
+Pytanie i kryteria odpowiedzi
+[co przeanalizować: poprawność, czytelność, bezpieczeństwo, wydajność lub projekt]
+Kod do analizy
+[kod zawierający konkretne mocne i słabe strony]
+Język
+[jeden z obsługiwanych języków]
+Model odpowiedzi i kryteria samooceny
+[rzeczowy model oraz lista punktów, które uczeń powinien zauważyć]
+Podstawowa podpowiedź (1. błędna próba)
+[obszar analizy bez podawania modelu]
+
+ODPOWIEDŹ OTWARTA — do architektury, SOLID, HTTP, system designu i rozmów technicznych
+KROK [NUMER]
+Typ bloku
+Odpowiedź otwarta
+Punkty
+[liczba od ${DEFAULT_EXERCISE_XP} do 1000]
+Tytuł odpowiedzi otwartej
+[tytuł]
+Kontekst
+[realistyczna sytuacja]
+Pytanie i kryteria odpowiedzi
+[jedno pytanie oraz punkty, do których uczeń ma się odnieść]
+Model odpowiedzi i kryteria samooceny
+[model dobrej odpowiedzi, dopuszczalne warianty i kryteria]
+Podstawowa podpowiedź (1. błędna próba)
+[naprowadzenie bez podania modelu]
 `}
 
 QUIZ — odpowiedzi wpisz jako zwykłe wiersze, bez oznaczeń A, B, C, D. Poprawna odpowiedź musi być pełną treścią jednego z tych wierszy, a nie literą.
@@ -947,7 +1105,7 @@ Styl
 
 Nie musisz używać wszystkich typów. Dobieraj je do tematu. Nie twórz fikcyjnych adresów obrazów, filmów ani plików.
 Quiz musi mieć minimum dwie unikalne odpowiedzi. Pole „Poprawna odpowiedź” ma zawierać dokładny tekst wybranej odpowiedzi.
-Lekcja ma być napisana po ludzku, łączyć krótkie objaśnienia z dużą ilością samodzielnej praktyki, nie powtarzać treści i kończyć się krótkim podsumowaniem. Quiz dodaj tylko wtedy, gdy naprawdę sprawdza zrozumienie; maksymalnie dwa quizy w lekcji. Większą liczbę ćwiczeń realizuj przez zadania, dialogi, audio, trening słówek i układanie zdań.
+Lekcja ma być napisana po ludzku, łączyć krótkie objaśnienia z dużą ilością samodzielnej praktyki, nie powtarzać treści i kończyć się krótkim podsumowaniem. Quiz dodaj tylko wtedy, gdy naprawdę sprawdza zrozumienie; maksymalnie dwa quizy w lekcji. W kursie programistycznym dobieraj Zadanie, Laboratorium praktyczne, Debugowanie, Przewidź wynik, Code Review i Odpowiedź otwartą zgodnie z rzeczywistą kompetencją, zamiast udawać każdą aktywność zwykłym zadaniem z dokładną odpowiedzią.
 Przed zwróceniem lekcji sprawdź każde zadanie: jeżeli uczeń może je wykonać przez bezmyślne skopiowanie wcześniejszego przykładu albo instrukcji, przeprojektuj je tak, aby wymagało samodzielnego przypomnienia i zastosowania wiedzy.
 Wykonaj cichy audyt jakości: sprawdź poprawność merytoryczną i językową, zgodność trudności z poziomem, różnorodność praktyki, jednoznaczność poleceń i odpowiedzi, sens każdej podpowiedzi, dodatnie punkty za każde ćwiczenie oraz to, czy wszystkie elementy rzeczywiście prowadzą do celu lekcji. Popraw słabe elementy przed zwróceniem wyniku. Nie pokazuj audytu.
 Przed zwróceniem wyniku policz bloki. Jeżeli jest ich więcej niż ${maxBlocks}, połącz lub usuń słabsze elementy. Nigdy nie zwracaj KROK ${maxBlocks + 1} ani wyższego.

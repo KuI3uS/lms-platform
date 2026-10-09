@@ -90,15 +90,15 @@ public class TaskEvaluationService {
             String answer,
             User user
     ) {
-        if (block.getType() != BlockType.TASK
-                && block.getType() != BlockType.QUIZ) {
+        if (!isCheckable(block.getType())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Tego bloku nie można sprawdzić automatycznie"
             );
         }
 
-        if (block.getExpectedAnswer() == null || block.getExpectedAnswer().isBlank()) {
+        if (block.getType() != BlockType.PRACTICAL_LAB
+                && (block.getExpectedAnswer() == null || block.getExpectedAnswer().isBlank())) {
             return new TaskCheckResponse(
                     false,
                     "Nauczyciel nie skonfigurował jeszcze poprawnej odpowiedzi.",
@@ -117,9 +117,12 @@ public class TaskEvaluationService {
         }
 
         String studentAnswer = answer == null ? "" : answer;
-        List<TaskDiagnosticDto> diagnostics = block.getType() == BlockType.QUIZ
-                ? evaluateQuiz(studentAnswer, block.getExpectedAnswer())
-                : isUnchangedStarter(studentAnswer, block.getStarterCode())
+        List<TaskDiagnosticDto> diagnostics = switch (block.getType()) {
+            case QUIZ -> evaluateQuiz(studentAnswer, block.getExpectedAnswer());
+            case PRACTICAL_LAB -> evaluateCompletionConfirmation(studentAnswer);
+            case PREDICT_OUTPUT -> evaluatePredictedOutput(studentAnswer, block.getExpectedAnswer());
+            case CODE_REVIEW, OPEN_RESPONSE -> evaluateReflectiveAnswer(studentAnswer);
+            default -> isUnchangedStarter(studentAnswer, block.getStarterCode())
                     ? List.of(new TaskDiagnosticDto(
                         "UNCHANGED_STARTER",
                         null,
@@ -141,6 +144,7 @@ public class TaskEvaluationService {
                             block.getExpectedAnswer(),
                             block.getLanguage()
                         );
+        };
         boolean correct = diagnostics.isEmpty();
 
         GamificationProfile profile = gamificationService.profileForUpdate(user);
@@ -182,9 +186,7 @@ public class TaskEvaluationService {
                 hintLevel,
                 correct ? null : buildHint(block, hintLevel, diagnostics),
                 visibleDiagnostics,
-                hintLevel >= 3 && block.getType() == BlockType.TASK
-                        ? block.getExpectedAnswer()
-                        : null,
+                solutionPreview(block, correct, hintLevel),
                 false,
                 award.xpEarned(),
                 award.multiplier(),
@@ -192,6 +194,83 @@ public class TaskEvaluationService {
                 award.level(),
                 award.levelUp()
         );
+    }
+
+    private boolean isCheckable(BlockType type) {
+        return type == BlockType.TASK
+                || type == BlockType.QUIZ
+                || type == BlockType.PRACTICAL_LAB
+                || type == BlockType.DEBUGGING
+                || type == BlockType.PREDICT_OUTPUT
+                || type == BlockType.CODE_REVIEW
+                || type == BlockType.OPEN_RESPONSE;
+    }
+
+    private String solutionPreview(LessonBlock block, boolean correct, int hintLevel) {
+        if ((block.getType() == BlockType.CODE_REVIEW
+                || block.getType() == BlockType.OPEN_RESPONSE)
+                && correct) {
+            return block.getExpectedAnswer();
+        }
+
+        if (!correct && hintLevel >= 3 && block.getType() != BlockType.PRACTICAL_LAB) {
+            return block.getExpectedAnswer();
+        }
+
+        return null;
+    }
+
+    private List<TaskDiagnosticDto> evaluateCompletionConfirmation(String student) {
+        if (!student.isBlank()) return List.of();
+        return List.of(new TaskDiagnosticDto(
+                "COMPLETION_NOT_CONFIRMED",
+                null,
+                "Najpierw wykonaj wszystkie kroki laboratorium.",
+                "Sprawdź rezultat według listy weryfikacyjnej, a następnie potwierdź ukończenie."
+        ));
+    }
+
+    private List<TaskDiagnosticDto> evaluateReflectiveAnswer(String student) {
+        if (!student.isBlank()) return List.of();
+        return List.of(new TaskDiagnosticDto(
+                "EMPTY_ANSWER",
+                null,
+                "Najpierw zapisz własną odpowiedź.",
+                "Odnieś się do kryteriów z polecenia. Po wysłaniu zobaczysz model odpowiedzi do samooceny."
+        ));
+    }
+
+    private List<TaskDiagnosticDto> evaluatePredictedOutput(String student, String expected) {
+        if (student.isBlank()) {
+            return List.of(new TaskDiagnosticDto(
+                    "EMPTY_ANSWER",
+                    null,
+                    "Najpierw wpisz przewidywany wynik programu.",
+                    "Prześledź wykonanie kodu krok po kroku, zanim go uruchomisz."
+            ));
+        }
+
+        if (normalizeProgramOutput(student).equals(normalizeProgramOutput(expected))) {
+            return List.of();
+        }
+
+        return List.of(new TaskDiagnosticDto(
+                "INCORRECT_PREDICTED_OUTPUT",
+                null,
+                "Przewidywany wynik nie zgadza się jeszcze z wynikiem programu.",
+                "Zapisuj po kolei zmiany wartości zmiennych i każdą linię, którą wypisuje program."
+        ));
+    }
+
+    private String normalizeProgramOutput(String output) {
+        return String.valueOf(output == null ? "" : output)
+                .replace("\r\n", "\n")
+                .replace('\r', '\n')
+                .lines()
+                .map(String::stripTrailing)
+                .reduce((left, right) -> left + "\n" + right)
+                .orElse("")
+                .strip();
     }
 
     private List<TaskDiagnosticDto> evaluateQuiz(
@@ -854,6 +933,26 @@ public class TaskEvaluationService {
             return correct
                     ? "Dobrze — to poprawna odpowiedź."
                     : "Ta odpowiedź nie jest poprawna.";
+        }
+        if (type == BlockType.PRACTICAL_LAB) {
+            return correct
+                    ? "Laboratorium ukończone — możesz przejść dalej."
+                    : "Dokończ laboratorium i sprawdź rezultat.";
+        }
+        if (type == BlockType.CODE_REVIEW || type == BlockType.OPEN_RESPONSE) {
+            return correct
+                    ? "Odpowiedź zapisana. Porównaj ją z modelem i kryteriami samooceny."
+                    : "Najpierw zapisz własną odpowiedź.";
+        }
+        if (type == BlockType.PREDICT_OUTPUT) {
+            return correct
+                    ? "Dobrze — przewidziany wynik jest poprawny."
+                    : "Prześledź kod jeszcze raz.";
+        }
+        if (type == BlockType.DEBUGGING) {
+            return correct
+                    ? "Dobra robota — błąd został naprawiony."
+                    : "Program nadal zawiera elementy wymagające poprawy.";
         }
         if (correct) return "Świetnie — rozwiązanie jest poprawne.";
         int count = diagnostics.size();

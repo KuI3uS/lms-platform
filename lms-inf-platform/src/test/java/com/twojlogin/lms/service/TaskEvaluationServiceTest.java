@@ -211,6 +211,56 @@ class TaskEvaluationServiceTest {
     }
 
     @Test
+    void checksPredictedOutputLineByLine() {
+        block.setType(BlockType.PREDICT_OUTPUT);
+        block.setStarterCode("System.out.println(2 + 3);");
+        block.setExpectedAnswer("5\nGotowe");
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+
+        TaskCheckResponse correct = service.check(
+                block.getId(),
+                "5   \r\nGotowe\n",
+                authentication
+        );
+
+        assertTrue(correct.correct());
+        assertEquals("Dobrze — przewidziany wynik jest poprawny.", correct.message());
+    }
+
+    @Test
+    void revealsCodeReviewModelOnlyAfterStudentSubmitsOwnAnswer() {
+        block.setType(BlockType.CODE_REVIEW);
+        block.setExpectedAnswer("Model: metoda ma zbyt wiele odpowiedzialności.");
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+
+        TaskCheckResponse response = service.check(
+                block.getId(),
+                "Metoda waliduje, zapisuje i wysyła e-mail.",
+                authentication
+        );
+
+        assertTrue(response.correct());
+        assertEquals(block.getExpectedAnswer(), response.solutionPreview());
+        assertTrue(response.message().contains("samooceny"));
+    }
+
+    @Test
+    void completesPracticalLabWithoutAnExpectedTextAnswer() {
+        block.setType(BlockType.PRACTICAL_LAB);
+        block.setExpectedAnswer("");
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+
+        TaskCheckResponse response = service.check(
+                block.getId(),
+                "completed",
+                authentication
+        );
+
+        assertTrue(response.correct());
+        assertTrue(response.message().contains("Laboratorium ukończone"));
+    }
+
+    @Test
     void acceptsConfiguredLanguageAnswerVariantsIgnoringCaseAndFinalPunctuation() {
         block.setLanguage("");
         block.setStarterCode("");

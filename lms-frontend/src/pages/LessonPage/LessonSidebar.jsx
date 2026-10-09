@@ -15,11 +15,15 @@ import {
     BsHeadphones,
     BsChatDots,
     BsTranslate,
-    BsGrid3X3Gap
+    BsGrid3X3Gap,
+    BsTools,
+    BsBug,
+    BsEye,
+    BsClipboardCheck,
+    BsChatLeftText
 } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
-
-const ASSESSMENT_TYPES = new Set(["TASK", "QUIZ", "DIALOG", "VOCABULARY", "AUDIO", "SENTENCE_BUILDER", "WORD_LAB", "LISTENING"]);
+import { ASSESSMENT_BLOCK_TYPES } from "../../utils/lessonBlockRewards";
 
 function blockIcon(type) {
     switch (type) {
@@ -49,6 +53,16 @@ function blockIcon(type) {
         case "TASK":
         case "QUIZ":
             return <BsQuestionCircle />;
+        case "PRACTICAL_LAB":
+            return <BsTools />;
+        case "DEBUGGING":
+            return <BsBug />;
+        case "PREDICT_OUTPUT":
+            return <BsEye />;
+        case "CODE_REVIEW":
+            return <BsClipboardCheck />;
+        case "OPEN_RESPONSE":
+            return <BsChatLeftText />;
         case "QUOTE":
             return <BsQuote />;
         case "DIVIDER":
@@ -81,7 +95,7 @@ export default function LessonSidebar({
 
     function isCompleted(block, index) {
         if (lessonCompleted) return true;
-        if (ASSESSMENT_TYPES.has(block.type)) {
+        if (ASSESSMENT_BLOCK_TYPES.has(block.type)) {
             return Boolean(results[block.id]?.correct || block.correct);
         }
         return index < selectedIndex;
@@ -151,7 +165,7 @@ export default function LessonSidebar({
                             const active = Number(selectedBlock?.id) === Number(block.id);
                             const accessible = canAccessBlock(block);
                             const completed = isCompleted(block, index);
-                            const attemptedIncorrectly = ASSESSMENT_TYPES.has(block.type)
+                            const attemptedIncorrectly = ASSESSMENT_BLOCK_TYPES.has(block.type)
                                 && (block.attempted || results[block.id])
                                 && !completed;
 

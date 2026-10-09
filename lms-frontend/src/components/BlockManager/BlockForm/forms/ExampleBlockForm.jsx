@@ -1,5 +1,6 @@
 
 import { BsCodeSlash } from "react-icons/bs";
+import { CODE_LANGUAGE_OPTIONS } from "../../../../utils/codeLanguages";
 
 export default function ExampleBlockForm({ block, setBlock }) {
     function update(field, value) {
@@ -36,12 +37,9 @@ export default function ExampleBlockForm({ block, setBlock }) {
                         onChange={event => update("language", event.target.value)}
                         className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-teal-300/50"
                     >
-                        <option value="java">Java</option>
-                        <option value="javascript">JavaScript</option>
-                        <option value="python">Python</option>
-                        <option value="csharp">C#</option>
-                        <option value="sql">SQL</option>
-                        <option value="html">HTML</option>
+                        {CODE_LANGUAGE_OPTIONS.map(option => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
                     </select>
                 </label>
             </div>
