@@ -36,6 +36,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useFeedback } from "../context/FeedbackContext";
 import CourseSectionHeading from "../components/CourseSectionHeading";
+import LessonPlanImport from "../components/LessonPlanImport";
 import {
     canAccessLessonStep,
     getActiveLessonStepIndex,
@@ -389,34 +390,45 @@ export default function ModulePage() {
             </header>
 
             {role === "ADMIN" && (
-                <section className="mx-auto max-w-3xl space-y-3 px-2">
-                    <input
-                        value={newSectionTitle}
-                        onChange={e => setNewSectionTitle(e.target.value)}
-                        maxLength={200}
-                        placeholder="Opcjonalny nagłówek części, np. CZĘŚĆ I — Java od zera"
-                        className="w-full rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold text-violet-100 outline-none transition focus:border-violet-400"
-                    />
-                    <p className="text-xs text-gray-400">
-                        Nagłówek możesz też dodać później — wybierz „Dodaj nagłówek” nad dowolnym etapem poniżej.
-                    </p>
-                    <div className="flex gap-3">
+                <div className="mx-auto max-w-3xl space-y-5 px-2">
+                    <section className="space-y-3">
                         <input
-                            value={newModule}
-                            onChange={e => setNewModule(e.target.value)}
-                            placeholder="Nazwa nowego modułu, np. Zmienne i typy danych"
-                            className="min-w-0 flex-1 rounded-xl border border-gray-800 bg-gray-900/70 px-4 py-3 outline-none transition focus:border-blue-500"
+                            value={newSectionTitle}
+                            onChange={e => setNewSectionTitle(e.target.value)}
+                            maxLength={200}
+                            placeholder="Opcjonalny nagłówek części, np. CZĘŚĆ I — Java od zera"
+                            className="w-full rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold text-violet-100 outline-none transition focus:border-violet-400"
                         />
+                        <p className="text-xs text-gray-400">
+                            Nagłówek możesz też dodać później — wybierz „Dodaj nagłówek” nad dowolnym etapem poniżej.
+                        </p>
+                        <div className="flex gap-3">
+                            <input
+                                value={newModule}
+                                onChange={e => setNewModule(e.target.value)}
+                                placeholder="Nazwa nowego modułu, np. Zmienne i typy danych"
+                                className="min-w-0 flex-1 rounded-xl border border-gray-800 bg-gray-900/70 px-4 py-3 outline-none transition focus:border-blue-500"
+                            />
 
-                        <button
-                            onClick={createModule}
-                            className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-semibold transition hover:bg-green-700"
-                        >
-                            <BsPlusCircle />
-                            Dodaj
-                        </button>
-                    </div>
-                </section>
+                            <button
+                                onClick={createModule}
+                                className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-semibold transition hover:bg-green-700"
+                            >
+                                <BsPlusCircle />
+                                Dodaj
+                            </button>
+                        </div>
+                    </section>
+
+                    <LessonPlanImport
+                        courseId={courseId}
+                        moduleCount={modules.length}
+                        onImported={async () => {
+                            roadmapCache.delete(String(courseId));
+                            await loadRoadmap();
+                        }}
+                    />
+                </div>
             )}
 
             <section className="mx-auto max-w-3xl space-y-4 pb-16">

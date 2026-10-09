@@ -1,6 +1,8 @@
 package com.twojlogin.lms.controller;
 
 import com.twojlogin.lms.dto.LessonDto;
+import com.twojlogin.lms.dto.LessonPlanImportRequest;
+import com.twojlogin.lms.dto.LessonPlanImportResult;
 import com.twojlogin.lms.entity.*;
 import com.twojlogin.lms.repository.*;
 import jakarta.transaction.Transactional;
@@ -12,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.twojlogin.lms.service.CourseAccessService;
 import com.twojlogin.lms.service.GamificationService;
 import com.twojlogin.lms.service.ProgressRewardService;
+import com.twojlogin.lms.service.LessonPlanImportService;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -36,6 +39,7 @@ public class LessonController {
     private final CourseAccessService courseAccessService;
     private final ProgressRewardService rewardService;
     private final LanguageReviewProgressRepository reviewRepository;
+    private final LessonPlanImportService lessonPlanImportService;
 
     public LessonController(
             LessonRepository lessonRepository,
@@ -46,7 +50,8 @@ public class LessonController {
             LessonBlockRepository lessonBlockRepository,
             CourseAccessService courseAccessService,
             ProgressRewardService rewardService,
-            LanguageReviewProgressRepository reviewRepository
+            LanguageReviewProgressRepository reviewRepository,
+            LessonPlanImportService lessonPlanImportService
     ) {
         this.lessonRepository = lessonRepository;
         this.moduleRepository = moduleRepository;
@@ -58,6 +63,7 @@ public class LessonController {
         this.courseAccessService = courseAccessService;
         this.rewardService = rewardService;
         this.reviewRepository = reviewRepository;
+        this.lessonPlanImportService = lessonPlanImportService;
     }
 
 
@@ -72,6 +78,15 @@ public class LessonController {
 
         lesson.setModule(module);
         return new LessonDto(lessonRepository.save(lesson));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/course/{courseId}/bulk-plan")
+    public LessonPlanImportResult importPlan(
+            @PathVariable Long courseId,
+            @RequestBody LessonPlanImportRequest request
+    ) {
+        return lessonPlanImportService.importPlan(courseId, request);
     }
 
     // GET lessons
