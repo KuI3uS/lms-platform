@@ -484,9 +484,21 @@ export default function ModulePage() {
                                             {moduleIndex + 1}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">
-                                                {isLanguageCourse ? `CEFR ${module.cefrLevel}` : `Etap ${moduleIndex + 1}`}
-                                            </p>
+                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">
+                                                    {isLanguageCourse ? `CEFR ${module.cefrLevel}` : `Etap ${moduleIndex + 1}`}
+                                                </p>
+                                                {role === "ADMIN" && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => startEditingModule(module)}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300/20 bg-blue-500/10 px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-blue-200 transition hover:border-blue-300/40 hover:bg-blue-500/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                                                    >
+                                                        <BsPencilSquare aria-hidden="true" />
+                                                        Edytuj nazwę
+                                                    </button>
+                                                )}
+                                            </div>
                                             <h2 className="mt-1 text-lg font-black sm:text-xl">
                                                 <button
                                                     type="button"
@@ -528,14 +540,6 @@ export default function ModulePage() {
                                             <div className="flex gap-2">
                                                 <button
                                                     type="button"
-                                                    aria-label={`Edytuj etap ${module.name}`}
-                                                    onClick={() => startEditingModule(module)}
-                                                    className="grid h-9 w-9 place-items-center rounded-full bg-blue-500/10 text-blue-300 transition hover:bg-blue-500 hover:text-white"
-                                                >
-                                                    <BsPencilSquare />
-                                                </button>
-                                                <button
-                                                    type="button"
                                                     aria-label={`Zarządzaj lekcjami etapu ${module.name}`}
                                                     onClick={() => navigate(`/admin/lessons/${module.id}`)}
                                                     className="grid h-9 w-9 place-items-center rounded-full bg-yellow-500/10 text-yellow-300 transition hover:bg-yellow-500 hover:text-white"
@@ -565,6 +569,7 @@ export default function ModulePage() {
                                                 <input
                                                     value={moduleDraft.name}
                                                     maxLength={255}
+                                                    autoFocus
                                                     onChange={event => setModuleDraft(current => ({
                                                         ...current,
                                                         name: event.target.value
