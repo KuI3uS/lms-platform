@@ -76,6 +76,10 @@ class LessonPlanImportServiceTest {
                 .toList());
         assertFalse(saved.get(0).isPublished());
         assertFalse(saved.get(0).isFreePreview());
+        assertEquals("", saved.get(0).getTheory());
+        assertEquals("", saved.get(0).getExample());
+        assertEquals("", saved.get(0).getContent());
+        assertEquals("", saved.get(0).getImageUrl());
     }
 
     @Test

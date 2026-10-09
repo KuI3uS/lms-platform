@@ -109,6 +109,13 @@ public class LessonPlanImportService {
                 Lesson lesson = new Lesson();
                 lesson.setModule(module);
                 lesson.setTitle(title);
+                // Starsze schematy produkcyjnej bazy mają te kolumny jako NOT NULL.
+                // Zwykły formularz również zapisuje puste ciągi, więc szkielet z importu
+                // powinien zachowywać się dokładnie tak samo.
+                lesson.setTheory("");
+                lesson.setExample("");
+                lesson.setContent("");
+                lesson.setImageUrl("");
                 lesson.setOrderIndex(++nextOrder);
                 lesson.setPublished(false);
                 lesson.setFreePreview(false);

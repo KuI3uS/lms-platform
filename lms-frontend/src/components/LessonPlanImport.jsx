@@ -9,11 +9,14 @@ import { apiFetch } from "../api/api";
 import { useFeedback } from "../context/FeedbackContext";
 import { parseLessonPlan } from "../utils/lessonPlanImport";
 
+const STAGES_PER_REQUEST = 20;
+
 export default function LessonPlanImport({ courseId, moduleCount, onImported }) {
     const { confirm, showToast } = useFeedback();
     const [open, setOpen] = useState(false);
     const [source, setSource] = useState("");
     const [importing, setImporting] = useState(false);
+    const [progress, setProgress] = useState(null);
     const parsed = useMemo(() => parseLessonPlan(source), [source]);
     const missingStages = parsed.stages.filter(
         stage => stage.stageNumber > moduleCount
@@ -46,15 +49,31 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
 
         try {
             setImporting(true);
-            const result = await apiFetch(`/lessons/course/${courseId}/bulk-plan`, {
-                method: "POST",
-                body: JSON.stringify({
-                    stages: parsed.stages.map(stage => ({
-                        stageNumber: stage.stageNumber,
-                        lessonTitles: stage.lessonTitles
-                    }))
-                })
-            });
+            const stageChunks = [];
+            for (let index = 0; index < parsed.stages.length; index += STAGES_PER_REQUEST) {
+                stageChunks.push(parsed.stages.slice(index, index + STAGES_PER_REQUEST));
+            }
+            const result = {
+                stagesUpdated: 0,
+                lessonsCreated: 0,
+                duplicatesSkipped: 0
+            };
+
+            for (let index = 0; index < stageChunks.length; index += 1) {
+                setProgress({ current: index + 1, total: stageChunks.length });
+                const chunkResult = await apiFetch(`/lessons/course/${courseId}/bulk-plan`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        stages: stageChunks[index].map(stage => ({
+                            stageNumber: stage.stageNumber,
+                            lessonTitles: stage.lessonTitles
+                        }))
+                    })
+                });
+                result.stagesUpdated += chunkResult?.stagesUpdated || 0;
+                result.lessonsCreated += chunkResult?.lessonsCreated || 0;
+                result.duplicatesSkipped += chunkResult?.duplicatesSkipped || 0;
+            }
             await onImported?.(result);
             setSource("");
             setOpen(false);
@@ -64,11 +83,12 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
             );
         } catch (error) {
             showToast(
-                error?.message || "Nie udało się zaimportować planu lekcji.",
+                `${error?.message || "Nie udało się zaimportować planu lekcji."} Możesz uruchomić import ponownie — zapisane partie zostaną rozpoznane jako duplikaty i pominięte.`,
                 "error"
             );
         } finally {
             setImporting(false);
+            setProgress(null);
         }
     };
 
@@ -172,7 +192,7 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
             >
                 <BsCloudArrowUp />
                 {importing
-                    ? "Importowanie..."
+                    ? `Importowanie partii ${progress?.current || 1} z ${progress?.total || 1}...`
                     : `Importuj ${parsed.lessonCount || 0} lekcji`}
             </button>
         </section>

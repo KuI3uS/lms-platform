@@ -2,6 +2,8 @@ import { useParams } from "react-router-dom";
 
 import LessonForm from "./LessonForm";
 import LessonCard from "./LessonCard";
+import StageLessonPackageImport from "../../components/StageLessonPackageImport";
+import { getLessonBlockLimit } from "../../utils/lessonBlockLimits";
 
 import useLessons from "./hooks/useLessons";
 import useLessonBlocks from "./hooks/useLessonBlocks";
@@ -17,6 +19,7 @@ export default function AdminLessonPage() {
     const expanded = useExpandedLesson();
     const moduleData = useModule(moduleId);
     const lessonVariant = moduleData.isLanguageCourse ? "LANGUAGE" : "PROGRAMMING";
+    const maxBlocks = getLessonBlockLimit(lessonVariant);
 
     return (
 
@@ -39,6 +42,14 @@ export default function AdminLessonPage() {
                         : "Jeżeli uczeń ma osobno ukończyć „Wprowadzenie”, „Pierwszy program” i „Zmienne”, utwórz trzy oddzielne lekcje. Bloki tekstu, informacji, zadań i quizów są krokami wewnątrz jednej lekcji."}
                 </p>
             </section>
+
+            <StageLessonPackageImport
+                moduleTitle={moduleData.moduleSettings.name}
+                currentLessons={lessons.lessons}
+                maxBlocks={maxBlocks}
+                variant={lessonVariant}
+                lessonsState={lessons}
+            />
 
             <LessonForm
                 form={lessons.lessonForm}
