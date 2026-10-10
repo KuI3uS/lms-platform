@@ -37,6 +37,7 @@ import { useAuth } from "../context/AuthContext";
 import { useFeedback } from "../context/FeedbackContext";
 import CourseSectionHeading from "../components/CourseSectionHeading";
 import LessonPlanImport from "../components/LessonPlanImport";
+import CourseDuplicateCleanup from "../components/CourseDuplicateCleanup";
 import {
     canAccessLessonStep,
     getActiveLessonStepIndex,
@@ -424,6 +425,14 @@ export default function ModulePage() {
                         courseId={courseId}
                         moduleCount={modules.length}
                         onImported={async () => {
+                            roadmapCache.delete(String(courseId));
+                            await loadRoadmap();
+                        }}
+                    />
+                    <CourseDuplicateCleanup
+                        key={courseId}
+                        courseId={courseId}
+                        onCleaned={async () => {
                             roadmapCache.delete(String(courseId));
                             await loadRoadmap();
                         }}

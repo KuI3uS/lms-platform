@@ -4,6 +4,7 @@ import com.twojlogin.lms.entity.LessonBlock;
 import com.twojlogin.lms.entity.BlockType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
@@ -20,6 +21,21 @@ public interface LessonBlockRepository extends JpaRepository<LessonBlock, Long> 
     List<LessonBlock> findByLessonId(Long lessonId);
 
     List<LessonBlock> findByLessonIdOrderByOrderIndexAsc(Long lessonId);
+
+    // A projection avoids retaining all block entities in the persistence context.
+    @Query("""
+            select b.lesson.id, b.title, b.type, b.content, b.description,
+                   b.instruction, b.starterCode, b.expectedAnswer, b.hint,
+                   b.detailedHint, b.solutionExplanation, b.language, b.hiddenTests,
+                   b.mediaUrl, b.mediaType, b.published, b.points, b.orderIndex
+            from LessonBlock b where b.lesson.id in :lessonIds
+            order by b.lesson.id, b.orderIndex, b.id
+            """)
+    List<Object[]> findDuplicateComparisonData(@Param("lessonIds") List<Long> lessonIds);
+
+    @Modifying
+    @Query("delete from LessonBlock b where b.lesson.id in :lessonIds")
+    int deleteUnusedByLessonIds(@Param("lessonIds") List<Long> lessonIds);
 
     int countByLessonId(Long lessonId);
 

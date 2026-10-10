@@ -3,6 +3,7 @@ package com.twojlogin.lms.service;
 import com.twojlogin.lms.dto.LessonPlanImportRequest;
 import com.twojlogin.lms.dto.LessonPlanImportResult;
 import com.twojlogin.lms.entity.CourseModule;
+import com.twojlogin.lms.entity.Course;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.repository.CourseModuleRepository;
 import com.twojlogin.lms.repository.CourseRepository;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -39,7 +41,7 @@ class LessonPlanImportServiceTest {
         CourseModule second = module(20L, "Etap 2");
         Lesson existing = lesson(second, "Pierwsza lekcja", 1);
 
-        when(courseRepository.existsById(7L)).thenReturn(true);
+        when(courseRepository.findByIdForImport(7L)).thenReturn(Optional.of(new Course()));
         when(moduleRepository.findByCourseIdOrderByIdAsc(7L))
                 .thenReturn(List.of(first, second));
         when(lessonRepository.findRoadmapLessonsByCourseId(7L))
@@ -84,7 +86,7 @@ class LessonPlanImportServiceTest {
 
     @Test
     void rejectsAStageNumberThatDoesNotExistWithoutWritingAnything() {
-        when(courseRepository.existsById(7L)).thenReturn(true);
+        when(courseRepository.findByIdForImport(7L)).thenReturn(Optional.of(new Course()));
         when(moduleRepository.findByCourseIdOrderByIdAsc(7L))
                 .thenReturn(List.of(module(10L, "Etap 1")));
 

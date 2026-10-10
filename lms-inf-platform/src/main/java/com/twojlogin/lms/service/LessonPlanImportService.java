@@ -47,7 +47,9 @@ public class LessonPlanImportService {
             Long courseId,
             LessonPlanImportRequest request
     ) {
-        if (!courseRepository.existsById(courseId)) {
+        // Serialize imports of this course so two simultaneous requests cannot
+        // both create the same titles from the same initial snapshot.
+        if (courseRepository.findByIdForImport(courseId).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Kurs nie istnieje");
         }
 

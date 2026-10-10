@@ -23,6 +23,17 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
             @Param("courseId") Long courseId
     );
 
+    @Query("""
+            select lesson.id from Lesson lesson
+            where lesson.module.course.id = :courseId and (
+                exists (select p.id from LessonProgress p where p.lesson = lesson)
+                or exists (select s.id from LessonSubmission s where s.lesson = lesson)
+                or exists (select a.id from TaskAttempt a where a.block.lesson = lesson)
+                or exists (select r.id from LanguageReviewProgress r where r.block.lesson = lesson)
+            )
+            """)
+    List<Long> findUsedLessonIdsByCourseId(@Param("courseId") Long courseId);
+
     long countByModuleCourseId(Long courseId);
 
     @Query("""

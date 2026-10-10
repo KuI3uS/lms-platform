@@ -12,6 +12,15 @@ public interface CourseModuleRepository extends JpaRepository<CourseModule, Long
 
     List<CourseModule> findByCourseIdOrderByIdAsc(Long courseId);
 
+    @Query("""
+            select module.id from CourseModule module
+            where module.course.id = :courseId and (
+                exists (select q.id from Question q where q.module = module)
+                or exists (select s.id from Submission s where s.module = module)
+            )
+            """)
+    List<Long> findProtectedModuleIdsByCourseId(@Param("courseId") Long courseId);
+
     long countByCourseId(Long courseId);
 
     @Query("""

@@ -10,6 +10,7 @@ import {
 import { apiFetch } from "../api/api";
 import { useFeedback } from "../context/FeedbackContext";
 import { CEFR_LEVELS } from "../utils/courseTaxonomy";
+import CourseDuplicateCleanup from "../components/CourseDuplicateCleanup";
 
 export default function AdminModulesPage() {
     const { confirm } = useFeedback();
@@ -232,6 +233,16 @@ export default function AdminModulesPage() {
                     </div>
                 </form>
             </section>
+
+            {courseId && !loading && (
+                <CourseDuplicateCleanup
+                    key={courseId}
+                    courseId={courseId}
+                    onCleaned={async () => {
+                        setModules(await apiFetch(`/modules/course/${courseId}`) || []);
+                    }}
+                />
+            )}
 
             {loading ? (
                 <div className="grid min-h-52 place-items-center">
