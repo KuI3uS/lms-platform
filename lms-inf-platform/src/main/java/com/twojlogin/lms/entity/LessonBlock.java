@@ -15,6 +15,7 @@ public class LessonBlock {
      * Podstawowe informacje
      */
 
+    @Column(columnDefinition = "TEXT")
     private String title;
 
     @Enumerated(EnumType.STRING)

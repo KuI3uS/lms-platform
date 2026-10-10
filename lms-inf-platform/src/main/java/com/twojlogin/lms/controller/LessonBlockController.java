@@ -40,6 +40,7 @@ public class LessonBlockController {
     private static final int MAX_BLOCKS_PER_LESSON = 10;
     private static final int MAX_BLOCKS_PER_LANGUAGE_LESSON = 10;
     private static final int MAX_VOCABULARY_ITEMS = 20;
+    private static final int MAX_BLOCK_TITLE_LENGTH = 1_000;
     private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 
     private final LessonBlockRepository blockRepository;
@@ -383,10 +384,10 @@ public class LessonBlockController {
         if (request.type() != BlockType.DIVIDER && isBlank(request.title())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Podaj tytuł bloku.");
         }
-        if (request.title() != null && request.title().trim().length() > 255) {
+        if (request.title() != null && request.title().trim().length() > MAX_BLOCK_TITLE_LENGTH) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Tytuł bloku może mieć maksymalnie 255 znaków."
+                    "Tytuł bloku może mieć maksymalnie " + MAX_BLOCK_TITLE_LENGTH + " znaków."
             );
         }
         if ((request.type() == BlockType.TASK

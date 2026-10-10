@@ -162,6 +162,41 @@ class LessonBlockControllerPersistenceTest {
     }
 
     @Test
+    void createsAndReadsABlockTitleLongerThanTheLegacyLimit() {
+        Lesson lesson = createLesson();
+        LessonBlockController controller = createController();
+        String title = "Szczegółowy tytuł kroku ".repeat(25).trim();
+
+        LessonBlockDto saved = controller.create(
+                lesson.getId(),
+                request(title, BlockType.TEXT, "Treść", null)
+        );
+
+        assertEquals(title, saved.title());
+        assertEquals(title, blockRepository.findById(saved.id()).orElseThrow().getTitle());
+    }
+
+    @Test
+    void rejectsABlockTitleLongerThanOneThousandCharacters() {
+        Lesson lesson = createLesson();
+        LessonBlockController controller = createController();
+
+        ResponseStatusException error = assertThrows(
+                ResponseStatusException.class,
+                () -> controller.create(
+                        lesson.getId(),
+                        request("x".repeat(1_001), BlockType.TEXT, "Treść", null)
+                )
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+        assertEquals(
+                "Tytuł bloku może mieć maksymalnie 1000 znaków.",
+                error.getReason()
+        );
+    }
+
+    @Test
     void importsMultipleBlocksInOneOrderedBatch() {
         Lesson lesson = createLesson();
         LessonBlockController controller = createController();

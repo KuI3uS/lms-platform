@@ -63,6 +63,31 @@ public class LegacySchemaCompatibility implements ApplicationRunner {
                     }
                 }
 
+                String lessonBlockTitleType = findColumnType(
+                        connection,
+                        "lesson_block",
+                        "title"
+                );
+                Integer lessonBlockTitleSize = findColumnSize(
+                        connection,
+                        "lesson_block",
+                        "title"
+                );
+                if (lessonBlockTitleType != null
+                        && lessonBlockTitleType.toUpperCase(Locale.ROOT).contains("CHAR")
+                        && lessonBlockTitleSize != null
+                        && lessonBlockTitleSize < 1_000) {
+                    statement.execute(
+                            "ALTER TABLE lesson_block " +
+                                    "MODIFY COLUMN title TEXT NULL"
+                    );
+                    log.info(
+                            "Expanded legacy lesson_block.title from {}({}) to TEXT",
+                            lessonBlockTitleType,
+                            lessonBlockTitleSize
+                    );
+                }
+
                 String achievementType = findColumnType(
                         connection,
                         "user_achievements",
@@ -98,6 +123,23 @@ public class LegacySchemaCompatibility implements ApplicationRunner {
                 column
         )) {
             return columns.next() ? columns.getString("TYPE_NAME") : null;
+        }
+    }
+
+    private Integer findColumnSize(
+            Connection connection,
+            String table,
+            String column
+    ) throws Exception {
+        DatabaseMetaData metadata = connection.getMetaData();
+
+        try (ResultSet columns = metadata.getColumns(
+                connection.getCatalog(),
+                null,
+                table,
+                column
+        )) {
+            return columns.next() ? columns.getInt("COLUMN_SIZE") : null;
         }
     }
 }

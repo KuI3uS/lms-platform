@@ -1,4 +1,4 @@
-import { MAX_LESSON_BLOCKS } from "./lessonBlockLimits.js";
+import { MAX_BLOCK_TITLE_LENGTH, MAX_LESSON_BLOCKS } from "./lessonBlockLimits.js";
 import {
     createEmptyDialogConfig,
     parseDialogueEditor,
@@ -504,8 +504,8 @@ function parseStep(step, warnings, errors) {
     if (resolved.type !== "DIVIDER" && !block.title?.trim()) {
         errors.push(`Krok ${step.number}: blok wymaga tytułu zgodnego z formularzem EduHub.`);
     }
-    if (block.title?.trim().length > 255) {
-        errors.push(`Krok ${step.number}: tytuł ma ${block.title.trim().length} znaków, a maksymalny limit wynosi 255.`);
+    if (block.title?.trim().length > MAX_BLOCK_TITLE_LENGTH) {
+        errors.push(`Krok ${step.number}: tytuł ma ${block.title.trim().length} znaków, a maksymalny limit wynosi ${MAX_BLOCK_TITLE_LENGTH}.`);
     }
 
     if (["IMAGE", "VIDEO", "PDF"].includes(resolved.type) && !block.mediaUrl?.trim()) {
