@@ -38,7 +38,18 @@ Rejestracja jest chroniona przez blokadę jednorazowych domen email oraz limity 
 
 - maksymalnie 5 prób z jednego adresu IP w ciągu 15 minut,
 - maksymalnie 3 próby dla jednego adresu email w ciągu 15 minut,
-- codziennie aktualizowaną listę domen tymczasowych oraz lokalną listę awaryjną.
+- pełną lokalną listę ponad 97 tys. domen, działającą już od startu aplikacji,
+- ponawianie pobierania aktualizacji co godzinę (pierwsza próba po 30 sekundach).
+
+Lista pochodzi ze standardowej listy
+[disposable/disposable-email-domains](https://github.com/disposable/disposable-email-domains).
+Nie używamy wariantu `strict`, który obejmuje także zwykłych dostawców poczty.
+Kopia z 2026-10-11 znajduje się w
+`lms-inf-platform/src/main/resources/registration/disposable-email-domains.txt.gz`;
+pochodzenie, data i suma SHA-256 źródła są zapisane w jej nagłówku. Licencja MIT
+jest dołączona obok pliku. Nieudane, uszkodzone lub podejrzanie małe aktualizacje
+pozostawiają poprzednią listę. Przy kolejnym restarcie aplikacja zawsze zaczyna
+od dołączonej kopii; aktualizacje pobrane podczas działania nie są zapisywane na dysku.
 
 Limity można zmienić zmiennymi backendu:
 
@@ -51,6 +62,13 @@ DISPOSABLE_EMAIL_BLOCKING_ENABLED=true
 
 Dodatkowe domeny rozdzielaj przecinkami w `DISPOSABLE_EMAIL_EXTRA_BLOCKED`. Wyjątki,
 które mimo obecności na liście mają być dozwolone, dodaj do `DISPOSABLE_EMAIL_ALLOWED`.
+
+Blokada dotyczy nowych rejestracji i nie usuwa istniejących kont. Domeny i ich
+subdomeny są sprawdzane po stronie backendu; wyjątki mają pierwszeństwo.
+Weryfikacja email jest nadal wymagana do aktywacji konta. Nowe domeny tymczasowe
+mogą pojawić się przed aktualizacją listy, więc ta ochrona nie gwarantuje
+zablokowania każdej jednorazowej skrzynki. Limity prób są lokalne dla procesu:
+restart je zeruje, a wiele instancji nie współdzieli liczników.
 
 ## Naturalne głosy dialogów (ElevenLabs)
 
