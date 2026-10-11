@@ -76,7 +76,7 @@ public class LegacySchemaCompatibility implements ApplicationRunner {
                 if (lessonBlockTitleType != null
                         && lessonBlockTitleType.toUpperCase(Locale.ROOT).contains("CHAR")
                         && lessonBlockTitleSize != null
-                        && lessonBlockTitleSize < 1_000) {
+                        && lessonBlockTitleSize < 2_000) {
                     statement.execute(
                             "ALTER TABLE lesson_block " +
                                     "MODIFY COLUMN title TEXT NULL"

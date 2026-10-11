@@ -95,8 +95,8 @@ test("both generator prompts explicitly include rewards in every block template"
     }
 });
 
-test("import accepts descriptive block titles up to 1000 characters", () => {
-    const acceptedTitle = "Rozbudowany tytuł kroku ".repeat(25).trim();
+test("import accepts descriptive block titles up to 2000 characters", () => {
+    const acceptedTitle = "x".repeat(1500);
     const accepted = parseChatGptLesson(`KROK 1
 Typ bloku
 Tekst
@@ -108,7 +108,7 @@ Materiał do przeczytania.`);
     assert.deepEqual(accepted.errors, []);
     assert.equal(accepted.blocks[0].title, acceptedTitle);
 
-    const rejectedTitle = "x".repeat(1001);
+    const rejectedTitle = "x".repeat(2001);
     const rejected = parseChatGptLesson(`KROK 1
 Typ bloku
 Tekst
@@ -117,5 +117,5 @@ ${rejectedTitle}
 Treść materiału
 Materiał do przeczytania.`);
 
-    assert.ok(rejected.errors.some(error => error.includes("maksymalny limit wynosi 1000")));
+    assert.ok(rejected.errors.some(error => error.includes("maksymalny limit wynosi 2000")));
 });

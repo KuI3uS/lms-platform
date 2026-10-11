@@ -40,7 +40,7 @@ public class LessonBlockController {
     private static final int MAX_BLOCKS_PER_LESSON = 10;
     private static final int MAX_BLOCKS_PER_LANGUAGE_LESSON = 10;
     private static final int MAX_VOCABULARY_ITEMS = 20;
-    private static final int MAX_BLOCK_TITLE_LENGTH = 1_000;
+    private static final int MAX_BLOCK_TITLE_LENGTH = 2_000;
     private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 
     private final LessonBlockRepository blockRepository;
