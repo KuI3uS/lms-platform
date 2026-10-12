@@ -117,6 +117,7 @@ export default function TaskBlockForm({
     const isDebugging = mode === "DEBUGGING";
     const isPrediction = mode === "PREDICT_OUTPUT";
     const isHtml = !isPrediction && (task.language || "java") === "html";
+    const isSql = !isPrediction && (task.language || "java").toLowerCase() === "sql";
     const formTitle = isDebugging
         ? "Debugowanie"
         : isPrediction
@@ -353,6 +354,15 @@ export default function TaskBlockForm({
                             >
                                 Uzupełnij wymagania z rozwiązania
                             </button>
+                        </div>
+                    )}
+
+                    {isSql && (
+                        <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] p-4 text-sm leading-6 text-cyan-50">
+                            <p className="font-black">Sprawdzanie instrukcji i danych SQL</p>
+                            <p className="mt-1 text-cyan-100/75">
+                                Wpisz kompletne rozwiązanie SQL jako wzorzec. System pominie wielkość liter w poleceniach, komentarze oraz formatowanie. Rekordy można dodać jednym INSERT albo osobnymi instrukcjami, zachowując tę samą listę kolumn i wartości. Dane tekstowe są sprawdzane dokładnie. Końcowe SELECT * FROM utworzona_tabela jest opcjonalne, chyba że występuje we wzorcu. Kod nie jest uruchamiany w bazie EduHub — wynik wykonania uczeń sprawdza w swoim środowisku.
+                            </p>
                         </div>
                     )}
 

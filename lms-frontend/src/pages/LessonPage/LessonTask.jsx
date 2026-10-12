@@ -43,7 +43,13 @@ const DIAGNOSTIC_LABELS = {
     MISSING_HTML_ELEMENT: "Brak elementu HTML",
     MISSING_HTML_ATTRIBUTE: "Brak atrybutu HTML",
     UNCLOSED_HTML_ELEMENT: "Niedomknięty element HTML",
-    INCORRECT_HTML_CONTENT: "Niepoprawna treść elementu"
+    INCORRECT_HTML_CONTENT: "Niepoprawna treść elementu",
+    SQL_SYNTAX_ERROR: "Błąd składni SQL",
+    MISSING_SQL_STATEMENT: "Brak wymaganego elementu SQL",
+    INCORRECT_SQL_STATEMENT: "Niepoprawna instrukcja lub rekord",
+    UNEXPECTED_SQL_STATEMENT: "Dodatkowa instrukcja lub rekord",
+    SQL_STATEMENT_ORDER: "Kolejność instrukcji SQL",
+    SQL_REFERENCE_ERROR: "Wzorzec zadania wymaga poprawy"
 };
 
 const TASK_PRESENTATION = {
@@ -112,6 +118,12 @@ export default function LessonTask({
                 {isEditableCodeTask && block.language?.toLowerCase() === "html" && (
                     <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.07] p-4 text-sm leading-6 text-cyan-50 sm:text-base">
                         <strong>Jak działa sprawdzanie:</strong> liczy się poprawna struktura, wymagane znaczniki, atrybuty i treść. Wielkość liter, wcięcia oraz podział kodu na linie nie wpływają na wynik. Po sprawdzeniu zobaczysz dokładnie, czego brakuje i w której linii szukać błędu.
+                    </div>
+                )}
+
+                {isEditableCodeTask && block.language?.toLowerCase() === "sql" && (
+                    <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.07] p-4 text-sm leading-6 text-cyan-50 sm:text-base">
+                        <strong>Jak działa sprawdzanie:</strong> porównujemy instrukcje i dane z wymaganiami zadania. Wielkość liter w poleceniach SQL, komentarze, wcięcia i podział na linie nie wpływają na wynik. Wartości tekstowe rekordów muszą być zgodne z poleceniem. Wykonanie kodu i wynik sprawdź w phpMyAdmin lub środowisku wskazanym przez nauczyciela.
                     </div>
                 )}
             </div>
@@ -198,7 +210,9 @@ export default function LessonTask({
                                     }`}>
                                         {result.correct
                                             ? isEditableCodeTask
-                                                ? "Dobra robota — kod działa"
+                                                ? block.language?.toLowerCase() === "sql"
+                                                    ? "Dobra robota — SQL spełnia wymagania"
+                                                    : "Dobra robota — kod działa"
                                                 : isReflection
                                                     ? "Odpowiedź zapisana — czas na samoocenę"
                                                     : "Dobra robota — odpowiedź jest poprawna"

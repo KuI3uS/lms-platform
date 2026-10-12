@@ -64,7 +64,7 @@ class RenderMemoryProfileTest {
             try (var response = connection.getInputStream()) {
                 var body = mapper.readTree(response);
                 assertEquals("ok", body.path("status").asText());
-                assertEquals("2026.10.11-disposable-email-protection", body.path("version").asText());
+                assertEquals("2026.10.12-sql-task-evaluation", body.path("version").asText());
             }
         } finally {
             connection.disconnect();

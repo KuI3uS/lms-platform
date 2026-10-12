@@ -449,6 +449,30 @@ class TaskEvaluationServiceTest {
     }
 
     @Test
+    void acceptsSqlFormattingDifferencesAndRecordsTheTaskAsCompleted() {
+        block.setLanguage("sql");
+        block.setStarterCode("");
+        block.setExpectedAnswer("CREATE DATABASE serwis_lab; USE serwis_lab; CREATE TABLE urzadzenia (id INT, typ VARCHAR(40)); INSERT INTO urzadzenia (id, typ) VALUES (1, 'Laptop');");
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+
+        TaskCheckResponse response = service.check(block.getId(), """
+                create database serwis_lab;
+                use serwis_lab;
+                create table urzadzenia (
+                    id int,
+                    typ varchar (40)
+                );
+                insert into urzadzenia(id, typ) values (1, 'Laptop');
+                select * from urzadzenia;
+                """, authentication);
+
+        assertTrue(response.correct());
+        assertTrue(response.diagnostics().isEmpty());
+        verify(attemptRepository).save(org.mockito.ArgumentMatchers.argThat(attempt ->
+                attempt.isCorrect() && attempt.getBlock().equals(block)));
+    }
+
+    @Test
     void requiresExactlyThreeCompletedCommentsForTheLoginProcessTask() {
         block.setStarterCode("");
         block.setExpectedAnswer("""

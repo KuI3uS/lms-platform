@@ -133,6 +133,8 @@ public class TaskEvaluationService {
                         ? evaluateTextAnswer(studentAnswer, block.getExpectedAnswer())
                         : "html".equalsIgnoreCase(block.getLanguage())
                             ? evaluateHtml(studentAnswer, block.getExpectedAnswer())
+                        : "sql".equalsIgnoreCase(block.getLanguage())
+                            ? SqlTaskEvaluator.evaluate(studentAnswer, block.getExpectedAnswer())
                         : hasText(block.getHiddenTests())
                                 && "java".equalsIgnoreCase(block.getLanguage())
                             ? codeExecutionService.evaluateJava(
