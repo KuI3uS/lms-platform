@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { BsPencil, BsPlusCircle, BsTrash } from "react-icons/bs";
+import { BsChevronDown, BsPencil, BsPlusCircle, BsTrash } from "react-icons/bs";
 
-export default function CourseSectionHeading({ title, moduleName, stageNumber, canEdit, onSave }) {
+export default function CourseSectionHeading({
+    title, moduleName, stageNumber, canEdit, onSave,
+    expanded, onToggle, panelId, summary, fallbackTitle = "Etapy kursu"
+}) {
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState("");
     const [saving, setSaving] = useState(false);
@@ -87,7 +90,7 @@ export default function CourseSectionHeading({ title, moduleName, stageNumber, c
         );
     }
 
-    if (!title) {
+    if (!title && !onToggle) {
         return canEdit ? (
             <div className="mb-2 flex justify-end px-2">
                 <button
@@ -107,22 +110,41 @@ export default function CourseSectionHeading({ title, moduleName, stageNumber, c
             <div className="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-violet-500/15 blur-3xl" />
             <div className="relative flex flex-wrap items-center justify-between gap-3">
                 <p className="text-[11px] font-black uppercase tracking-[0.28em] text-violet-300">
-                    Nowa część kursu
+                    {title ? "Część kursu" : "Etapy kursu"}
                 </p>
                 {canEdit && (
                     <button
                         type="button"
                         onClick={startEditing}
-                        aria-label={`Edytuj nagłówek przed etapem ${stageNumber}: ${title}`}
+                        aria-label={title
+                            ? `Edytuj nagłówek przed etapem ${stageNumber}: ${title}`
+                            : `Dodaj nagłówek przed etapem ${stageNumber}: ${moduleName}`}
                         className="inline-flex items-center gap-2 rounded-lg border border-violet-400/20 px-3 py-2 text-xs font-bold text-violet-200 transition hover:bg-violet-500/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
                     >
-                        <BsPencil aria-hidden="true" /> Edytuj nagłówek
+                        {title ? <BsPencil aria-hidden="true" /> : <BsPlusCircle aria-hidden="true" />}
+                        {title ? "Edytuj nagłówek" : "Dodaj nagłówek"}
                     </button>
                 )}
             </div>
             <h2 className="relative mt-3 break-words text-2xl font-black leading-tight text-white sm:text-3xl">
-                {title}
+                {onToggle ? (
+                    <button
+                        type="button"
+                        aria-expanded={expanded}
+                        aria-controls={panelId}
+                        aria-label={`${expanded ? "Zwiń" : "Rozwiń"} część ${title || fallbackTitle}`}
+                        onClick={onToggle}
+                        className="flex w-full items-start justify-between gap-4 rounded-xl text-left transition hover:text-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+                    >
+                        <span className="min-w-0">{title || fallbackTitle}</span>
+                        <span className="mt-1 flex shrink-0 items-center gap-2 rounded-xl border border-violet-300/20 bg-white/[0.04] px-3 py-2 text-violet-200">
+                            <span className="hidden text-xs font-bold sm:inline">{expanded ? "Zwiń" : "Rozwiń"}</span>
+                            <BsChevronDown aria-hidden="true" className={`text-base transition-transform duration-200 motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`} />
+                        </span>
+                    </button>
+                ) : title}
             </h2>
+            {summary && <p className="relative mt-3 text-sm font-bold text-violet-200/70">{summary}</p>}
         </header>
     );
 }

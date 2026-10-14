@@ -39,6 +39,12 @@ import CourseSectionHeading from "../components/CourseSectionHeading";
 import LessonPlanImport from "../components/LessonPlanImport";
 import CourseDuplicateCleanup from "../components/CourseDuplicateCleanup";
 import {
+    buildCourseSections,
+    courseSectionExpansionKey,
+    readCourseSectionExpansion,
+    saveCourseSectionExpansion
+} from "../utils/courseSections";
+import {
     canAccessLessonStep,
     getActiveLessonStepIndex,
     isLessonStepCompleted
@@ -63,6 +69,7 @@ export default function ModulePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [moduleExpansion, setModuleExpansion] = useState({});
+    const [sectionExpansion, setSectionExpansion] = useState(readCourseSectionExpansion);
     const [stepRoadmap, setStepRoadmap] = useState({
         lessonId: null,
         steps: [],
@@ -70,6 +77,10 @@ export default function ModulePage() {
     });
 
     const role = user?.role || null;
+
+    useEffect(() => {
+        saveCourseSectionExpansion(sectionExpansion);
+    }, [sectionExpansion]);
 
     const loadRoadmap = useCallback(async () => {
         const cached = roadmapCache.get(String(courseId));
@@ -269,6 +280,27 @@ export default function ModulePage() {
             )))
         }));
     };
+    const sections = buildCourseSections(modules);
+    const activeSectionId = sections.find(section => section.entries.some(
+        ({ module }) => module.id === activeModuleId
+    ))?.id ?? sections[0]?.id;
+    const sectionKey = section => courseSectionExpansionKey(courseId, user?.id, section.id);
+    const isSectionExpanded = section => (
+        sectionExpansion[sectionKey(section)] ?? (section.id === activeSectionId)
+    );
+    const expandedSectionCount = sections.filter(isSectionExpanded).length;
+    const toggleSection = section => {
+        setSectionExpansion(previous => ({
+            ...previous,
+            [sectionKey(section)]: !isSectionExpanded(section)
+        }));
+    };
+    const setAllSectionsExpanded = expanded => {
+        setSectionExpansion(previous => ({
+            ...previous,
+            ...Object.fromEntries(sections.map(section => [sectionKey(section), expanded]))
+        }));
+    };
     const progressLessons = role === "ADMIN"
         ? allLessons
         : allLessons.filter(lesson => lesson.hasContent !== false);
@@ -443,15 +475,31 @@ export default function ModulePage() {
             <section className="mx-auto max-w-3xl space-y-4 pb-16">
                 {modules.length > 0 && (
                     <div className="flex flex-wrap items-center justify-between gap-3 px-2">
-                        <p className="text-sm font-bold text-gray-400">Etapy kursu</p>
+                        <p className="text-sm font-bold text-gray-400">Części: {sections.length} · Etapy: {modules.length}</p>
                         <div className="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                disabled={expandedSectionCount === 0}
+                                onClick={() => setAllSectionsExpanded(false)}
+                                className="rounded-xl border border-violet-300/25 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-200 transition hover:bg-violet-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-default disabled:opacity-40"
+                            >
+                                Zwiń wszystkie części
+                            </button>
+                            <button
+                                type="button"
+                                disabled={expandedSectionCount === sections.length}
+                                onClick={() => setAllSectionsExpanded(true)}
+                                className="rounded-xl border border-violet-300/25 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-200 transition hover:bg-violet-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-default disabled:opacity-40"
+                            >
+                                Rozwiń wszystkie części
+                            </button>
                             <button
                                 type="button"
                                 disabled={expandedModuleCount === 0}
                                 onClick={() => setAllModulesExpanded(false)}
                                 className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-gray-300 transition hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-default disabled:opacity-40"
                             >
-                                Zwiń wszystkie
+                                Zwiń etapy
                             </button>
                             <button
                                 type="button"
@@ -459,7 +507,7 @@ export default function ModulePage() {
                                 onClick={() => setAllModulesExpanded(true)}
                                 className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-gray-300 transition hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-default disabled:opacity-40"
                             >
-                                Rozwiń wszystkie
+                                Rozwiń etapy
                             </button>
                         </div>
                     </div>
@@ -469,295 +517,320 @@ export default function ModulePage() {
                         Brak sekcji w tym kursie.
                     </div>
                 ) : (
-                    modules.map((module, moduleIndex) => {
-                        const lessons = module.lessons || [];
-                        const progressEligibleLessons = role === "ADMIN"
-                            ? lessons
-                            : lessons.filter(lesson => lesson.hasContent !== false);
-                        const completedLessons = progressEligibleLessons.filter(
-                            lesson => lesson.completed
-                        ).length;
-                        const levelBelowCurrent = isLanguageCourse && isCefrBelow(
-                            module.cefrLevel,
-                            course?.unlockedCefrLevel
-                        );
-                        const moduleProgress = progressEligibleLessons.length
-                            ? Math.round((completedLessons / progressEligibleLessons.length) * 100)
-                            : 0;
-                        const expanded = isModuleExpanded(module);
-                        const lessonsPanelId = `module-${courseId}-${module.id}-lessons`;
-
+                    sections.map(section => {
+                        const firstModule = section.entries[0].module;
+                        const sectionExpanded = isSectionExpanded(section);
+                        const sectionPanelId = `course-${courseId}-section-${section.id}`;
+                        const stageRange = section.startStageNumber === section.endStageNumber
+                            ? `Etap ${section.startStageNumber}`
+                            : `Etapy ${section.startStageNumber}–${section.endStageNumber}`;
                         return (
-                            <div key={`${courseId}:${module.id}`} className={module.sectionTitle ? "pt-7" : ""}>
+                            <section key={`${courseId}:section:${section.id}`} className="space-y-4 pt-3">
                                 <CourseSectionHeading
-                                    title={module.sectionTitle}
-                                    moduleName={module.name}
-                                    stageNumber={moduleIndex + 1}
+                                    title={section.title}
+                                    moduleName={firstModule.name}
+                                    stageNumber={section.startStageNumber}
                                     canEdit={role === "ADMIN"}
-                                    onSave={title => saveSectionTitle(module, title)}
+                                    onSave={title => saveSectionTitle(firstModule, title)}
+                                    expanded={sectionExpanded}
+                                    onToggle={() => toggleSection(section)}
+                                    panelId={sectionPanelId}
+                                    summary={`${stageRange} · Liczba etapów: ${section.entries.length} · Lekcje: ${section.lessonCount}`}
+                                    fallbackTitle={sections.length === 1 ? "Etapy kursu" : "Etapy bez nagłówka"}
                                 />
-                                <article
-                                    className="relative rounded-2xl border border-white/10 bg-white/[0.02]"
-                                >
-                                <header className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                                    <div className="flex min-w-0 flex-1 items-center gap-4">
-                                        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-500/15 text-base font-black text-blue-200 ring-1 ring-blue-300/20">
-                                            {moduleIndex + 1}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">
-                                                    {isLanguageCourse ? `CEFR ${module.cefrLevel}` : `Etap ${moduleIndex + 1}`}
-                                                </p>
-                                                {role === "ADMIN" && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => startEditingModule(module)}
-                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300/20 bg-blue-500/10 px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-blue-200 transition hover:border-blue-300/40 hover:bg-blue-500/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
-                                                    >
-                                                        <BsPencilSquare aria-hidden="true" />
-                                                        Edytuj nazwę
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <h2 className="mt-1 text-lg font-black sm:text-xl">
-                                                <button
-                                                    type="button"
-                                                    aria-expanded={expanded}
-                                                    aria-controls={lessonsPanelId}
-                                                    aria-label={`${expanded ? "Zwiń" : "Rozwiń"} etap ${module.name}`}
-                                                    onClick={() => toggleModule(module)}
-                                                    className="flex w-full items-center justify-between gap-3 rounded-lg text-left transition hover:text-cyan-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+                                <div id={sectionPanelId} hidden={!sectionExpanded} className="space-y-4">
+                                    {sectionExpanded && section.entries.map(({ module, moduleIndex }) => {
+                                        const lessons = module.lessons || [];
+                                        const progressEligibleLessons = role === "ADMIN"
+                                            ? lessons
+                                            : lessons.filter(lesson => lesson.hasContent !== false);
+                                        const completedLessons = progressEligibleLessons.filter(
+                                            lesson => lesson.completed
+                                        ).length;
+                                        const levelBelowCurrent = isLanguageCourse && isCefrBelow(
+                                            module.cefrLevel,
+                                            course?.unlockedCefrLevel
+                                        );
+                                        const moduleProgress = progressEligibleLessons.length
+                                            ? Math.round((completedLessons / progressEligibleLessons.length) * 100)
+                                            : 0;
+                                        const expanded = isModuleExpanded(module);
+                                        const lessonsPanelId = `module-${courseId}-${module.id}-lessons`;
+
+                                        return (
+                                            <div key={`${courseId}:${module.id}`}>
+                                                {module.id !== firstModule.id && <CourseSectionHeading
+                                                    moduleName={module.name}
+                                                    stageNumber={moduleIndex + 1}
+                                                    canEdit={role === "ADMIN"}
+                                                    onSave={title => saveSectionTitle(module, title)}
+                                                />}
+                                                <article
+                                                    className="relative rounded-2xl border border-white/10 bg-white/[0.02]"
                                                 >
-                                                    <span>{module.name}</span>
-                                                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/5 text-blue-200">
-                                                        <BsChevronDown
-                                                            aria-hidden="true"
-                                                            className={`transition-transform duration-200 motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
-                                                        />
-                                                    </span>
-                                                </button>
-                                            </h2>
-                                            <p className="mt-1 text-xs text-gray-500">
-                                                {progressEligibleLessons.length} {progressEligibleLessons.length === 1 ? "dostępna lekcja" : "dostępnych lekcji"} · ukończono {completedLessons}
-                                                {isLanguageCourse && !module.levelUnlocked ? " · poziom zablokowany" : ""}
-                                                {levelBelowCurrent && completedLessons < lessons.length ? " · potwierdzony testem kwalifikacyjnym" : ""}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 self-end sm:self-auto">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
-                                            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-800">
-                                                <div
-                                                    className="h-full rounded-full bg-cyan-400 transition-[width] duration-500"
-                                                    style={{ width: `${moduleProgress}%` }}
-                                                />
-                                            </div>
-                                            <span>{moduleProgress}%</span>
-                                        </div>
-
-                                        {role === "ADMIN" && (
-                                            <div className="flex gap-2">
-                                                <button
-                                                    type="button"
-                                                    aria-label={`Zarządzaj lekcjami etapu ${module.name}`}
-                                                    onClick={() => navigate(`/admin/lessons/${module.id}`)}
-                                                    className="grid h-9 w-9 place-items-center rounded-full bg-yellow-500/10 text-yellow-300 transition hover:bg-yellow-500 hover:text-white"
-                                                >
-                                                    <BsGearFill />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    aria-label={`Usuń etap ${module.name}`}
-                                                    onClick={() => deleteModule(module)}
-                                                    className="grid h-9 w-9 place-items-center rounded-full bg-red-500/10 text-red-300 transition hover:bg-red-500 hover:text-white"
-                                                >
-                                                    <BsTrash />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </header>
-
-                                {role === "ADMIN" && editingModuleId === module.id && moduleDraft && (
-                                    <section className="border-t border-blue-400/15 bg-blue-500/[0.04] p-5 sm:p-6">
-                                        <div className="grid gap-5">
-                                            <div>
-                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-blue-300">
-                                                    Nazwa etapu
-                                                </label>
-                                                <input
-                                                    value={moduleDraft.name}
-                                                    maxLength={255}
-                                                    autoFocus
-                                                    onChange={event => setModuleDraft(current => ({
-                                                        ...current,
-                                                        name: event.target.value
-                                                    }))}
-                                                    className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 font-bold outline-none focus:border-blue-400"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-violet-300">
-                                                    Nagłówek części nad etapem — opcjonalnie
-                                                </label>
-                                                <input
-                                                    value={moduleDraft.sectionTitle}
-                                                    maxLength={200}
-                                                    onChange={event => setModuleDraft(current => ({
-                                                        ...current,
-                                                        sectionTitle: event.target.value
-                                                    }))}
-                                                    placeholder="Np. CZĘŚĆ XX — Rekrutacja Junior Java Developer"
-                                                    className="mt-2 w-full rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold text-violet-100 outline-none focus:border-violet-400"
-                                                />
-                                            </div>
-
-                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                                <label className="flex items-center gap-3 text-sm font-bold text-gray-300">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={moduleDraft.lessonsLocked}
-                                                        onChange={event => setModuleDraft(current => ({
-                                                            ...current,
-                                                            lessonsLocked: event.target.checked
-                                                        }))}
-                                                        className="h-4 w-4 accent-blue-500"
-                                                    />
-                                                    Odblokowuj lekcje kolejno
-                                                </label>
-
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={cancelEditingModule}
-                                                        disabled={savingModuleId === module.id}
-                                                        className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-black text-gray-300 transition hover:bg-white/[0.06] disabled:opacity-40"
-                                                    >
-                                                        Anuluj
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => saveEditedModule(module)}
-                                                        disabled={savingModuleId === module.id || !moduleDraft.name.trim()}
-                                                        className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white transition hover:bg-blue-500 disabled:opacity-40"
-                                                    >
-                                                        {savingModuleId === module.id ? "Zapisywanie..." : "Zapisz etap"}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </section>
-                                )}
-
-                                <div
-                                    id={lessonsPanelId}
-                                    hidden={!expanded}
-                                    className="border-t border-white/10 pb-6 pt-6"
-                                >
-                                    {expanded && (lessons.length === 0 ? (
-                                        <div className="flex flex-col items-center py-5 text-center">
-                                            <div className="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-gray-700 text-gray-600">
-                                                <BsLockFill />
-                                            </div>
-                                            <p className="mt-3 text-sm text-gray-600">
-                                                Lekcje w przygotowaniu
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <ol className="space-y-4 py-2">
-                                            {lessons.map((lesson, index) => {
-                                                const offsets = [0, -64, 0, 64];
-                                                const offset = offsets[index % offsets.length];
-                                                const current = Number(lesson.id) === Number(activeLessonId);
-                                                const currentSteps = current
-                                                    && Number(stepRoadmap.lessonId) === Number(lesson.id)
-                                                    ? stepRoadmap.steps
-                                                    : [];
-                                                const stepsLoading = current
-                                                    && Number(stepRoadmap.lessonId) !== Number(lesson.id);
-                                                const hasContent = lesson.hasContent !== false;
-                                                const lessonAccessible = Boolean(
-                                                    lesson.canAccess
-                                                    && (role === "ADMIN" || hasContent)
-                                                );
-
-                                                return (
-                                                    <li
-                                                        key={lesson.id}
-                                                        className="flex flex-col items-center py-2"
-                                                    >
-                                                        <div
-                                                            className="transition-transform duration-500 ease-out"
-                                                            style={{ transform: `translateX(${offset}px)` }}
-                                                        >
-                                                            <button
-                                                                type="button"
-                                                                disabled={!lessonAccessible}
-                                                                onClick={() => lessonAccessible && navigate(`/lesson/${lesson.id}`, {
-                                                                    state: { courseId: Number(courseId) }
-                                                                })}
-                                                                aria-label={`Lekcja ${lesson.orderIndex ?? index + 1}: ${lesson.title}`}
-                                                                className="group flex w-56 flex-col items-center text-center disabled:cursor-not-allowed"
-                                                            >
-                                                                {current && (
-                                                                    <span className="mb-2 rounded-full bg-blue-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/25">
-                                                                        Kontynuuj
-                                                                    </span>
+                                                <header className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                                                    <div className="flex min-w-0 flex-1 items-center gap-4">
+                                                        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-500/15 text-base font-black text-blue-200 ring-1 ring-blue-300/20">
+                                                            {moduleIndex + 1}
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">
+                                                                    {isLanguageCourse ? `CEFR ${module.cefrLevel}` : `Etap ${moduleIndex + 1}`}
+                                                                </p>
+                                                                {role === "ADMIN" && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => startEditingModule(module)}
+                                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300/20 bg-blue-500/10 px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-blue-200 transition hover:border-blue-300/40 hover:bg-blue-500/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                                                                    >
+                                                                        <BsPencilSquare aria-hidden="true" />
+                                                                        Edytuj nazwę
+                                                                    </button>
                                                                 )}
-                                                                <span className={`relative grid h-20 w-20 place-items-center rounded-full border-2 border-b-[7px] text-2xl font-black transition-all duration-200 motion-safe:group-hover:-translate-y-1 motion-safe:group-active:translate-y-0 ${
-                                                                    lesson.completed
-                                                                        ? "border-emerald-300/70 border-b-emerald-700 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                                                                        : lessonAccessible
-                                                                            ? "border-blue-300/80 border-b-blue-800 bg-blue-600 text-white shadow-xl shadow-blue-500/25"
-                                                                            : "border-gray-700 border-b-gray-950 bg-gray-800 text-gray-600"
-                                                                }`}>
-                                                                    {lesson.completed ? (
-                                                                        <BsCheckCircle size={30} />
-                                                                    ) : lessonAccessible ? (
-                                                                        <BsPlayFill className="ml-1" size={28} />
-                                                                    ) : (
-                                                                        <BsLockFill size={23} />
-                                                                    )}
-                                                                </span>
-                                                                <span className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-gray-600">
-                                                                    Lekcja {lesson.orderIndex ?? index + 1}
-                                                                </span>
-                                                                <span className={`mt-1 line-clamp-2 max-w-52 text-sm font-black leading-5 ${
-                                                                    lessonAccessible ? "text-gray-100" : "text-gray-600"
-                                                                }`}>
-                                                                    {lesson.title}
-                                                                </span>
-                                                                {!hasContent && role !== "ADMIN" && (
-                                                                    <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-300/60">
-                                                                        Materiały w przygotowaniu
+                                                            </div>
+                                                            <h2 className="mt-1 text-lg font-black sm:text-xl">
+                                                                <button
+                                                                    type="button"
+                                                                    aria-expanded={expanded}
+                                                                    aria-controls={lessonsPanelId}
+                                                                    aria-label={`${expanded ? "Zwiń" : "Rozwiń"} etap ${module.name}`}
+                                                                    onClick={() => toggleModule(module)}
+                                                                    className="flex w-full items-center justify-between gap-3 rounded-lg text-left transition hover:text-cyan-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+                                                                >
+                                                                    <span>{module.name}</span>
+                                                                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/5 text-blue-200">
+                                                                        <BsChevronDown
+                                                                            aria-hidden="true"
+                                                                            className={`transition-transform duration-200 motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
+                                                                        />
                                                                     </span>
-                                                                )}
-                                                            </button>
+                                                                </button>
+                                                            </h2>
+                                                            <p className="mt-1 text-xs text-gray-500">
+                                                                {progressEligibleLessons.length} {progressEligibleLessons.length === 1 ? "dostępna lekcja" : "dostępnych lekcji"} · ukończono {completedLessons}
+                                                                {isLanguageCourse && !module.levelUnlocked ? " · poziom zablokowany" : ""}
+                                                                {levelBelowCurrent && completedLessons < lessons.length ? " · potwierdzony testem kwalifikacyjnym" : ""}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-3 self-end sm:self-auto">
+                                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
+                                                            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-800">
+                                                                <div
+                                                                    className="h-full rounded-full bg-cyan-400 transition-[width] duration-500"
+                                                                    style={{ width: `${moduleProgress}%` }}
+                                                                />
+                                                            </div>
+                                                            <span>{moduleProgress}%</span>
                                                         </div>
 
-                                                        {current && (
-                                                            <LessonSubsteps
-                                                                lesson={lesson}
-                                                                steps={currentSteps}
-                                                                loading={stepsLoading}
-                                                                error={stepRoadmap.error}
-                                                                onOpenStep={step => navigate(
-                                                                    `/lesson/${lesson.id}?step=${step.id}`,
-                                                                    { state: { courseId: Number(courseId) } }
-                                                                )}
-                                                            />
+                                                        {role === "ADMIN" && (
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    aria-label={`Zarządzaj lekcjami etapu ${module.name}`}
+                                                                    onClick={() => navigate(`/admin/lessons/${module.id}`)}
+                                                                    className="grid h-9 w-9 place-items-center rounded-full bg-yellow-500/10 text-yellow-300 transition hover:bg-yellow-500 hover:text-white"
+                                                                >
+                                                                    <BsGearFill />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    aria-label={`Usuń etap ${module.name}`}
+                                                                    onClick={() => deleteModule(module)}
+                                                                    className="grid h-9 w-9 place-items-center rounded-full bg-red-500/10 text-red-300 transition hover:bg-red-500 hover:text-white"
+                                                                >
+                                                                    <BsTrash />
+                                                                </button>
+                                                            </div>
                                                         )}
-                                                    </li>
-                                                );
-                                            })}
-                                        </ol>
-                                    ))}
+                                                    </div>
+                                                </header>
+
+                                                {role === "ADMIN" && editingModuleId === module.id && moduleDraft && (
+                                                    <section className="border-t border-blue-400/15 bg-blue-500/[0.04] p-5 sm:p-6">
+                                                        <div className="grid gap-5">
+                                                            <div>
+                                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-blue-300">
+                                                                    Nazwa etapu
+                                                                </label>
+                                                                <input
+                                                                    value={moduleDraft.name}
+                                                                    maxLength={255}
+                                                                    autoFocus
+                                                                    onChange={event => setModuleDraft(current => ({
+                                                                        ...current,
+                                                                        name: event.target.value
+                                                                    }))}
+                                                                    className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 font-bold outline-none focus:border-blue-400"
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-violet-300">
+                                                                    Nagłówek części nad etapem — opcjonalnie
+                                                                </label>
+                                                                <input
+                                                                    value={moduleDraft.sectionTitle}
+                                                                    maxLength={200}
+                                                                    onChange={event => setModuleDraft(current => ({
+                                                                        ...current,
+                                                                        sectionTitle: event.target.value
+                                                                    }))}
+                                                                    placeholder="Np. CZĘŚĆ XX — Rekrutacja Junior Java Developer"
+                                                                    className="mt-2 w-full rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold text-violet-100 outline-none focus:border-violet-400"
+                                                                />
+                                                            </div>
+
+                                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                                                <label className="flex items-center gap-3 text-sm font-bold text-gray-300">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={moduleDraft.lessonsLocked}
+                                                                        onChange={event => setModuleDraft(current => ({
+                                                                            ...current,
+                                                                            lessonsLocked: event.target.checked
+                                                                        }))}
+                                                                        className="h-4 w-4 accent-blue-500"
+                                                                    />
+                                                                    Odblokowuj lekcje kolejno
+                                                                </label>
+
+                                                                <div className="flex gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={cancelEditingModule}
+                                                                        disabled={savingModuleId === module.id}
+                                                                        className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-black text-gray-300 transition hover:bg-white/[0.06] disabled:opacity-40"
+                                                                    >
+                                                                        Anuluj
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => saveEditedModule(module)}
+                                                                        disabled={savingModuleId === module.id || !moduleDraft.name.trim()}
+                                                                        className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white transition hover:bg-blue-500 disabled:opacity-40"
+                                                                    >
+                                                                        {savingModuleId === module.id ? "Zapisywanie..." : "Zapisz etap"}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </section>
+                                                )}
+
+                                                <div
+                                                    id={lessonsPanelId}
+                                                    hidden={!expanded}
+                                                    className="border-t border-white/10 pb-6 pt-6"
+                                                >
+                                                    {expanded && (lessons.length === 0 ? (
+                                                        <div className="flex flex-col items-center py-5 text-center">
+                                                            <div className="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-gray-700 text-gray-600">
+                                                                <BsLockFill />
+                                                            </div>
+                                                            <p className="mt-3 text-sm text-gray-600">
+                                                                Lekcje w przygotowaniu
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <ol className="space-y-4 py-2">
+                                                            {lessons.map((lesson, index) => {
+                                                                const offsets = [0, -64, 0, 64];
+                                                                const offset = offsets[index % offsets.length];
+                                                                const current = Number(lesson.id) === Number(activeLessonId);
+                                                                const currentSteps = current
+                                                                    && Number(stepRoadmap.lessonId) === Number(lesson.id)
+                                                                    ? stepRoadmap.steps
+                                                                    : [];
+                                                                const stepsLoading = current
+                                                                    && Number(stepRoadmap.lessonId) !== Number(lesson.id);
+                                                                const hasContent = lesson.hasContent !== false;
+                                                                const lessonAccessible = Boolean(
+                                                                    lesson.canAccess
+                                                                    && (role === "ADMIN" || hasContent)
+                                                                );
+
+                                                                return (
+                                                                    <li
+                                                                        key={lesson.id}
+                                                                        className="flex flex-col items-center py-2"
+                                                                    >
+                                                                        <div
+                                                                            className="transition-transform duration-500 ease-out"
+                                                                            style={{ transform: `translateX(${offset}px)` }}
+                                                                        >
+                                                                            <button
+                                                                                type="button"
+                                                                                disabled={!lessonAccessible}
+                                                                                onClick={() => lessonAccessible && navigate(`/lesson/${lesson.id}`, {
+                                                                                    state: { courseId: Number(courseId) }
+                                                                                })}
+                                                                                aria-label={`Lekcja ${lesson.orderIndex ?? index + 1}: ${lesson.title}`}
+                                                                                className="group flex w-56 flex-col items-center text-center disabled:cursor-not-allowed"
+                                                                            >
+                                                                                {current && (
+                                                                                    <span className="mb-2 rounded-full bg-blue-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/25">
+                                                                                        Kontynuuj
+                                                                                    </span>
+                                                                                )}
+                                                                                <span className={`relative grid h-20 w-20 place-items-center rounded-full border-2 border-b-[7px] text-2xl font-black transition-all duration-200 motion-safe:group-hover:-translate-y-1 motion-safe:group-active:translate-y-0 ${
+                                                                                    lesson.completed
+                                                                                        ? "border-emerald-300/70 border-b-emerald-700 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                                                                                        : lessonAccessible
+                                                                                            ? "border-blue-300/80 border-b-blue-800 bg-blue-600 text-white shadow-xl shadow-blue-500/25"
+                                                                                            : "border-gray-700 border-b-gray-950 bg-gray-800 text-gray-600"
+                                                                                }`}>
+                                                                                    {lesson.completed ? (
+                                                                                        <BsCheckCircle size={30} />
+                                                                                    ) : lessonAccessible ? (
+                                                                                        <BsPlayFill className="ml-1" size={28} />
+                                                                                    ) : (
+                                                                                        <BsLockFill size={23} />
+                                                                                    )}
+                                                                                </span>
+                                                                                <span className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-gray-600">
+                                                                                    Lekcja {lesson.orderIndex ?? index + 1}
+                                                                                </span>
+                                                                                <span className={`mt-1 line-clamp-2 max-w-52 text-sm font-black leading-5 ${
+                                                                                    lessonAccessible ? "text-gray-100" : "text-gray-600"
+                                                                                }`}>
+                                                                                    {lesson.title}
+                                                                                </span>
+                                                                                {!hasContent && role !== "ADMIN" && (
+                                                                                    <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-300/60">
+                                                                                        Materiały w przygotowaniu
+                                                                                    </span>
+                                                                                )}
+                                                                            </button>
+                                                                        </div>
+
+                                                                        {current && (
+                                                                            <LessonSubsteps
+                                                                                lesson={lesson}
+                                                                                steps={currentSteps}
+                                                                                loading={stepsLoading}
+                                                                                error={stepRoadmap.error}
+                                                                                onOpenStep={step => navigate(
+                                                                                    `/lesson/${lesson.id}?step=${step.id}`,
+                                                                                    { state: { courseId: Number(courseId) } }
+                                                                                )}
+                                                                            />
+                                                                        )}
+                                                                    </li>
+                                                                );
+                                                            })}
+                                                        </ol>
+                                                    ))}
+                                                </div>
+                                                </article>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                </article>
-                            </div>
+                            </section>
                         );
                     })
                 )}
