@@ -4,6 +4,19 @@ Strona oferty: https://edu-hub.com.pl/kurs/java-backend-developer
 
 Materiały są przygotowane do samodzielnej publikacji. Nie opublikowano postów ani nie uruchomiono płatnych reklam. Cena i liczba gotowych lekcji są aktualizowane na stronie oferty na podstawie danych kursu.
 
+## Ważne przed rozpoczęciem sprzedaży
+
+Weryfikacja wdrożenia 16 października 2026: kurs ma 476 etapów i 2970 lekcji w planie, ale **0 opublikowanych lekcji z materiałami**. Publiczna oferta pokazuje więc kurs w przygotowaniu i nie udostępnia przejścia do zakupu. Sama obecność tytułów lekcji nie oznacza gotowego kursu.
+
+Posty i filmy poniżej są gotowymi szablonami na start po udostępnieniu materiałów. Zanim zaczniesz je publikować:
+
+- Przygotuj i opublikuj kompletny pierwszy fragment kursu, który uczeń może rzeczywiście przerobić.
+- Sprawdź lekcje z konta zwykłego ucznia, nie tylko administratora.
+- Zweryfikuj widoczną liczbę dostępnych lekcji i warianty cenowe na stronie oferty.
+- Opisuj zakres już dostępny, bez przedstawiania całego planu jako ukończonego kursu.
+
+14-dniowy plan publikacji rozpocznij po tych sprawdzeniach. Nie publikowano ani nie zmieniano istniejących lekcji w ramach przygotowania tej oferty.
+
 ## Opis do karty kursu
 
 Ucz się Javy krok po kroku: poznawaj pojęcia, pisz własny kod i poprawiaj rozwiązania na podstawie wskazówek. Java Backend Developer w EduHub łączy uporządkowany plan nauki z ćwiczeniami w edytorze i zapisem Twojego postępu.
