@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -23,6 +24,8 @@ public class Course {
     @Column(length = 32, columnDefinition = "varchar(32)")
     private CourseBillingMode billingMode;
     private boolean published;
+    @JsonIgnore
+    private LocalDateTime importPublicationRepairedAt;
     private String thumbnailUrl;
     private String level;
     private String category = "PROGRAMMING";
@@ -112,6 +115,14 @@ public class Course {
 
     public void setPublished(boolean published) {
         this.published = published;
+    }
+
+    public LocalDateTime getImportPublicationRepairedAt() {
+        return importPublicationRepairedAt;
+    }
+
+    public void setImportPublicationRepairedAt(LocalDateTime repairedAt) {
+        this.importPublicationRepairedAt = repairedAt;
     }
 
     public String getThumbnailUrl() {

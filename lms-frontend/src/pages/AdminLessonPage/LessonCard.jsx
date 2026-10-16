@@ -128,6 +128,10 @@ export default function LessonCard({
 
                             </h2>
 
+                            <p className={`mt-3 text-sm font-bold ${lesson.published ? "text-emerald-300" : "text-amber-300"}`}>
+                                {lesson.published ? "Opublikowana — dostępna dla uczniów z dostępem do kursu" : "Szkic lekcji — niewidoczny dla uczniów"}
+                            </p>
+
                             <p className="text-gray-400 mt-3">
 
                                 {variant === "LANGUAGE"

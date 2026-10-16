@@ -43,7 +43,7 @@ export default function BlockFooter({
 
                         <div className="text-sm text-gray-400">
 
-                            Widoczny dla użytkowników.
+                            Widoczny dla uczniów, gdy cała lekcja jest opublikowana.
 
                         </div>
 

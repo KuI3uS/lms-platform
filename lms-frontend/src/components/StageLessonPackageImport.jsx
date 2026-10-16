@@ -26,6 +26,7 @@ export default function StageLessonPackageImport({
     const [open, setOpen] = useState(false);
     const [source, setSource] = useState("");
     const [importError, setImportError] = useState("");
+    const [publishLessons, setPublishLessons] = useState(true);
     const parsed = useMemo(
         () => parseStageLessonImport(source, maxBlocks, variant),
         [source, maxBlocks, variant]
@@ -71,14 +72,14 @@ export default function StageLessonPackageImport({
 
         const accepted = await confirm({
             title: "Zaimportuj cały etap",
-            message: `Zapisać ${parsed.lessonCount} kompletnych lekcji i ${parsed.blockCount} bloków? Nowe lekcje pozostaną nieopublikowane do sprawdzenia. Puste lekcje o tych samych nazwach zostaną uzupełnione, a lekcje mające już bloki będą pominięte.`,
+            message: `Zapisać ${parsed.lessonCount} kompletnych lekcji i ${parsed.blockCount} bloków? ${publishLessons ? "Lekcje z opublikowanymi blokami zostaną udostępnione uczniom mającym dostęp do kursu." : "Nowe lekcje pozostaną szkicami do sprawdzenia."} Puste lekcje o tych samych nazwach zostaną uzupełnione, a lekcje mające już bloki będą pominięte.`,
             confirmLabel: "Importuj cały etap"
         });
         if (!accepted) return;
 
         try {
             setImportError("");
-            const result = await lessonsState.importLessonPackage(parsed.lessons);
+            const result = await lessonsState.importLessonPackage(parsed.lessons, { publishLessons });
             const details = [
                 result.lessonsCreated ? `nowe lekcje: ${result.lessonsCreated}` : "",
                 result.emptyLessonsFilled ? `uzupełnione puste lekcje: ${result.emptyLessonsFilled}` : "",
@@ -235,6 +236,11 @@ export default function StageLessonPackageImport({
                     </div>
                 </div>
             )}
+
+            <label className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                <input type="checkbox" checked={publishLessons} disabled={lessonsState.packageImporting} onChange={event => setPublishLessons(event.target.checked)} className="mt-1 h-4 w-4 shrink-0" />
+                <span><strong className="block">Opublikuj lekcje po zapisaniu bloków</strong><span className="mt-1 block leading-6 text-emerald-100/75">Uczeń z dostępem do kursu zobaczy je po udanym imporcie. Odznacz, jeśli chcesz najpierw sprawdzić lekcje jako szkice.</span></span>
+            </label>
 
             <button
                 type="button"

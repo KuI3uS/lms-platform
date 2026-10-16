@@ -64,7 +64,7 @@ class RenderMemoryProfileTest {
             try (var response = connection.getInputStream()) {
                 var body = mapper.readTree(response);
                 assertEquals("ok", body.path("status").asText());
-                assertEquals("2026.10.16-java-course-offer", body.path("version").asText());
+                assertEquals("2026.10.16-java-lesson-publication", body.path("version").asText());
             }
         } finally {
             connection.disconnect();
@@ -94,7 +94,7 @@ class RenderMemoryProfileTest {
             List<LessonBlockRequest> requests = mapper.readValue(
                     resource, new TypeReference<List<LessonBlockRequest>>() {});
             List<LessonBlockRequest> lessonBlocks = requests.subList(0, 10);
-            assertEquals(10, controller.createBulk(lesson.getId(), lessonBlocks).size());
+            assertEquals(10, controller.createBulk(lesson.getId(), lessonBlocks, false).size());
             assertEquals(10, blocks.countByLessonId(lesson.getId()));
         }
     }

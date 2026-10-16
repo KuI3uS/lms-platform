@@ -21,6 +21,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
     const { showToast } = useFeedback();
     const [open, setOpen] = useState(false);
     const [source, setSource] = useState("");
+    const [publishLesson, setPublishLesson] = useState(true);
     const result = useMemo(
         () => parseChatGptLesson(source, maxBlocks, variant),
         [source, maxBlocks, variant]
@@ -46,7 +47,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
     };
 
     const importLesson = async () => {
-        const imported = await lessonBlocks.importBlocks(lessonId, result.blocks, maxBlocks);
+        const imported = await lessonBlocks.importBlocks(lessonId, result.blocks, maxBlocks, publishLesson);
         if (imported) {
             setSource("");
             setOpen(false);
@@ -54,7 +55,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
     };
 
     const replaceLesson = async () => {
-        const imported = await lessonBlocks.replaceBlocks(lessonId, result.blocks, maxBlocks);
+        const imported = await lessonBlocks.replaceBlocks(lessonId, result.blocks, maxBlocks, publishLesson);
         if (imported) {
             setSource("");
             setOpen(false);
@@ -171,6 +172,11 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                             Import nie został zapisany: {importError}
                         </div>
                     )}
+
+                    <label className="flex items-start gap-3 rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                        <input type="checkbox" checked={publishLesson} disabled={importing} onChange={event => setPublishLesson(event.target.checked)} className="mt-1 h-4 w-4 shrink-0" />
+                        <span><strong className="block">Opublikuj lekcję po udanym imporcie</strong><span className="mt-1 block leading-6">Udostępni lekcję uczniom mającym dostęp do kursu. Odznacz, aby zachować obecny status publikacji.</span></span>
+                    </label>
 
                     <div className={`grid gap-3 ${existingCount > 0 ? "sm:grid-cols-2" : ""}`}>
                         <button

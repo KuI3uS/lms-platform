@@ -121,7 +121,7 @@ export default function useLessons(moduleId) {
 
     }
 
-    async function importLessonPackage(packageLessons) {
+    async function importLessonPackage(packageLessons, { publishLessons = true } = {}) {
         if (!Array.isArray(packageLessons) || packageLessons.length === 0 || packageImporting) {
             return null;
         }
@@ -183,7 +183,7 @@ export default function useLessons(moduleId) {
                 }
 
                 const payload = importedLesson.blocks.map(toLessonBlockRequest);
-                await apiFetch(`/lesson-blocks/lesson/${targetLesson.id}/bulk`, {
+                await apiFetch(`/lesson-blocks/lesson/${targetLesson.id}/bulk?publishLesson=${publishLessons}`, {
                     method: "POST",
                     body: JSON.stringify(payload)
                 });

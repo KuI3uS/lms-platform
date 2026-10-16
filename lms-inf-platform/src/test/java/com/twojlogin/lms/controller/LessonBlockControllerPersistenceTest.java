@@ -66,11 +66,13 @@ class LessonBlockControllerPersistenceTest {
                 .build();
         var result = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
                         .post("/api/lesson-blocks/lesson/{lessonId}/bulk", lesson.getId())
+                        .param("publishLesson", "true")
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .content(body))
                 .andReturn();
         assertEquals(200, result.getResponse().getStatus(), result.getResponse().getContentAsString());
         assertEquals(10, blockRepository.countByLessonId(lesson.getId()));
+        assertEquals(true, lessonRepository.findById(lesson.getId()).orElseThrow().isPublished());
     }
 
     @Autowired
@@ -205,7 +207,7 @@ class LessonBlockControllerPersistenceTest {
 
         List<LessonBlockDto> saved = controller.createBulk(
                 lesson.getId(),
-                List.of(info, quiz)
+                List.of(info, quiz), false
         );
 
         assertEquals(2, saved.size());
@@ -230,6 +232,36 @@ class LessonBlockControllerPersistenceTest {
         assertEquals(2, result.get("deleted"));
         assertEquals(0, blockRepository.countByLessonId(selectedLesson.getId()));
         assertEquals(1, blockRepository.countByLessonId(otherLesson.getId()));
+    }
+
+    @Test
+    void explicitlyRequestedPublicationMakesImportedLessonVisibleOnlyAfterBlocksAreSaved() {
+        Lesson lesson = createLesson();
+        lesson.setPublished(false);
+        lessonRepository.saveAndFlush(lesson);
+        createController().createBulk(lesson.getId(),
+                List.of(request("Treść", BlockType.TEXT, "Materiał lekcji", null)), true);
+        assertEquals(true, lessonRepository.findById(lesson.getId()).orElseThrow().isPublished());
+    }
+
+    @Test
+    void importingWithoutPublicationKeepsDraftStatus() {
+        Lesson lesson = createLesson();
+        lesson.setPublished(false);
+        lessonRepository.saveAndFlush(lesson);
+        createController().createBulk(lesson.getId(),
+                List.of(request("Treść", BlockType.TEXT, "Materiał lekcji", null)), false);
+        assertEquals(false, lessonRepository.findById(lesson.getId()).orElseThrow().isPublished());
+    }
+
+    @Test
+    void failedImportCannotPublishTheLesson() {
+        Lesson lesson = createLesson();
+        lesson.setPublished(false);
+        lessonRepository.saveAndFlush(lesson);
+        assertThrows(ResponseStatusException.class, () -> createController().createBulk(lesson.getId(),
+                List.of(request("x".repeat(2001), BlockType.TEXT, "Materiał", null)), true));
+        assertEquals(false, lessonRepository.findById(lesson.getId()).orElseThrow().isPublished());
     }
 
     @Test
@@ -367,7 +399,7 @@ class LessonBlockControllerPersistenceTest {
                 ))
                 .toList();
 
-        List<LessonBlockDto> saved = controller.createBulk(lessonId, requests);
+        List<LessonBlockDto> saved = controller.createBulk(lessonId, requests, false);
 
         assertEquals(10, saved.size());
         assertEquals(10, blockRepository.countByLessonId(lessonId));
@@ -404,7 +436,7 @@ class LessonBlockControllerPersistenceTest {
                                 request("Pierwszy", BlockType.TEXT, "Treść", null),
                                 request("Drugi", BlockType.TEXT, "Treść", null),
                                 request("Trzeci", BlockType.TEXT, "Treść", null)
-                        )
+                        ), false
                 )
         );
 
@@ -430,7 +462,7 @@ class LessonBlockControllerPersistenceTest {
                         request("Nowy materiał", BlockType.TEXT, "Treść", null),
                         request("Nowe ćwiczenie", BlockType.TASK, "Polecenie", "Odpowiedź"),
                         request("Nowe podsumowanie", BlockType.SUMMARY, "Zapamiętaj", null)
-                )
+                ), true
         );
 
         assertEquals(3, saved.size());
@@ -439,6 +471,7 @@ class LessonBlockControllerPersistenceTest {
         assertEquals("Nowe ćwiczenie", saved.get(1).title());
         assertEquals("Nowe podsumowanie", saved.get(2).title());
         assertEquals(List.of(0, 1, 2), saved.stream().map(LessonBlockDto::orderIndex).toList());
+        assertEquals(true, lessonRepository.findById(lesson.getId()).orElseThrow().isPublished());
     }
 
     @Test

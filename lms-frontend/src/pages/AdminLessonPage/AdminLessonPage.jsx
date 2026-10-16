@@ -15,7 +15,7 @@ export default function AdminLessonPage() {
     const { moduleId } = useParams();
 
     const lessons = useLessons(moduleId);
-    const lessonBlocks = useLessonBlocks();
+    const lessonBlocks = useLessonBlocks(lessons.loadLessons);
     const expanded = useExpandedLesson();
     const moduleData = useModule(moduleId);
     const lessonVariant = moduleData.isLanguageCourse ? "LANGUAGE" : "PROGRAMMING";

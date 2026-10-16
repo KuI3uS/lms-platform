@@ -151,7 +151,8 @@ public class LessonBlockController {
     @PostMapping("/lesson/{lessonId}/bulk")
     public List<LessonBlockDto> createBulk(
             @PathVariable Long lessonId,
-            @RequestBody List<LessonBlockRequest> requests
+            @RequestBody List<LessonBlockRequest> requests,
+            @RequestParam(defaultValue = "false") boolean publishLesson
     ) {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -172,7 +173,9 @@ public class LessonBlockController {
             blocks.add(block);
         }
 
-        return blockRepository.saveAllAndFlush(blocks).stream()
+        var savedBlocks = blockRepository.saveAllAndFlush(blocks);
+        publishImportedLessonIfRequested(lesson, savedBlocks, publishLesson);
+        return savedBlocks.stream()
                 .map(block -> LessonBlockDto.from(block, true))
                 .toList();
     }
@@ -182,7 +185,8 @@ public class LessonBlockController {
     @PutMapping("/lesson/{lessonId}/replace")
     public List<LessonBlockDto> replaceAll(
             @PathVariable Long lessonId,
-            @RequestBody List<LessonBlockRequest> requests
+            @RequestBody List<LessonBlockRequest> requests,
+            @RequestParam(defaultValue = "false") boolean publishLesson
     ) {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -207,9 +211,19 @@ public class LessonBlockController {
         blockRepository.deleteAll(current);
         blockRepository.flush();
 
-        return blockRepository.saveAllAndFlush(replacement).stream()
+        var savedBlocks = blockRepository.saveAllAndFlush(replacement);
+        publishImportedLessonIfRequested(lesson, savedBlocks, publishLesson);
+        return savedBlocks.stream()
                 .map(block -> LessonBlockDto.from(block, true))
                 .toList();
+    }
+
+    private void publishImportedLessonIfRequested(Lesson lesson, List<LessonBlock> blocks, boolean requested) {
+        if (requested && blocks.stream().anyMatch(block ->
+                Boolean.TRUE.equals(block.getPublished()) && block.getType() != BlockType.DIVIDER)) {
+            lesson.setPublished(true);
+            lessonRepository.saveAndFlush(lesson);
+        }
     }
 
     private void validateImportSize(

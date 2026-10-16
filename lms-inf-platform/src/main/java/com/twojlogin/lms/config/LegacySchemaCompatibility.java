@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.core.annotation.Order;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -14,6 +15,7 @@ import java.sql.Statement;
 import java.util.Locale;
 
 @Component
+@Order(0)
 public class LegacySchemaCompatibility implements ApplicationRunner {
 
     private static final Logger log =

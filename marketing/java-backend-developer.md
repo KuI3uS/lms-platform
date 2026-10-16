@@ -2,20 +2,19 @@
 
 Strona oferty: https://edu-hub.com.pl/kurs/java-backend-developer
 
-Materiały są przygotowane do samodzielnej publikacji. Nie opublikowano postów ani nie uruchomiono płatnych reklam. Cena i liczba gotowych lekcji są aktualizowane na stronie oferty na podstawie danych kursu.
+Materiały są przygotowane do samodzielnej publikacji. Nie opublikowano postów ani nie uruchomiono płatnych reklam. Cena jest pobierana na stronie oferty z ustawień kursu.
 
-## Ważne przed rozpoczęciem sprzedaży
+## Zasady prezentacji kursu
 
-Weryfikacja wdrożenia 16 października 2026: kurs ma 476 etapów i 2970 lekcji w planie, ale **0 opublikowanych lekcji z materiałami**. Publiczna oferta pokazuje więc kurs w przygotowaniu i nie udostępnia przejścia do zakupu. Sama obecność tytułów lekcji nie oznacza gotowego kursu.
+Po potwierdzeniu zakupu uczeń otrzymuje dostęp do udostępnionych lekcji kursu na swoim koncie. Program pokazuje pełną ścieżkę, a materiały są udostępniane etapami.
 
-Posty i filmy poniżej są gotowymi szablonami na start po udostępnieniu materiałów. Zanim zaczniesz je publikować:
+Przed publikacją materiałów promocyjnych:
 
-- Przygotuj i opublikuj kompletny pierwszy fragment kursu, który uczeń może rzeczywiście przerobić.
 - Sprawdź lekcje z konta zwykłego ucznia, nie tylko administratora.
-- Zweryfikuj widoczną liczbę dostępnych lekcji i warianty cenowe na stronie oferty.
+- Zweryfikuj warianty cenowe na stronie oferty.
 - Opisuj zakres już dostępny, bez przedstawiania całego planu jako ukończonego kursu.
 
-14-dniowy plan publikacji rozpocznij po tych sprawdzeniach. Nie publikowano ani nie zmieniano istniejących lekcji w ramach przygotowania tej oferty.
+Nie utożsamiaj flagi publikacji bloku ze statusem całej lekcji. W imporcie etapu opcja publikacji udostępnia lekcje dopiero po udanym zapisaniu ich bloków.
 
 ## Opis do karty kursu
 
@@ -34,7 +33,7 @@ Właśnie na tym chcę skupić naukę w EduHub: rozumiesz zasadę, piszesz włas
 
 Java Backend Developer to uporządkowany plan nauki z materiałami i ćwiczeniami w edytorze. Uczysz się we własnym tempie, a postęp zapisuje się na Twoim koncie.
 
-Przygotowałem publiczną stronę kursu. Bez logowania sprawdzisz początek programu, aktualną cenę i liczbę opublikowanych lekcji. Możesz też rozwiązać krótkie ćwiczenie i zobaczyć, jak wygląda informacja zwrotna.
+Przygotowałem publiczną stronę kursu. Bez logowania sprawdzisz początek programu i aktualną cenę. Możesz też rozwiązać krótkie ćwiczenie i zobaczyć, jak wygląda informacja zwrotna.
 
 Sprawdź, czy ten sposób nauki jest dla Ciebie:
 https://edu-hub.com.pl/kurs/java-backend-developer?utm_source=post1&utm_medium=organic&utm_campaign=java_start
@@ -62,7 +61,7 @@ Błąd w kodzie to moment, w którym potrzebujesz wskazówki, co sprawdzić dale
 
 W EduHub możesz wysłać rozwiązanie zadania, zobaczyć wynik i skorzystać z podpowiedzi. Potem poprawiasz kod i sprawdzasz go ponownie.
 
-Kurs Java Backend Developer jest dla osób, które chcą ćwiczyć programowanie i uporządkować podstawy. Na stronie rozdzielam gotowe materiały od planu kursu, żeby przed zakupem było wiadomo, co jest dostępne.
+Kurs Java Backend Developer jest dla osób, które chcą ćwiczyć programowanie i uporządkować podstawy. Na stronie znajdziesz program i warianty dostępu. Po zakupie lekcje otworzysz na swoim koncie.
 
 Zobacz sposób nauki i aktualną ofertę:
 https://edu-hub.com.pl/kurs/java-backend-developer?utm_source=post3&utm_medium=organic&utm_campaign=java_start
@@ -97,7 +96,7 @@ Podpis: „Nie zgaduj — sprawdź, co robi kod. https://edu-hub.com.pl/kurs/jav
 
 Czas: około 25–35 sekund.
 
-„Jeśli zaczynasz Javę albo chcesz uporządkować podstawy, zobacz Java Backend Developer w EduHub. Masz plan nauki, materiały, zadania i postęp na swoim koncie. Przed zakupem sprawdzisz aktualną cenę i liczbę opublikowanych lekcji. Na stronie jest też krótkie ćwiczenie bez logowania. Wejdź w link i zobacz, czy ten sposób nauki Ci odpowiada”.
+„Jeśli zaczynasz Javę albo chcesz uporządkować podstawy, zobacz Java Backend Developer w EduHub. Masz plan nauki, materiały, zadania i postęp na swoim koncie. Przed zakupem sprawdzisz aktualną cenę i warianty dostępu. Na stronie jest też krótkie ćwiczenie bez logowania. Wejdź w link i zobacz, czy ten sposób nauki Ci odpowiada”.
 
 Ujęcia: publiczna strona → fragment planu → przykładowe ćwiczenie → aktualne warianty dostępu. Nagrywaj własny widok; nie pokazuj adresów e-mail ani danych uczniów.
 

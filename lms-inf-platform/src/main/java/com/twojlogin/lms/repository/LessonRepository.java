@@ -3,6 +3,7 @@ package com.twojlogin.lms.repository;
 import com.twojlogin.lms.entity.Lesson;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
@@ -35,6 +36,19 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     List<Long> findUsedLessonIdsByCourseId(@Param("courseId") Long courseId);
 
     long countByModuleCourseId(Long courseId);
+
+    @Modifying(flushAutomatically = true)
+    @Query(value = """
+            update lesson set published = true
+            where published = false
+            and module_id in (select id from course_module where course_id = :courseId)
+            and exists (
+                select block.id from lesson_block block
+                where block.lesson_id = lesson.id and block.published = true
+                and block.type <> 'DIVIDER'
+            )
+            """, nativeQuery = true)
+    int publishImportedLessonsWithPublishedBlocks(@Param("courseId") Long courseId);
 
     @Query(value = """
             select count(*) from lesson

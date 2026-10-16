@@ -67,7 +67,12 @@ function resolveBlockLimit(variantOrLimit = "PROGRAMMING") {
 }
 
 
-export default function useLessonBlocks() {
+export default function useLessonBlocks(onLessonChanged) {
+
+    async function refreshLessonPublication() {
+        try { await onLessonChanged?.(); }
+        catch { /* Import succeeded; a failed refresh must not encourage duplicate imports. */ }
+    }
 
     const {
         confirm,
@@ -349,7 +354,8 @@ export default function useLessonBlocks() {
     async function importBlocks(
         lessonId,
         blocks,
-        variantOrLimit = "PROGRAMMING"
+        variantOrLimit = "PROGRAMMING",
+        publishLesson = true
     ) {
 
         if (
@@ -458,7 +464,7 @@ export default function useLessonBlocks() {
 
 
             const saved = await apiFetch(
-                `/lesson-blocks/lesson/${lessonId}/bulk`,
+                `/lesson-blocks/lesson/${lessonId}/bulk?publishLesson=${publishLesson}`,
                 {
                     method: "POST",
                     body: JSON.stringify(
@@ -484,6 +490,7 @@ export default function useLessonBlocks() {
             );
 
 
+            if (publishLesson) await refreshLessonPublication();
             return true;
 
         } catch (error) {
@@ -524,7 +531,8 @@ export default function useLessonBlocks() {
     async function replaceBlocks(
         lessonId,
         blocks,
-        variantOrLimit = "PROGRAMMING"
+        variantOrLimit = "PROGRAMMING",
+        publishLesson = true
     ) {
 
         if (
@@ -639,7 +647,7 @@ export default function useLessonBlocks() {
 
 
             const saved = await apiFetch(
-                `/lesson-blocks/lesson/${lessonId}/replace`,
+                `/lesson-blocks/lesson/${lessonId}/replace?publishLesson=${publishLesson}`,
                 {
                     method: "PUT",
                     body: JSON.stringify(
@@ -666,6 +674,7 @@ export default function useLessonBlocks() {
             );
 
 
+            if (publishLesson) await refreshLessonPublication();
             return true;
 
         } catch (error) {
