@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "./api/api";
+import { purchaseCourseId, rememberCoursePurchase } from "./utils/coursePurchaseIntent";
 
 export default function Register() {
+    const purchaseId = purchaseCourseId(window.location.search);
+    const loginUrl = purchaseId ? `/login?course=${purchaseId}` : "/login";
     const [form, setForm] = useState({
         email: "",
         password: "",
@@ -40,6 +43,7 @@ export default function Register() {
                 })
             });
 
+            if (purchaseId) rememberCoursePurchase(purchaseId);
             setCreated(true);
         } catch (e) {
             setError(e.message || "Nie udało się utworzyć konta.");
@@ -59,7 +63,7 @@ export default function Register() {
                         <strong className="block text-white">{form.email.trim()}</strong>
                     </p>
                     <Link
-                        to="/login"
+                        to={loginUrl}
                         className="mt-6 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-bold"
                     >
                         Przejdź do logowania
@@ -76,6 +80,7 @@ export default function Register() {
                 className="bg-gray-800 p-8 rounded-xl space-y-4 w-[min(24rem,calc(100vw-2rem))]"
             >
                 <h2 className="text-2xl font-bold">Rejestracja</h2>
+                {purchaseId && <p className="text-sm leading-6 text-gray-300">Założenie konta jest bezpłatne. Po aktywacji i zalogowaniu przejdziesz do wybranego kursu, gdzie sprawdzisz dostęp i cenę przed płatnością.</p>}
 
                 {error && (
                     <div role="alert" className="rounded-xl bg-red-500/15 p-3 text-sm text-red-300">
@@ -127,7 +132,7 @@ export default function Register() {
                 </button>
 
                 <p className="text-center text-sm text-gray-400">
-                    Masz już konto? <Link to="/login" className="text-blue-400">Zaloguj się</Link>
+                    Masz już konto? <Link to={loginUrl} className="text-blue-400">Zaloguj się</Link>
                 </p>
             </form>
 

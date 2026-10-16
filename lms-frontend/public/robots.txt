@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /checkout/
+Disallow: /modules/
+Disallow: /lesson/
+
+Sitemap: https://edu-hub.com.pl/sitemap.xml

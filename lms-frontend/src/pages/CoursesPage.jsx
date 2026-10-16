@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { getCourseDescription, isJavaBackendCourse, JAVA_COURSE_PATH } from "../utils/javaCourseOffer";
 import {
     BsArrowClockwise,
     BsBuildings,
@@ -193,8 +194,9 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
                         {course.title || course.name}
                     </h3>
                     <p className="mt-3 line-clamp-3 min-h-[4.5rem] leading-6 text-slate-400">
-                        {course.description || "Opis kursu zostanie uzupełniony wkrótce."}
+                        {getCourseDescription(course)}
                     </p>
+                    {isJavaBackendCourse(course) && <Link to={JAVA_COURSE_PATH} className="mt-3 inline-flex text-sm font-bold text-cyan-300 hover:text-cyan-100">Poznaj program i sposób nauki →</Link>}
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">

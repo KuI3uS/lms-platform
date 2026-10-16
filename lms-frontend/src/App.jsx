@@ -5,6 +5,7 @@ import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const LandingPage = lazy(() => import("./components/LandingPage"));
+const JavaCourseOfferPage = lazy(() => import("./pages/JavaCourseOfferPage"));
 const Login = lazy(() => import("./Login"));
 const Register = lazy(() => import("./Register"));
 const ForgotPassword = lazy(() => import("./ForgotPassword"));
@@ -58,6 +59,7 @@ export default function App() {
         <Suspense fallback={<PageLoader />}>
             <Routes>
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/kurs/java-backend-developer" element={<JavaCourseOfferPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />

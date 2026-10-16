@@ -31,6 +31,7 @@
                         <div className="landing-nav__links">
                             <a href="#home">Start</a>
                             <a href="#courses">Kursy</a>
+                            <Link to="/kurs/java-backend-developer">Kurs Java</Link>
                             <a href="#how">Jak to działa</a>
                             <a href="#tutoring">Korepetycje</a>
                         </div>
@@ -125,6 +126,14 @@
                 </section>
 
                 <main>
+                    <section className="section" aria-labelledby="java-feature-title">
+                        <div className="container card card--featured">
+                            <span className="featured-label">JAVA BACKEND DEVELOPER</span>
+                            <h2 id="java-feature-title">Zacznij pisać w Javie. Rozumiej swój kod.</h2>
+                            <p className="featured-intro">Uporządkowany plan nauki, ćwiczenia w edytorze i wskazówki do rozwiązań. Poznaj sposób nauki, sprawdź dostępne materiały i aktualne warianty dostępu — bez zakładania konta.</p>
+                            <div className="featured-cta"><Link to="/kurs/java-backend-developer" className="btn-primary-glow">Poznaj kurs i spróbuj ćwiczenia →</Link></div>
+                        </div>
+                    </section>
                     <section id="courses" className="section">
                         <div className="container">
                             <h2 className="section-title">Dostępne ścieżki nauki</h2>

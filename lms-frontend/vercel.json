@@ -32,6 +32,10 @@
   ],
   "rewrites": [
     {
+      "source": "/kurs/java-backend-developer",
+      "destination": "/java-backend-developer.html"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "https://lms-platform-1-dcxg.onrender.com/api/$1"
     },

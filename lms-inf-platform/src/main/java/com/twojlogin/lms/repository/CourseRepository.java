@@ -19,4 +19,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findAllByOrderByIdAsc();
 
     List<Course> findByPublishedTrueOrderByIdAsc();
+
+    @Query("""
+            select course from Course course
+            where course.published = true and (
+                lower(trim(course.name)) = 'java backend developer'
+                or lower(trim(course.title)) = 'java backend developer'
+            ) order by course.id
+            """)
+    List<Course> findPublishedJavaBackendCourses();
 }

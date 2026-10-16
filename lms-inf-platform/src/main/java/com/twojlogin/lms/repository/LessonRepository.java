@@ -36,6 +36,22 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
     long countByModuleCourseId(Long courseId);
 
+    @Query(value = """
+            select count(*) from lesson
+            join course_module module on module.id = lesson.module_id
+            where module.course_id = :courseId and lesson.published = true and (
+                (lesson.theory is not null and trim(lesson.theory) <> '')
+                or (lesson.example is not null and trim(lesson.example) <> '')
+                or (lesson.content is not null and trim(lesson.content) <> '')
+                or exists (
+                    select block.id from lesson_block block
+                    where block.lesson_id = lesson.id and block.published = true
+                    and block.type <> 'DIVIDER'
+                )
+            )
+            """, nativeQuery = true)
+    long countPublishedWithMaterialsByCourseId(@Param("courseId") Long courseId);
+
     @Query("""
             select lesson.module.course.id, count(lesson)
             from Lesson lesson

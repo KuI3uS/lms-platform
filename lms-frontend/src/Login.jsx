@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "./api/api";
 import { useAuth } from "./context/AuthContext";
+import { clearCoursePurchase, purchaseCourseId, safeLoginDestination } from "./utils/coursePurchaseIntent";
 
 export default function Login() {
     const { completeLogin } = useAuth();
+    const purchaseId = purchaseCourseId(window.location.search);
     const sessionExpired = new URLSearchParams(window.location.search)
         .get("session") === "expired";
     const [email, setEmail] = useState("");
@@ -35,12 +37,10 @@ export default function Login() {
 
             completeLogin(data);
             const storedDestination = sessionStorage.getItem("eduhub:return-after-login");
-            const destination = storedDestination?.startsWith("/")
-                && !storedDestination.startsWith("//")
-                ? storedDestination
-                : "/courses";
+            const destination = safeLoginDestination(window.location.search, storedDestination);
 
             sessionStorage.removeItem("eduhub:return-after-login");
+            clearCoursePurchase();
             window.location.href = destination;
         } catch (e) {
             setError(e.message || "Nie udało się zalogować.");
@@ -136,7 +136,7 @@ export default function Login() {
 
                 <p className="text-sm text-gray-400 mt-3 text-center">
                     Nie masz konta?{" "}
-                    <Link to="/register" className="text-blue-400">
+                    <Link to={purchaseId ? `/register?course=${purchaseId}` : "/register"} className="text-blue-400">
                         Zarejestruj się
                     </Link>
                 </p>
