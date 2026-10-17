@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Allow: /api/public/courses/java-backend-developer
 Disallow: /api/
 Disallow: /admin/
 Disallow: /checkout/

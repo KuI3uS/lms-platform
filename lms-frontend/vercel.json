@@ -1,4 +1,6 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "headers": [
     {
       "source": "/(.*)",
@@ -28,6 +30,13 @@
           "value": "DENY"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/java-backend-developer.html",
+      "destination": "/kurs/java-backend-developer",
+      "permanent": true
     }
   ],
   "rewrites": [
