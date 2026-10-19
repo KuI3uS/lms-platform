@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import usePublicJavaOffer from "../hooks/usePublicJavaOffer";
 import { formatOfferPrice, getCourseDescription, getPublicOfferPlans } from "../utils/javaCourseOffer";
 import { rememberCoursePurchase } from "../utils/coursePurchaseIntent";
+import { JAVA_COURSE_TOPICS } from "../utils/javaCourseSeo";
 import "../styles/java-course-offer.css";
 
 function PracticePreview() {
@@ -41,21 +42,22 @@ export default function JavaCourseOfferPage() {
     const plans = getPublicOfferPlans(offer);
     const destination = offer ? user ? `/checkout/${offer.id}` : `/register?course=${offer.id}` : "/register";
     const checkoutLink = (label, className = "java-primary-link") => (
-        <Link className={className} to={destination} onClick={() => offer && rememberCoursePurchase(offer.id)}>{label}<BsArrowRight aria-hidden="true" /></Link>
+        <Link reloadDocument className={className} to={destination} onClick={() => offer && rememberCoursePurchase(offer.id)}>{label}<BsArrowRight aria-hidden="true" /></Link>
     );
     return (
         <div className="java-offer">
             <a className="java-skip" href="#java-content">Przejdź do oferty</a>
             <nav className="java-nav" aria-label="Nawigacja kursu Java">
-                <Link to="/" className="java-brand"><BsMortarboard aria-hidden="true" /> EduHub</Link>
-                <div><a href="#program">Program</a><a href="#dostep">Dostęp i cena</a><Link to={user ? "/courses" : offer ? `/login?course=${offer.id}` : "/login"}>{user ? "Moje kursy" : "Zaloguj się"}</Link></div>
+                <Link reloadDocument to="/" className="java-brand"><BsMortarboard aria-hidden="true" /> EduHub</Link>
+                <div><a href="#program">Program</a><a href="#dostep">Dostęp i cena</a><Link reloadDocument to={user ? "/courses" : offer ? `/login?course=${offer.id}` : "/login"}>{user ? "Moje kursy" : "Zaloguj się"}</Link></div>
             </nav>
             <main id="java-content">
+                <nav className="java-breadcrumb java-container" aria-label="Ścieżka nawigacji"><ol><li><Link reloadDocument to="/">EduHub</Link></li><li aria-current="page">Kurs Java Backend Developer</li></ol></nav>
                 <header className="java-hero java-container">
                     <div className="java-hero-copy">
                         <p className="java-kicker"><BsCodeSlash aria-hidden="true" /> Java Backend Developer</p>
-                        <h1>Zacznij pisać w Javie.<br /><span>Rozumiej swój kod.</span></h1>
-                        <p className="java-lead">Od pierwszych instrukcji do myślenia jak programista. Uporządkowany plan, własne rozwiązania i wskazówki, które pomagają zrobić następny krok.</p>
+                        <h1>Kurs Java online od podstaw.<br /><span>Java Backend Developer.</span></h1>
+                        <p className="java-lead">Zacznij pisać w Javie i rozumiej swój kod. Kurs dla początkujących z uporządkowanym planem nauki, ćwiczeniami w edytorze i wskazówkami do rozwiązań. Uczysz się we własnym tempie.</p>
                         <div className="java-hero-actions"><a href="#dostep" className="java-primary-link">Sprawdź dostęp do kursu <BsArrowRight aria-hidden="true" /></a><a href="#program" className="java-text-link">Zobacz program ↓</a></div>
                         <ul className="java-hero-facts"><li><BsCheck2 /> Nauka we własnym tempie</li><li><BsCheck2 /> Praktyka w edytorze</li><li><BsCheck2 /> Zapis postępu na koncie</li></ul>
                     </div>
@@ -63,7 +65,7 @@ export default function JavaCourseOfferPage() {
                 </header>
 
                 <section className="java-container java-section" aria-labelledby="method-title">
-                    <div className="java-section-heading"><p className="java-kicker">Od wiedzy do działania</p><h2 id="method-title">Przeczytaj. Napisz. Sprawdź. Popraw.</h2><p>{getCourseDescription(offer || { title: "Java Backend Developer" })}</p></div>
+                    <div className="java-section-heading"><p className="java-kicker">Od wiedzy do działania</p><h2 id="method-title">Nauka Javy przez praktyczne ćwiczenia</h2><p>{getCourseDescription(offer || { title: "Java Backend Developer" })}</p></div>
                     <div className="java-method-grid">{[
                         ["01", "Poznaj jedną rzecz", "Pracuj z materiałem lekcji, zanim przejdziesz do zadania."],
                         ["02", "Napisz własny kod", "Przenieś poznaną zasadę do swojego rozwiązania w edytorze."],
@@ -73,7 +75,9 @@ export default function JavaCourseOfferPage() {
                 </section>
 
                 <section id="program" className="java-container java-section" aria-labelledby="program-title">
-                    <div className="java-section-heading"><p className="java-kicker">Program i dostępne materiały</p><h2 id="program-title">Wiesz, od czego zacząć.</h2><p>Kurs jest dla osób rozpoczynających naukę Javy oraz tych, które chcą uporządkować podstawy. Poniżej widzisz bieżący stan materiałów i fragment planu, pobrane z EduHub.</p></div>
+                    <div className="java-section-heading"><p className="java-kicker">Program i dostępne materiały</p><h2 id="program-title">Program kursu Java Backend Developer</h2><p>Kurs jest dla osób rozpoczynających naukę Javy oraz tych, które chcą uporządkować podstawy. Zaczynasz od środowiska pracy i prostych instrukcji, a następnie przechodzisz do kolejnych zagadnień. Oto tematy otwierające ścieżkę nauki.</p></div>
+                    <div className="java-topic-grid">{JAVA_COURSE_TOPICS.map(topic => <article key={topic.title}><h3>{topic.title}</h3><p>{topic.description}</p></article>)}</div>
+                    <h3 className="java-current-outline-title">Aktualny program i dostępne lekcje</h3>
                     {loading ? <p role="status">Pobieranie aktualnego programu i ceny…</p> : error ? <p className="java-notice" role="alert">{error}</p> : <>
                         <div className="java-metrics"><div><strong>{offer.plannedLessonCount}</strong><span>lekcji w programie kursu</span></div><div><strong>{offer.stageCount}</strong><span>etapów ścieżki nauki</span></div></div>
                         <p className="java-plan-note">Po zakupie otrzymujesz dostęp do udostępnionych lekcji na swoim koncie. Program przedstawia pełną ścieżkę nauki; materiały są udostępniane etapami.</p>
@@ -82,12 +86,14 @@ export default function JavaCourseOfferPage() {
                 </section>
 
                 <section id="dostep" className="java-container java-section" aria-labelledby="access-title">
-                    <div className="java-section-heading"><p className="java-kicker">Wybierz swój sposób nauki</p><h2 id="access-title">Jasne zasady dostępu.</h2><p>Cena i warianty poniżej są pobierane z aktualnej oferty kursu. Założenie konta nie uruchamia płatności.</p></div>
+                    <div className="java-section-heading"><p className="java-kicker">Wybierz swój sposób nauki</p><h2 id="access-title">Cena kursu Java i warianty dostępu</h2><p>Cena i warianty poniżej są pobierane z aktualnej oferty kursu. Założenie konta nie uruchamia płatności.</p></div>
                     {loading ? <p role="status">Pobieranie wariantów dostępu…</p> : !offer ? <div className="java-notice">Aktualna oferta jest chwilowo niedostępna. {error}</div> : plans.length === 0 ? <div className="java-notice">Warunki dostępu są aktualizowane. Sprawdź ofertę ponownie później.</div> : <div className="java-price-grid">{plans.map(plan => <article className="java-price-card" key={plan.id}><p className="java-kicker">{plan.title}</p><h3>{formatOfferPrice(plan.price)}{plan.id === "SUBSCRIPTION" && <small> / mies.</small>}</h3><p>{plan.renewal}</p><ul><li><BsCheck2 /> Dostęp do udostępnionych lekcji kursu</li><li><BsCheck2 /> Ćwiczenia i zapis postępu na koncie</li><li><BsCheck2 /> Ostateczny wariant wybierzesz przed płatnością</li></ul>{checkoutLink(plan.id === "FREE" ? "Przejdź do kursu" : "Wybierz dostęp w EduHub")}</article>)}</div>}
-                    {offer && plans.length > 0 && <p className="java-plan-note">{user ? "Po przejściu do panelu sprawdzisz szczegóły dostępu przed potwierdzeniem zamówienia." : <>Masz już konto? <Link to={`/login?course=${offer.id}`} onClick={() => rememberCoursePurchase(offer.id)}>Zaloguj się i wróć do zakupu tego kursu.</Link></>}</p>}
+                    {offer && plans.length > 0 && <p className="java-plan-note">{user ? "Po przejściu do panelu sprawdzisz szczegóły dostępu przed potwierdzeniem zamówienia." : <>Masz już konto? <Link reloadDocument to={`/login?course=${offer.id}`} onClick={() => rememberCoursePurchase(offer.id)}>Zaloguj się i wróć do zakupu tego kursu.</Link></>}</p>}
                 </section>
 
-                <section className="java-container java-section java-faq" aria-labelledby="faq-title"><div className="java-section-heading"><p className="java-kicker">Zanim zaczniesz</p><h2 id="faq-title">Pytania o kurs.</h2></div>
+                <section className="java-container java-section java-faq" aria-labelledby="faq-title"><div className="java-section-heading"><p className="java-kicker">Zanim zaczniesz</p><h2 id="faq-title">Najczęstsze pytania o kurs Java online</h2></div>
+                    <details><summary>Czy ten kurs Java jest dla początkujących?</summary><p>Tak. Początek programu obejmuje wyjaśnienie, czym jest programowanie, konfigurację środowiska i pierwszy program w Javie. Możesz zacząć od podstaw albo wrócić do tych tematów, aby uporządkować wcześniejszą wiedzę.</p></details>
+                    <details><summary>Czy nauka Javy obejmuje pisanie kodu?</summary><p>Tak. W kursie pracujesz z ćwiczeniami w edytorze. W zadaniach sprawdzanych automatycznie otrzymujesz wynik i wskazówki, które pomagają poprawić rozwiązanie. Przykład takiego ćwiczenia znajdziesz na początku tej strony.</p></details>
                     <details><summary>Czy mogę zobaczyć sposób nauki przed założeniem konta?</summary><p>Tak. Na górze strony znajdziesz krótkie ćwiczenie z informacją zwrotną. Program i warianty dostępu również sprawdzisz bez logowania.</p></details>
                     <details><summary>Co obejmuje dostęp do kursu?</summary><p>Po potwierdzeniu zakupu możesz otwierać udostępnione lekcje i rozwiązywać zadania na swoim koncie. Program przedstawia całą ścieżkę nauki, a materiały są udostępniane etapami.</p></details>
                     <details><summary>Czym różni się abonament od dostępu na 30 dni?</summary><p>Abonament odnawia się automatycznie co miesiąc. Dostęp na 30 dni bez odnowienia wymaga jednej płatności. Dostęp bezterminowy, jeśli jest dostępny w ofercie, to osobny wariant. Na stronie pokazujemy wyłącznie warianty aktualnie skonfigurowane dla kursu.</p></details>
@@ -95,7 +101,7 @@ export default function JavaCourseOfferPage() {
                     <details><summary>Czy muszę uczyć się o określonych godzinach?</summary><p>Nie ma tu harmonogramu spotkań na żywo. Pracujesz z opublikowanymi materiałami we własnym tempie, w okresie wynikającym z wybranego wariantu dostępu.</p></details>
                 </section>
             </main>
-            <footer className="java-footer java-container"><Link to="/" className="java-brand"><BsMortarboard aria-hidden="true" /> EduHub</Link><span>Java Backend Developer · Nauka przez praktykę</span><a href="#java-content">Wróć na górę ↑</a></footer>
+            <footer className="java-footer java-container"><Link reloadDocument to="/" className="java-brand"><BsMortarboard aria-hidden="true" /> EduHub</Link><span>Java Backend Developer · Nauka przez praktykę</span><a href="#java-content">Wróć na górę ↑</a></footer>
         </div>
     );
 }
