@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../../api/api";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { cleanChatGptBlock } from "../../../utils/chatGptReferences";
+import { matchStageLessons } from "../../../utils/stageLessonImport";
 
 const emptyLesson = {
     title: "",
@@ -22,6 +23,7 @@ export default function useLessons(moduleId) {
     const [loading, setLoading] = useState(false);
     const [packageImporting, setPackageImporting] = useState(false);
     const [packageImportProgress, setPackageImportProgress] = useState(null);
+    const [publishingReady, setPublishingReady] = useState(false);
 
     const loadLessons = useCallback(async () => {
 
@@ -62,7 +64,7 @@ export default function useLessons(moduleId) {
             method: "POST",
             body: JSON.stringify({
                 ...lessonForm,
-                orderIndex: lessons.length + 1
+                orderIndex: Math.max(0, ...lessons.map(lesson => Number(lesson.orderIndex) || 0)) + 1
             })
         });
 
@@ -126,73 +128,25 @@ export default function useLessons(moduleId) {
             return null;
         }
 
-        const result = {
-            lessonsCreated: 0,
-            emptyLessonsFilled: 0,
-            lessonsSkipped: 0,
-            blocksCreated: 0
-        };
-        const knownLessons = [...lessons];
-        let nextOrder = knownLessons.reduce(
-            (highest, lesson) => Math.max(highest, Number(lesson.orderIndex) || 0),
-            0
-        );
-
         try {
             setPackageImporting(true);
-
-            for (let index = 0; index < packageLessons.length; index += 1) {
-                const importedLesson = packageLessons[index];
-                const title = String(importedLesson.title || "").trim();
-                setPackageImportProgress({
-                    current: index + 1,
-                    total: packageLessons.length,
-                    title
-                });
-
-                const titleKey = normalizeLessonTitle(title);
-                let targetLesson = knownLessons.find(
-                    lesson => normalizeLessonTitle(lesson.title) === titleKey
-                );
-                let createdNow = false;
-
-                if (targetLesson) {
-                    const currentBlocks = await apiFetch(`/lesson-blocks/lesson/${targetLesson.id}`);
-                    if (Array.isArray(currentBlocks) && currentBlocks.length > 0) {
-                        result.lessonsSkipped += 1;
-                        continue;
-                    }
-                } else {
-                    nextOrder += 1;
-                    targetLesson = await apiFetch(`/lessons/module/${moduleId}`, {
-                        method: "POST",
-                        body: JSON.stringify({
-                            title,
-                            theory: "",
-                            example: "",
-                            content: "",
-                            imageUrl: "",
-                            published: false,
-                            freePreview: false,
-                            orderIndex: nextOrder
-                        })
-                    });
-                    knownLessons.push(targetLesson);
-                    createdNow = true;
-                    result.lessonsCreated += 1;
-                }
-
-                const payload = importedLesson.blocks.map(toLessonBlockRequest);
-                await apiFetch(`/lesson-blocks/lesson/${targetLesson.id}/bulk?publishLesson=${publishLessons}`, {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                });
-
-                result.blocksCreated += payload.length;
-                if (!createdNow) result.emptyLessonsFilled += 1;
-            }
-
-            await loadLessons();
+            const freshLessons = await apiFetch(`/lessons/module/${moduleId}`);
+            const matched = matchStageLessons(packageLessons, freshLessons);
+            if (matched.errors.length) throw new Error(matched.errors.join("\n"));
+            setPackageImportProgress({ total: packageLessons.length });
+            const result = await apiFetch(`/lesson-blocks/module/${moduleId}/import`, {
+                method: "POST",
+                body: JSON.stringify({
+                    publishLessons,
+                    lessons: matched.matches.map(({ source, target }) => ({
+                        lessonId: target.id,
+                        title: target.title,
+                        blocks: source.blocks.map(toLessonBlockRequest)
+                    }))
+                })
+            });
+            try { await loadLessons(); }
+            catch { showToast("Bloki zostały zapisane. Odśwież stronę, aby zobaczyć aktualne lekcje.", "warning"); }
             return result;
         } catch (error) {
             try {
@@ -200,7 +154,6 @@ export default function useLessons(moduleId) {
             } catch {
                 // Pierwotny błąd importu zawiera ważniejszą informację.
             }
-            error.packageResult = result;
             throw error;
         } finally {
             setPackageImporting(false);
@@ -208,11 +161,31 @@ export default function useLessons(moduleId) {
         }
     }
 
+    async function publishReadyLessons() {
+        const count = lessons.filter(lesson => !lesson.published && lesson.publishedBlockCount > 0).length;
+        if (!count || publishingReady || packageImporting) return;
+        if (!await confirm({
+            title: "Udostępnij lekcje z materiałami",
+            message: `Opublikować ${count} lekcji tego etapu mających już opublikowane bloki? Puste lekcje oraz bloki ukryte pozostaną bez zmian. Dostęp do płatnego kursu nadal wymaga zakupu.`,
+            confirmLabel: "Udostępnij uczniom", danger: false
+        })) return;
+        try {
+            setPublishingReady(true);
+            const result = await apiFetch(`/lesson-blocks/module/${moduleId}/publish-ready`, { method: "POST" });
+            showToast(`Udostępniono ${result.lessonsPublished} lekcji z materiałami.`, "success");
+            await loadLessons();
+        } catch (error) {
+            showToast(error.message || "Nie udało się opublikować lekcji.", "error");
+        } finally { setPublishingReady(false); }
+    }
+
     return {
 
         loading,
         packageImporting,
         packageImportProgress,
+        publishingReady,
+        publishReadyLessons,
 
         lessons,
         setLessons,
@@ -234,13 +207,6 @@ export default function useLessons(moduleId) {
 
     };
 
-}
-
-function normalizeLessonTitle(value) {
-    return String(value || "")
-        .trim()
-        .replace(/\s+/g, " ")
-        .toLocaleLowerCase("pl-PL");
 }
 
 function toLessonBlockRequest(block) {

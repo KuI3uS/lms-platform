@@ -18,6 +18,38 @@ function normalizeTitle(value) {
         .trim();
 }
 
+export function normalizeStageLessonTitle(value) {
+    return String(value || "").normalize("NFKC")
+        .replace(/`/g, " ").replace(/[‘’]/g, "'")
+        .replace(/[–—−]/g, "-").replace(/\s*-\s*/g, " - ")
+        .replace(/\s+/g, " ").trim().toLocaleLowerCase("pl-PL");
+}
+
+export function matchStageLessons(packageLessons, existingLessons) {
+    const byTitle = new Map();
+    (existingLessons || []).forEach((lesson, index) => {
+        const key = normalizeStageLessonTitle(lesson.title);
+        byTitle.set(key, [...(byTitle.get(key) || []), { ...lesson, displayNumber: index + 1 }]);
+    });
+    const matches = [];
+    const errors = [];
+    const usedIds = new Set();
+    for (const source of packageLessons || []) {
+        const candidates = byTitle.get(normalizeStageLessonTitle(source.title)) || [];
+        if (candidates.length === 0) {
+            errors.push(`Lekcja „${source.title}” nie istnieje w tym etapie. Najpierw utwórz jej kartę lub popraw tytuł w pakiecie. Import nie tworzy nowych lekcji.`);
+        } else if (candidates.length > 1) {
+            errors.push(`Nazwa „${source.title}” pasuje do kilku lekcji. Nadaj kartom różne tytuły przed importem.`);
+        } else if (usedIds.has(candidates[0].id)) {
+            errors.push(`Kilka pozycji pakietu wskazuje tę samą lekcję „${source.title}”.`);
+        } else {
+            usedIds.add(candidates[0].id);
+            matches.push({ source, target: candidates[0] });
+        }
+    }
+    return { matches, errors };
+}
+
 function extractTitle(section, inlineTitle) {
     const inline = normalizeTitle(inlineTitle || "");
     if (inline) return { title: inline, body: section };
@@ -109,7 +141,7 @@ export function parseStageLessonImport(
     const sortedNumbers = [...seenNumbers].sort((a, b) => a - b);
     sortedNumbers.forEach((number, index) => {
         if (number !== index + 1) {
-            warnings.push("Numery lekcji nie są kolejne od 1. Kolejność importu będzie zgodna z kolejnością wklejenia.");
+            warnings.push("Numery w pakiecie są pomocnicze. Import dopasowuje lekcje po tytułach i nie zmienia kolejności istniejących kart.");
         }
     });
 
@@ -146,6 +178,8 @@ ${lessonList}
 
 WAŻNE
 - Przygotuj dokładnie wszystkie lekcje z listy, w tej samej kolejności i z tymi samymi tytułami.
+- Import uzupełnia WYŁĄCZNIE istniejące karty lekcji. Nie dopisuj nowych tematów ani nie zmieniaj tytułów; brak dopasowania zatrzyma zapis całego pakietu.
+- Etap może zawierać do ${MAX_LESSONS_PER_STAGE_IMPORT} lekcji w jednej paczce. Limit ${maxBlocks} dotyczy bloków WEWNĄTRZ KAŻDEJ lekcji, nie liczby lekcji w etapie.
 - Każda lekcja ma być pełna, przemyślana i możliwa do przeprowadzenia bez dopisywania brakujących treści.
 - Każda lekcja może mieć maksymalnie ${maxBlocks} bloków i ma rozwijać jedną konkretną umiejętność.
 - Pomiędzy lekcjami zachowaj progresję. Nie powtarzaj tej samej teorii i tych samych ćwiczeń.

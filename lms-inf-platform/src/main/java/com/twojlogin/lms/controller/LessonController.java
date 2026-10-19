@@ -114,6 +114,7 @@ public class LessonController {
         boolean admin = courseAccessService.isAdmin(user);
         boolean unrestricted = admin || !module.isLessonsLocked();
         Map<Long, Long> publishedBlockCounts = new LinkedHashMap<>();
+        Map<Long, Object[]> importMaterialCounts = new LinkedHashMap<>();
         if (!lessons.isEmpty()) {
             lessonBlockRepository.countPublishedByLessonIds(
                     lessons.stream().map(Lesson::getId).toList()
@@ -121,6 +122,9 @@ public class LessonController {
                     ((Number) row[0]).longValue(),
                     ((Number) row[1]).longValue()
             ));
+            lessonBlockRepository.countImportMaterialsByLessonIds(
+                    lessons.stream().map(Lesson::getId).toList()
+            ).forEach(row -> importMaterialCounts.put(((Number) row[0]).longValue(), row));
         }
 
         return java.util.stream.IntStream.range(0, lessons.size())
@@ -137,7 +141,13 @@ public class LessonController {
                                     || previousCompleted
                     );
 
-                    return new LessonDto(lesson, completed, canAccess);
+                    LessonDto dto = new LessonDto(lesson, completed, canAccess);
+                    Object[] counts = importMaterialCounts.get(lesson.getId());
+                    if (counts != null) {
+                        dto.blockCount = ((Number) counts[1]).longValue();
+                        dto.publishedBlockCount = ((Number) counts[2]).longValue();
+                    }
+                    return dto;
                 })
                 .toList();
     }

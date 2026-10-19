@@ -42,6 +42,14 @@ public interface LessonBlockRepository extends JpaRepository<LessonBlock, Long> 
     int countByLessonIdAndPublishedTrue(Long lessonId);
 
     @Query("""
+            select block.lesson.id, count(block),
+                sum(case when block.published = true and block.type <> com.twojlogin.lms.entity.BlockType.DIVIDER then 1 else 0 end)
+            from LessonBlock block where block.lesson.id in :lessonIds
+            group by block.lesson.id
+            """)
+    List<Object[]> countImportMaterialsByLessonIds(@Param("lessonIds") List<Long> lessonIds);
+
+    @Query("""
             select block.lesson.id, count(block)
             from LessonBlock block
             where block.lesson.id in :lessonIds

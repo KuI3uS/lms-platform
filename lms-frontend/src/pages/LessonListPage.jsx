@@ -865,7 +865,7 @@ function LessonCard({
 
                     <span className="text-sm text-gray-400">
 
-                        Lekcja {lesson.orderIndex ?? index + 1}
+                        Lekcja {index + 1}
 
                     </span>
 

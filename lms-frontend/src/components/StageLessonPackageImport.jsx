@@ -12,7 +12,9 @@ import { useFeedback } from "../context/FeedbackContext";
 import { cleanChatGptText } from "../utils/chatGptReferences";
 import {
     getStageLessonPrompt,
-    parseStageLessonImport
+    parseStageLessonImport,
+    matchStageLessons,
+    MAX_LESSONS_PER_STAGE_IMPORT
 } from "../utils/stageLessonImport";
 
 export default function StageLessonPackageImport({
@@ -31,9 +33,13 @@ export default function StageLessonPackageImport({
         () => parseStageLessonImport(source, maxBlocks, variant),
         [source, maxBlocks, variant]
     );
+    const matched = useMemo(() => matchStageLessons(parsed.lessons, currentLessons), [parsed.lessons, currentLessons]);
+    const errors = [...parsed.errors, ...matched.errors];
     const canImport = parsed.lessonCount > 0
-        && parsed.errors.length === 0
-        && !lessonsState.packageImporting;
+        && errors.length === 0
+        && !lessonsState.packageImporting
+        && !lessonsState.publishingReady
+        && !lessonsState.loading;
 
     const copyPrompt = async () => {
         try {
@@ -72,8 +78,9 @@ export default function StageLessonPackageImport({
 
         const accepted = await confirm({
             title: "Zaimportuj cały etap",
-            message: `Zapisać ${parsed.lessonCount} kompletnych lekcji i ${parsed.blockCount} bloków? ${publishLessons ? "Lekcje z opublikowanymi blokami zostaną udostępnione uczniom mającym dostęp do kursu." : "Nowe lekcje pozostaną szkicami do sprawdzenia."} Puste lekcje o tych samych nazwach zostaną uzupełnione, a lekcje mające już bloki będą pominięte.`,
-            confirmLabel: "Importuj cały etap"
+            message: `Uzupełnić bloki w ${parsed.lessonCount} istniejących lekcjach? Import nie utworzy żadnej nowej lekcji. ${publishLessons ? "Lekcje mające opublikowane bloki zostaną udostępnione uczniom z dostępem do kursu, również gdy ich treść została zaimportowana wcześniej." : "Status publikacji pozostanie bez zmian."} Lekcje mające już bloki nie zostaną nadpisane.`,
+            confirmLabel: "Uzupełnij istniejące lekcje",
+            danger: false
         });
         if (!accepted) return;
 
@@ -81,9 +88,9 @@ export default function StageLessonPackageImport({
             setImportError("");
             const result = await lessonsState.importLessonPackage(parsed.lessons, { publishLessons });
             const details = [
-                result.lessonsCreated ? `nowe lekcje: ${result.lessonsCreated}` : "",
-                result.emptyLessonsFilled ? `uzupełnione puste lekcje: ${result.emptyLessonsFilled}` : "",
-                result.lessonsSkipped ? `pominięte z treścią: ${result.lessonsSkipped}` : ""
+                result.lessonsFilled ? `uzupełnione lekcje: ${result.lessonsFilled}` : "",
+                result.lessonsSkipped ? `treść bez zmian: ${result.lessonsSkipped}` : "",
+                result.lessonsPublished ? `opublikowane lekcje: ${result.lessonsPublished}` : ""
             ].filter(Boolean).join(", ");
 
             showToast(
@@ -93,11 +100,7 @@ export default function StageLessonPackageImport({
             setSource("");
             setOpen(false);
         } catch (error) {
-            const partial = error?.packageResult;
-            const saved = (partial?.lessonsCreated || 0) + (partial?.emptyLessonsFilled || 0);
-            const message = saved > 0
-                ? `${error?.message || "Import został przerwany."} Zapisano wcześniej ${saved} lekcji. Popraw błąd i uruchom import ponownie — gotowe lekcje zostaną bezpiecznie pominięte.`
-                : error?.message || "Nie udało się zaimportować pakietu lekcji.";
+            const message = `${error?.message || "Nie udało się potwierdzić importu."} Odśwież listę przed ponowną próbą. Ponowny import nie nadpisze zapisanych bloków.`;
             setImportError(message);
             showToast(message, "error");
         }
@@ -111,7 +114,7 @@ export default function StageLessonPackageImport({
                 className="flex w-full items-center justify-center gap-3 rounded-2xl border border-violet-400/25 bg-violet-500/[0.09] px-5 py-4 font-black text-violet-100 transition hover:border-violet-300/50 hover:bg-violet-500/[0.15]"
             >
                 <BsStars />
-                Importuj wszystkie lekcje tego etapu
+                Importuj bloki do istniejących lekcji etapu
             </button>
         );
     }
@@ -126,10 +129,10 @@ export default function StageLessonPackageImport({
                         Import całego etapu
                     </p>
                     <h2 className="mt-2 text-2xl font-black text-white">
-                        Wklej wiele kompletnych lekcji naraz
+                        Uzupełnij bloki istniejących lekcji
                     </h2>
                     <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-400">
-                        Możesz wkleić np. 10 lekcji, każdą z maksymalnie {maxBlocks} blokami. EduHub rozdzieli lekcje, sprawdzi wszystkie pola i zapisze je kolejno. Istniejące puste karty zostaną uzupełnione automatycznie.
+                        Jedna paczka może obejmować do {MAX_LESSONS_PER_STAGE_IMPORT} wcześniej utworzonych lekcji, każdą z maksymalnie {maxBlocks} blokami. Limit {maxBlocks} dotyczy bloków w lekcji, nie liczby lekcji w etapie. Import dopasowuje tytuły i nigdy nie tworzy dodatkowych kart.
                     </p>
                 </div>
                 <button
@@ -143,11 +146,14 @@ export default function StageLessonPackageImport({
                 </button>
             </header>
 
+            {currentLessons.length === 0 && <p role="status" className="mt-4 rounded-xl border border-amber-400/25 bg-amber-500/10 p-4 text-sm text-amber-100">Najpierw utwórz lekcje w tym etapie. Dopiero potem importuj ich bloki.</p>}
+
             <div className="mt-6 flex flex-wrap gap-3">
                 <button
                     type="button"
                     onClick={copyPrompt}
-                    className="inline-flex items-center gap-2 rounded-xl border border-violet-300/20 bg-violet-500/10 px-4 py-2.5 text-sm font-black text-violet-100 transition hover:bg-violet-500/20"
+                    disabled={currentLessons.length === 0 || lessonsState.loading}
+                    className="inline-flex items-center gap-2 rounded-xl border border-violet-300/20 bg-violet-500/10 px-4 py-2.5 text-sm font-black text-violet-100 transition hover:bg-violet-500/20 disabled:opacity-40"
                 >
                     <BsClipboard /> Skopiuj prompt dla całego etapu
                 </button>
@@ -183,19 +189,19 @@ export default function StageLessonPackageImport({
                     </div>
 
                     <div className={`rounded-2xl border p-4 ${
-                        parsed.errors.length > 0
+                        errors.length > 0
                             ? "border-red-400/25 bg-red-500/10"
                             : "border-emerald-400/25 bg-emerald-500/10"
                     }`}>
                         <p className="flex items-center gap-2 font-black text-white">
-                            {parsed.errors.length > 0
+                            {errors.length > 0
                                 ? <BsExclamationTriangle className="text-red-300" />
                                 : <BsCheckCircle className="text-emerald-300" />}
-                            {parsed.errors.length > 0
+                            {errors.length > 0
                                 ? "Pakiet wymaga poprawy"
-                                : "Wszystkie lekcje są gotowe do importu"}
+                                : "Wszystkie lekcje dopasowane — można zapisać bloki"}
                         </p>
-                        {parsed.errors.slice(0, 8).map(error => (
+                        {errors.slice(0, 8).map(error => (
                             <p key={error} className="mt-2 text-sm leading-6 text-red-200">{error}</p>
                         ))}
                         {parsed.warnings.slice(0, 8).map(warning => (
@@ -205,14 +211,20 @@ export default function StageLessonPackageImport({
 
                     {parsed.lessons.length > 0 && (
                         <ol className="grid gap-2 sm:grid-cols-2">
-                            {parsed.lessons.map((lesson, index) => (
+                            {parsed.lessons.map((lesson, index) => {
+                                const target = matched.matches.find(match => match.source === lesson)?.target;
+                                return (
                                 <li key={`${lesson.number}-${lesson.title}-${index}`} className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
                                     <p className="text-xs font-black uppercase tracking-wider text-violet-300">
                                         Lekcja {lesson.number} · {lesson.blocks.length} {lesson.blocks.length === 1 ? "blok" : "bloków"}
                                     </p>
                                     <p className="mt-1 font-bold text-slate-200">{lesson.title || "Brak tytułu"}</p>
+                                    <p className={`mt-2 text-xs leading-5 ${target ? "text-emerald-200" : "text-red-200"}`}>
+                                        {!target ? "Brak jednoznacznego dopasowania — zapis zablokowany" : `→ Istniejąca lekcja ${target.displayNumber}: ${target.title}`}
+                                    </p>
+                                    {target && <p className="mt-1 text-xs leading-5 text-slate-400">{target.blockCount > 0 ? publishLessons && !target.published && target.publishedBlockCount > 0 ? "Treść pozostanie bez zmian; lekcja zostanie opublikowana." : "Lekcja ma już bloki — treść pozostanie bez zmian." : `Dodam ${lesson.blocks.length} bloków do tej karty.`}</p>}
                                 </li>
-                            ))}
+                            );})}
                         </ol>
                     )}
                 </div>
@@ -226,20 +238,14 @@ export default function StageLessonPackageImport({
 
             {lessonsState.packageImporting && progress && (
                 <div className="mt-4 rounded-2xl border border-blue-400/25 bg-blue-500/10 p-4 text-sm text-blue-100">
-                    <p className="font-black">Importowanie lekcji {progress.current} z {progress.total}</p>
-                    <p className="mt-1 text-blue-200/80">{progress.title}</p>
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/30">
-                        <div
-                            className="h-full rounded-full bg-gradient-to-r from-violet-400 to-cyan-400 transition-all"
-                            style={{ width: `${Math.round(progress.current / progress.total * 100)}%` }}
-                        />
-                    </div>
+                    <p className="font-black">Sprawdzanie i zapisywanie pakietu {progress.total} lekcji…</p>
+                    <p className="mt-1 text-blue-200/80">Pakiet jest zapisywany w jednej operacji. Jeśli walidacja nie przejdzie, żadna lekcja nie zostanie zmieniona.</p>
                 </div>
             )}
 
             <label className="mt-5 flex items-start gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
                 <input type="checkbox" checked={publishLessons} disabled={lessonsState.packageImporting} onChange={event => setPublishLessons(event.target.checked)} className="mt-1 h-4 w-4 shrink-0" />
-                <span><strong className="block">Opublikuj lekcje po zapisaniu bloków</strong><span className="mt-1 block leading-6 text-emerald-100/75">Uczeń z dostępem do kursu zobaczy je po udanym imporcie. Odznacz, jeśli chcesz najpierw sprawdzić lekcje jako szkice.</span></span>
+                <span><strong className="block">Opublikuj dopasowane lekcje z materiałami</strong><span className="mt-1 block leading-6 text-emerald-100/75">Dotyczy także lekcji mających już opublikowane bloki — bez ich nadpisywania. Puste lekcje i ukryte bloki nie zostaną udostępnione. Odznacz, aby zachować obecne statusy.</span></span>
             </label>
 
             <button
@@ -253,7 +259,7 @@ export default function StageLessonPackageImport({
                     : <BsCloudArrowUp />}
                 {lessonsState.packageImporting
                     ? "Importowanie całego etapu..."
-                    : `Importuj ${parsed.lessonCount || 0} kompletnych lekcji`}
+                    : `Uzupełnij bloki w ${parsed.lessonCount || 0} istniejących lekcjach`}
             </button>
         </section>
     );

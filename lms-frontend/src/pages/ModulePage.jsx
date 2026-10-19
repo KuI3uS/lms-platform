@@ -768,7 +768,7 @@ export default function ModulePage() {
                                                                                 onClick={() => lessonAccessible && navigate(`/lesson/${lesson.id}`, {
                                                                                     state: { courseId: Number(courseId) }
                                                                                 })}
-                                                                                aria-label={`Lekcja ${lesson.orderIndex ?? index + 1}: ${lesson.title}`}
+                                                                                aria-label={`Lekcja ${index + 1}: ${lesson.title}`}
                                                                                 className="group flex w-56 flex-col items-center text-center disabled:cursor-not-allowed"
                                                                             >
                                                                                 {current && (
@@ -792,7 +792,7 @@ export default function ModulePage() {
                                                                                     )}
                                                                                 </span>
                                                                                 <span className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-gray-600">
-                                                                                    Lekcja {lesson.orderIndex ?? index + 1}
+                                                                                    Lekcja {index + 1}
                                                                                 </span>
                                                                                 <span className={`mt-1 line-clamp-2 max-w-52 text-sm font-black leading-5 ${
                                                                                     lessonAccessible ? "text-gray-100" : "text-gray-600"

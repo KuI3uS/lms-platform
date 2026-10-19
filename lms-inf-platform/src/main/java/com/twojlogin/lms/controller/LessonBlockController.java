@@ -9,6 +9,9 @@ import com.twojlogin.lms.dto.InteractiveCompletionRequest;
 import com.twojlogin.lms.dto.LessonBlockDto;
 import com.twojlogin.lms.dto.LessonBlockRequest;
 import com.twojlogin.lms.dto.TaskCheckResponse;
+import com.twojlogin.lms.dto.StageLessonBlockImportRequest;
+import com.twojlogin.lms.dto.StageLessonBlockImportResult;
+import com.twojlogin.lms.util.LessonImportTitles;
 import com.twojlogin.lms.entity.BlockType;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
@@ -123,7 +126,7 @@ public class LessonBlockController {
             @RequestBody LessonBlockRequest request
     ) {
 
-        Lesson lesson = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findByIdForBlockImport(lessonId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
@@ -154,7 +157,7 @@ public class LessonBlockController {
             @RequestBody List<LessonBlockRequest> requests,
             @RequestParam(defaultValue = "false") boolean publishLesson
     ) {
-        Lesson lesson = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findByIdForBlockImport(lessonId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
@@ -188,7 +191,7 @@ public class LessonBlockController {
             @RequestBody List<LessonBlockRequest> requests,
             @RequestParam(defaultValue = "false") boolean publishLesson
     ) {
-        Lesson lesson = lessonRepository.findById(lessonId)
+        Lesson lesson = lessonRepository.findByIdForBlockImport(lessonId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
@@ -217,6 +220,100 @@ public class LessonBlockController {
                 .map(block -> LessonBlockDto.from(block, true))
                 .toList();
     }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/module/{moduleId}/import")
+    public StageLessonBlockImportResult importStage(
+            @PathVariable Long moduleId, @RequestBody StageLessonBlockImportRequest request
+    ) {
+        if (request == null || request.lessons() == null || request.lessons().isEmpty()
+                || request.lessons().size() > 50) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pakiet musi zawierać od 1 do 50 lekcji, każdą z maksymalnie 10 blokami.");
+        }
+        var moduleLessons = lessonRepository.findByModuleIdForBlockImport(moduleId);
+        Map<Long, Lesson> targets = moduleLessons.stream().collect(Collectors.toMap(Lesson::getId, Function.identity()));
+        Map<Long, Object[]> counts = importMaterialCounts(moduleLessons);
+        var seenIds = new java.util.HashSet<Long>();
+        List<StageImportPlan> plans = new java.util.ArrayList<>();
+
+        // Preflight the entire package before any inserts or publication changes.
+        for (var item : request.lessons()) {
+            Lesson lesson = item == null ? null : targets.get(item.lessonId());
+            if (lesson == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lekcja nie istnieje w wybranym etapie. Najpierw utwórz jej kartę. Import nie tworzy nowych lekcji.");
+            }
+            if (!seenIds.add(lesson.getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ta sama lekcja występuje w pakiecie więcej niż raz.");
+            }
+            if (LessonImportTitles.normalize(item.title()).isBlank()
+                    || !LessonImportTitles.normalize(lesson.getTitle()).equals(LessonImportTitles.normalize(item.title()))) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Tytuł lekcji nie zgadza się z istniejącą kartą: „" + lesson.getTitle() + "”. Odśwież listę i sprawdź dopasowanie.");
+            }
+            validateImportSize(item.blocks(), lessonBlockLimit(lesson));
+            List<LessonBlock> imported = new java.util.ArrayList<>();
+            for (int index = 0; index < item.blocks().size(); index++) {
+                if (item.blocks().get(index) == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pakiet zawiera pusty blok lekcji.");
+                }
+                LessonBlock block = new LessonBlock();
+                block.setLesson(lesson);
+                block.setOrderIndex(index);
+                applyRequest(block, item.blocks().get(index), false);
+                imported.add(block);
+            }
+            plans.add(new StageImportPlan(lesson, imported, counts.containsKey(lesson.getId())));
+        }
+
+        int filled = 0, skipped = 0, published = 0;
+        List<LessonBlock> newBlocks = new java.util.ArrayList<>();
+        boolean publish = Boolean.TRUE.equals(request.publishLessons());
+        for (StageImportPlan plan : plans) {
+            boolean hasPublishedMaterials;
+            if (plan.hasBlocks()) {
+                skipped++;
+                hasPublishedMaterials = ((Number) counts.get(plan.lesson().getId())[2]).longValue() > 0;
+            } else {
+                filled++;
+                newBlocks.addAll(plan.blocks());
+                hasPublishedMaterials = plan.blocks().stream().anyMatch(block ->
+                        Boolean.TRUE.equals(block.getPublished()) && block.getType() != BlockType.DIVIDER);
+            }
+            if (publish && hasPublishedMaterials && !plan.lesson().isPublished()) {
+                plan.lesson().setPublished(true);
+                published++;
+            }
+        }
+        blockRepository.saveAllAndFlush(newBlocks);
+        lessonRepository.flush();
+        return new StageLessonBlockImportResult(filled, skipped, published, newBlocks.size());
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/module/{moduleId}/publish-ready")
+    public Map<String, Integer> publishReadyStageLessons(@PathVariable Long moduleId) {
+        var lessons = lessonRepository.findByModuleIdForBlockImport(moduleId);
+        var counts = importMaterialCounts(lessons);
+        int published = 0;
+        for (Lesson lesson : lessons) {
+            Object[] material = counts.get(lesson.getId());
+            if (!lesson.isPublished() && material != null && ((Number) material[2]).longValue() > 0) {
+                lesson.setPublished(true);
+                published++;
+            }
+        }
+        lessonRepository.flush();
+        return Map.of("lessonsPublished", published);
+    }
+
+    private Map<Long, Object[]> importMaterialCounts(List<Lesson> lessons) {
+        if (lessons.isEmpty()) return Map.of();
+        return blockRepository.countImportMaterialsByLessonIds(lessons.stream().map(Lesson::getId).toList())
+                .stream().collect(Collectors.toMap(row -> ((Number) row[0]).longValue(), Function.identity()));
+    }
+
+    private record StageImportPlan(Lesson lesson, List<LessonBlock> blocks, boolean hasBlocks) {}
 
     private void publishImportedLessonIfRequested(Lesson lesson, List<LessonBlock> blocks, boolean requested) {
         if (requested && blocks.stream().anyMatch(block ->

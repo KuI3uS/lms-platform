@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
     getStageLessonPrompt,
-    parseStageLessonImport
+    parseStageLessonImport,
+    matchStageLessons,
+    normalizeStageLessonTitle
 } from "../src/utils/stageLessonImport.js";
 
 const packageText = `LEKCJA 1 — Tworzymy pierwsze repozytorium Git
@@ -94,4 +96,54 @@ test("stage prompt contains current stage and all existing lesson titles", () =>
     assert.match(prompt, /LEKCJA 1 —/);
     assert.match(prompt, /KONIEC LEKCJI/);
     assert.match(prompt, /maksymalnie 10 bloków/);
+    assert.match(prompt, /WYŁĄCZNIE istniejące karty lekcji/);
+    assert.match(prompt, /do 50 lekcji/);
+});
+
+function lessonText(number, blockCount = 10) {
+    return `LEKCJA ${number} — Lekcja SQL ${number}\n` + Array.from({ length: blockCount }, (_, index) => `KROK ${index + 1}\nTyp bloku\nTekst\nTytuł\nMateriał ${index + 1}\nTreść\nWyjaśnienie i przykład SQL.\n`).join("\n") + "KONIEC LEKCJI\n";
+}
+
+test("accepts fifty lessons with ten blocks each, not ten lessons total", () => {
+    const parsed = parseStageLessonImport(Array.from({ length: 50 }, (_, index) => lessonText(index + 1)).join("\n"));
+    assert.deepEqual(parsed.errors, []);
+    assert.equal(parsed.lessonCount, 50);
+    assert.equal(parsed.blockCount, 500);
+    const existing = parsed.lessons.map((lesson, index) => ({ id: index + 10, title: lesson.title }));
+    assert.equal(matchStageLessons(parsed.lessons, existing).matches.length, 50);
+});
+
+test("rejects fifty-one lessons or eleven blocks inside one lesson", () => {
+    assert.ok(parseStageLessonImport(Array.from({ length: 51 }, (_, index) => lessonText(index + 1, 1)).join("\n")).errors.some(error => /maksymalnie 50 lekcji/.test(error)));
+    assert.ok(parseStageLessonImport(lessonText(1, 11)).errors.length > 0);
+});
+
+test("matches existing cards by title, tolerating formatting but retaining SQL operators", () => {
+    const matched = matchStageLessons([{ title: "  AS — nadawanie czytelnych nazw kolumnom " }, { title: "Operatory — =, <>, >, <, >=, <=" }], [
+        { id: 12, title: "Operatory - =, <>, >, <, >=, <=", orderIndex: 8 },
+        { id: 11, title: "AS - nadawanie czytelnych nazw kolumnom", orderIndex: 8 }
+    ]);
+    assert.deepEqual(matched.errors, []);
+    assert.deepEqual(matched.matches.map(match => match.target.id), [11, 12]);
+    assert.deepEqual(matched.matches.map(match => match.target.displayNumber), [2, 1]);
+    assert.notEqual(normalizeStageLessonTitle("x > y"), normalizeStageLessonTitle("x < y"));
+});
+
+test("missing and ambiguous lesson names are errors, never new lesson plans", () => {
+    const unmatched = matchStageLessons([{ title: "WHERE" }], [{ id: 1, title: "SELECT" }]);
+    assert.equal(unmatched.matches.length, 0);
+    assert.match(unmatched.errors[0], /nie istnieje/);
+    const ambiguous = matchStageLessons([{ title: "AS — alias" }], [{ id: 1, title: "AS - alias" }, { id: 2, title: "AS — alias" }]);
+    assert.equal(ambiguous.matches.length, 0);
+    assert.match(ambiguous.errors[0], /kilku lekcji/);
+});
+
+test("a repeated target cannot import twice and a subset keeps original card IDs and positions", () => {
+    const existing = [{ id: 7, title: "WHERE", blockCount: 2, published: false, publishedBlockCount: 2 }, { id: 8, title: "SELECT" }];
+    const duplicated = matchStageLessons([{ title: "WHERE" }, { title: "where" }], existing);
+    assert.equal(duplicated.errors.length, 1);
+    const matched = matchStageLessons([{ title: "SELECT" }], existing);
+    assert.equal(matched.matches[0].target.id, 8);
+    assert.equal(matched.matches[0].target.displayNumber, 2);
+    assert.equal(existing.length, 2);
 });

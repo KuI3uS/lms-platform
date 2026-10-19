@@ -4,6 +4,8 @@ import com.twojlogin.lms.entity.Lesson;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
@@ -11,7 +13,16 @@ import java.util.Optional;
 
 public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
-    List<Lesson> findByModuleIdOrderByOrderIndexAsc(Long moduleId);
+    @Query("select lesson from Lesson lesson where lesson.module.id = :moduleId order by lesson.orderIndex, lesson.id")
+    List<Lesson> findByModuleIdOrderByOrderIndexAsc(@Param("moduleId") Long moduleId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select lesson from Lesson lesson where lesson.module.id = :moduleId order by lesson.id")
+    List<Lesson> findByModuleIdForBlockImport(@Param("moduleId") Long moduleId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select lesson from Lesson lesson where lesson.id = :id")
+    Optional<Lesson> findByIdForBlockImport(@Param("id") Long id);
 
     @Query("""
             select lesson

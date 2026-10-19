@@ -20,6 +20,7 @@ export default function AdminLessonPage() {
     const moduleData = useModule(moduleId);
     const lessonVariant = moduleData.isLanguageCourse ? "LANGUAGE" : "PROGRAMMING";
     const maxBlocks = getLessonBlockLimit(lessonVariant);
+    const readyDraftCount = lessons.lessons.filter(lesson => !lesson.published && lesson.publishedBlockCount > 0).length;
 
     return (
 
@@ -42,6 +43,12 @@ export default function AdminLessonPage() {
                         : "Jeżeli uczeń ma osobno ukończyć „Wprowadzenie”, „Pierwszy program” i „Zmienne”, utwórz trzy oddzielne lekcje. Bloki tekstu, informacji, zadań i quizów są krokami wewnątrz jednej lekcji."}
                 </p>
             </section>
+
+            {readyDraftCount > 0 && <section className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-5 text-amber-100">
+                <h2 className="font-black">{readyDraftCount} lekcji ma opublikowane bloki, ale cała lekcja pozostaje szkicem</h2>
+                <p className="mt-2 text-sm leading-6">Możesz udostępnić te lekcje uczniom bez ponownego importu. Puste karty i ukryte bloki pozostaną bez zmian.</p>
+                <button type="button" disabled={lessons.publishingReady || lessons.packageImporting} onClick={lessons.publishReadyLessons} className="mt-4 rounded-xl bg-amber-300 px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-40">{lessons.publishingReady ? "Publikowanie…" : "Udostępnij lekcje z materiałami"}</button>
+            </section>}
 
             <StageLessonPackageImport
                 moduleTitle={moduleData.moduleSettings.name}
@@ -100,13 +107,14 @@ export default function AdminLessonPage() {
 
                 <div className="space-y-6">
 
-                    {lessons.lessons.map((lesson) => (
+                    {lessons.lessons.map((lesson, index) => (
 
                         <LessonCard
 
                             key={lesson.id}
 
                             lesson={lesson}
+                            displayNumber={index + 1}
 
                             expanded={expanded.isExpanded(lesson.id)}
 

@@ -13,6 +13,7 @@ import BlockManager from "../../components/BlockManager/BlockManager";
 export default function LessonCard({
 
                                        lesson,
+                                       displayNumber,
 
                                        expanded,
 
@@ -118,7 +119,7 @@ export default function LessonCard({
 
                                 <BsStars />
 
-                                Lekcja {lesson.orderIndex}
+                                Lekcja {displayNumber}
 
                             </div>
 
@@ -129,7 +130,7 @@ export default function LessonCard({
                             </h2>
 
                             <p className={`mt-3 text-sm font-bold ${lesson.published ? "text-emerald-300" : "text-amber-300"}`}>
-                                {lesson.published ? "Opublikowana — dostępna dla uczniów z dostępem do kursu" : "Szkic lekcji — niewidoczny dla uczniów"}
+                                {lesson.published ? lesson.publishedBlockCount > 0 ? "Opublikowana — dostępna dla uczniów z dostępem do kursu" : "Opublikowana karta — dodaj i opublikuj bloki, aby uczeń mógł ją otworzyć" : lesson.publishedBlockCount > 0 ? "Ma opublikowane bloki — udostępnij całą lekcję przyciskiem powyżej" : "Szkic lekcji — niewidoczny dla uczniów"}
                             </p>
 
                             <p className="text-gray-400 mt-3">

@@ -14,6 +14,8 @@ public class LessonDto {
     public Long courseId;
     public boolean completed;
     public boolean canAccess;
+    public long blockCount;
+    public long publishedBlockCount;
 
     public LessonDto(com.twojlogin.lms.entity.Lesson lesson) {
         this.id = lesson.getId();
