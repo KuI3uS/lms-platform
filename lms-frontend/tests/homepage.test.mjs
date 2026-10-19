@@ -9,11 +9,11 @@ import {
 import { HOME_TITLE, HOME_DESCRIPTION } from "../src/utils/homeSeo.js";
 
 const home = await readFile(
-  new URL("../dist/home.html", import.meta.url),
+  new URL("../dist/index.html", import.meta.url),
   "utf8",
 );
 const app = await readFile(
-  new URL("../dist/index.html", import.meta.url),
+  new URL("../dist/app.html", import.meta.url),
   "utf8",
 );
 
@@ -71,26 +71,12 @@ test("homepage SEO and Google ownership verification survive the separate public
   assert.ok(!JSON.stringify(schema).includes("aggregateRating"));
 });
 
-test("canonical homepage uses the new public document while application routes retain their fallback", async () => {
-  const config = JSON.parse(
-    await readFile(new URL("../vercel.json", import.meta.url), "utf8"),
-  );
-  assert.equal(
-    config.rewrites.find((item) => item.source === "/").destination,
-    "/home.html",
-  );
-  assert.equal(
-    config.rewrites.find((item) => item.source === "/(.*)").destination,
-    "/index.html",
-  );
-  assert.ok(
-    config.rewrites.findIndex((item) => item.source === "/") <
-      config.rewrites.findIndex((item) => item.source === "/(.*)"),
-  );
-  assert.equal(
-    config.redirects.find((item) => item.source === "/home.html").destination,
-    "/",
-  );
+test("canonical homepage is a static index while application routes retain a separate fallback", async () => {
+  const config = JSON.parse(await readFile(new URL("../vercel.json", import.meta.url), "utf8"));
+  assert.ok(!config.rewrites.some(item => item.source === "/"));
+  assert.equal(config.rewrites.find(item => item.source === "/(.*)").destination, "/app.html");
+  assert.equal(config.redirects.find(item => item.source === "/home.html").destination, "/");
+  assert.ok(!app.includes('id="eh-hero-title"'));
 });
 
 test("demo checks an answer without running input as Java or SQL", () => {

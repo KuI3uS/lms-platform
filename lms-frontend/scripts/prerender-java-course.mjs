@@ -20,7 +20,7 @@ const pages = [
     structuredData: getJavaCourseStructuredData,
   },
   {
-    file: "home.html",
+    file: "index.html",
     entry: "/src/prerender-home.jsx",
     render: "renderHome",
     schema: "home-schema",

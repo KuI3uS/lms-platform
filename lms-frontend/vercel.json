@@ -46,10 +46,6 @@
   ],
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/home.html"
-    },
-    {
       "source": "/kurs/java-backend-developer",
       "destination": "/java-backend-developer.html"
     },
@@ -59,7 +55,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/app.html"
     }
   ]
 }

@@ -8,8 +8,8 @@ export default defineConfig({
   build: {
     rolldownOptions: {
       input: {
-        main: fileURLToPath(new URL("./index.html", import.meta.url)),
-        home: fileURLToPath(new URL("./home.html", import.meta.url)),
+        main: fileURLToPath(new URL("./app.html", import.meta.url)),
+        home: fileURLToPath(new URL("./index.html", import.meta.url)),
         java: fileURLToPath(
           new URL("./java-backend-developer.html", import.meta.url),
         ),
