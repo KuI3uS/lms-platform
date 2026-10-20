@@ -199,6 +199,9 @@ class StageLessonBlockImportTest {
         assertThrows(AccessDeniedException.class, () -> controller.importStage(module.getId(),
                 new StageLessonBlockImportRequest(List.of(item(target, 1)), true)));
         assertThrows(AccessDeniedException.class, () -> controller.publishReadyStageLessons(module.getId()));
+        assertThrows(AccessDeniedException.class, () -> lessonController.importPlan(module.getCourse().getId(),
+                new com.twojlogin.lms.dto.LessonPlanImportRequest(List.of(
+                        new com.twojlogin.lms.dto.LessonPlanImportRequest.StageLessons(2, "Nowy etap", List.of("Lekcja"))))));
         assertFalse(target.isPublished());
         assertEquals(0, blocks.count());
     }

@@ -456,6 +456,7 @@ export default function ModulePage() {
                     <LessonPlanImport
                         courseId={courseId}
                         moduleCount={modules.length}
+                        existingModules={modules}
                         onImported={async () => {
                             roadmapCache.delete(String(courseId));
                             await loadRoadmap();

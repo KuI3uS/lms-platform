@@ -3,10 +3,12 @@ package com.twojlogin.lms.service;
 import com.twojlogin.lms.dto.LessonPlanImportRequest;
 import com.twojlogin.lms.dto.LessonPlanImportResult;
 import com.twojlogin.lms.entity.CourseModule;
+import com.twojlogin.lms.entity.Course;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.repository.CourseModuleRepository;
 import com.twojlogin.lms.repository.CourseRepository;
 import com.twojlogin.lms.repository.LessonRepository;
+import com.twojlogin.lms.util.LessonImportTitles;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,8 +26,9 @@ import java.util.Set;
 @Service
 public class LessonPlanImportService {
 
-    private static final int MAX_STAGES = 1_000;
-    private static final int MAX_LESSONS = 10_000;
+    // Limits apply to a single transaction, not to a complete course plan.
+    private static final int MAX_STAGES = 20;
+    private static final int MAX_LESSONS = 500;
     private static final int MAX_TITLE_LENGTH = 255;
 
     private final CourseRepository courseRepository;
@@ -49,9 +52,8 @@ public class LessonPlanImportService {
     ) {
         // Serialize imports of this course so two simultaneous requests cannot
         // both create the same titles from the same initial snapshot.
-        if (courseRepository.findByIdForImport(courseId).isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Kurs nie istnieje");
-        }
+        Course course = courseRepository.findByIdForImport(courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kurs nie istnieje"));
 
         List<LessonPlanImportRequest.StageLessons> requestedStages = request == null
                 ? null
@@ -65,12 +67,15 @@ public class LessonPlanImportService {
         if (requestedStages.size() > MAX_STAGES) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Jednorazowo można zaimportować maksymalnie " + MAX_STAGES + " etapów"
+                    "Jedna partia może zawierać maksymalnie " + MAX_STAGES + " etapów. Podziel plan na partie."
             );
         }
 
         List<CourseModule> modules = moduleRepository.findByCourseIdOrderByIdAsc(courseId);
         validateStages(requestedStages, modules.size());
+        var targets = resolveStages(course, modules, requestedStages);
+        var newModules = targets.stream().filter(StageTarget::created).map(StageTarget::module).toList();
+        if (!newModules.isEmpty()) moduleRepository.saveAll(newModules);
 
         List<Lesson> existingLessons = lessonRepository.findRoadmapLessonsByCourseId(courseId);
         Map<Long, Set<String>> knownTitlesByModule = new HashMap<>();
@@ -91,8 +96,9 @@ public class LessonPlanImportService {
         int duplicatesSkipped = 0;
         int stagesUpdated = 0;
 
-        for (LessonPlanImportRequest.StageLessons requestedStage : requestedStages) {
-            CourseModule module = modules.get(requestedStage.stageNumber() - 1);
+        for (StageTarget target : targets) {
+            var requestedStage = target.request();
+            CourseModule module = target.module();
             Set<String> knownTitles = knownTitlesByModule.computeIfAbsent(
                     module.getId(),
                     ignored -> new HashSet<>()
@@ -133,7 +139,8 @@ public class LessonPlanImportService {
         return new LessonPlanImportResult(
                 stagesUpdated,
                 lessonsToCreate.size(),
-                duplicatesSkipped
+                duplicatesSkipped,
+                newModules.size()
         );
     }
 
@@ -149,7 +156,8 @@ public class LessonPlanImportService {
                 throw badRequest("Każdy etap musi mieć numer");
             }
             int stageNumber = stage.stageNumber();
-            if (stageNumber < 1 || stageNumber > moduleCount) {
+            if (stageNumber < 1) throw badRequest("Numer etapu musi być większy od zera");
+            if ((stage.stageTitle() == null || stage.stageTitle().isBlank()) && stageNumber > moduleCount) {
                 throw badRequest(
                         "Etap " + stageNumber + " nie istnieje w tym kursie. Kurs ma "
                                 + moduleCount + " etapów"
@@ -158,6 +166,7 @@ public class LessonPlanImportService {
             if (!stageNumbers.add(stageNumber)) {
                 throw badRequest("Etap " + stageNumber + " występuje w planie więcej niż raz");
             }
+            if (stage.stageTitle() != null && !stage.stageTitle().isBlank()) normalizeTitle(stage.stageTitle());
             if (stage.lessonTitles() == null || stage.lessonTitles().isEmpty()) {
                 throw badRequest("Etap " + stageNumber + " nie zawiera żadnej lekcji");
             }
@@ -165,12 +174,54 @@ public class LessonPlanImportService {
             lessonCount += stage.lessonTitles().size();
             if (lessonCount > MAX_LESSONS) {
                 throw badRequest(
-                        "Jednorazowo można zaimportować maksymalnie " + MAX_LESSONS + " lekcji"
+                        "Jedna partia może zawierać maksymalnie " + MAX_LESSONS + " lekcji. Podziel plan na partie."
                 );
             }
             for (String title : stage.lessonTitles()) normalizeTitle(title);
         }
     }
+
+    private List<StageTarget> resolveStages(Course course, List<CourseModule> modules,
+                                          List<LessonPlanImportRequest.StageLessons> requests) {
+        Map<String, List<CourseModule>> existingByName = new HashMap<>();
+        for (var module : modules) {
+            existingByName.computeIfAbsent(normalizeForComparison(module.getName()), ignored -> new ArrayList<>()).add(module);
+        }
+        Set<String> requestedNames = new HashSet<>();
+        Set<CourseModule> usedModules = new HashSet<>();
+        List<StageTarget> targets = new ArrayList<>();
+        for (var request : requests.stream().sorted(java.util.Comparator.comparingInt(LessonPlanImportRequest.StageLessons::stageNumber)).toList()) {
+            if (request.stageTitle() == null || request.stageTitle().isBlank()) {
+                var module = modules.get(request.stageNumber() - 1);
+                if (!usedModules.add(module)) throw badRequest("Ten sam etap występuje w partii więcej niż raz");
+                targets.add(new StageTarget(request, module, false));
+                continue;
+            }
+            String name = normalizeTitle(request.stageTitle());
+            String key = normalizeForComparison(name);
+            if (!requestedNames.add(key)) throw badRequest("Nazwa etapu „" + name + "” występuje w partii więcej niż raz");
+            var matches = existingByName.getOrDefault(key, List.of());
+            CourseModule module;
+            boolean created = matches.isEmpty();
+            if (created) {
+                module = new CourseModule();
+                module.setCourse(course);
+                module.setName(name);
+                if ("LANGUAGE".equals(course.getCategory())) module.setCefrLevel(course.getCefrLevel());
+            } else if (matches.size() == 1) {
+                module = matches.get(0);
+            } else if (request.stageNumber() <= modules.size() && matches.contains(modules.get(request.stageNumber() - 1))) {
+                module = modules.get(request.stageNumber() - 1);
+            } else {
+                throw badRequest("Nazwa „" + name + "” pasuje do kilku etapów. Nadaj im różne nazwy przed importem.");
+            }
+            if (!usedModules.add(module)) throw badRequest("Ten sam etap występuje w partii więcej niż raz");
+            targets.add(new StageTarget(request, module, created));
+        }
+        return targets;
+    }
+
+    private record StageTarget(LessonPlanImportRequest.StageLessons request, CourseModule module, boolean created) {}
 
     private String normalizeTitle(String value) {
         if (value == null || value.isBlank()) {
@@ -187,8 +238,7 @@ public class LessonPlanImportService {
     }
 
     private String normalizeForComparison(String value) {
-        if (value == null) return "";
-        return value.strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+        return LessonImportTitles.normalize(value);
     }
 
     private ResponseStatusException badRequest(String message) {

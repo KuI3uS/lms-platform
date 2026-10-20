@@ -7,23 +7,19 @@ import {
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
 import { useFeedback } from "../context/FeedbackContext";
-import { parseLessonPlan } from "../utils/lessonPlanImport";
+import { parseLessonPlan, previewLessonPlan, buildLessonPlanBatches } from "../utils/lessonPlanImport";
 
-const STAGES_PER_REQUEST = 20;
-
-export default function LessonPlanImport({ courseId, moduleCount, onImported }) {
+export default function LessonPlanImport({ courseId, moduleCount, existingModules = [], onImported }) {
     const { confirm, showToast } = useFeedback();
     const [open, setOpen] = useState(false);
     const [source, setSource] = useState("");
     const [importing, setImporting] = useState(false);
     const [progress, setProgress] = useState(null);
     const parsed = useMemo(() => parseLessonPlan(source), [source]);
-    const missingStages = parsed.stages.filter(
-        stage => stage.stageNumber > moduleCount
-    );
+    const preview = useMemo(() => previewLessonPlan(parsed.stages, existingModules), [parsed.stages, existingModules]);
+    const errors = [...parsed.errors, ...preview.errors];
     const canImport = parsed.lessonCount > 0
-        && parsed.errors.length === 0
-        && missingStages.length === 0
+        && errors.length === 0
         && !importing;
 
     const loadFile = async event => {
@@ -41,22 +37,21 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
     const importPlan = async () => {
         if (!canImport) return;
         const accepted = await confirm({
-            title: "Zaimportuj spis lekcji",
-            message: `Utworzyć ${parsed.lessonCount} lekcji w ${parsed.stages.length} etapach? Nowe lekcje zostaną zapisane jako nieopublikowane szkielety. Istniejące lekcje o tej samej nazwie nie zostaną powielone.`,
-            confirmLabel: "Importuj lekcje"
+            title: "Zaimportuj plan etapów i lekcji",
+            message: `Dodać brakujące etapy (${preview.stagesToCreate}) i sprawdzić ${parsed.lessonCount} tematów lekcji? Etapy dopasowujemy po nazwie. Istniejące etapy i lekcje nie zostaną nadpisane ani powielone. Nowe lekcje będą pustymi szkicami, których bloki dodasz osobnym importem. Duże plany zapisujemy partiami.`,
+            confirmLabel: "Importuj etapy i lekcje",
+            danger: false
         });
         if (!accepted) return;
 
         try {
             setImporting(true);
-            const stageChunks = [];
-            for (let index = 0; index < parsed.stages.length; index += STAGES_PER_REQUEST) {
-                stageChunks.push(parsed.stages.slice(index, index + STAGES_PER_REQUEST));
-            }
+            const stageChunks = buildLessonPlanBatches(parsed.stages);
             const result = {
                 stagesUpdated: 0,
                 lessonsCreated: 0,
-                duplicatesSkipped: 0
+                duplicatesSkipped: 0,
+                stagesCreated: 0
             };
 
             for (let index = 0; index < stageChunks.length; index += 1) {
@@ -66,6 +61,7 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
                     body: JSON.stringify({
                         stages: stageChunks[index].map(stage => ({
                             stageNumber: stage.stageNumber,
+                            stageTitle: stage.stageTitle,
                             lessonTitles: stage.lessonTitles
                         }))
                     })
@@ -73,12 +69,13 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
                 result.stagesUpdated += chunkResult?.stagesUpdated || 0;
                 result.lessonsCreated += chunkResult?.lessonsCreated || 0;
                 result.duplicatesSkipped += chunkResult?.duplicatesSkipped || 0;
+                result.stagesCreated += chunkResult?.stagesCreated || 0;
             }
             await onImported?.(result);
             setSource("");
             setOpen(false);
             showToast(
-                `Utworzono ${result.lessonsCreated} lekcji w ${result.stagesUpdated} etapach.${result.duplicatesSkipped ? ` Pominięto duplikaty: ${result.duplicatesSkipped}.` : ""}`,
+                `Dodano etapów: ${result.stagesCreated}, szkielety lekcji: ${result.lessonsCreated}.${result.duplicatesSkipped ? ` Pominięto istniejące lekcje: ${result.duplicatesSkipped}.` : ""}`,
                 "success"
             );
         } catch (error) {
@@ -100,7 +97,7 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
                 className="flex w-full items-center justify-center gap-3 rounded-2xl border border-cyan-400/25 bg-cyan-500/[0.08] px-5 py-4 font-black text-cyan-200 transition hover:border-cyan-300/45 hover:bg-cyan-500/[0.14] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
             >
                 <BsCloudArrowUp className="text-xl" />
-                Importuj wiele lekcji z planu
+                Importuj plan — utwórz etapy i szkielety lekcji
             </button>
         );
     }
@@ -116,13 +113,14 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
                         Wklej cały plan etapów i lekcji
                     </h2>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
-                        Rozpoznawany format to „ETAP 16 — nazwa”, a pod nim „Lekcje: temat 1; temat 2; temat 3”. Import tworzy same szkielety lekcji — ich bloki uzupełnisz później.
+                        Wklej „ETAP 1 — nazwa”, a pod nim „Lekcje: temat 1; temat 2; temat 3”. Ten import tworzy brakujące etapy i puste szkielety lekcji — także w pustym kursie. Bez limitu liczby etapów i tematów w całym planie: duże plany zapisujemy automatycznie partiami. Bloki uzupełnisz później importem wewnątrz etapu.
                     </p>
                 </div>
                 <button
                     type="button"
                     aria-label="Zamknij import lekcji"
                     onClick={() => setOpen(false)}
+                    disabled={importing}
                     className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 text-gray-400 transition hover:bg-white/10 hover:text-white"
                 >
                     <BsX className="text-2xl" />
@@ -137,6 +135,7 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
                         type="file"
                         accept=".txt,.md,text/plain,text/markdown"
                         onChange={loadFile}
+                        disabled={importing}
                         className="sr-only"
                     />
                 </label>
@@ -145,6 +144,7 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
 
             <textarea
                 value={source}
+                disabled={importing}
                 onChange={event => setSource(event.target.value)}
                 rows={14}
                 placeholder={'## ETAP 16 — Operatory warunkowe\nLekcje: Kilka kryteriów naraz; AND w praktyce; OR w praktyce'}
@@ -156,22 +156,15 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
                     <div className="grid gap-3 sm:grid-cols-3">
                         <Summary value={parsed.stages.length} label="rozpoznanych etapów" />
                         <Summary value={parsed.lessonCount} label="lekcji do sprawdzenia" />
-                        <Summary value={moduleCount} label="etapów w tym kursie" />
+                        <Summary value={preview.stagesToCreate} label="nowych etapów do utworzenia" />
                     </div>
 
-                    {parsed.errors.length > 0 && (
+                    <p className="text-sm leading-6 text-slate-400">Etapy już w kursie: {moduleCount}. Dopasowania po nazwie: {preview.stagesToReuse}. Istniejące lekcje nie zostaną powielone ani nadpisane.</p>
+                    {errors.length > 0 && (
                         <Message tone="error">
-                            {parsed.errors.slice(0, 5).map(error => (
+                            {errors.slice(0, 5).map(error => (
                                 <span key={error} className="block">{error}</span>
                             ))}
-                        </Message>
-                    )}
-                    {missingStages.length > 0 && (
-                        <Message tone="error">
-                            Plan zawiera nieistniejące etapy: {missingStages
-                                .slice(0, 10)
-                                .map(stage => stage.stageNumber)
-                                .join(", ")}.
                         </Message>
                     )}
                     {canImport && (
@@ -193,7 +186,7 @@ export default function LessonPlanImport({ courseId, moduleCount, onImported }) 
                 <BsCloudArrowUp />
                 {importing
                     ? `Importowanie partii ${progress?.current || 1} z ${progress?.total || 1}...`
-                    : `Importuj ${parsed.lessonCount || 0} lekcji`}
+                    : `Importuj plan: ${parsed.stages.length} etapów · ${parsed.lessonCount || 0} lekcji`}
             </button>
         </section>
     );
