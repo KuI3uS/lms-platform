@@ -34,6 +34,16 @@
   ],
   "redirects": [
     {
+      "source": "/vite.svg",
+      "destination": "/favicon.png",
+      "permanent": true
+    },
+    {
+      "source": "/favicon.svg",
+      "destination": "/favicon.png",
+      "permanent": true
+    },
+    {
       "source": "/home.html",
       "destination": "/",
       "permanent": true

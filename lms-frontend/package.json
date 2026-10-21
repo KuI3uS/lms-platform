@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "icons:generate": "node scripts/generate-favicons.mjs",
     "build": "vite build && node scripts/prerender-java-course.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
