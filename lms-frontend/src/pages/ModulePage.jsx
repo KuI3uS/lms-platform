@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import {
@@ -38,6 +38,8 @@ import { useFeedback } from "../context/FeedbackContext";
 import CourseSectionHeading from "../components/CourseSectionHeading";
 import LessonPlanImport from "../components/LessonPlanImport";
 import CourseDuplicateCleanup from "../components/CourseDuplicateCleanup";
+import CourseRoadmapSearch from "../components/CourseRoadmapSearch";
+import { filterCourseRoadmap } from "../utils/courseRoadmapSearch";
 import {
     buildCourseSections,
     courseSectionExpansionKey,
@@ -70,6 +72,8 @@ export default function ModulePage() {
     const [error, setError] = useState("");
     const [moduleExpansion, setModuleExpansion] = useState({});
     const [sectionExpansion, setSectionExpansion] = useState(readCourseSectionExpansion);
+    const [courseSearch, setCourseSearch] = useState({ courseId: null, query: "" });
+    const [searchExpansion, setSearchExpansion] = useState({ scope: null, panels: {} });
     const [stepRoadmap, setStepRoadmap] = useState({
         lessonId: null,
         steps: [],
@@ -77,6 +81,17 @@ export default function ModulePage() {
     });
 
     const role = user?.role || null;
+    const searchQuery = courseSearch.courseId === courseId ? courseSearch.query : "";
+    const sections = useMemo(() => buildCourseSections(modules), [modules]);
+    const search = useMemo(() => filterCourseRoadmap(sections, searchQuery), [sections, searchQuery]);
+    const searchScope = `${courseId}:${searchQuery}`;
+    const searchPanelExpanded = key => searchExpansion.scope === searchScope
+        ? (searchExpansion.panels[key] ?? true)
+        : true;
+    const toggleSearchPanel = key => setSearchExpansion(previous => {
+        const panels = previous.scope === searchScope ? previous.panels : {};
+        return { scope: searchScope, panels: { ...panels, [key]: !(panels[key] ?? true) } };
+    });
 
     useEffect(() => {
         saveCourseSectionExpansion(sectionExpansion);
@@ -262,10 +277,12 @@ export default function ModulePage() {
         (module.lessons || []).some(lesson => lesson.id === activeLessonId)
     ))?.id;
     const isModuleExpanded = module => (
-        moduleExpansion[`${courseId}:${module.id}`] ?? (module.id === activeModuleId)
+        search.active ? searchPanelExpanded(`module:${module.id}`)
+            : moduleExpansion[`${courseId}:${module.id}`] ?? (module.id === activeModuleId)
     );
     const expandedModuleCount = modules.filter(isModuleExpanded).length;
     const toggleModule = module => {
+        if (search.active) return toggleSearchPanel(`module:${module.id}`);
         const expanded = isModuleExpanded(module);
         setModuleExpansion(previous => ({
             ...previous,
@@ -280,16 +297,17 @@ export default function ModulePage() {
             )))
         }));
     };
-    const sections = buildCourseSections(modules);
     const activeSectionId = sections.find(section => section.entries.some(
         ({ module }) => module.id === activeModuleId
     ))?.id ?? sections[0]?.id;
     const sectionKey = section => courseSectionExpansionKey(courseId, user?.id, section.id);
     const isSectionExpanded = section => (
-        sectionExpansion[sectionKey(section)] ?? (section.id === activeSectionId)
+        search.active ? searchPanelExpanded(`section:${section.id}`)
+            : sectionExpansion[sectionKey(section)] ?? (section.id === activeSectionId)
     );
     const expandedSectionCount = sections.filter(isSectionExpanded).length;
     const toggleSection = section => {
+        if (search.active) return toggleSearchPanel(`section:${section.id}`);
         setSectionExpansion(previous => ({
             ...previous,
             [sectionKey(section)]: !isSectionExpanded(section)
@@ -422,6 +440,17 @@ export default function ModulePage() {
                 </div>
             </header>
 
+            {modules.length > 0 && <CourseRoadmapSearch
+                query={searchQuery}
+                onChange={query => {
+                    setCourseSearch({ courseId, query });
+                    setSearchExpansion({ scope: null, panels: {} });
+                }}
+                active={search.active}
+                moduleCount={search.moduleCount}
+                lessonCount={search.lessonCount}
+            />}
+
             {role === "ADMIN" && (
                 <div className="mx-auto max-w-3xl space-y-5 px-2">
                     <section className="space-y-3">
@@ -477,7 +506,7 @@ export default function ModulePage() {
                 {modules.length > 0 && (
                     <div className="flex flex-wrap items-center justify-between gap-3 px-2">
                         <p className="text-sm font-bold text-gray-400">Części: {sections.length} · Etapy: {modules.length}</p>
-                        <div className="flex flex-wrap gap-2">
+                        {!search.active && <div className="flex flex-wrap gap-2">
                             <button
                                 type="button"
                                 disabled={expandedSectionCount === 0}
@@ -510,7 +539,7 @@ export default function ModulePage() {
                             >
                                 Rozwiń etapy
                             </button>
-                        </div>
+                        </div>}
                     </div>
                 )}
                 {modules.length === 0 ? (
@@ -518,8 +547,8 @@ export default function ModulePage() {
                         Brak sekcji w tym kursie.
                     </div>
                 ) : (
-                    sections.map(section => {
-                        const firstModule = section.entries[0].module;
+                    search.sections.map(section => {
+                        const firstModule = section.firstModule;
                         const sectionExpanded = isSectionExpanded(section);
                         const sectionPanelId = `course-${courseId}-section-${section.id}`;
                         const stageRange = section.startStageNumber === section.endStageNumber
@@ -536,11 +565,13 @@ export default function ModulePage() {
                                     expanded={sectionExpanded}
                                     onToggle={() => toggleSection(section)}
                                     panelId={sectionPanelId}
-                                    summary={`${stageRange} · Liczba etapów: ${section.entries.length} · Lekcje: ${section.lessonCount}`}
+                                    summary={search.active
+                                        ? `${stageRange} · Znalezione etapy: ${section.entries.length} · Lekcje w wynikach: ${section.entries.reduce((count, entry) => count + entry.lessonEntries.length, 0)}`
+                                        : `${stageRange} · Liczba etapów: ${section.entries.length} · Lekcje: ${section.lessonCount}`}
                                     fallbackTitle={sections.length === 1 ? "Etapy kursu" : "Etapy bez nagłówka"}
                                 />
                                 <div id={sectionPanelId} hidden={!sectionExpanded} className="space-y-4">
-                                    {sectionExpanded && section.entries.map(({ module, moduleIndex }) => {
+                                    {sectionExpanded && section.entries.map(({ module, moduleIndex, lessonEntries }) => {
                                         const lessons = module.lessons || [];
                                         const progressEligibleLessons = role === "ADMIN"
                                             ? lessons
@@ -738,7 +769,7 @@ export default function ModulePage() {
                                                         </div>
                                                     ) : (
                                                         <ol className="space-y-4 py-2">
-                                                            {lessons.map((lesson, index) => {
+                                                            {lessonEntries.map(({ lesson, lessonIndex: index }) => {
                                                                 const offsets = [0, -64, 0, 64];
                                                                 const offset = offsets[index % offsets.length];
                                                                 const current = Number(lesson.id) === Number(activeLessonId);
