@@ -16,6 +16,7 @@ import {
 import { getBlockLabel } from "./blockTypes";
 import { DEFAULT_EXERCISE_XP, getBlockBaseXp } from "../../utils/lessonBlockRewards";
 import { cleanChatGptText } from "../../utils/chatGptReferences";
+import { getImportRepairPrompt } from "../../utils/lessonImportPrompt";
 
 export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks, variant = "PROGRAMMING" }) {
     const { showToast } = useFeedback();
@@ -43,6 +44,19 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
             showToast("Wzór promptu został skopiowany.", "success");
         } catch {
             showToast("Nie udało się skopiować promptu.", "error");
+        }
+    };
+
+    const copyRepair = async () => {
+        try {
+            await navigator.clipboard.writeText(getImportRepairPrompt({
+                source,
+                errors: [...result.errors, ...(importError ? [importError] : [])],
+                contract: getChatGptLessonPrompt(maxBlocks, variant, { includeContext: false })
+            }));
+            showToast("Skopiowano materiał i listę błędów. Wklej je do ChatGPT, a poprawioną odpowiedź ponownie tutaj.", "success");
+        } catch {
+            showToast("Nie udało się skopiować polecenia naprawy.", "error");
         }
     };
 
@@ -79,10 +93,10 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
         <section className="rounded-3xl border border-violet-400/25 bg-violet-500/[0.07] p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-300">Import bez API</p>
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-300">Import ze sprawdzeniem pól</p>
                     <h4 className="mt-2 text-xl font-black text-white">Wklej lekcję przygotowaną w ChatGPT</h4>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                        EduHub rozpozna maksymalnie {maxBlocks} spójnych kroków, zadania oraz odpowiedzi quizów. Skopiowany wzór sam dobiera metodykę, poziom wsparcia i rodzaje ćwiczeń do tematu. Jeden dialog lub trening słówek może zawierać wiele wewnętrznych elementów. Nic nie zostanie zapisane przed kliknięciem importu.
+                        1. Skopiuj wzór do ChatGPT. 2. Wklej tutaj gotową odpowiedź, nie sam prompt. 3. Sprawdź podgląd i zapisz. Maksymalnie {maxBlocks} bloków. Nic nie zapisze się automatycznie.
                     </p>
                     <p className="mt-2 text-xs font-black uppercase tracking-wider text-cyan-300/80">
                         Obecna lekcja: {existingCount}/{maxBlocks} bloków · wolne miejsce: {remainingSlots}
@@ -142,6 +156,9 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                         {result.warnings.map((warning) => (
                             <p key={warning} className="mt-2 text-sm text-amber-200">{warning}</p>
                         ))}
+                        {(result.errors.length > 0 || importError) && <button type="button" onClick={copyRepair} disabled={importing} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-100 hover:bg-red-500/20 disabled:opacity-40">
+                            <BsClipboard aria-hidden="true" /> Skopiuj polecenie naprawy do ChatGPT
+                        </button>}
                         {exceedsLessonLimit && (
                             <div className="mt-3 rounded-xl border border-amber-400/25 bg-amber-500/10 p-3 text-sm leading-6 text-amber-100">
                                 <p className="font-bold">Nie można dopisać tych bloków do obecnych.</p>

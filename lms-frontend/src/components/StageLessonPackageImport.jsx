@@ -10,6 +10,7 @@ import {
 } from "react-icons/bs";
 import { useFeedback } from "../context/FeedbackContext";
 import { cleanChatGptText } from "../utils/chatGptReferences";
+import { getImportRepairPrompt } from "../utils/lessonImportPrompt";
 import {
     getStageLessonPrompt,
     parseStageLessonImport,
@@ -29,6 +30,10 @@ export default function StageLessonPackageImport({
     const [source, setSource] = useState("");
     const [importError, setImportError] = useState("");
     const [publishLessons, setPublishLessons] = useState(true);
+    const [promptStart, setPromptStart] = useState(1);
+    const [promptEnd, setPromptEnd] = useState(null);
+    const end = Math.min(promptEnd ?? currentLessons.length, currentLessons.length);
+    const promptLessons = currentLessons.slice(promptStart - 1, end);
     const parsed = useMemo(
         () => parseStageLessonImport(source, maxBlocks, variant),
         [source, maxBlocks, variant]
@@ -47,16 +52,30 @@ export default function StageLessonPackageImport({
                 maxBlocks,
                 variant,
                 stageTitle: moduleTitle,
-                lessonTitles: currentLessons.map(lesson => lesson.title)
+                lessonTitles: promptLessons.map(lesson => lesson.title)
             }));
             showToast(
                 currentLessons.length > 0
-                    ? `Skopiowano prompt dla ${currentLessons.length} lekcji tego etapu.`
+                    ? `Skopiowano prompt dla ${promptLessons.length} lekcji z wybranego zakresu.`
                     : "Skopiowano wzór promptu dla całego etapu.",
                 "success"
             );
         } catch {
             showToast("Nie udało się skopiować promptu.", "error");
+        }
+    };
+
+    const copyRepair = async () => {
+        try {
+            await navigator.clipboard.writeText(getImportRepairPrompt({
+                source,
+                errors: [...errors, ...(importError ? [importError] : [])],
+                contract: getStageLessonPrompt({ maxBlocks, variant, stageTitle: moduleTitle, lessonTitles: currentLessons.map(lesson => lesson.title) }),
+                scope: "paczkę lekcji"
+            }));
+            showToast("Skopiowano pakiet i konkretne błędy. Wklej do ChatGPT, a jego poprawioną odpowiedź ponownie tutaj.", "success");
+        } catch {
+            showToast("Nie udało się skopiować polecenia naprawy.", "error");
         }
     };
 
@@ -132,7 +151,7 @@ export default function StageLessonPackageImport({
                         Uzupełnij bloki istniejących lekcji
                     </h2>
                     <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-400">
-                        Jedna paczka może obejmować do {MAX_LESSONS_PER_STAGE_IMPORT} wcześniej utworzonych lekcji, każdą z maksymalnie {maxBlocks} blokami. Limit {maxBlocks} dotyczy bloków w lekcji, nie liczby lekcji w etapie. Import dopasowuje tytuły i nigdy nie tworzy dodatkowych kart.
+                        Skopiuj wzór do ChatGPT i wklej tutaj jego gotową odpowiedź. Paczka może obejmować do {MAX_LESSONS_PER_STAGE_IMPORT} istniejących lekcji, po maksymalnie {maxBlocks} bloków. Import dopasowuje tytuły i nigdy nie tworzy dodatkowych kart.
                     </p>
                 </div>
                 <button
@@ -148,14 +167,27 @@ export default function StageLessonPackageImport({
 
             {currentLessons.length === 0 && <p role="status" className="mt-4 rounded-xl border border-amber-400/25 bg-amber-500/10 p-4 text-sm text-amber-100">Najpierw utwórz lekcje w tym etapie. Dopiero potem importuj ich bloki.</p>}
 
+            {currentLessons.length > 0 && <fieldset disabled={lessonsState.packageImporting} className="mt-5 rounded-xl border border-white/10 bg-black/15 p-4">
+                <legend className="px-2 text-sm font-bold text-slate-200">Zakres lekcji do przygotowania</legend>
+                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                    <label className="inline-flex items-center gap-2">Od <input aria-label="Prompt od lekcji" type="number" min="1" max={currentLessons.length} value={promptStart} onChange={event => setPromptStart(Math.max(1, Math.min(Number(event.target.value) || 1, currentLessons.length)))} className="w-20 rounded-lg border border-white/20 bg-slate-950 px-3 py-2 text-white" /></label>
+                    <label className="inline-flex items-center gap-2">do <input aria-label="Prompt do lekcji" type="number" min="1" max={currentLessons.length} value={end} onChange={event => setPromptEnd(Math.max(1, Math.min(Number(event.target.value) || 1, currentLessons.length)))} className="w-20 rounded-lg border border-white/20 bg-slate-950 px-3 py-2 text-white" /></label>
+                    <button type="button" onClick={() => { const first = currentLessons.findIndex(lesson => !lesson.blockCount); const start = first < 0 ? 1 : first + 1; setPromptStart(start); setPromptEnd(Math.min(start + 2, currentLessons.length)); }} className="rounded-lg border border-cyan-300/25 px-3 py-2 font-bold text-cyan-200 hover:bg-cyan-500/10">Mniejsza paczka: 3 lekcje</button>
+                    <button type="button" onClick={() => { setPromptStart(1); setPromptEnd(null); }} className="rounded-lg px-3 py-2 text-slate-300 hover:bg-white/5">Cały etap</button>
+                </div>
+                <p className="mt-3 text-xs leading-5 text-slate-400">Duże odpowiedzi ChatGPT mogą się urwać. Dla rozbudowanych lekcji wybierz po 2–3 naraz; kolejne zakresy dodasz do tych samych kart. Import nadal obsługuje do 50 lekcji w jednej paczce.</p>
+                {promptStart > end && <p role="alert" className="mt-2 text-sm text-red-200">Początek zakresu nie może być większy od końca.</p>}
+                {promptLessons.length > MAX_LESSONS_PER_STAGE_IMPORT && <p role="alert" className="mt-2 text-sm text-red-200">Wybierz zakres do {MAX_LESSONS_PER_STAGE_IMPORT} lekcji. Większy etap przygotujesz w kolejnych paczkach.</p>}
+            </fieldset>}
+
             <div className="mt-6 flex flex-wrap gap-3">
                 <button
                     type="button"
                     onClick={copyPrompt}
-                    disabled={currentLessons.length === 0 || lessonsState.loading}
+                    disabled={currentLessons.length === 0 || promptLessons.length === 0 || promptLessons.length > MAX_LESSONS_PER_STAGE_IMPORT || lessonsState.loading || lessonsState.packageImporting}
                     className="inline-flex items-center gap-2 rounded-xl border border-violet-300/20 bg-violet-500/10 px-4 py-2.5 text-sm font-black text-violet-100 transition hover:bg-violet-500/20 disabled:opacity-40"
                 >
-                    <BsClipboard /> Skopiuj prompt dla całego etapu
+                    <BsClipboard /> {promptLessons.length === currentLessons.length ? "Skopiuj prompt dla całego etapu" : `Skopiuj prompt: ${promptLessons.length} lekcji z zakresu`}
                 </button>
                 <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-black text-slate-200 transition hover:bg-white/10">
                     <BsFileEarmarkText /> Wczytaj plik .txt lub .md
@@ -163,6 +195,7 @@ export default function StageLessonPackageImport({
                         type="file"
                         accept=".txt,.md,text/plain,text/markdown"
                         onChange={loadFile}
+                        disabled={lessonsState.packageImporting}
                         className="sr-only"
                     />
                 </label>
@@ -207,6 +240,9 @@ export default function StageLessonPackageImport({
                         {parsed.warnings.slice(0, 8).map(warning => (
                             <p key={warning} className="mt-2 text-sm leading-6 text-amber-200">{warning}</p>
                         ))}
+                        {(errors.length > 0 || importError) && <button type="button" onClick={copyRepair} disabled={lessonsState.packageImporting} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-100 hover:bg-red-500/20 disabled:opacity-40">
+                            <BsClipboard aria-hidden="true" /> Skopiuj polecenie naprawy do ChatGPT
+                        </button>}
                     </div>
 
                     {parsed.lessons.length > 0 && (
@@ -222,7 +258,7 @@ export default function StageLessonPackageImport({
                                     <p className={`mt-2 text-xs leading-5 ${target ? "text-emerald-200" : "text-red-200"}`}>
                                         {!target ? "Brak jednoznacznego dopasowania — zapis zablokowany" : `→ Istniejąca lekcja ${target.displayNumber}: ${target.title}`}
                                     </p>
-                                    {target && <p className="mt-1 text-xs leading-5 text-slate-400">{target.blockCount > 0 ? publishLessons && !target.published && target.publishedBlockCount > 0 ? "Treść pozostanie bez zmian; lekcja zostanie opublikowana." : "Lekcja ma już bloki — treść pozostanie bez zmian." : `Dodam ${lesson.blocks.length} bloków do tej karty.`}</p>}
+                                    {target && <p className="mt-1 text-xs leading-5 text-slate-400">{target.blockCount > 0 ? publishLessons && !target.published && target.publishedBlockCount > 0 ? "Treść pozostanie bez zmian; lekcja zostanie opublikowana." : "Lekcja ma już bloki — treść pozostanie bez zmian." : `Bloki do dodania do tej karty: ${lesson.blocks.length}.`}</p>}
                                 </li>
                             );})}
                         </ol>

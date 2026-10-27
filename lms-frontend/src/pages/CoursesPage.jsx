@@ -1,52 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getCourseDescription, isJavaBackendCourse, JAVA_COURSE_PATH } from "../utils/javaCourseOffer";
-import {
-    BsArrowClockwise,
-    BsBuildings,
-    BsCheckCircle,
-    BsCodeSlash,
-    BsCollection,
-    BsExclamationTriangle,
-    BsHourglassSplit,
-    BsLaptop,
-    BsLockFill,
-    BsMortarboardFill,
-    BsPencil,
-    BsPlayFill,
-    BsPlusCircle,
-    BsRocketTakeoff,
-    BsTrash,
-    BsTranslate
-} from "react-icons/bs";
+import { BsArrowClockwise, BsArrowRight, BsCheckCircle, BsCollection, BsExclamationTriangle, BsHourglassSplit, BsLockFill, BsPencil, BsPlusCircle, BsSearch, BsTrash, BsX } from "react-icons/bs";
 import { apiFetch } from "../api/api";
-import {
-    getCourseCover,
-    getGeneratedCourseCover
-} from "../utils/courseCover";
-import {
-    getCategoryDefinition,
-    getCourseCategory,
-    getCourseLanguageLabel,
-    getCourseLevelLabel
-} from "../utils/courseTaxonomy";
+import { getCourseCover, getGeneratedCourseCover } from "../utils/courseCover";
+import { getCategoryDefinition, getCourseCategory, getCourseLanguageLabel, getCourseLevelLabel } from "../utils/courseTaxonomy";
+import { courseBillingLabel, courseProgress, filterCoursesByName, formatCoursePrice, isPaidCourse, sortCoursesForLearning } from "../utils/courseCatalog";
 import { useAuth } from "../context/AuthContext";
 import { useFeedback } from "../context/FeedbackContext";
 
-const CATEGORY_ICONS = {
-    SCHOOL: BsMortarboardFill,
-    UNIVERSITY: BsBuildings,
-    PROGRAMMING: BsCodeSlash,
-    DIGITAL_SKILLS: BsLaptop,
-    LANGUAGE: BsTranslate
-};
-
 const CATEGORY_STYLES = {
-    SCHOOL: "border-emerald-400/30 bg-emerald-500/10 text-emerald-200",
-    UNIVERSITY: "border-amber-400/30 bg-amber-500/10 text-amber-200",
-    PROGRAMMING: "border-cyan-400/30 bg-cyan-500/10 text-cyan-200",
-    DIGITAL_SKILLS: "border-blue-400/30 bg-blue-500/10 text-blue-200",
-    LANGUAGE: "border-violet-400/30 bg-violet-500/10 text-violet-200"
+    SCHOOL: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    UNIVERSITY: "border-amber-200 bg-amber-50 text-amber-900",
+    PROGRAMMING: "border-teal-200 bg-teal-50 text-teal-800",
+    DIGITAL_SKILLS: "border-blue-200 bg-blue-50 text-blue-800",
+    LANGUAGE: "border-violet-200 bg-violet-50 text-violet-800"
 };
 
 function getErrorMessage(error) {
@@ -58,229 +26,49 @@ function getErrorMessage(error) {
     }
 }
 
-function Metric({ label, value }) {
-    return (
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl sm:p-7">
-            <p className="text-sm text-slate-400">{label}</p>
-            <p className="mt-3 text-3xl font-black sm:text-5xl">{value}</p>
-        </div>
-    );
-}
-
-function formatPrice(price) {
-    return new Intl.NumberFormat("pl-PL", {
-        style: "currency",
-        currency: "PLN",
-        maximumFractionDigits: Number(price) % 1 === 0 ? 0 : 2
-    }).format(Number(price || 0));
-}
-
-function formatCoursePrice(course) {
-    if (course.billingMode === "SUBSCRIPTION") {
-        return `${formatPrice(course.monthlyPrice)} / mies.`;
-    }
-    if (course.billingMode === "FLEXIBLE") {
-        return `od ${formatPrice(course.monthlyPrice)} / mies.`;
-    }
-    return formatPrice(course.price);
-}
-
 function CourseSkeleton() {
-    return (
-        <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04]">
-            <div className="aspect-[3/2] animate-pulse bg-slate-800/80" />
-            <div className="space-y-5 p-6">
-                <div className="h-7 w-1/2 animate-pulse rounded-lg bg-slate-800" />
-                <div className="space-y-2">
-                    <div className="h-4 animate-pulse rounded bg-slate-800" />
-                    <div className="h-4 w-4/5 animate-pulse rounded bg-slate-800" />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                    {[0, 1, 2].map((item) => (
-                        <div key={item} className="h-20 animate-pulse rounded-2xl bg-slate-900" />
-                    ))}
-                </div>
-                <div className="h-12 animate-pulse rounded-2xl bg-slate-800" />
-            </div>
-        </div>
-    );
-}
-
-function LearningSpaceCard({ icon: Icon, eyebrow, title, description, count, tone, active, onClick }) {
-    const tones = {
-        emerald: "border-emerald-400/20 from-emerald-500/15 text-emerald-200 hover:border-emerald-300/45",
-        amber: "border-amber-400/20 from-amber-500/15 text-amber-200 hover:border-amber-300/45",
-        cyan: "border-cyan-400/20 from-cyan-500/15 text-cyan-200 hover:border-cyan-300/45",
-        violet: "border-violet-400/20 from-violet-500/15 text-violet-200 hover:border-violet-300/45"
-    };
-    const courseCountLabel = count === 1
-        ? "1 kurs"
-        : count > 1 && count < 5
-            ? `${count} kursy`
-            : `${count} kursów`;
-
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-pressed={active}
-            className={`group min-w-0 rounded-3xl border bg-gradient-to-br to-white/[0.025] p-5 text-left transition duration-300 hover:-translate-y-1 hover:bg-white/[0.04] ${tones[tone]} ${active ? "ring-2 ring-cyan-300/70 ring-offset-4 ring-offset-[#050810]" : "opacity-80 hover:opacity-100"}`}
-        >
-            <div className="flex items-start justify-between gap-4">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-current/20 bg-black/20 text-xl">
-                    <Icon />
-                </span>
-                <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-black text-slate-300">
-                    {courseCountLabel}
-                </span>
-            </div>
-            <p className="mt-5 text-[10px] font-black uppercase tracking-[0.24em] opacity-70">{eyebrow}</p>
-            <h3 className="mt-1 text-xl font-black text-white">{title}</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
-        </button>
-    );
-}
-
-function EmptyLearningArea({ message }) {
-    return (
-        <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.025] px-6 py-10 text-center text-sm text-slate-500">
-            {message}
-        </div>
-    );
+    return <div aria-hidden="true" className="overflow-hidden rounded-2xl border border-slate-200 bg-white"><div className="aspect-[16/7] animate-pulse bg-slate-200" /><div className="space-y-4 p-5"><div className="h-5 w-2/3 animate-pulse rounded bg-slate-200" /><div className="h-12 animate-pulse rounded bg-slate-100" /><div className="h-10 animate-pulse rounded-lg bg-slate-100" /></div></div>;
 }
 
 function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
     const category = getCourseCategory(course);
-    const categoryDefinition = getCategoryDefinition(category);
-    const CategoryIcon = CATEGORY_ICONS[category] || BsCollection;
-    const progress = Math.min(100, Math.max(0, course.progress ?? 0));
-    const pending = course.accessStatus === "PENDING";
+    const definition = getCategoryDefinition(category);
+    const progress = courseProgress(course);
+    const pending = course.accessStatus === "PENDING" && !course.canAccess && !isAdmin;
     const locked = !course.canAccess && !isAdmin;
-    const actionLabel = pending
-        ? "Płatność oczekuje"
-        : locked
-            ? `Odblokuj — ${formatCoursePrice(course)}`
-            : progress > 0
-                ? "Kontynuuj naukę"
-                : "Rozpocznij naukę";
+    const actionLabel = pending ? "Sprawdź płatność" : locked ? "Zobacz opcje dostępu" : "Otwórz plan kursu";
 
     return (
-        <article className="group flex min-w-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-2xl transition duration-300 md:hover:-translate-y-1 md:hover:border-cyan-400/50 md:hover:shadow-[0_20px_60px_rgba(6,182,212,0.12)]">
-            <div className="relative overflow-hidden bg-slate-950">
-                <img
-                    src={getCourseCover(course)}
-                    alt={`Okładka kursu ${course.title || course.name}`}
-                    loading="lazy"
-                    decoding="async"
-                    onError={({ currentTarget }) => {
-                        currentTarget.onerror = null;
-                        currentTarget.src = getGeneratedCourseCover(course);
-                    }}
-                    className="aspect-[3/2] w-full object-cover transition duration-500 md:group-hover:scale-[1.03]"
-                />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#090d15]/70 via-transparent to-transparent" />
-                <div className={`absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-black backdrop-blur-xl ${CATEGORY_STYLES[category] || CATEGORY_STYLES.PROGRAMMING}`}>
-                    <CategoryIcon />
-                    {categoryDefinition.label}
+        <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-slate-300">
+            <img src={getCourseCover(course)} alt={`Okładka kursu ${course.title || course.name}`} loading="lazy" decoding="async" className="aspect-[16/7] w-full bg-slate-100 object-cover" onError={({ currentTarget }) => { currentTarget.onerror = null; currentTarget.src = getGeneratedCourseCover(course); }} />
+            <div className="flex flex-1 flex-col p-5 sm:p-6">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span className={`rounded-md border px-2 py-1 text-[11px] font-semibold ${CATEGORY_STYLES[category] || CATEGORY_STYLES.PROGRAMMING}`}>{definition.label}</span>
+                    {isAdmin && <span className={`rounded-md border px-2 py-1 text-[11px] font-semibold ${course.published === false ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{course.published === false ? "Szkic kursu" : "Opublikowany"}</span>}
+                    {pending && <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-900"><BsHourglassSplit aria-hidden="true" /> Płatność oczekuje</span>}
                 </div>
-                <div className="absolute right-4 top-4 rounded-full border border-white/15 bg-slate-950/85 px-3 py-1.5 text-xs font-black backdrop-blur-xl">
-                    {course.paid ? formatCoursePrice(course) : "Bezpłatny"}
-                </div>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-5 p-5 sm:p-6">
-                <div>
-                    <h3 className="text-2xl font-black leading-tight">
-                        {course.title || course.name}
-                    </h3>
-                    <p className="mt-3 line-clamp-3 min-h-[4.5rem] leading-6 text-slate-400">
-                        {getCourseDescription(course)}
-                    </p>
-                    {isJavaBackendCourse(course) && <Link reloadDocument to={JAVA_COURSE_PATH} className="mt-3 inline-flex text-sm font-bold text-cyan-300 hover:text-cyan-100">Poznaj program i sposób nauki →</Link>}
+                <h3 className="text-xl font-semibold leading-snug tracking-tight text-slate-900">{course.title || course.name}</h3>
+                <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{getCourseDescription(course)}</p>
+                {isJavaBackendCourse(course) && <Link reloadDocument to={JAVA_COURSE_PATH} className="mt-3 text-sm font-semibold text-teal-800 underline decoration-teal-800/30 underline-offset-4 hover:decoration-teal-800">Zobacz szczegółowy program →</Link>}
+                <div className="mt-5 flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-100 pt-4 text-xs text-slate-500">
+                    <span>{course.lessonCount ?? 0} lekcji</span><span>{course.moduleCount ?? 0} etapów</span><span>{category === "LANGUAGE" ? `${getCourseLanguageLabel(course.courseLanguage)} · ` : ""}{getCourseLevelLabel(course)}</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                    <div className="min-w-0 rounded-2xl border border-white/5 bg-black/20 p-3 sm:p-4">
-                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">Lekcje</p>
-                        <p className="mt-2 text-xl font-black sm:text-2xl">{course.lessonCount ?? 0}</p>
-                    </div>
-                    <div className="min-w-0 rounded-2xl border border-white/5 bg-black/20 p-3 sm:p-4">
-                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">
-                            {category === "LANGUAGE" ? "CEFR" : "Poziom"}
-                        </p>
-                        <p className="mt-2 truncate text-sm font-black sm:text-base" title={getCourseLevelLabel(course)}>
-                            {getCourseLevelLabel(course)}
-                        </p>
-                    </div>
-                    <div className="min-w-0 rounded-2xl border border-white/5 bg-black/20 p-3 sm:p-4">
-                        <p className="truncate text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">Moduły</p>
-                        <p className="mt-2 text-xl font-black sm:text-2xl">{course.moduleCount ?? 0}</p>
-                    </div>
+                {!locked && <div className="mt-4">
+                    <div className="mb-2 flex justify-between gap-2 text-xs text-slate-500"><span>Ukończono {course.completedLessonCount ?? 0} z {course.lessonCount ?? 0} lekcji</span><span className="font-semibold text-teal-800">{progress}%</span></div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-teal-700" style={{ width: `${progress}%` }} /></div>
+                </div>}
+
+                <div className="mt-auto pt-5">
+                    <div className="mb-4 flex flex-wrap items-end justify-between gap-2"><span className="text-lg font-semibold tracking-tight text-slate-900">{formatCoursePrice(course)}</span><span className="text-xs text-slate-500">{courseBillingLabel(course)}</span></div>
+                    <button type="button" onClick={onOpen} className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${pending ? "border border-amber-300 bg-amber-50 text-amber-950 hover:bg-amber-100" : "bg-teal-800 text-white hover:bg-teal-900"}`}>
+                        {pending ? <BsHourglassSplit aria-hidden="true" /> : locked ? <BsLockFill aria-hidden="true" /> : null}{actionLabel}<BsArrowRight aria-hidden="true" />
+                    </button>
+                    {isAdmin && <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-200 pt-4">
+                        <button type="button" onClick={onEdit} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-teal-700 hover:text-teal-800"><BsPencil aria-hidden="true" /> Edytuj</button>
+                        <button type="button" onClick={onDelete} disabled={deleting} className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-wait disabled:opacity-50"><BsTrash aria-hidden="true" /> {deleting ? "Usuwanie…" : "Usuń"}</button>
+                    </div>}
                 </div>
-
-                {category === "LANGUAGE" && (
-                    <div className="flex items-center gap-2 text-sm font-bold text-violet-200">
-                        <BsTranslate />
-                        {getCourseLanguageLabel(course.courseLanguage)} · poziomy {getCourseLevelLabel(course)}
-                    </div>
-                )}
-
-                <div>
-                    <div className="mb-2 flex justify-between text-sm text-slate-400">
-                        <span>Postęp kursu</span>
-                        <span className="font-bold text-slate-200">{progress}%</span>
-                    </div>
-                    <div className="h-2.5 overflow-hidden rounded-full bg-slate-800">
-                        <div
-                            className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-700"
-                            style={{ width: `${progress}%` }}
-                        />
-                    </div>
-                    <p className="mt-2 text-xs text-slate-500">
-                        Ukończono {course.completedLessonCount ?? 0} z {course.lessonCount ?? 0} lekcji
-                    </p>
-                </div>
-
-                <button
-                    type="button"
-                    onClick={onOpen}
-                    className={`mt-auto flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 font-black transition hover:brightness-110 ${
-                        pending
-                            ? "border border-amber-500/30 bg-amber-500/10 text-amber-200"
-                            : locked
-                                ? "bg-gradient-to-r from-violet-500 to-blue-600"
-                                : "bg-gradient-to-r from-cyan-500 to-blue-600"
-                    }`}
-                >
-                    {pending ? <BsHourglassSplit /> : locked ? <BsLockFill /> : <BsPlayFill />}
-                    {actionLabel}
-                </button>
-
-                {isAdmin && (
-                    <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
-                        <button
-                            type="button"
-                            onClick={onEdit}
-                            className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm font-bold text-amber-200 transition hover:bg-amber-500/20"
-                        >
-                            <BsPencil />
-                            Edytuj
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onDelete}
-                            disabled={deleting}
-                            className="flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm font-bold text-red-200 transition hover:bg-red-500/20 disabled:cursor-wait disabled:opacity-50"
-                        >
-                            {deleting ? (
-                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-red-100 border-t-transparent" />
-                            ) : (
-                                <BsTrash />
-                            )}
-                            Usuń
-                        </button>
-                    </div>
-                )}
             </div>
         </article>
     );
@@ -288,65 +76,50 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
 
 export default function CoursesPage() {
     const { user } = useAuth();
+    return <CourseCatalog key={`${user?.id ?? user?.email ?? "guest"}:${user?.role ?? "unknown"}`} user={user} />;
+}
+
+function CourseCatalog({ user }) {
     const { confirm } = useFeedback();
     const navigate = useNavigate();
     const location = useLocation();
+    const searchInput = useRef(null);
     const isAdmin = user?.role === "ADMIN";
     const [view, setView] = useState("catalog");
-    const [activeSection, setActiveSection] = useState("recommended");
-
+    const [activeSection, setActiveSection] = useState("all");
+    const [query, setQuery] = useState("");
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [deletingCourseId, setDeletingCourseId] = useState(null);
-
-    const loadCourses = async () => {
-        try {
-            setLoading(true);
-            setError("");
-            const data = await apiFetch(view === "mine" ? "/courses/my" : "/courses");
-            setCourses(data || []);
-        } catch (loadError) {
-            setError(getErrorMessage(loadError));
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [reload, setReload] = useState(0);
 
     useEffect(() => {
         let active = true;
-
         apiFetch(view === "mine" ? "/courses/my" : "/courses")
-            .then((data) => {
-                if (active) setCourses(data || []);
-            })
-            .catch((loadError) => {
-                if (active) setError(getErrorMessage(loadError));
-            })
-            .finally(() => {
-                if (active) setLoading(false);
-            });
+            .then(data => { if (active) setCourses(data || []); })
+            .catch(loadError => { if (active) setError(getErrorMessage(loadError)); })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, [view, reload]);
 
-        return () => {
-            active = false;
-        };
-    }, [view]);
-
-    const changeView = (nextView) => {
+    const changeView = nextView => {
+        if (view === nextView) return;
         setLoading(true);
         setError("");
+        setCourses([]);
         setView(nextView);
     };
-
-    const deleteCourse = async (course) => {
+    const refresh = () => { setLoading(true); setError(""); setReload(value => value + 1); };
+    const clearSearch = () => { setQuery(""); searchInput.current?.focus(); };
+    const deleteCourse = async course => {
         const title = course.title || course.name;
         if (!await confirm({ title: "Usuń kurs", message: `Usunąć kurs „${title}” wraz z całą jego zawartością?`, confirmLabel: "Usuń kurs" })) return;
-
         try {
             setDeletingCourseId(course.id);
             setError("");
             await apiFetch(`/courses/${course.id}`, { method: "DELETE" });
-            setCourses((current) => current.filter((item) => item.id !== course.id));
+            setCourses(current => current.filter(item => item.id !== course.id));
         } catch (deleteError) {
             setError(getErrorMessage(deleteError));
         } finally {
@@ -354,280 +127,49 @@ export default function CoursesPage() {
         }
     };
 
-    const totalLessons = courses.reduce(
-        (sum, course) => sum + (course.lessonCount || 0),
-        0
-    );
-    const averageProgress = courses.length
-        ? Math.round(courses.reduce((sum, course) => sum + (course.progress || 0), 0) / courses.length)
-        : 0;
-    const schoolCourses = courses.filter(
-        (course) => getCourseCategory(course) === "SCHOOL"
-    );
-    const isPaidCourse = (course) => typeof course.paid === "boolean"
-        ? course.paid
-        : course.billingMode !== "FREE";
-    const paidCourses = courses.filter(isPaidCourse);
-    const freeCourses = courses.filter((course) => !isPaidCourse(course));
-    const recommendedCourses = [...courses]
-        .sort((first, second) => {
-            const accessDifference = Number(second.canAccess) - Number(first.canAccess);
-            if (accessDifference !== 0) return accessDifference;
-            const progressDifference = Number(second.progress || 0) - Number(first.progress || 0);
-            if (progressDifference !== 0) return progressDifference;
-            return Number(second.lessonCount || 0) - Number(first.lessonCount || 0);
-        })
-        .slice(0, 6);
-    const courseSections = {
-        recommended: {
-            label: "Polecane",
-            eyebrow: "Dobry wybór na start",
-            description: "Najlepiej dopasowane, rozbudowane ścieżki oraz kursy, które już rozpocząłeś.",
-            items: recommendedCourses
-        },
-        paid: {
-            label: "Płatne",
-            eyebrow: "Pełne programy nauki",
-            description: "Kursy kupowane jednorazowo, na 30 dni albo w miesięcznym abonamencie.",
-            items: paidCourses
-        },
-        free: {
-            label: "Darmowe",
-            eyebrow: "Nauka bez opłat",
-            description: "Bezpłatne kursy, które możesz rozpocząć od razu.",
-            items: freeCourses
-        },
-        school: {
-            label: "Dla szkół",
-            eyebrow: "Materiały zgodne z nauką szkolną",
-            description: "Przedmioty i ścieżki uporządkowane dla uczniów według programu nauczania.",
-            items: schoolCourses
-        }
+    const matchingCourses = useMemo(() => filterCoursesByName(courses, query), [courses, query]);
+    const recommended = useMemo(() => sortCoursesForLearning(matchingCourses).slice(0, 6), [matchingCourses]);
+    const sections = {
+        all: { label: "Wszystkie", description: "Wybierz kurs lub zawęź katalog do tego, czego teraz potrzebujesz.", items: matchingCourses },
+        recommended: { label: "Polecane", description: "Najpierw rozpoczęte kursy i dostępne dla Ciebie programy. Do sześciu propozycji z katalogu.", items: recommended },
+        paid: { label: "Płatne", description: "Kursy z dostępem jednorazowym, na 30 dni lub w abonamencie — zależnie od oferty.", items: matchingCourses.filter(isPaidCourse) },
+        free: { label: "Darmowe", description: "Kursy, które możesz rozpocząć bez opłat.", items: matchingCourses.filter(course => !isPaidCourse(course)) },
+        school: { label: "Dla szkół", description: "Przedmioty szkolne i materiały dla uczniów technikum.", items: matchingCourses.filter(course => getCourseCategory(course) === "SCHOOL") }
     };
-    const selectedSection = courseSections[activeSection];
-    const renderCourseCards = (items) => (
-        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-            {items.map((course) => (
-                <CourseCard
-                    key={course.id}
-                    course={course}
-                    isAdmin={isAdmin}
-                    deleting={deletingCourseId === course.id}
-                    onOpen={() => navigate(
-                        course.canAccess || isAdmin
-                            ? `/modules/${course.id}`
-                            : `/checkout/${course.id}`
-                    )}
-                    onEdit={() => navigate(`/admin/courses/${course.id}/edit`)}
-                    onDelete={() => deleteCourse(course)}
-                />
-            ))}
-        </div>
-    );
+    const selected = sections[activeSection];
+    const totalLessons = courses.reduce((sum, course) => sum + Number(course.lessonCount || 0), 0);
+    const averageProgress = courses.length ? Math.round(courses.reduce((sum, course) => sum + courseProgress(course), 0) / courses.length) : 0;
 
     return (
-        <div className="space-y-8 text-white sm:space-y-12">
-            {location.state?.message && (
-                <div role="status" className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-emerald-200">
-                    <BsCheckCircle className="shrink-0" />
-                    {location.state.message}
+        <div className="app-enter mx-auto max-w-7xl space-y-6 pb-8 text-slate-900">
+            {location.state?.message && <div role="status" className="flex items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-900"><BsCheckCircle aria-hidden="true" className="shrink-0" />{location.state.message}</div>}
+            <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-6">
+                <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800">Biblioteka nauki</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{view === "mine" ? "Moje kursy" : isAdmin ? "Kursy w EduHub" : "Czego chcesz się nauczyć?"}</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{isAdmin ? "Zarządzaj programami, sprawdzaj publikację i otwieraj plany kursów." : "Praktyczne kursy, jasny program i nauka we własnym tempie. Wybierz swój następny krok."}</p></div>
+                {isAdmin && <button type="button" onClick={() => navigate("/admin/add-course")} className="inline-flex items-center gap-2 rounded-xl bg-teal-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"><BsPlusCircle aria-hidden="true" /> Dodaj kurs</button>}
+            </header>
+
+            <section aria-label="Wybierz kurs" className="space-y-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    {!isAdmin && <div className="flex w-fit rounded-xl border border-slate-200 bg-white p-1" aria-label="Widok katalogu">{[{ value: "catalog", label: "Katalog" }, { value: "mine", label: "Moje kursy" }].map(item => <button key={item.value} type="button" aria-pressed={view === item.value} onClick={() => changeView(item.value)} className={`rounded-lg px-4 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-teal-700 ${view === item.value ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>{item.label}</button>)}</div>}
+                    <form role="search" aria-label="Wyszukiwanie kursów" onSubmit={event => event.preventDefault()} className="w-full lg:max-w-md">
+                        <label htmlFor="course-name-search" className="sr-only">Szukaj kursu po nazwie</label>
+                        <div className="flex items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 focus-within:border-teal-700 focus-within:ring-2 focus-within:ring-teal-700/10"><BsSearch aria-hidden="true" className="shrink-0 text-slate-400" /><input ref={searchInput} id="course-name-search" type="search" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); clearSearch(); } }} autoComplete="off" maxLength={120} placeholder="Szukaj po nazwie, np. Java lub angielski" className="min-w-0 flex-1 bg-transparent py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 [&::-webkit-search-cancel-button]:appearance-none" />{query && <button type="button" onClick={clearSearch} aria-label="Wyczyść wyszukiwanie kursów" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-teal-700"><BsX aria-hidden="true" className="text-xl" /></button>}</div>
+                    </form>
                 </div>
-            )}
-
-            <section className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 p-6 sm:p-10 lg:rounded-[42px] lg:p-14">
-                <div className="absolute -left-24 -top-32 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl" />
-                <div className="absolute -bottom-40 right-0 h-96 w-96 rounded-full bg-blue-600/10 blur-3xl" />
-
-                <div className="relative z-10 max-w-4xl">
-                    <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300 sm:text-sm sm:tracking-[0.35em]">
-                        EDUHUB • NAUKA BEZ GRANIC
-                    </p>
-                    <h1 className="mt-5 text-3xl font-black leading-tight sm:text-5xl lg:text-6xl">
-                        Twoja szkoła i rozwój
-                        <br className="hidden sm:block" /> w jednym miejscu.
-                    </h1>
-                    <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:mt-7 sm:text-xl sm:leading-9">
-                        Ucz się zgodnie ze swoją klasą, przygotuj się do egzaminów albo wybierz dodatkową ścieżkę programistyczną, akademicką lub językową.
-                    </p>
-
-                    <div className="mt-7 flex flex-wrap gap-2.5 text-sm font-semibold sm:mt-9 sm:gap-3">
-                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-emerald-200">Technikum klasy 1–4</span>
-                        <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-cyan-200">Interaktywne lekcje</span>
-                        <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-blue-200">Projekty praktyczne</span>
-                        <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-2 text-violet-200">Języki A1–C2</span>
-                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-emerald-200">Certyfikaty</span>
-                    </div>
-                </div>
+                <nav aria-label="Kategorie kursów" className="flex flex-wrap gap-2">{Object.entries(sections).map(([key, section]) => <button key={key} type="button" aria-pressed={activeSection === key} onClick={() => setActiveSection(key)} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${activeSection === key ? "border-teal-800 bg-teal-800 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-teal-600 hover:text-teal-800"}`}>{section.label}<span className={`text-xs ${activeSection === key ? "text-teal-100" : "text-slate-400"}`}>{loading ? "—" : section.items.length}</span></button>)}</nav>
+                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><p className="max-w-2xl text-sm leading-6 text-slate-500">{selected.description}</p><p role="status" aria-live="polite" className="shrink-0 text-xs font-medium text-slate-600">{loading ? "Ładowanie kursów…" : `Wyniki: ${selected.items.length}${query.trim() ? ` dla „${query.trim()}”` : ""}`}</p></div>
             </section>
 
-            <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
-                <Metric label="Dostępnych kursów" value={loading ? "—" : courses.length} />
-                <Metric label="Łącznie lekcji" value={loading ? "—" : totalLessons} />
-                <Metric label="Średni postęp" value={loading ? "—" : `${averageProgress}%`} />
-            </div>
+            {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><span className="inline-flex items-start gap-2"><BsExclamationTriangle aria-hidden="true" className="mt-0.5 shrink-0" />{error}</span><button type="button" onClick={refresh} className="inline-flex items-center gap-2 font-semibold underline underline-offset-4"><BsArrowClockwise aria-hidden="true" /> Spróbuj ponownie</button></div>}
 
-            <section>
-                {!isAdmin && (
-                    <div className="mb-7 inline-flex rounded-2xl border border-white/10 bg-black/20 p-1.5">
-                        <button
-                            type="button"
-                            onClick={() => changeView("catalog")}
-                            className={`rounded-xl px-5 py-2.5 text-sm font-black transition ${
-                                view === "catalog"
-                                    ? "bg-cyan-500 text-slate-950"
-                                    : "text-slate-400 hover:text-white"
-                            }`}
-                        >
-                            Katalog
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => changeView("mine")}
-                            className={`rounded-xl px-5 py-2.5 text-sm font-black transition ${
-                                view === "mine"
-                                    ? "bg-cyan-500 text-slate-950"
-                                    : "text-slate-400 hover:text-white"
-                            }`}
-                        >
-                            Moje kursy
-                        </button>
-                    </div>
-                )}
+            {loading ? <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{[0, 1, 2].map(item => <CourseSkeleton key={item} />)}</div> : error && courses.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center"><h2 className="text-xl font-semibold">Nie udało się pobrać katalogu</h2><p className="mt-2 text-sm text-slate-600">Spróbuj ponownie, korzystając z przycisku powyżej.</p></div> : selected.items.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+                <BsCollection aria-hidden="true" className="mx-auto text-3xl text-slate-400" />
+                <h2 className="mt-4 text-xl font-semibold">{query.trim() ? "Nie znaleźliśmy takiego kursu" : courses.length === 0 ? view === "mine" ? "Twoje kursy pojawią się tutaj" : "Katalog czeka na pierwsze kursy" : `W sekcji „${selected.label}” nie ma jeszcze kursów`}</h2>
+                <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">{query.trim() ? "Spróbuj krótszej nazwy albo wybierz inną kategorię. Możesz pisać bez polskich znaków." : isAdmin ? "Dodaj kurs, a potem uzupełnij jego etapy i lekcje." : view === "mine" ? "Wybierz kurs w katalogu lub aktywuj otrzymany kod dostępu." : "Wybierz inną sekcję lub wróć później — nowe programy pojawią się po opublikowaniu."}</p>
+                <div className="mt-5 flex flex-wrap justify-center gap-3">{query.trim() && <button type="button" onClick={clearSearch} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Wyczyść wyszukiwanie</button>}{isAdmin && courses.length === 0 ? <button type="button" onClick={() => navigate("/admin/add-course")} className="rounded-xl bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900">Dodaj pierwszy kurs</button> : !isAdmin && view === "mine" ? <><button type="button" onClick={() => changeView("catalog")} className="rounded-xl bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900">Przejdź do katalogu</button><button type="button" onClick={() => navigate("/access-code")} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Mam kod dostępu</button></> : activeSection !== "all" && <button type="button" onClick={() => setActiveSection("all")} className="rounded-xl bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900">Pokaż wszystkie kursy</button>}</div>
+            </div> : <section aria-label={`Kursy: ${selected.label}`} className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{selected.items.map(course => <CourseCard key={course.id} course={course} isAdmin={isAdmin} deleting={deletingCourseId === course.id} onOpen={() => navigate(course.canAccess || isAdmin ? `/modules/${course.id}` : `/checkout/${course.id}`)} onEdit={() => navigate(`/admin/courses/${course.id}/edit`)} onDelete={() => deleteCourse(course)} />)}</section>}
 
-                <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300 sm:text-sm">Kursy</p>
-                        <h2 className="mt-2 text-3xl font-black sm:text-4xl">
-                            {view === "mine" && !isAdmin ? "Moje kursy" : "Dostępne ścieżki nauki"}
-                        </h2>
-                    </div>
-
-                    {isAdmin && (
-                        <button
-                            type="button"
-                            onClick={() => navigate("/admin/add-course")}
-                            className="flex items-center justify-center gap-2 self-start rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm font-black text-cyan-200 transition hover:bg-cyan-500/20 sm:self-auto"
-                        >
-                            <BsPlusCircle />
-                            Dodaj kurs
-                        </button>
-                    )}
-                </div>
-
-                {error && courses.length > 0 && (
-                    <div role="alert" className="mb-5 flex items-start gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-red-200">
-                        <BsExclamationTriangle className="mt-0.5 shrink-0" />
-                        <span>{error}</span>
-                    </div>
-                )}
-
-                {loading ? (
-                    <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-                        {[0, 1, 2].map((item) => <CourseSkeleton key={item} />)}
-                    </div>
-                ) : error && courses.length === 0 ? (
-                    <div className="rounded-3xl border border-red-500/20 bg-red-500/5 px-6 py-12 text-center sm:px-10">
-                        <BsExclamationTriangle className="mx-auto text-4xl text-red-300" />
-                        <h3 className="mt-4 text-2xl font-black">Nie udało się pobrać kursów</h3>
-                        <p className="mx-auto mt-2 max-w-xl text-slate-400">{error}</p>
-                        <button
-                            type="button"
-                            onClick={loadCourses}
-                            className="mx-auto mt-6 flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 font-bold transition hover:bg-white/15"
-                        >
-                            <BsArrowClockwise /> Spróbuj ponownie
-                        </button>
-                    </div>
-                ) : courses.length === 0 ? (
-                    <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.03] px-6 py-14 text-center sm:px-10">
-                        <BsCollection className="mx-auto text-5xl text-slate-600" />
-                        <h3 className="mt-5 text-2xl font-black">Brak dostępnych kursów</h3>
-                        <p className="mx-auto mt-2 max-w-xl text-slate-400">
-                            {isAdmin
-                                ? "Utwórz pierwszy kurs, a następnie dodaj do niego moduły i lekcje."
-                                : view === "mine"
-                                    ? "Nie masz jeszcze żadnego kursu. Wybierz kurs z katalogu i aktywuj dostęp."
-                                    : "Nowe ścieżki nauki pojawią się tutaj po ich opublikowaniu."}
-                        </p>
-                        {isAdmin && (
-                            <button
-                                type="button"
-                                onClick={() => navigate("/admin/add-course")}
-                                className="mx-auto mt-6 flex items-center gap-2 rounded-xl bg-cyan-500 px-5 py-3 font-black text-slate-950 transition hover:bg-cyan-400"
-                            >
-                                <BsPlusCircle /> Utwórz pierwszy kurs
-                            </button>
-                        )}
-                    </div>
-                ) : (
-                    <div className="space-y-10">
-                        <nav aria-label="Przestrzenie nauki" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            <LearningSpaceCard
-                                icon={BsRocketTakeoff}
-                                eyebrow="Wybrane dla Ciebie"
-                                title="Polecane"
-                                description="Najlepsze kursy na start i rozpoczęte ścieżki."
-                                count={recommendedCourses.length}
-                                tone="emerald"
-                                active={activeSection === "recommended"}
-                                onClick={() => setActiveSection("recommended")}
-                            />
-                            <LearningSpaceCard
-                                icon={BsLockFill}
-                                eyebrow="Oferta premium"
-                                title="Płatne"
-                                description="Pełne kursy jednorazowe i abonamentowe."
-                                count={paidCourses.length}
-                                tone="amber"
-                                active={activeSection === "paid"}
-                                onClick={() => setActiveSection("paid")}
-                            />
-                            <LearningSpaceCard
-                                icon={BsPlayFill}
-                                eyebrow="Bez opłat"
-                                title="Darmowe"
-                                description="Kursy dostępne od razu bez zakupu."
-                                count={freeCourses.length}
-                                tone="cyan"
-                                active={activeSection === "free"}
-                                onClick={() => setActiveSection("free")}
-                            />
-                            <LearningSpaceCard
-                                icon={BsMortarboardFill}
-                                eyebrow="Nauka szkolna"
-                                title="Dla szkół"
-                                description="Przedmioty uporządkowane według programu nauczania."
-                                count={schoolCourses.length}
-                                tone="violet"
-                                active={activeSection === "school"}
-                                onClick={() => setActiveSection("school")}
-                            />
-                        </nav>
-
-                        <section className="rounded-[32px] border border-white/10 bg-white/[0.025] p-5 sm:p-8">
-                            <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">
-                                {selectedSection.eyebrow}
-                            </p>
-                            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                                <div>
-                                    <h3 className="text-3xl font-black">{selectedSection.label}</h3>
-                                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                                        {selectedSection.description}
-                                    </p>
-                                </div>
-                                <span className="text-sm font-bold text-slate-500">
-                                    {selectedSection.items.length} {selectedSection.items.length === 1 ? "kurs" : "kursów"}
-                                </span>
-                            </div>
-                            <div className="mt-7">
-                                {selectedSection.items.length > 0
-                                    ? renderCourseCards(selectedSection.items)
-                                    : <EmptyLearningArea message={`W sekcji „${selectedSection.label}” nie ma jeszcze kursów.`} />}
-                            </div>
-                        </section>
-                    </div>
-                )}
-            </section>
+            {!loading && courses.length > 0 && <footer className="flex flex-wrap gap-x-5 gap-y-2 border-t border-slate-200 pt-5 text-xs text-slate-500"><span>{courses.length} kursów w {view === "mine" ? "Twoim widoku" : "katalogu"}</span><span>{totalLessons} lekcji łącznie</span><span>Średni postęp: {averageProgress}%</span></footer>}
         </div>
     );
 }

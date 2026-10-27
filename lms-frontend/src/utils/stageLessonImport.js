@@ -81,6 +81,9 @@ export function parseStageLessonImport(
     variant = "PROGRAMMING"
 ) {
     const cleanSource = cleanChatGptText(source).replace(END_MARKER, "").trim();
+    if (cleanSource.startsWith("Przygotuj kompletny pakiet") && cleanSource.includes("KROK [NUMER]")) {
+        return { lessons: [], lessonCount: 0, blockCount: 0, warnings: [], errors: ["To jest wzór promptu, nie gotowy pakiet lekcji. Wklej prompt do ChatGPT, a tutaj wklej jego odpowiedź z nagłówkami LEKCJA 1 i KROK 1."] };
+    }
     const headers = [...cleanSource.matchAll(LESSON_HEADER)];
     const errors = [];
     const warnings = [];
@@ -166,7 +169,7 @@ export function getStageLessonPrompt({
     const lessonList = normalizedTitles.length > 0
         ? normalizedTitles.map((title, index) => `${index + 1}. ${title}`).join("\n")
         : "1. [wpisz tytuł pierwszej lekcji]\n2. [wpisz tytuł drugiej lekcji]";
-    const singleLessonRules = getChatGptLessonPrompt(maxBlocks, variant);
+    const singleLessonRules = getChatGptLessonPrompt(maxBlocks, variant, { includeContext: false });
 
     return `Przygotuj kompletny pakiet lekcji do jednorazowego importu w EduHub.
 
@@ -198,10 +201,11 @@ KROK 1
 [pierwszy blok]
 KONIEC LEKCJI
 
-Kontynuuj aż do ostatniej lekcji. Numerację KROKÓW zaczynaj od 1 w każdej lekcji. Nie dodawaj Markdown, tabel, wstępu ani komentarza poza wskazanym formatem.
+Kontynuuj aż do ostatniej lekcji. Numerację KROKÓW zaczynaj od 1 w każdej lekcji. Nie opakowuj całego pakietu w Markdown ani blok kodu; backticki są dozwolone wewnątrz pól zawierających kod. Nie dodawaj tabel, wstępu ani komentarza poza wskazanym formatem.
+Nie generuj niekompletnej ostatniej lekcji: każda musi mieć pełne pola, zamknięty kod i KONIEC LEKCJI. Jeśli pakiet jest zbyt duży na jedną odpowiedź, przygotuj mniejszy zakres kompletnych lekcji z listy; nigdy nie skracaj wymagań i rozwiązań do wielokropka.
 
 SZCZEGÓŁOWE ZASADY TWORZENIA KAŻDEJ LEKCJI
-Poniższe zasady stosuj osobno do każdej lekcji. Zdanie „zwróć tylko gotowe bloki” oznacza bloki wewnątrz znaczników LEKCJA/KONIEC LEKCJI wymaganych powyżej.
+Poniższy kontrakt stosuj wewnątrz KAŻDEJ lekcji. Temat i kolejność pochodzą wyłącznie z powyższej listy, nie z dodatkowego formularza. Zachowaj nagłówki LEKCJA/KONIEC LEKCJI.
 
 ${singleLessonRules}
 

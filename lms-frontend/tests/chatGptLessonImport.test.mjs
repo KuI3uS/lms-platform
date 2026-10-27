@@ -70,10 +70,10 @@ test("language exercise imports also receive the default reward", () => {
     }
 });
 
-test("a task without an answer becomes reading material without exercise XP", () => {
+test("a task without an answer is blocked instead of silently becoming reading material", () => {
     const result = parseChatGptLesson("KROK 1\nTyp bloku\nZadanie\nTytuł\nSpróbuj sam\nPolecenie\nPrzywitaj kolegę.");
-    assert.equal(result.blocks[0].type, "TEXT");
-    assert.equal(result.blocks[0].points, 0);
+    assert.equal(result.blocks[0].type, "TASK");
+    assert.ok(result.errors.some(error => error.includes("Poprawna odpowiedź")));
 });
 
 test("reward preview matches existing zero-XP exercise defaults and excludes reading material", () => {

@@ -117,6 +117,41 @@ class StageLessonBlockImportTest {
     }
 
     @Test
+    void invalidBlockInLaterLessonReportsItsPositionStepAndFieldWithoutPartialImport() {
+        var module = module();
+        var first = lesson(module, "Internet", 1);
+        var second = lesson(module, "Frontend i backend", 2);
+        var invalidTask = new LessonBlockRequest("Porównaj role", BlockType.OPEN_RESPONSE, null, null,
+                "Wyjaśnij różnice własnymi słowami", null, null, null, null, null,
+                null, null, null, null, true, 10, null);
+        var invalidLesson = new StageLessonBlockImportRequest.LessonBlocks(second.getId(), second.getTitle(),
+                List.of(text("Wprowadzenie"), invalidTask));
+
+        var error = assertThrows(ResponseStatusException.class, () -> controller.importStage(module.getId(),
+                new StageLessonBlockImportRequest(List.of(item(first, 1), invalidLesson), true)));
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+        assertTrue(error.getReason().contains("Lekcja „Frontend i backend” (pozycja 2 w pakiecie)"));
+        assertTrue(error.getReason().contains("krok 2, pole „Poprawna odpowiedź”"));
+        assertEquals(0, blocks.count());
+        assertEquals(2, lessons.count());
+        assertFalse(first.isPublished());
+        assertFalse(second.isPublished());
+    }
+
+    @Test
+    void stageImportReportsLessonForEmptyBlockList() {
+        var module = module();
+        var target = lesson(module, "Puste kroki", 1);
+        var error = assertThrows(ResponseStatusException.class, () -> controller.importStage(module.getId(),
+                new StageLessonBlockImportRequest(List.of(item(target, 0)), true)));
+
+        assertTrue(error.getReason().contains("Lekcja „Puste kroki” (pozycja 1 w pakiecie), pole „Bloki”"));
+        assertEquals(0, blocks.count());
+        assertFalse(target.isPublished());
+    }
+
+    @Test
     void rejectsMoreThanFiftyLessonsBeforeSavingAnything() {
         var module = module();
         var target = lesson(module, "WHERE", 1);

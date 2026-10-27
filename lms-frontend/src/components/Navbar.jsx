@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
@@ -17,16 +17,24 @@ import {
 } from "react-icons/bs";
 
 const PAGE_TITLES = [
-    ["/dashboard", "Twój dzień"],
-    ["/courses", "Ścieżki nauki"],
-    ["/results", "Wyniki"],
+    ["/dashboard", "Start"],
+    ["/courses", "Kursy"],
+    ["/results", "Wyniki zadań"],
     ["/exams", "Egzaminy INF"],
-    ["/learning-center", "Postęp i nagrody"],
+    ["/learning-center", "Postęp"],
+    ["/language-reviews", "Powtórki językowe"],
+    ["/access-code", "Kod dostępu"],
+    ["/modules", "Twój kurs"],
+    ["/lessons", "Lekcje"],
+    ["/checkout", "Dostęp do kursu"],
     ["/admin/course-orders", "Zamówienia"],
+    ["/admin/courses", "Kursy"],
+    ["/admin/add-course", "Nowy kurs"],
     ["/admin/users", "Użytkownicy"],
     ["/admin/submissions", "Prace uczniów"],
     ["/admin/tutoring", "Korepetycje"],
-    ["/admin", "Strefa twórcy"]
+    ["/admin/access-codes", "Kody dostępu"],
+    ["/admin", "Panel twórcy"]
 ];
 
 function formatExpiry(value) {
@@ -52,6 +60,10 @@ export default function Navbar({ onMenuClick }) {
     const [notifications, setNotifications] = useState({ unreadCount: 0, notifications: [] });
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const notificationTriggerRef = useRef(null);
+    const notificationPanelRef = useRef(null);
+    const profileTriggerRef = useRef(null);
+    const profilePanelRef = useRef(null);
 
     const pageTitle = PAGE_TITLES.find(([path]) => location.pathname.startsWith(path))?.[1] || "EduHub";
     const streakActive = learningStats.taskStreak > 0
@@ -59,6 +71,40 @@ export default function Navbar({ onMenuClick }) {
     const visibleStreak = streakActive ? learningStats.taskStreak : 0;
     const visibleMultiplier = streakActive ? learningStats.xpMultiplier : 1;
     const initials = identity.email.slice(0, 2).toUpperCase();
+    const displayName = user?.firstName || identity.email.split("@")[0];
+
+    useEffect(() => {
+        if (!notificationsOpen && !profileOpen) return undefined;
+        const panel = notificationsOpen ? notificationPanelRef.current : profilePanelRef.current;
+        const trigger = notificationsOpen ? notificationTriggerRef.current : profileTriggerRef.current;
+        const close = () => {
+            setNotificationsOpen(false);
+            setProfileOpen(false);
+        };
+        panel?.focus();
+        const dismissOnEscape = event => {
+            if (event.key !== "Escape") return;
+            event.preventDefault();
+            close();
+            trigger?.focus();
+        };
+        const dismissOutside = event => {
+            if (!panel?.contains(event.target) && !trigger?.contains(event.target)) close();
+        };
+        document.addEventListener("keydown", dismissOnEscape);
+        document.addEventListener("pointerdown", dismissOutside);
+        document.addEventListener("focusin", dismissOutside);
+        return () => {
+            document.removeEventListener("keydown", dismissOnEscape);
+            document.removeEventListener("pointerdown", dismissOutside);
+            document.removeEventListener("focusin", dismissOutside);
+        };
+    }, [notificationsOpen, profileOpen]);
+
+    const closeNotifications = () => {
+        setNotificationsOpen(false);
+        notificationTriggerRef.current?.focus();
+    };
 
     useEffect(() => {
         let active = true;
@@ -123,27 +169,28 @@ export default function Navbar({ onMenuClick }) {
                 <button
                     type="button"
                     aria-label="Zamknij powiadomienia"
-                    onClick={() => setNotificationsOpen(false)}
-                    className="fixed inset-0 z-[9998] cursor-default bg-black/35 backdrop-blur-[2px]"
+                    tabIndex={-1}
+                    onClick={closeNotifications}
+                    className="fixed inset-0 z-[9998] cursor-default bg-slate-900/15"
                 />
-                <section className="fixed right-3 top-[4.5rem] z-[9999] w-[min(23rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f19] shadow-2xl shadow-black/70 sm:right-5">
-                    <div className="flex items-center justify-between border-b border-white/[0.08] p-4">
+                <section ref={notificationPanelRef} id="workspace-notifications" tabIndex={-1} aria-label="Powiadomienia" className="fixed right-3 top-[4.5rem] z-[9999] w-[min(25rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl shadow-slate-900/10 outline-none sm:right-5">
+                    <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4">
                         <div>
-                            <p className="font-black">Powiadomienia</p>
+                            <p className="font-bold">Powiadomienia</p>
                             <p className="text-xs text-slate-500">{notifications.unreadCount} nowych</p>
                         </div>
                         <div className="flex items-center gap-2">
                             {notifications.unreadCount > 0 && (
-                                <button type="button" onClick={markAllRead} className="text-xs font-bold text-cyan-300">
+                                <button type="button" onClick={markAllRead} className="rounded-lg p-2 text-xs font-semibold text-teal-700 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600">
                                     Przeczytaj wszystkie
                                 </button>
                             )}
-                            <button type="button" aria-label="Zamknij" onClick={() => setNotificationsOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-white/10">
+                            <button type="button" aria-label="Zamknij powiadomienia" onClick={closeNotifications} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600">
                                 <BsX />
                             </button>
                         </div>
                     </div>
-                    <div className="max-h-[28rem] overflow-y-auto p-2">
+                    <div className="max-h-[min(28rem,calc(100dvh-10rem))] overflow-y-auto p-2">
                         {notifications.notifications.length === 0 ? (
                             <p className="p-8 text-center text-sm text-slate-500">Wszystko przeczytane. Możesz wracać do nauki.</p>
                         ) : notifications.notifications.slice(0, 10).map((notification) => (
@@ -151,10 +198,10 @@ export default function Navbar({ onMenuClick }) {
                                 key={notification.id}
                                 type="button"
                                 onClick={() => openNotification(notification)}
-                                className={`block w-full rounded-xl p-3 text-left transition hover:bg-white/[0.06] ${notification.read ? "opacity-60" : "bg-cyan-400/[0.04]"}`}
+                                className={`block w-full rounded-xl p-3 text-left transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 ${notification.read ? "text-slate-600" : "bg-teal-50/70 text-slate-900"}`}
                             >
-                                <span className="block text-sm font-black">{notification.title}</span>
-                                <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-500">{notification.message}</span>
+                                <span className="block text-sm font-semibold">{notification.title}</span>
+                                <span className="mt-1 line-clamp-2 block text-xs leading-5 text-slate-600">{notification.message}</span>
                             </button>
                         ))}
                     </div>
@@ -166,71 +213,70 @@ export default function Navbar({ onMenuClick }) {
 
     return (
         <>
-            <header className="relative z-40 flex h-16 shrink-0 items-center justify-between border-b border-white/[0.08] bg-[#070a12]/90 px-3 backdrop-blur-2xl sm:px-5 lg:px-7">
+            <header className="workspace-navbar relative z-40 flex h-[4.5rem] shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 text-slate-900 sm:px-6 lg:px-8">
                 <div className="flex min-w-0 items-center gap-3">
-                    <button type="button" aria-label="Otwórz menu" onClick={onMenuClick} className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 lg:hidden">
+                    <button type="button" aria-label="Otwórz menu" onClick={onMenuClick} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 lg:hidden">
                         <BsList size={22} />
                     </button>
                     <div className="min-w-0">
-                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-600">Przestrzeń nauki</p>
-                        <h2 className="truncate text-base font-black sm:text-lg">{pageTitle}</h2>
+                        <p className="text-[11px] font-medium text-slate-500">Twoja przestrzeń</p>
+                        <h2 className="truncate text-base font-bold sm:text-lg">{pageTitle}</h2>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <div
-                        title={formatExpiry(streakActive ? learningStats.taskStreakExpiresAt : null)}
-                        className={`hidden items-center gap-2 rounded-xl border px-3 py-2 sm:flex ${streakActive ? "border-orange-400/20 bg-orange-400/10 text-orange-200" : "border-white/[0.08] bg-white/[0.03] text-slate-500"}`}
-                    >
-                        <BsFire />
-                        <span className="text-xs font-black">Seria {visibleStreak}</span>
-                        <span className="rounded-md bg-black/20 px-1.5 py-0.5 text-[10px] font-black">×{visibleMultiplier}</span>
-                    </div>
-                    <div className="hidden items-center gap-2 rounded-xl border border-cyan-400/15 bg-cyan-400/[0.08] px-3 py-2 text-xs font-black text-cyan-100 md:flex">
-                        <BsGem className="text-cyan-300" /> {Number(learningStats.gemBalance || 0).toLocaleString("pl-PL")}
-                    </div>
-                    <div
-                        title={`Liga ${learningStats.leagueName || "Miedź"} · poziom ${learningStats.level || 1}`}
-                        className="hidden items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.035] py-1 pl-1 pr-3 lg:flex"
-                    >
-                        <LeagueBadge name={learningStats.leagueName || "Miedź"} size="xs" />
-                        <span className="text-left leading-tight">
-                            <span className="block text-[10px] font-black uppercase tracking-wider text-slate-500">Liga</span>
-                            <span className="block text-xs font-black text-white">{learningStats.leagueName || "Miedź"}</span>
-                        </span>
-                    </div>
+                <div className="flex shrink-0 items-center gap-2 sm:gap-3">
                     <button
+                        ref={notificationTriggerRef}
                         type="button"
                         aria-label={`Powiadomienia: ${notifications.unreadCount} nowych`}
+                        aria-expanded={notificationsOpen}
+                        aria-controls={notificationsOpen ? "workspace-notifications" : undefined}
                         onClick={() => { setNotificationsOpen((open) => !open); setProfileOpen(false); }}
-                        className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-slate-300 transition hover:border-cyan-400/30 hover:text-white"
+                        className="relative grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
                     >
                         <BsBell />
-                        {notifications.unreadCount > 0 && <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-cyan-400 px-1 text-[10px] font-black text-slate-950">{Math.min(99, notifications.unreadCount)}</span>}
+                        {notifications.unreadCount > 0 && <span className="absolute -right-0.5 -top-0.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-teal-700 px-1 text-[10px] font-bold text-white">{Math.min(99, notifications.unreadCount)}</span>}
                     </button>
                     <div className="relative">
                         <button
+                            ref={profileTriggerRef}
                             type="button"
                             aria-label="Otwórz profil"
+                            aria-expanded={profileOpen}
+                            aria-controls={profileOpen ? "workspace-profile" : undefined}
                             onClick={() => { setProfileOpen((open) => !open); setNotificationsOpen(false); }}
-                            className="flex h-10 items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] pl-1.5 pr-2 text-slate-300 transition hover:border-cyan-400/30"
+                            className="flex h-10 items-center gap-2 rounded-xl py-1 pl-1 pr-2 text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 sm:gap-3"
                         >
-                            <span className="grid h-7 w-7 place-items-center rounded-lg border bg-slate-900 text-[10px] font-black" style={{ borderColor: learningStats.leagueColor || "#22d3ee", color: learningStats.leagueColor || "#22d3ee", boxShadow: Number(learningStats.level || 1) >= 5 ? `0 0 12px ${learningStats.leagueColor || "#22d3ee"}55` : "none" }}>{initials}</span>
+                            <span className="grid h-9 w-9 place-items-center rounded-full bg-teal-50 text-xs font-bold text-teal-800">{initials}</span>
+                            <span className="hidden max-w-36 truncate text-sm font-semibold sm:block">{displayName}</span>
                             <BsChevronDown className="hidden text-xs sm:block" />
                         </button>
                         {profileOpen && (
-                            <div className="absolute right-0 top-12 w-64 overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f19] p-2 shadow-2xl shadow-black/60">
-                                <div className="border-b border-white/[0.08] px-3 py-3">
-                                    <p className="truncate text-sm font-black">{identity.email}</p>
-                                    <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300">{identity.role}</p>
+                            <section ref={profilePanelRef} id="workspace-profile" tabIndex={-1} aria-label="Twój profil i postęp" className="absolute right-0 top-12 max-h-[calc(100dvh-6rem)] w-[min(20rem,calc(100vw-1.5rem))] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-xl shadow-slate-900/10 outline-none">
+                                <div className="border-b border-slate-100 px-3 py-3">
+                                    <p className="truncate text-sm font-bold">{identity.email}</p>
+                                    <p className="mt-1 text-xs text-slate-500">{identity.role === "ADMIN" ? "Administrator" : "Konto ucznia"}</p>
                                 </div>
-                                <button type="button" onClick={() => navigate("/learning-center")} className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-300 hover:bg-white/[0.06]">
-                                    <BsPerson /> Mój postęp
+                                <div className="mx-2 my-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                                    <div className="flex items-center gap-3">
+                                        <LeagueBadge name={learningStats.leagueName || "Miedź"} size="xs" muted />
+                                        <div>
+                                            <p className="text-sm font-semibold">Liga {learningStats.leagueName || "Miedź"}</p>
+                                            <p className="mt-0.5 text-xs text-slate-500">Poziom {learningStats.level || 1} · {Number(learningStats.xp || 0).toLocaleString("pl-PL")} XP</p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-200/70 pt-3 text-xs">
+                                        <span title={formatExpiry(streakActive ? learningStats.taskStreakExpiresAt : null)} className="inline-flex items-center gap-1.5 text-slate-600"><BsFire className="text-orange-600" /> Seria {visibleStreak} · ×{visibleMultiplier}</span>
+                                        <span aria-label={`${Number(learningStats.gemBalance || 0).toLocaleString("pl-PL")} klejnotów`} className="inline-flex items-center gap-1.5 font-semibold text-teal-800"><BsGem /> {Number(learningStats.gemBalance || 0).toLocaleString("pl-PL")}</span>
+                                    </div>
+                                </div>
+                                <button type="button" onClick={() => { setProfileOpen(false); navigate("/learning-center"); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600">
+                                    <BsPerson /> Postęp i nagrody
                                 </button>
-                                <button type="button" onClick={async () => { await logout(); window.location.href = "/login"; }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-red-300 hover:bg-red-500/10">
+                                <button type="button" onClick={async () => { await logout(); window.location.href = "/login"; }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600">
                                     <BsBoxArrowRight /> Wyloguj
                                 </button>
-                            </div>
+                            </section>
                         )}
                     </div>
                 </div>

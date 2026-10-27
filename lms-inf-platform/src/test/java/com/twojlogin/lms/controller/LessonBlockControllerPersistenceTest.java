@@ -30,6 +30,7 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @DataJpaTest
@@ -284,6 +285,7 @@ class LessonBlockControllerPersistenceTest {
                 case DIALOG -> "{\"kind\":\"dialog\",\"turns\":[{\"text\":\"Hello\"},{\"text\":\"Hi\"}]}";
                 case VOCABULARY, WORD_LAB, LISTENING -> "{\"kind\":\"vocabulary\",\"items\":[{\"term\":\"hello\",\"translation\":\"cześć\"}]}";
                 case SENTENCE_BUILDER -> "{\"kind\":\"sentence-builder\",\"polishSentence\":\"Dzień dobry\",\"words\":[\"Good\",\"morning\"]}";
+                case QUIZ -> "poprawna odpowiedź\nniepoprawna odpowiedź";
                 default -> "Treść";
             };
 
@@ -308,7 +310,10 @@ class LessonBlockControllerPersistenceTest {
                             null,
                             null,
                             null,
-                            null,
+                            switch (type) {
+                                case IMAGE, VIDEO, PDF, DOWNLOAD -> "https://example.invalid/material";
+                                default -> null;
+                            },
                             null,
                             true,
                             5,
@@ -343,6 +348,79 @@ class LessonBlockControllerPersistenceTest {
         );
 
         assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+        assertEquals(0, blockRepository.countByLessonId(lesson.getId()));
+    }
+
+    @Test
+    void bulkImportReportsLessonStepAndMissingFieldBeforeSavingAnyBlocks() {
+        Lesson lesson = createLesson("HTML od podstaw", 1);
+        var error = assertThrows(ResponseStatusException.class, () -> createController().createBulk(
+                lesson.getId(), List.of(
+                        request("Wprowadzenie", BlockType.TEXT, "Materiał", null),
+                        request("Zbuduj stronę", BlockType.TASK, "Przygotuj dokument", null)
+                ), true));
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+        assertTrue(error.getReason().contains("Lekcja „HTML od podstaw”"));
+        assertTrue(error.getReason().contains("krok 2"));
+        assertTrue(error.getReason().contains("pole „Poprawna odpowiedź”"));
+        assertEquals(0, blockRepository.countByLessonId(lesson.getId()));
+        assertEquals(false, lessonRepository.findById(lesson.getId()).orElseThrow().isPublished());
+    }
+
+    @Test
+    void replacementPreflightKeepsExistingBlocksWhenLaterRequestIsNull() {
+        Lesson lesson = createLesson();
+        var controller = createController();
+        var original = controller.create(lesson.getId(), request("Oryginał", BlockType.TEXT, "Pozostaw treść", null));
+        var error = assertThrows(ResponseStatusException.class, () -> controller.replaceAll(lesson.getId(),
+                java.util.Arrays.asList(request("Nowy", BlockType.TEXT, "Nowy materiał", null), null), true));
+
+        assertTrue(error.getReason().contains("krok 2, pole „Typ bloku”"));
+        assertEquals(1, blockRepository.countByLessonId(lesson.getId()));
+        assertEquals("Pozostaw treść", blockRepository.findById(original.id()).orElseThrow().getContent());
+    }
+
+    @Test
+    void quizImportRejectsMissingDuplicateOrUnmatchedOptionsWithActionableFields() {
+        Lesson lesson = createLesson();
+        var controller = createController();
+        for (var invalid : List.of(
+                request("Quiz", BlockType.QUIZ, "Jedyna odpowiedź", "Jedyna odpowiedź"),
+                request("Quiz", BlockType.QUIZ, "ŻÓŁĆ\nzolc", "ŻÓŁĆ"),
+                request("Quiz", BlockType.QUIZ, "Pierwsza\nDruga", "A")
+        )) {
+            var error = assertThrows(ResponseStatusException.class, () -> controller.createBulk(
+                    lesson.getId(), List.of(invalid), false));
+            assertTrue(error.getReason().contains("krok 1, pole „"));
+        }
+        assertEquals(0, blockRepository.countByLessonId(lesson.getId()));
+    }
+
+    @Test
+    void rejectsEmptyReadingAudioAndMediaBlocksLikeFrontendPreviewDoes() {
+        Lesson lesson = createLesson();
+        var controller = createController();
+        for (BlockType type : List.of(BlockType.TEXT, BlockType.SUMMARY, BlockType.EXAMPLE, BlockType.AUDIO,
+                BlockType.IMAGE, BlockType.VIDEO, BlockType.PDF)) {
+            var error = assertThrows(ResponseStatusException.class, () -> controller.createBulk(lesson.getId(),
+                    List.of(request("Niekompletny blok", type, " ", null)), false));
+            assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+            assertTrue(error.getReason().contains("krok 1, pole „"));
+        }
+        assertEquals(0, blockRepository.countByLessonId(lesson.getId()));
+    }
+
+    @Test
+    void malformedInteractiveJsonHasValidationErrorInsteadOfServerError() {
+        Lesson lesson = createLesson();
+        var controller = createController();
+        for (String content : List.of("null", "[]", "{", "{\"turns\":[{\"text\":\"Hello\"},{\"text\":\"\"}]}")) {
+            var error = assertThrows(ResponseStatusException.class, () -> controller.createBulk(lesson.getId(),
+                    List.of(request("Dialog", BlockType.DIALOG, content, null)), false));
+            assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+            assertTrue(error.getReason().contains("krok 1, pole „"));
+        }
         assertEquals(0, blockRepository.countByLessonId(lesson.getId()));
     }
 

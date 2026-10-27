@@ -162,7 +162,7 @@ public class LessonBlockController {
                         HttpStatus.NOT_FOUND,
                         "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
                 ));
-        validateImportSize(requests, lessonBlockLimit(lesson));
+        validateLessonImportSize(lesson, requests, null);
         ensureLessonCapacity(lesson, requests.size());
         Integer maxOrder = blockRepository.findMaxOrderIndexByLessonId(lessonId);
         int firstOrder = (maxOrder == null ? -1 : maxOrder) + 1;
@@ -172,7 +172,7 @@ public class LessonBlockController {
             LessonBlock block = new LessonBlock();
             block.setLesson(lesson);
             block.setOrderIndex(firstOrder + index);
-            applyRequest(block, requests.get(index), false);
+            applyImportedRequest(block, requests.get(index), index, null);
             blocks.add(block);
         }
 
@@ -196,14 +196,14 @@ public class LessonBlockController {
                         HttpStatus.NOT_FOUND,
                         "Nie znaleziono lekcji. Odśwież stronę i spróbuj ponownie."
                 ));
-        validateImportSize(requests, lessonBlockLimit(lesson));
+        validateLessonImportSize(lesson, requests, null);
 
         List<LessonBlock> replacement = new java.util.ArrayList<>(requests.size());
         for (int index = 0; index < requests.size(); index++) {
             LessonBlock block = new LessonBlock();
             block.setLesson(lesson);
             block.setOrderIndex(index);
-            applyRequest(block, requests.get(index), false);
+            applyImportedRequest(block, requests.get(index), index, null);
             replacement.add(block);
         }
 
@@ -238,28 +238,29 @@ public class LessonBlockController {
         List<StageImportPlan> plans = new java.util.ArrayList<>();
 
         // Preflight the entire package before any inserts or publication changes.
-        for (var item : request.lessons()) {
+        for (int lessonIndex = 0; lessonIndex < request.lessons().size(); lessonIndex++) {
+            var item = request.lessons().get(lessonIndex);
             Lesson lesson = item == null ? null : targets.get(item.lessonId());
             if (lesson == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lekcja nie istnieje w wybranym etapie. Najpierw utwórz jej kartę. Import nie tworzy nowych lekcji.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lekcja " + (lessonIndex + 1)
+                        + " w pakiecie: nie istnieje w wybranym etapie. Najpierw utwórz jej kartę. Import nie tworzy nowych lekcji.");
             }
             if (!seenIds.add(lesson.getId())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ta sama lekcja występuje w pakiecie więcej niż raz.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        importLessonLabel(lesson, lessonIndex + 1) + ", pole „Tytuł lekcji”: ta sama lekcja występuje w pakiecie więcej niż raz.");
             }
             if (LessonImportTitles.normalize(item.title()).isBlank()
                     || !LessonImportTitles.normalize(lesson.getTitle()).equals(LessonImportTitles.normalize(item.title()))) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Tytuł lekcji nie zgadza się z istniejącą kartą: „" + lesson.getTitle() + "”. Odśwież listę i sprawdź dopasowanie.");
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        importLessonLabel(lesson, lessonIndex + 1) + ", pole „Tytuł lekcji”: tytuł nie zgadza się z istniejącą kartą. Odśwież listę i sprawdź dopasowanie.");
             }
-            validateImportSize(item.blocks(), lessonBlockLimit(lesson));
+            validateLessonImportSize(lesson, item.blocks(), lessonIndex + 1);
             List<LessonBlock> imported = new java.util.ArrayList<>();
             for (int index = 0; index < item.blocks().size(); index++) {
-                if (item.blocks().get(index) == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pakiet zawiera pusty blok lekcji.");
-                }
                 LessonBlock block = new LessonBlock();
                 block.setLesson(lesson);
                 block.setOrderIndex(index);
-                applyRequest(block, item.blocks().get(index), false);
+                applyImportedRequest(block, item.blocks().get(index), index, lessonIndex + 1);
                 imported.add(block);
             }
             plans.add(new StageImportPlan(lesson, imported, counts.containsKey(lesson.getId())));
@@ -341,13 +342,50 @@ public class LessonBlockController {
         }
     }
 
+    private void validateLessonImportSize(Lesson lesson, List<LessonBlockRequest> requests, Integer packagePosition) {
+        try {
+            validateImportSize(requests, lessonBlockLimit(lesson));
+        } catch (ResponseStatusException exception) {
+            throw new ResponseStatusException(exception.getStatusCode(),
+                    importLessonLabel(lesson, packagePosition) + ", pole „Bloki”: " + exception.getReason(), exception);
+        }
+    }
+
+    private void applyImportedRequest(LessonBlock block, LessonBlockRequest request, int stepIndex, Integer packagePosition) {
+        try {
+            applyRequest(block, request, false);
+        } catch (BlockValidationException exception) {
+            throw new ResponseStatusException(exception.getStatusCode(),
+                    importLessonLabel(block.getLesson(), packagePosition) + ", krok " + (stepIndex + 1)
+                            + ", pole „" + exception.field + "”: " + exception.getReason(), exception);
+        }
+    }
+
+    private String importLessonLabel(Lesson lesson, Integer packagePosition) {
+        String title = isBlank(lesson.getTitle()) ? "bez tytułu" : lesson.getTitle().trim();
+        return "Lekcja „" + title + "”" + (packagePosition == null ? "" : " (pozycja " + packagePosition + " w pakiecie)");
+    }
+
+    private static final class BlockValidationException extends ResponseStatusException {
+        private final String field;
+
+        private BlockValidationException(String field, String reason) {
+            super(HttpStatus.BAD_REQUEST, reason);
+            this.field = field;
+        }
+    }
+
+    private BlockValidationException invalidField(String field, String reason) {
+        return new BlockValidationException(field, reason);
+    }
+
     private void ensureLessonCapacity(Lesson lesson, int newBlocks) {
         int maxBlocks = lessonBlockLimit(lesson);
         int currentBlocks = blockRepository.countByLessonId(lesson.getId());
         if (currentBlocks + newBlocks > maxBlocks) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Ta lekcja może zawierać maksymalnie " + maxBlocks
+                    importLessonLabel(lesson, null) + ", pole „Bloki”: ta lekcja może zawierać maksymalnie " + maxBlocks
                             + " bloków. Usuń zbędne bloki albo podziel materiał na dwie lekcje."
             );
         }
@@ -489,15 +527,17 @@ public class LessonBlockController {
             LessonBlockRequest request,
             boolean allowOrderChange
     ) {
+        if (request == null) {
+            throw invalidField("Typ bloku", "Blok jest pusty. Dodaj jego typ i wymagane pola.");
+        }
         if (request.type() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wybierz typ bloku.");
+            throw invalidField("Typ bloku", "Wybierz typ bloku.");
         }
         if (request.type() != BlockType.DIVIDER && isBlank(request.title())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Podaj tytuł bloku.");
+            throw invalidField("Tytuł", "Podaj tytuł bloku.");
         }
         if (request.title() != null && request.title().trim().length() > MAX_BLOCK_TITLE_LENGTH) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw invalidField("Tytuł",
                     "Tytuł bloku może mieć maksymalnie " + MAX_BLOCK_TITLE_LENGTH + " znaków."
             );
         }
@@ -508,8 +548,7 @@ public class LessonBlockController {
                 || request.type() == BlockType.CODE_REVIEW
                 || request.type() == BlockType.OPEN_RESPONSE)
                 && isBlank(request.expectedAnswer())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw invalidField("Poprawna odpowiedź",
                     "Dodaj poprawną odpowiedź do zadania."
             );
         }
@@ -520,14 +559,12 @@ public class LessonBlockController {
                 || request.type() == BlockType.OPEN_RESPONSE
                 || request.type() == BlockType.PRACTICAL_LAB)
                 && isBlank(request.instruction())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw invalidField(request.type() == BlockType.PRACTICAL_LAB ? "Cel i wymagania" : "Polecenie",
                     "Dodaj polecenie lub cel aktywności."
             );
         }
         if (request.type() == BlockType.PRACTICAL_LAB && isBlank(request.content())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw invalidField("Weryfikacja i kryteria ukończenia",
                     "Dodaj sposób weryfikacji i kryteria ukończenia laboratorium."
             );
         }
@@ -535,18 +572,17 @@ public class LessonBlockController {
                 || request.type() == BlockType.PREDICT_OUTPUT
                 || request.type() == BlockType.CODE_REVIEW)
                 && isBlank(request.starterCode())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw invalidField("Kod startowy / kod do analizy",
                     "Dodaj kod potrzebny do wykonania aktywności."
             );
         }
         if ((request.type() == BlockType.DIALOG || request.type() == BlockType.VOCABULARY || request.type() == BlockType.WORD_LAB || request.type() == BlockType.LISTENING || request.type() == BlockType.SENTENCE_BUILDER)
                 && isBlank(request.content())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw invalidField("Treść interaktywnego bloku",
                     "Uzupełnij zawartość interaktywnego bloku."
             );
         }
+        validateDisplayContent(request);
         validateInteractiveContent(request);
 
         /*
@@ -584,6 +620,44 @@ public class LessonBlockController {
         return value == null || value.isBlank();
     }
 
+    private void validateDisplayContent(LessonBlockRequest request) {
+        BlockType type = request.type().normalized();
+        if ((type == BlockType.TEXT || type == BlockType.TIP || type == BlockType.WARNING
+                || type == BlockType.INFO || type == BlockType.SUMMARY || type == BlockType.QUOTE
+                || type == BlockType.EXAMPLE || type == BlockType.AUDIO) && isBlank(request.content())) {
+            throw invalidField(type == BlockType.AUDIO ? "Zwrot do wypowiedzenia" : "Treść",
+                    type == BlockType.AUDIO ? "Dodaj zwrot do odsłuchania i wypowiedzenia." : "Blok nie ma treści. Uzupełnij materiał.");
+        }
+        if ((type == BlockType.IMAGE || type == BlockType.VIDEO || type == BlockType.PDF
+                || type == BlockType.DOWNLOAD) && isBlank(request.mediaUrl())) {
+            throw invalidField("Adres materiału", "Dodaj adres obrazu, filmu lub pliku.");
+        }
+        if (type == BlockType.QUIZ) {
+            List<String> options = valueOrEmpty(request.content()).lines()
+                    .map(String::trim).filter(option -> !option.isBlank()).toList();
+            if (options.size() < 2) {
+                throw invalidField("Odpowiedzi — każda w nowym wierszu",
+                        "Quiz wymaga co najmniej dwóch odpowiedzi, każdej w osobnym wierszu.");
+            }
+            long distinct = options.stream().map(this::normalizeQuizOption).distinct().count();
+            if (distinct != options.size()) {
+                throw invalidField("Odpowiedzi — każda w nowym wierszu", "Wszystkie odpowiedzi quizu muszą być różne.");
+            }
+            if (!options.contains(request.expectedAnswer())) {
+                throw invalidField("Poprawna odpowiedź",
+                        "Wpisz pełną treść jednej z odpowiedzi quizu, dokładnie tak jak na liście, a nie samą literę.");
+            }
+        }
+    }
+
+    private String normalizeQuizOption(String value) {
+        return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFD)
+                .replaceAll("[\\u0300-\\u036f]", "")
+                .replace('ł', 'l').replace('Ł', 'L')
+                .replace("**", "").replaceAll("^#{1,6}\\s*", "")
+                .replaceAll("\\s+", " ").trim().toLowerCase(java.util.Locale.ROOT);
+    }
+
     private void validateInteractiveContent(LessonBlockRequest request) {
         if (request.type() != BlockType.DIALOG && request.type() != BlockType.VOCABULARY && request.type() != BlockType.WORD_LAB && request.type() != BlockType.LISTENING && request.type() != BlockType.SENTENCE_BUILDER) {
             return;
@@ -591,29 +665,38 @@ public class LessonBlockController {
 
         try {
             JsonNode content = OBJECT_MAPPER.readTree(request.content());
+            if (content == null || !content.isObject()) {
+                throw invalidField("Treść interaktywnego bloku", "Konfiguracja musi być obiektem JSON, a nie pustą wartością lub listą.");
+            }
             if (request.type() == BlockType.DIALOG) {
                 JsonNode turns = content.path("turns");
                 if (!turns.isArray() || turns.size() < 2) {
-                    throw new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
+                    throw invalidField("Dialog",
                             "Dialog wymaga przynajmniej dwóch wypowiedzi."
                     );
+                }
+                int turnIndex = 0;
+                for (JsonNode turn : turns) {
+                    turnIndex++;
+                    if (!turn.isObject() || !turn.path("text").isTextual() || turn.path("text").asText("").isBlank()) {
+                        throw invalidField("Dialog", "Wypowiedź " + turnIndex + " nie ma treści. Uzupełnij tekst postaci.");
+                    }
                 }
             }
             if (request.type() == BlockType.VOCABULARY || request.type() == BlockType.WORD_LAB || request.type() == BlockType.LISTENING) {
                 JsonNode items = content.path("items");
                 if (!items.isArray() || items.isEmpty() || items.size() > MAX_VOCABULARY_ITEMS) {
-                    throw new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
+                    throw invalidField("Słówka — jedno w wierszu",
                             "Trening słówek musi zawierać od 1 do 20 pozycji."
                     );
                 }
+                int itemIndex = 0;
                 for (JsonNode item : items) {
-                    if (item.path("term").asText("").isBlank()
-                            || item.path("translation").asText("").isBlank()) {
-                        throw new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
-                                "Każde słówko musi mieć treść i tłumaczenie."
+                    itemIndex++;
+                    if (!item.isObject() || !item.path("term").isTextual() || !item.path("translation").isTextual()
+                            || item.path("term").asText("").isBlank() || item.path("translation").asText("").isBlank()) {
+                        throw invalidField("Słówka — jedno w wierszu",
+                                "Pozycja " + itemIndex + " musi mieć słowo i tłumaczenie zapisane jako tekst."
                         );
                     }
                 }
@@ -622,20 +705,18 @@ public class LessonBlockController {
                 JsonNode words = content.path("words");
                 if (content.path("polishSentence").asText("").isBlank()
                         || !words.isArray() || words.size() < 2 || words.size() > 6) {
-                    throw new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
+                    throw invalidField("Zdanie po polsku / Poprawne zdanie po angielsku",
                             "Układanie zdania wymaga polskiego zdania i od 2 do 6 kafelków."
                     );
                 }
                 for (JsonNode word : words) {
-                    if (word.asText("").isBlank()) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kafelek nie może być pusty.");
+                    if (!word.isTextual() || word.asText("").isBlank()) {
+                        throw invalidField("Poprawne zdanie po angielsku", "Kafelek musi zawierać niepusty tekst.");
                     }
                 }
             }
         } catch (JacksonException exception) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw invalidField("Treść interaktywnego bloku",
                     "Interaktywny blok ma nieprawidłowy format danych."
             );
         }

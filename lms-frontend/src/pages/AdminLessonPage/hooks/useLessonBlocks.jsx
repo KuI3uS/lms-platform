@@ -6,11 +6,7 @@ import {
     getLessonBlockLimit
 } from "../../../utils/lessonBlockLimits";
 
-import {
-    parseDialogContent,
-    parseVocabularyContent
-} from "../../../utils/languageInteractiveBlocks";
-import { parseSentenceBuilderContent } from "../../../utils/sentenceBuilder";
+import { getLessonBlockValidationError } from "../../../utils/lessonBlockValidation";
 import { cleanChatGptBlock } from "../../../utils/chatGptReferences";
 
 
@@ -423,10 +419,11 @@ export default function useLessonBlocks(onLessonChanged) {
 
             const block = blocks[index];
 
-            if (!validateBlock(block)) {
+            const reason = getLessonBlockValidationError(block);
+            if (reason) {
 
                 const message =
-                    `Nie można zaimportować bloku ${index + 1}. Sprawdź jego konfigurację.`;
+                    `Krok ${index + 1}: ${reason}`;
 
 
                 setErrorsByLesson(prev => ({
@@ -582,10 +579,11 @@ export default function useLessonBlocks(onLessonChanged) {
             index += 1
         ) {
 
-            if (!validateBlock(blocks[index])) {
+            const reason = getLessonBlockValidationError(blocks[index]);
+            if (reason) {
 
                 const message =
-                    `Nie można zapisać bloku ${index + 1}. Sprawdź jego konfigurację.`;
+                    `Krok ${index + 1}: ${reason}`;
 
 
                 setErrorsByLesson(prev => ({
@@ -942,328 +940,9 @@ export default function useLessonBlocks(onLessonChanged) {
      * Walidacja pojedynczego bloku.
      */
     function validateBlock(block) {
-
-        if (
-            block.type !== "DIVIDER"
-            && !block.title?.trim()
-        ) {
-
-            showToast(
-                "Podaj tytuł bloku.",
-                "warning"
-            );
-
-            return false;
-        }
-
-
-        if (
-            [
-                "TEXT",
-                "TIP",
-                "WARNING",
-                "INFO",
-                "SUMMARY",
-                "QUOTE",
-                "EXAMPLE"
-            ].includes(block.type)
-            && !block.content?.trim()
-        ) {
-
-            showToast(
-                "Uzupełnij treść tego bloku.",
-                "warning"
-            );
-
-            return false;
-        }
-
-
-        if (
-            [
-                "IMAGE",
-                "VIDEO",
-                "PDF",
-                "DOWNLOAD"
-            ].includes(block.type)
-            && !block.mediaUrl?.trim()
-        ) {
-
-            showToast(
-                "Podaj prawidłowy adres materiału.",
-                "warning"
-            );
-
-            return false;
-        }
-
-
-        if (
-            block.type === "AUDIO"
-            && !block.content?.trim()
-        ) {
-
-            showToast(
-                "Dodaj zwrot, który uczeń ma powtórzyć.",
-                "warning"
-            );
-
-            return false;
-        }
-
-
-        /**
-         * Dialog interaktywny.
-         */
-        if (block.type === "DIALOG") {
-            const dialog = parseDialogContent(block.content);
-
-            const characters = Array.isArray(dialog?.characters)
-                ? dialog.characters
-                : [];
-
-            const turns = Array.isArray(dialog?.turns)
-                ? dialog.turns
-                : [];
-
-            if (
-                characters.length < 2
-                || !characters[0]?.name?.trim()
-                || !characters[1]?.name?.trim()
-            ) {
-                showToast(
-                    "Dialog wymaga dwóch bohaterów.",
-                    "warning"
-                );
-                return false;
-            }
-
-            const studentCharacterId =
-                dialog?.studentCharacterId != null
-                    ? String(dialog.studentCharacterId)
-                    : "";
-
-            const studentCharacterExists =
-                characters.some(
-                    character =>
-                        String(character?.id ?? "")
-                        === studentCharacterId
-                );
-
-            if (
-                !studentCharacterId
-                || !studentCharacterExists
-            ) {
-                console.error(
-                    "BŁĘDNA ROLA UCZNIA:",
-                    {
-                        studentCharacterId:
-                        dialog?.studentCharacterId,
-
-                        characters:
-                            characters.map(character => ({
-                                id: character.id,
-                                name: character.name
-                            })),
-
-                        dialog
-                    }
-                );
-
-                showToast(
-                    "Wybierz postać, w którą wciela się uczeń.",
-                    "warning"
-                );
-
-                return false;
-            }
-
-            if (turns.length < 2) {
-                showToast(
-                    "Dialog wymaga przynajmniej dwóch wypowiedzi.",
-                    "warning"
-                );
-                return false;
-            }
-        }
-
-        if (block.type === "WORD_LAB") {
-            const vocabulary = parseVocabularyContent(block.content);
-            if (vocabulary.items.length < 1 || vocabulary.items.length > 20) {
-                showToast("Laboratorium słów musi zawierać od 1 do 20 pozycji.", "warning");
-                return false;
-            }
-        }
-
-        if (block.type === "LISTENING") {
-            const listening = parseVocabularyContent(block.content);
-            if (listening.items.length < 1 || listening.items.length > 20) {
-                showToast("Rozpoznawanie ze słuchu musi zawierać od 1 do 20 nagrań.", "warning");
-                return false;
-            }
-        }
-
-        /**
-         * Trening słówek.
-         */
-        if (
-            block.type === "VOCABULARY"
-        ) {
-
-            const vocabulary =
-                parseVocabularyContent(
-                    block.content
-                );
-
-
-            if (
-                vocabulary.items.length < 1
-                || vocabulary.items.some(
-                    item =>
-                        !item.term
-                        || !item.translation
-                )
-            ) {
-
-                showToast(
-                    "Dodaj przynajmniej jedno słówko wraz z tłumaczeniem.",
-                    "warning"
-                );
-
-                return false;
-            }
-
-
-            if (
-                vocabulary.items.length > 20
-            ) {
-
-                showToast(
-                    "Jeden trening może zawierać maksymalnie 20 słówek.",
-                    "warning"
-                );
-
-                return false;
-            }
-        }
-
-        if (block.type === "SENTENCE_BUILDER") {
-            const sentence = parseSentenceBuilderContent(block.content);
-            if (!sentence.polishSentence) {
-                showToast("Dodaj polskie zdanie do przetłumaczenia.", "warning");
-                return false;
-            }
-            if (sentence.words.length < 2 || sentence.words.length > 6) {
-                showToast("Zdanie angielskie musi zawierać od 2 do 6 kafelków.", "warning");
-                return false;
-            }
-        }
-
-
-        /**
-         * Quiz.
-         */
-        if (
-            block.type === "QUIZ"
-        ) {
-
-            const options =
-                (block.content || "")
-                    .split("\n")
-                    .map(
-                        option =>
-                            option.trim()
-                    )
-                    .filter(Boolean);
-
-
-            if (
-                options.length < 2
-            ) {
-
-                showToast(
-                    "Quiz wymaga przynajmniej dwóch odpowiedzi.",
-                    "warning"
-                );
-
-                return false;
-            }
-
-
-            if (
-                !block.expectedAnswer
-                || !options.includes(
-                    block.expectedAnswer
-                )
-            ) {
-
-                showToast(
-                    "Wybierz poprawną odpowiedź quizu.",
-                    "warning"
-                );
-
-                return false;
-            }
-        }
-
-
-        /**
-         * Zadanie.
-         */
-        if (["TASK", "DEBUGGING", "PREDICT_OUTPUT", "CODE_REVIEW", "OPEN_RESPONSE"].includes(block.type)) {
-
-            if (
-                !block.instruction?.trim()
-            ) {
-
-                showToast(
-                    "Dodaj polecenie do aktywności.",
-                    "warning"
-                );
-
-                return false;
-            }
-
-
-            if (
-                !block.expectedAnswer?.trim()
-            ) {
-
-                showToast(
-                    block.type === "OPEN_RESPONSE" || block.type === "CODE_REVIEW"
-                        ? "Dodaj model odpowiedzi i kryteria samooceny."
-                        : "Dodaj poprawną odpowiedź do aktywności.",
-                    "warning"
-                );
-
-                return false;
-            }
-        }
-
-        if (["DEBUGGING", "PREDICT_OUTPUT", "CODE_REVIEW"].includes(block.type)
-            && !block.starterCode?.trim()) {
-            const message = block.type === "DEBUGGING"
-                ? "Dodaj kod z błędem, który uczeń ma naprawić."
-                : block.type === "PREDICT_OUTPUT"
-                    ? "Dodaj kod, którego wynik uczeń ma przewidzieć."
-                    : "Dodaj kod do analizy.";
-            showToast(message, "warning");
-            return false;
-        }
-
-        if (block.type === "PRACTICAL_LAB") {
-            if (!block.instruction?.trim()) {
-                showToast("Dodaj cel i wymagania laboratorium.", "warning");
-                return false;
-            }
-            if (!block.content?.trim()) {
-                showToast("Dodaj sposób weryfikacji i kryteria ukończenia.", "warning");
-                return false;
-            }
-        }
-
-
-        return true;
+        const reason = getLessonBlockValidationError(block);
+        if (reason) showToast(reason, "warning");
+        return !reason;
     }
 
 
