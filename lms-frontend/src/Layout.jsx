@@ -20,6 +20,7 @@ import {
 import skicodeLogo from "./assets/images/skicode-logo.png";
 import { apiFetch } from "./api/api";
 import { useAuth } from "./context/AuthContext";
+import { getWorkspaceTheme, WORKSPACE_BACKGROUNDS } from "./utils/workspaceTheme";
 
 export default function Layout() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,9 +31,8 @@ export default function Layout() {
     const menuTriggerRef = useRef(null);
 
     const isLessonPage = location.pathname.startsWith("/lesson/");
-    const lightWorkspace = ["/dashboard", "/courses", "/admin/courses"].includes(
-        location.pathname.replace(/\/+$/, "")
-    );
+    const workspaceTheme = getWorkspaceTheme(location.pathname);
+    const lightWorkspace = workspaceTheme === "light";
     const closeMenu = () => setMobileMenuOpen(false);
     const linkClass = ({ isActive }) =>
         `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 ${
@@ -220,9 +220,9 @@ export default function Layout() {
                     menuTriggerRef.current = event.currentTarget;
                     setMobileMenuOpen(true);
                 }} />
-                <main className={`workspace-main flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 ${lightWorkspace
-                    ? "workspace-main--light bg-[#f6f8fa] text-slate-900"
-                    : "workspace-main--dark bg-[radial-gradient(circle_at_85%_-10%,rgba(34,211,238,0.12),transparent_30%),radial-gradient(circle_at_15%_105%,rgba(124,58,237,0.10),transparent_28%),#05070d] text-white"}`}>
+                <main style={{ backgroundColor: WORKSPACE_BACKGROUNDS[workspaceTheme] }} className={`workspace-main flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 ${lightWorkspace
+                    ? "workspace-main--light text-slate-900"
+                    : "workspace-main--dark text-white"}`}>
                     <Outlet />
                 </main>
             </div>

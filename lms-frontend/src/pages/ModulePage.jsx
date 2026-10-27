@@ -370,27 +370,26 @@ export default function ModulePage() {
 
     if (error) {
         return (
-            <div className="mx-auto max-w-3xl rounded-3xl border border-red-500/30 bg-red-500/10 p-8 text-center text-red-200">
+            <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-red-800">
                 {error}
             </div>
         );
     }
 
     return (
-        <div className="mx-auto max-w-5xl space-y-10 text-white">
-            <header className="relative px-2 py-3 sm:px-4">
-                <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="course-roadmap mx-auto max-w-6xl space-y-6 text-slate-900">
+            <header className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7">
                 <button
                     type="button"
                     onClick={() => navigate("/courses")}
-                    className="relative mb-7 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-black text-gray-300 transition hover:border-cyan-300/30 hover:bg-white/[0.07] hover:text-white"
+                    className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
                 >
                     <BsArrowLeft />
                     Wróć do kursów
                 </button>
-                <div className="relative flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                        <p className="mb-3 text-sm font-semibold text-blue-300">
+                <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+                    <div className="min-w-0">
+                        <p className="mb-3 text-sm font-semibold text-teal-800">
                             {isLanguageCourse ? (
                                 <span className="inline-flex items-center gap-2">
                                     <BsTranslate />
@@ -403,35 +402,35 @@ export default function ModulePage() {
                                 </span>
                             )}
                         </p>
-                        <h1 className="text-3xl font-black sm:text-5xl">
+                        <h1 className="break-words text-2xl font-bold leading-tight tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-3xl">
                             {course?.title || course?.name || "Roadmap kursu"}
                         </h1>
-                        <p className="mt-3 max-w-2xl text-gray-400">
+                        <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
                             {isLanguageCourse
                                 ? "Krótka lekcja po krótkiej lekcji — aż do certyfikatu."
-                                : "Jedna umiejętność naraz. Ukończ węzeł, aby odblokować następny."}
+                                : "Wybierz etap i przejdź do lekcji. Zapisany postęp pomoże Ci wrócić do nauki."}
                         </p>
                     </div>
 
-                    <div className="w-full max-w-sm lg:w-80">
+                    <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
                         <div className="mb-2 flex items-center justify-between text-sm">
-                            <span className="text-gray-500">Postęp całego kursu</span>
-                            <span className="font-black text-cyan-300">{progress}%</span>
+                            <span className="font-medium text-slate-700">Postęp całego kursu</span>
+                            <span className="font-bold text-teal-800">{progress}%</span>
                         </div>
-                        <div className="h-2.5 overflow-hidden rounded-full bg-gray-800/80">
+                        <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
                             <div
-                                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-[width] duration-500"
+                                className="h-full rounded-full bg-teal-700 transition-[width] duration-500"
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
-                        <p className="mt-2 text-xs text-gray-600">
+                        <p className="mt-3 text-sm leading-5 text-slate-600">
                             Zaliczono {completedCount} z {progressLessons.length} dostępnych lekcji lub ich odpowiedników
                         </p>
                         {isLanguageCourse && (
                             <button
                                 type="button"
                                 onClick={() => navigate("/exams")}
-                                className="mt-4 w-full rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-2.5 text-sm font-black text-violet-200 transition hover:bg-violet-500/20"
+                                className="mt-4 w-full rounded-xl border border-teal-200 bg-white px-4 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-50"
                             >
                                 Egzaminy i poziomy CEFR
                             </button>
@@ -441,6 +440,7 @@ export default function ModulePage() {
             </header>
 
             {modules.length > 0 && <CourseRoadmapSearch
+                appearance="light"
                 query={searchQuery}
                 onChange={query => {
                     setCourseSearch({ courseId, query });
@@ -452,16 +452,18 @@ export default function ModulePage() {
             />}
 
             {role === "ADMIN" && (
-                <div className="mx-auto max-w-3xl space-y-5 px-2">
+                <details className="mx-auto max-w-5xl rounded-2xl border border-slate-300 bg-white p-4 sm:p-5">
+                    <summary className="cursor-pointer text-sm font-semibold text-slate-800 focus-visible:outline-2 focus-visible:outline-teal-700">Narzędzia administratora — dodawanie etapów i import</summary>
+                    <div className="mt-5 space-y-5">
                     <section className="space-y-3">
                         <input
                             value={newSectionTitle}
                             onChange={e => setNewSectionTitle(e.target.value)}
                             maxLength={200}
                             placeholder="Opcjonalny nagłówek części, np. CZĘŚĆ I — Java od zera"
-                            className="w-full rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold text-violet-100 outline-none transition focus:border-violet-400"
+                            className="w-full rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 font-bold text-violet-900 outline-none transition focus:border-violet-400"
                         />
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-slate-600">
                             Nagłówek możesz też dodać później — wybierz „Dodaj nagłówek” nad dowolnym etapem poniżej.
                         </p>
                         <div className="flex gap-3">
@@ -469,12 +471,12 @@ export default function ModulePage() {
                                 value={newModule}
                                 onChange={e => setNewModule(e.target.value)}
                                 placeholder="Nazwa nowego modułu, np. Zmienne i typy danych"
-                                className="min-w-0 flex-1 rounded-xl border border-gray-800 bg-gray-900/70 px-4 py-3 outline-none transition focus:border-blue-500"
+                                className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500"
                             />
 
                             <button
                                 onClick={createModule}
-                                className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-semibold transition hover:bg-green-700"
+                                className="flex items-center gap-2 rounded-xl bg-teal-800 px-5 py-3 font-semibold text-white transition hover:bg-teal-900"
                             >
                                 <BsPlusCircle />
                                 Dodaj
@@ -482,7 +484,7 @@ export default function ModulePage() {
                         </div>
                     </section>
 
-                    <LessonPlanImport
+                    <div className="rounded-2xl bg-slate-950 p-4 text-white"><LessonPlanImport
                         courseId={courseId}
                         moduleCount={modules.length}
                         existingModules={modules}
@@ -490,28 +492,29 @@ export default function ModulePage() {
                             roadmapCache.delete(String(courseId));
                             await loadRoadmap();
                         }}
-                    />
-                    <CourseDuplicateCleanup
+                    /></div>
+                    <div className="rounded-2xl bg-slate-950 p-4 text-white"><CourseDuplicateCleanup
                         key={courseId}
                         courseId={courseId}
                         onCleaned={async () => {
                             roadmapCache.delete(String(courseId));
                             await loadRoadmap();
                         }}
-                    />
-                </div>
+                    /></div>
+                    </div>
+                </details>
             )}
 
-            <section className="mx-auto max-w-3xl space-y-4 pb-16">
+            <section className="mx-auto max-w-5xl space-y-4 pb-16">
                 {modules.length > 0 && (
                     <div className="flex flex-wrap items-center justify-between gap-3 px-2">
-                        <p className="text-sm font-bold text-gray-400">Części: {sections.length} · Etapy: {modules.length}</p>
+                        <p className="text-sm font-bold text-slate-600">Części: {sections.length} · Etapy: {modules.length}</p>
                         {!search.active && <div className="flex flex-wrap gap-2">
                             <button
                                 type="button"
                                 disabled={expandedSectionCount === 0}
                                 onClick={() => setAllSectionsExpanded(false)}
-                                className="rounded-xl border border-violet-300/25 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-200 transition hover:bg-violet-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-default disabled:opacity-40"
+                                className="rounded-xl border border-violet-200 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-800 transition hover:bg-violet-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-default disabled:opacity-40"
                             >
                                 Zwiń wszystkie części
                             </button>
@@ -519,7 +522,7 @@ export default function ModulePage() {
                                 type="button"
                                 disabled={expandedSectionCount === sections.length}
                                 onClick={() => setAllSectionsExpanded(true)}
-                                className="rounded-xl border border-violet-300/25 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-200 transition hover:bg-violet-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-default disabled:opacity-40"
+                                className="rounded-xl border border-violet-200 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-800 transition hover:bg-violet-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-default disabled:opacity-40"
                             >
                                 Rozwiń wszystkie części
                             </button>
@@ -527,7 +530,7 @@ export default function ModulePage() {
                                 type="button"
                                 disabled={expandedModuleCount === 0}
                                 onClick={() => setAllModulesExpanded(false)}
-                                className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-gray-300 transition hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-default disabled:opacity-40"
+                                className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-default disabled:opacity-40"
                             >
                                 Zwiń etapy
                             </button>
@@ -535,7 +538,7 @@ export default function ModulePage() {
                                 type="button"
                                 disabled={expandedModuleCount === modules.length}
                                 onClick={() => setAllModulesExpanded(true)}
-                                className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-gray-300 transition hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-default disabled:opacity-40"
+                                className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-default disabled:opacity-40"
                             >
                                 Rozwiń etapy
                             </button>
@@ -543,7 +546,7 @@ export default function ModulePage() {
                     </div>
                 )}
                 {modules.length === 0 ? (
-                    <div className="py-16 text-center text-gray-500">
+                    <div className="py-16 text-center text-slate-600">
                         Brak sekcji w tym kursie.
                     </div>
                 ) : (
@@ -557,6 +560,7 @@ export default function ModulePage() {
                         return (
                             <section key={`${courseId}:section:${section.id}`} className="space-y-4 pt-3">
                                 <CourseSectionHeading
+                                    appearance="light"
                                     title={section.title}
                                     moduleName={firstModule.name}
                                     stageNumber={section.startStageNumber}
@@ -592,29 +596,30 @@ export default function ModulePage() {
                                         return (
                                             <div key={`${courseId}:${module.id}`}>
                                                 {module.id !== firstModule.id && <CourseSectionHeading
+                                                    appearance="light"
                                                     moduleName={module.name}
                                                     stageNumber={moduleIndex + 1}
                                                     canEdit={role === "ADMIN"}
                                                     onSave={title => saveSectionTitle(module, title)}
                                                 />}
                                                 <article
-                                                    className="relative rounded-2xl border border-white/10 bg-white/[0.02]"
+                                                    className="relative rounded-2xl border border-slate-200 bg-white"
                                                 >
                                                 <header className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                                                     <div className="flex min-w-0 flex-1 items-center gap-4">
-                                                        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-500/15 text-base font-black text-blue-200 ring-1 ring-blue-300/20">
+                                                        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-blue-500/15 text-base font-black text-teal-800 ring-1 ring-blue-300/20">
                                                             {moduleIndex + 1}
                                                         </div>
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-300">
+                                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-teal-800">
                                                                     {isLanguageCourse ? `CEFR ${module.cefrLevel}` : `Etap ${moduleIndex + 1}`}
                                                                 </p>
                                                                 {role === "ADMIN" && (
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => startEditingModule(module)}
-                                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300/20 bg-blue-500/10 px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-blue-200 transition hover:border-blue-300/40 hover:bg-blue-500/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300/20 bg-blue-500/10 px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-teal-800 transition hover:border-blue-300/40 hover:bg-blue-500/20 hover:text-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
                                                                     >
                                                                         <BsPencilSquare aria-hidden="true" />
                                                                         Edytuj nazwę
@@ -628,10 +633,10 @@ export default function ModulePage() {
                                                                     aria-controls={lessonsPanelId}
                                                                     aria-label={`${expanded ? "Zwiń" : "Rozwiń"} etap ${module.name}`}
                                                                     onClick={() => toggleModule(module)}
-                                                                    className="flex w-full items-center justify-between gap-3 rounded-lg text-left transition hover:text-cyan-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+                                                                    className="flex w-full items-center justify-between gap-3 rounded-lg text-left transition hover:text-teal-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
                                                                 >
                                                                     <span>{module.name}</span>
-                                                                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/5 text-blue-200">
+                                                                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-teal-800">
                                                                         <BsChevronDown
                                                                             aria-hidden="true"
                                                                             className={`transition-transform duration-200 motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
@@ -639,7 +644,7 @@ export default function ModulePage() {
                                                                     </span>
                                                                 </button>
                                                             </h2>
-                                                            <p className="mt-1 text-xs text-gray-500">
+                                                            <p className="mt-1 text-xs text-slate-600">
                                                                 {progressEligibleLessons.length} {progressEligibleLessons.length === 1 ? "dostępna lekcja" : "dostępnych lekcji"} · ukończono {completedLessons}
                                                                 {isLanguageCourse && !module.levelUnlocked ? " · poziom zablokowany" : ""}
                                                                 {levelBelowCurrent && completedLessons < lessons.length ? " · potwierdzony testem kwalifikacyjnym" : ""}
@@ -648,10 +653,10 @@ export default function ModulePage() {
                                                     </div>
 
                                                     <div className="flex items-center gap-3 self-end sm:self-auto">
-                                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
-                                                            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-800">
+                                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                                                            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-200">
                                                                 <div
-                                                                    className="h-full rounded-full bg-cyan-400 transition-[width] duration-500"
+                                                                    className="h-full rounded-full bg-teal-700 transition-[width] duration-500"
                                                                     style={{ width: `${moduleProgress}%` }}
                                                                 />
                                                             </div>
@@ -664,7 +669,7 @@ export default function ModulePage() {
                                                                     type="button"
                                                                     aria-label={`Zarządzaj lekcjami etapu ${module.name}`}
                                                                     onClick={() => navigate(`/admin/lessons/${module.id}`)}
-                                                                    className="grid h-9 w-9 place-items-center rounded-full bg-yellow-500/10 text-yellow-300 transition hover:bg-yellow-500 hover:text-white"
+                                                                    className="grid h-10 w-10 place-items-center rounded-full border border-amber-200 bg-amber-50 text-amber-900 transition hover:bg-amber-100"
                                                                 >
                                                                     <BsGearFill />
                                                                 </button>
@@ -672,7 +677,7 @@ export default function ModulePage() {
                                                                     type="button"
                                                                     aria-label={`Usuń etap ${module.name}`}
                                                                     onClick={() => deleteModule(module)}
-                                                                    className="grid h-9 w-9 place-items-center rounded-full bg-red-500/10 text-red-300 transition hover:bg-red-500 hover:text-white"
+                                                                    className="grid h-10 w-10 place-items-center rounded-full border border-red-200 bg-red-50 text-red-800 transition hover:bg-red-100"
                                                                 >
                                                                     <BsTrash />
                                                                 </button>
@@ -685,7 +690,7 @@ export default function ModulePage() {
                                                     <section className="border-t border-blue-400/15 bg-blue-500/[0.04] p-5 sm:p-6">
                                                         <div className="grid gap-5">
                                                             <div>
-                                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-blue-300">
+                                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-teal-800">
                                                                     Nazwa etapu
                                                                 </label>
                                                                 <input
@@ -696,12 +701,12 @@ export default function ModulePage() {
                                                                         ...current,
                                                                         name: event.target.value
                                                                     }))}
-                                                                    className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 font-bold outline-none focus:border-blue-400"
+                                                                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-900 outline-none focus:border-teal-700"
                                                                 />
                                                             </div>
 
                                                             <div>
-                                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-violet-300">
+                                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-violet-800">
                                                                     Nagłówek części nad etapem — opcjonalnie
                                                                 </label>
                                                                 <input
@@ -712,12 +717,12 @@ export default function ModulePage() {
                                                                         sectionTitle: event.target.value
                                                                     }))}
                                                                     placeholder="Np. CZĘŚĆ XX — Rekrutacja Junior Java Developer"
-                                                                    className="mt-2 w-full rounded-xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold text-violet-100 outline-none focus:border-violet-400"
+                                                                    className="mt-2 w-full rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 font-bold text-violet-900 outline-none focus:border-violet-400"
                                                                 />
                                                             </div>
 
                                                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                                                <label className="flex items-center gap-3 text-sm font-bold text-gray-300">
+                                                                <label className="flex items-center gap-3 text-sm font-bold text-slate-700">
                                                                     <input
                                                                         type="checkbox"
                                                                         checked={moduleDraft.lessonsLocked}
@@ -735,7 +740,7 @@ export default function ModulePage() {
                                                                         type="button"
                                                                         onClick={cancelEditingModule}
                                                                         disabled={savingModuleId === module.id}
-                                                                        className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-black text-gray-300 transition hover:bg-white/[0.06] disabled:opacity-40"
+                                                                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-100 disabled:opacity-40"
                                                                     >
                                                                         Anuluj
                                                                     </button>
@@ -756,14 +761,14 @@ export default function ModulePage() {
                                                 <div
                                                     id={lessonsPanelId}
                                                     hidden={!expanded}
-                                                    className="border-t border-white/10 pb-6 pt-6"
+                                                    className="border-t border-slate-200 pb-6 pt-6"
                                                 >
                                                     {expanded && (lessons.length === 0 ? (
                                                         <div className="flex flex-col items-center py-5 text-center">
-                                                            <div className="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-gray-700 text-gray-600">
+                                                            <div className="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-slate-300 text-slate-600">
                                                                 <BsLockFill />
                                                             </div>
-                                                            <p className="mt-3 text-sm text-gray-600">
+                                                            <p className="mt-3 text-sm text-slate-600">
                                                                 Lekcje w przygotowaniu
                                                             </p>
                                                         </div>
@@ -804,16 +809,16 @@ export default function ModulePage() {
                                                                                 className="group flex w-56 flex-col items-center text-center disabled:cursor-not-allowed"
                                                                             >
                                                                                 {current && (
-                                                                                    <span className="mb-2 rounded-full bg-blue-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/25">
+                                                                                    <span className="mb-2 rounded-full bg-teal-800 px-3 py-1 text-xs font-semibold text-white">
                                                                                         Kontynuuj
                                                                                     </span>
                                                                                 )}
                                                                                 <span className={`relative grid h-20 w-20 place-items-center rounded-full border-2 border-b-[7px] text-2xl font-black transition-all duration-200 motion-safe:group-hover:-translate-y-1 motion-safe:group-active:translate-y-0 ${
                                                                                     lesson.completed
-                                                                                        ? "border-emerald-300/70 border-b-emerald-700 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                                                                                        ? "border-emerald-700 border-b-emerald-900 bg-emerald-700 text-white"
                                                                                         : lessonAccessible
                                                                                             ? "border-blue-300/80 border-b-blue-800 bg-blue-600 text-white shadow-xl shadow-blue-500/25"
-                                                                                            : "border-gray-700 border-b-gray-950 bg-gray-800 text-gray-600"
+                                                                                            : "border-slate-300 border-b-slate-300 bg-slate-100 text-slate-600"
                                                                                 }`}>
                                                                                     {lesson.completed ? (
                                                                                         <BsCheckCircle size={30} />
@@ -823,16 +828,16 @@ export default function ModulePage() {
                                                                                         <BsLockFill size={23} />
                                                                                     )}
                                                                                 </span>
-                                                                                <span className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-gray-600">
+                                                                                <span className="mt-3 text-xs font-semibold text-slate-600">
                                                                                     Lekcja {index + 1}
                                                                                 </span>
                                                                                 <span className={`mt-1 line-clamp-2 max-w-52 text-sm font-black leading-5 ${
-                                                                                    lessonAccessible ? "text-gray-100" : "text-gray-600"
+                                                                                    lessonAccessible ? "text-slate-900" : "text-slate-600"
                                                                                 }`}>
                                                                                     {lesson.title}
                                                                                 </span>
                                                                                 {!hasContent && role !== "ADMIN" && (
-                                                                                    <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-300/60">
+                                                                                    <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">
                                                                                         Materiały w przygotowaniu
                                                                                     </span>
                                                                                 )}
@@ -881,11 +886,11 @@ function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
     if (loading) {
         return (
             <div className="lesson-step-transition mt-7 flex flex-col items-center gap-3" aria-label="Ładowanie podzadań">
-                <div className="h-3 w-36 animate-pulse rounded-full bg-white/10" />
+                <div className="h-3 w-36 animate-pulse rounded-full bg-slate-200" />
                 {[0, 1, 2].map(item => (
                     <div
                         key={item}
-                        className="h-11 w-11 animate-pulse rounded-full bg-gray-800"
+                        className="h-11 w-11 animate-pulse rounded-full bg-slate-200"
                     />
                 ))}
             </div>
@@ -894,7 +899,7 @@ function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
 
     if (error) {
         return (
-            <p className="mt-6 max-w-xs text-center text-xs text-red-300">
+            <p className="mt-6 max-w-xs text-center text-xs text-red-800">
                 {error}
             </p>
         );
@@ -915,11 +920,11 @@ function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
             aria-label={`Podzadania lekcji ${lesson.title}`}
         >
             <header className="mb-4 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-800">
                     Podzadania tej lekcji
                 </p>
                 <p className={`mt-1 text-xs font-bold ${
-                    readyToFinish ? "text-emerald-300" : "text-gray-500"
+                    readyToFinish ? "text-emerald-800" : "text-slate-600"
                 }`}>
                     {readyToFinish
                         ? "Wszystkie kroki gotowe — zakończ lekcję"
@@ -955,12 +960,12 @@ function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
                                 >
                                     <span className={`relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 border-b-4 text-sm transition-all duration-200 motion-safe:group-hover:-translate-y-0.5 ${
                                         completed
-                                            ? "border-emerald-300/70 border-b-emerald-800 bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                                            ? "border-emerald-700 border-b-emerald-900 bg-emerald-700 text-white"
                                             : active
                                                 ? "border-cyan-200 border-b-blue-900 bg-blue-600 text-white shadow-xl shadow-blue-500/30 ring-4 ring-blue-500/15"
                                                 : accessible
-                                                    ? "border-gray-600 border-b-gray-950 bg-gray-800 text-gray-300 group-hover:border-blue-400 group-hover:text-white"
-                                                    : "border-gray-800 border-b-black bg-gray-900 text-gray-700"
+                                                    ? "border-slate-300 border-b-gray-950 bg-slate-200 text-slate-700 group-hover:border-blue-400 group-hover:text-teal-900"
+                                                    : "border-slate-300 border-b-slate-300 bg-slate-100 text-slate-600"
                                     }`}>
                                         {completed
                                             ? <BsCheckCircle size={17} />
@@ -970,17 +975,17 @@ function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
                                     </span>
 
                                     <span className="min-w-0">
-                                        <span className={`block text-[9px] font-black uppercase tracking-[0.16em] ${
+                                        <span className={`block text-[11px] font-semibold ${
                                             active
-                                                ? "text-cyan-300"
+                                                ? "text-teal-800"
                                                 : completed
-                                                    ? "text-emerald-400/80"
-                                                    : "text-gray-600"
+                                                    ? "text-emerald-800"
+                                                    : "text-slate-600"
                                         }`}>
                                             Krok {index + 1}
                                         </span>
-                                        <span className={`mt-0.5 line-clamp-2 block text-[11px] font-bold leading-4 ${
-                                            accessible ? "text-gray-300" : "text-gray-700"
+                                        <span className={`mt-0.5 line-clamp-2 block text-xs font-semibold leading-5 ${
+                                            accessible ? "text-slate-700" : "text-slate-600"
                                         }`}>
                                             {step.title || stepTypeLabel(step.type)}
                                         </span>
