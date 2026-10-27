@@ -11,6 +11,7 @@ import { getBlockBaseXp, REWARDED_BLOCK_TYPES } from "./lessonBlockRewards.js";
 import { cleanChatGptText } from "./chatGptReferences.js";
 import { getChatGptLessonPrompt } from "./lessonImportPrompt.js";
 import { getLessonBlockValidationError } from "./lessonBlockValidation.js";
+import { normalizeCodeLanguage } from "./codeLanguages.js";
 
 const TYPE_MAP = {
     tekst: "TEXT",
@@ -290,26 +291,9 @@ function fieldsFromLines(lines) {
 
 function normalizeLanguage(value, fallback = "") {
     const language = normalize(String(value || "").split("\n")[0]);
+    const codeLanguage = normalizeCodeLanguage(language);
+    if (codeLanguage) return codeLanguage;
     const languages = {
-        java: "java",
-        javascript: "javascript",
-        python: "python",
-        "c#": "csharp",
-        csharp: "csharp",
-        sql: "sql",
-        html: "html",
-        bash: "bash",
-        shell: "bash",
-        powershell: "powershell",
-        json: "json",
-        yaml: "yaml",
-        yml: "yaml",
-        xml: "xml",
-        dockerfile: "dockerfile",
-        http: "http",
-        markdown: "markdown",
-        text: "text",
-        tekst: "text",
         "en-us": "en-US",
         "en-gb": "en-GB",
         "angielski (stany zjednoczone)": "en-US",
@@ -536,7 +520,7 @@ function parseStep(step, warnings, errors, variant) {
         errors.push(`Krok ${step.number}: tytuł ma ${block.title.trim().length} znaków, a maksymalny limit wynosi ${MAX_BLOCK_TITLE_LENGTH}.`);
     }
     if (fields.language?.trim() && !normalizeLanguage(fields.language)) {
-        errors.push(`Krok ${step.number}: pole „Język” ma nieobsługiwaną wartość „${fields.language.split("\n")[0]}”. Użyj tokenu z wzoru (np. javascript, java, sql, html, text albo en-GB), nie opisu języka.`);
+        errors.push(`Krok ${step.number}: pole „Język” ma nieobsługiwaną wartość „${fields.language.split("\n")[0]}”. Użyj tokenu z wzoru (np. javascript, java, sql, html, php, text albo en-GB), nie opisu języka.`);
     }
 
     if (["IMAGE", "VIDEO", "PDF"].includes(resolved.type) && !block.mediaUrl?.trim()) {

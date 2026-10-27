@@ -6,6 +6,7 @@ import {
     BsPlayFill
 } from "react-icons/bs";
 import { lazy, Suspense } from "react";
+import { normalizeCodeLanguage } from "../../utils/codeLanguages.js";
 
 const MonacoEditorBox = lazy(() => import("./MonacoEditor"));
 
@@ -95,6 +96,7 @@ export default function LessonTask({
     const isReflection = block.type === "CODE_REVIEW" || block.type === "OPEN_RESPONSE";
     const hasReadOnlyCode = (isPrediction || block.type === "CODE_REVIEW") && Boolean(block.starterCode);
     const isEditableCodeTask = !isPrediction && !isReflection && Boolean(block.language || block.starterCode);
+    const isPhp = normalizeCodeLanguage(block.language) === "php";
     const value = answers[block.id] ?? (isEditableCodeTask ? block.starterCode ?? "" : "");
 
     return (
@@ -124,6 +126,12 @@ export default function LessonTask({
                 {isEditableCodeTask && block.language?.toLowerCase() === "sql" && (
                     <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.07] p-4 text-sm leading-6 text-cyan-50 sm:text-base">
                         <strong>Jak działa sprawdzanie:</strong> porównujemy instrukcje i dane z wymaganiami zadania. Wielkość liter w poleceniach SQL, komentarze, wcięcia i podział na linie nie wpływają na wynik. Wartości tekstowe rekordów muszą być zgodne z poleceniem. Wykonanie kodu i wynik sprawdź w phpMyAdmin lub środowisku wskazanym przez nauczyciela.
+                    </div>
+                )}
+
+                {isEditableCodeTask && isPhp && (
+                    <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.07] p-4 text-sm leading-6 text-cyan-50 sm:text-base">
+                        <strong>Jak działa sprawdzanie PHP:</strong> porównujemy przesłany kod ze wzorcem zadania. EduHub nie uruchamia PHP ani ukrytych testów PHP. Sprawdź działanie skryptu samodzielnie w XAMPP lub środowisku PHP wskazanym w poleceniu. Zachowaj znacznik &lt;?php, nazwy zmiennych z $ i wymagane wartości tekstowe.
                     </div>
                 )}
             </div>
@@ -212,7 +220,9 @@ export default function LessonTask({
                                             ? isEditableCodeTask
                                                 ? block.language?.toLowerCase() === "sql"
                                                     ? "Dobra robota — SQL spełnia wymagania"
-                                                    : "Dobra robota — kod działa"
+                                                    : isPhp
+                                                        ? "Dobra robota — kod PHP jest zgodny ze wzorcem"
+                                                        : "Dobra robota — kod działa"
                                                 : isReflection
                                                     ? "Odpowiedź zapisana — czas na samoocenę"
                                                     : "Dobra robota — odpowiedź jest poprawna"

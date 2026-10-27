@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class TaskEvaluationServiceTest {
 
@@ -316,6 +317,53 @@ class TaskEvaluationServiceTest {
 
         assertTrue(response.correct());
         verify(codeExecutionService).evaluateJava(EXPECTED, block.getHiddenTests());
+    }
+
+    @Test
+    void checksPhpAsACaseSensitivePatternWithoutExecutingItEvenWhenHiddenTestsArePresent() {
+        block.setLanguage("php");
+        block.setExpectedAnswer("<?php\n$imie = \"Anna\";\necho $imie;");
+        block.setHiddenTests("<brak> => Anna");
+
+        TaskCheckResponse response = service.check(block.getId(), """
+                <?php
+                  $imie="Anna";
+                  echo   $imie;
+                """, authentication);
+
+        assertTrue(response.correct());
+        assertTrue(response.diagnostics().isEmpty());
+        verifyNoInteractions(codeExecutionService);
+    }
+
+    @Test
+    void phpPatternPreservesCaseInVariableNamesAndStringValues() {
+        block.setLanguage("php");
+        String php = "<?php\n$imie = \"Anna\";\necho $imie;";
+        block.setExpectedAnswer(php);
+
+        TaskCheckResponse wrongVariable = service.check(block.getId(), php.replace("$imie", "$Imie"), authentication);
+        TaskCheckResponse wrongValue = service.check(block.getId(), php.replace("Anna", "anna"), authentication);
+
+        assertFalse(wrongVariable.correct());
+        assertFalse(wrongValue.correct());
+        assertTrue(wrongVariable.diagnostics().stream().allMatch(diagnostic -> diagnostic.type().equals("MISSING_REQUIRED_ELEMENT")));
+        assertTrue(wrongValue.diagnostics().stream().allMatch(diagnostic -> diagnostic.type().equals("MISSING_REQUIRED_ELEMENT")));
+        verifyNoInteractions(codeExecutionService);
+    }
+
+    @Test
+    void phpReportsMissingSemicolonWithoutApplyingJavaSpecificStatementRules() {
+        block.setLanguage("php");
+        block.setExpectedAnswer("<?php\n$liczba = 7;\necho $liczba;");
+
+        TaskCheckResponse response = service.check(block.getId(), "<?php\n$liczba = 7\necho $liczba;", authentication);
+
+        assertFalse(response.correct());
+        assertEquals(1, response.diagnostics().size());
+        assertEquals("MISSING_SEMICOLON", response.diagnostics().get(0).type());
+        assertEquals(2, response.diagnostics().get(0).line());
+        verifyNoInteractions(codeExecutionService);
     }
 
     @Test

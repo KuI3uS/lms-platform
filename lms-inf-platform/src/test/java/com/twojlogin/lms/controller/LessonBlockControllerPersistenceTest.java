@@ -127,6 +127,26 @@ class LessonBlockControllerPersistenceTest {
     }
 
     @Test
+    void importsPhpExampleAndTaskWithoutChangingDollarVariablesOrCode() {
+        Lesson lesson = createLesson();
+        String code = "<?php\n$imie = \"Anna\";\necho $imie;";
+        var example = new LessonBlockRequest("Zmienne PHP", BlockType.EXAMPLE, code, "Przykład przypisania", null,
+                null, null, null, null, null, "php", null, null, null, true, 0, null);
+        var task = new LessonBlockRequest("Własna zmienna", BlockType.TASK, null, null, "Przypisz imię i je wyświetl.",
+                "<?php\n", code, null, null, null, "php", null, null, null, true, 10, null);
+
+        var saved = createController().createBulk(lesson.getId(), List.of(example, task), false);
+
+        assertEquals(2, saved.size());
+        assertEquals("php", saved.get(0).language());
+        assertEquals("php", saved.get(1).language());
+        assertEquals(code, saved.get(0).content());
+        assertEquals("<?php\n", saved.get(1).starterCode());
+        assertEquals(code, saved.get(1).expectedAnswer());
+        assertEquals(code, blockRepository.findById(saved.get(1).id()).orElseThrow().getExpectedAnswer());
+    }
+
+    @Test
     void createsLongTextBlockWithLegacyCompatibleEmptyValues() {
         Lesson lesson = createLesson();
         LessonBlockController controller = createController();

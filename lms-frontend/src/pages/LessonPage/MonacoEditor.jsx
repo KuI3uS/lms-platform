@@ -1,5 +1,6 @@
 import Editor from "@monaco-editor/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getMonacoLanguage, normalizeCodeLanguage } from "../../utils/codeLanguages.js";
 import {
     BsCodeSlash,
     BsTerminal,
@@ -46,7 +47,7 @@ function EditorHeader({ language, native }) {
 
                 <div className="flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/15 px-4 py-2">
                     <BsLightningChargeFill className="text-yellow-300"/>
-                    <span className="text-sm font-semibold">Live</span>
+                    <span className="text-sm font-semibold">{language === "php" ? "Edycja" : "Live"}</span>
                 </div>
             </div>
         </div>
@@ -132,6 +133,7 @@ export default function MonacoEditorBox({
 
                                         }) {
     const useNativeEditor = useMemo(() => needsNativeEditor(), []);
+    const codeLanguage = normalizeCodeLanguage(language, "text");
     const editorRef = useRef(null);
     const lastEmittedValueRef = useRef(value);
 
@@ -192,7 +194,7 @@ export default function MonacoEditorBox({
         return (
             <NativeCodeEditor
                 value={value}
-                language={language}
+                language={codeLanguage}
                 onChange={onChange}
             />
         );
@@ -208,7 +210,7 @@ export default function MonacoEditorBox({
 
             {/* Header */}
 
-            <EditorHeader language={language}/>
+            <EditorHeader language={codeLanguage}/>
 
             {/* Editor */}
 
@@ -216,7 +218,7 @@ export default function MonacoEditorBox({
 
                 height="min(600px, 65vh)"
 
-                language={language}
+                language={getMonacoLanguage(codeLanguage)}
 
                 theme="eduhub-dark"
 

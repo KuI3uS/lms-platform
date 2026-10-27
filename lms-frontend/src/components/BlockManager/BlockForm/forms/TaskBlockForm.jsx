@@ -7,7 +7,7 @@ import {
     BsGlobe
 } from "react-icons/bs";
 import { lazy, Suspense } from "react";
-import { CODE_LANGUAGE_OPTIONS } from "../../../../utils/codeLanguages";
+import { CODE_LANGUAGE_OPTIONS, normalizeCodeLanguage } from "../../../../utils/codeLanguages.js";
 
 const MonacoEditorBox = lazy(() => import("../../../../pages/LessonPage/MonacoEditor"));
 
@@ -118,6 +118,7 @@ export default function TaskBlockForm({
     const isPrediction = mode === "PREDICT_OUTPUT";
     const isHtml = !isPrediction && (task.language || "java") === "html";
     const isSql = !isPrediction && (task.language || "java").toLowerCase() === "sql";
+    const isPhp = !isPrediction && normalizeCodeLanguage(task.language) === "php";
     const formTitle = isDebugging
         ? "Debugowanie"
         : isPrediction
@@ -307,6 +308,12 @@ export default function TaskBlockForm({
                         ))}
 
                     </select>
+
+                    {isPhp && (
+                        <p className="rounded-xl border border-cyan-400/20 bg-cyan-400/[0.06] px-4 py-3 text-sm leading-6 text-cyan-50">
+                            <strong>PHP — porównanie ze wzorcem.</strong> Wpisz pełny poprawny kod w polu „{isDebugging ? "Poprawiony kod" : "Poprawna odpowiedź"}”. EduHub nie uruchamia PHP ani ukrytych testów PHP. Uczeń uruchamia skrypt samodzielnie w XAMPP lub innym środowisku PHP, a tutaj wysyła kod do porównania z rozwiązaniem.
+                        </p>
+                    )}
 
                 </div>
 

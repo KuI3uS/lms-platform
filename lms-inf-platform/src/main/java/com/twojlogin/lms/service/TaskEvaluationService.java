@@ -907,6 +907,7 @@ public class TaskEvaluationService {
         return normalizedLanguage.equals("java")
                 || normalizedLanguage.equals("javascript")
                 || normalizedLanguage.equals("csharp")
+                || normalizedLanguage.equals("php")
                 || normalizedLanguage.equals("sql");
     }
 

@@ -1,4 +1,5 @@
 import { MAX_BLOCK_TITLE_LENGTH, MAX_LESSON_BLOCKS } from "./lessonBlockLimits.js";
+import { CODE_LANGUAGE_OPTIONS } from "./codeLanguages.js";
 
 // Keep field labels literal: these templates are the contract of the text importer.
 const template = (type, fields, interactive = false) => `
@@ -141,7 +142,8 @@ ${language ? `- Język interfejsu poleceń: polski. Dobierz CEFR z tematu; konse
 - Laboratorium praktyczne: praca w XAMPP, phpMyAdmin, IntelliJ, terminalu, GitHubie, Dockerze itd.; wpisz cel, wymagania i weryfikację. To samoocena, nie automatyczna kontrola zewnętrznego programu.
 - Odpowiedź otwarta i Analiza kodu / Code Review: własna wypowiedź + model i kryteria samooceny. Nie wymagaj jednej dokładnej frazy.
 - Przewidź wynik: krótki kod do przeanalizowania i dokładny wynik; zachowaj istotną wielkość liter i kolejność linii.
-- Języki edytora i wzorca: java, javascript, python, csharp, sql, html, bash, powershell, json, yaml, xml, dockerfile, http, markdown, text. Wpisz jeden token, nie opis języka. Obsługa edytora nie oznacza uruchamiania tego języka; poza Java, SQL i HTML nie obiecuj pełnej analizy semantycznej programu.
+- Języki edytora i wzorca: ${CODE_LANGUAGE_OPTIONS.map(option => option.value).join(", ")}. Wpisz jeden token, nie opis języka. Obsługa edytora nie oznacza uruchamiania tego języka; poza Java, SQL i HTML nie obiecuj pełnej analizy semantycznej programu.
+- PHP: wpisz Język → php. Kod zachowuje znacznik <?php, zmienne z $ oraz wielkość liter w nazwach zmiennych i tekstach. Zadanie porównuje kod ze wzorcem, nie wykonuje PHP. Uruchamianie w XAMPP, obsługę formularzy, sesji lub połączenia z bazą sprawdzaj jako Laboratorium praktyczne z jasnymi kryteriami weryfikacji.
 - Tylko java ma Ukryte testy uruchomieniowe: jeden test w wierszu „wejście => wyjście”; <brak> oznacza brak wejścia. Nie nazywaj dowolnego porównania tekstu uruchomieniem programu.
 - HTML: Polecenie zawiera pełną listę Wymagania: (znaczniki, atrybuty, teksty, liczby elementów), a wzorzec odpowiada wszystkim wymaganiom. SQL: zgodne bazy/tabele/kolumny/dane i poprawna kolejność poleceń. Nie dodawaj testu „<brak> => cały HTML/SQL”.`}
 - Quiz: 2–6 różnych odpowiedzi, po jednej w wierszu, bez A/B/C, numeracji i punktowania. Poprawna odpowiedź jest dokładną pełną treścią jednego wiersza, nie literą. Maksymalnie dwa sensowne quizy w lekcji.
