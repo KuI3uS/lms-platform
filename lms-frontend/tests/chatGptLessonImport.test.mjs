@@ -119,3 +119,46 @@ Materiał do przeczytania.`);
 
     assert.ok(rejected.errors.some(error => error.includes("maksymalny limit wynosi 2000")));
 });
+
+test("CSS style headings stay in lesson content instead of the short separator setting", () => {
+    const prose = `STYL\n${"Dobierz kolory i czytelną typografię.\n".repeat(30)}\nKońcowe wymaganie.`;
+    for (const heading of ["STYL", "Styl:", "### Styl"]) {
+        const content = prose.replace("STYL", heading);
+        const result = parseChatGptLesson(`KROK 1\nTyp bloku\nTekst\nTytuł\nFormularz\nTreść materiału\nWstęp.\n${content}`);
+        assert.deepEqual(result.errors, []);
+        assert.equal(result.blocks[0].content, `Wstęp.\n${content}`);
+        assert.equal(result.blocks[0].mediaType, "");
+    }
+});
+
+test("an activity goal does not pollute the title or displace a lab's detailed requirements", () => {
+    const requirements = `Zbuduj formularz.\n\nSTYL\n${"Przygotuj widoczny fokus.\n".repeat(30)}\nOstatnie wymaganie.`;
+    const result = parseChatGptLesson(`KROK 1
+Typ bloku
+Laboratorium praktyczne
+Tytuł
+Rejestracja
+Polecenie lub cel aktywności: Połącz obsługę zdarzeń.
+Środowisko i sytuacja
+Przeglądarka i edytor.
+Cel i wymagania
+${requirements}
+Weryfikacja i kryteria ukończenia
+Przetestuj klawiaturą.`);
+    assert.deepEqual(result.errors, []);
+    assert.equal(result.blocks[0].title, "Rejestracja");
+    assert.equal(result.blocks[0].instruction, `Połącz obsługę zdarzeń.\n\n${requirements}`);
+    assert.equal(result.blocks[0].description, "Przeglądarka i edytor.");
+    assert.equal(result.blocks[0].content, "Przetestuj klawiaturą.");
+    assert.equal(result.blocks[0].mediaType, "");
+});
+
+test("real separator style fields still accept every existing style", () => {
+    for (const [style, expected] of [["Gradient", "gradient"], ["Linia", "line"], ["Kropki", "dots"]]) {
+        for (const type of ["KROK 1\nTyp bloku\nSeparator", "KROK 1 — Separator"]) {
+            const result = parseChatGptLesson(`${type}\nStyl\n${style}`);
+            assert.deepEqual(result.errors, []);
+            assert.equal(result.blocks[0].mediaType, expected);
+        }
+    }
+});

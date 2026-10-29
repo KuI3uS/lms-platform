@@ -44,6 +44,7 @@ public class LessonBlockController {
     private static final int MAX_BLOCKS_PER_LANGUAGE_LESSON = 10;
     private static final int MAX_VOCABULARY_ITEMS = 20;
     private static final int MAX_BLOCK_TITLE_LENGTH = 2_000;
+    private static final int MAX_BLOCK_METADATA_LENGTH = 255;
     private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 
     private final LessonBlockRepository blockRepository;
@@ -582,6 +583,8 @@ public class LessonBlockController {
                     "Uzupełnij zawartość interaktywnego bloku."
             );
         }
+        validateMetadataLength(request.mediaType(), "Typ multimediów / styl separatora");
+        validateMetadataLength(request.language(), "Język");
         validateDisplayContent(request);
         validateInteractiveContent(request);
 
@@ -618,6 +621,13 @@ public class LessonBlockController {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private void validateMetadataLength(String value, String field) {
+        if (value != null && value.trim().length() > MAX_BLOCK_METADATA_LENGTH) {
+            throw invalidField(field, "To krótkie ustawienie może mieć maksymalnie "
+                    + MAX_BLOCK_METADATA_LENGTH + " znaków. Treść lekcji umieść w treści lub poleceniu.");
+        }
     }
 
     private void validateDisplayContent(LessonBlockRequest request) {

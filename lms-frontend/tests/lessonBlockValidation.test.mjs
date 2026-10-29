@@ -53,6 +53,14 @@ test("title validation retains the 2000-character limit and divider exception", 
     assert.equal(validate(block("DIVIDER", { title: "" })), "");
 });
 
+test("short metadata fields cannot accept a lesson body, while long content remains valid", () => {
+    const content = "Materiały i wymagania.\n".repeat(1000);
+    for (const [key, label] of [["mediaType", "Typ multimediów / styl separatora"], ["language", "Język"]]) {
+        assert.equal(validate(block("TEXT", { content, [key]: "x".repeat(255) })), "");
+        assert.match(validate(block("TEXT", { content, [key]: "x".repeat(256) })), new RegExp(`Pole „${label}”.*255`));
+    }
+});
+
 test("display blocks identify missing content and media without adding URL restrictions", () => {
     assert.match(validate(block("TEXT", { content: " \n " })), /Pole „Treść”/);
     for (const type of ["IMAGE", "VIDEO", "PDF", "DOWNLOAD"]) {

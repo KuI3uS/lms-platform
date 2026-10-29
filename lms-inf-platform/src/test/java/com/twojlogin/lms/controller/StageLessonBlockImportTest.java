@@ -117,6 +117,41 @@ class StageLessonBlockImportTest {
     }
 
     @Test
+    void overlongMetadataReportsTheExactLessonStepAndFieldBeforeAnyWrites() {
+        var module = module();
+        var first = lesson(module, "Zdarzenia", 1);
+        var second = lesson(module, "Formularz", 2);
+        for (String field : List.of("mediaType", "language")) {
+            var invalidBlock = new LessonBlockRequest("Wygląd formularza", BlockType.TEXT, "Treść lekcji",
+                    null, null, null, null, null, null, null,
+                    field.equals("language") ? "x".repeat(256) : null, null, null,
+                    field.equals("mediaType") ? "x".repeat(256) : null, true, 0, null);
+            var invalidLesson = new StageLessonBlockImportRequest.LessonBlocks(second.getId(), second.getTitle(),
+                    List.of(text("Wprowadzenie"), invalidBlock));
+            var error = assertThrows(ResponseStatusException.class, () -> controller.importStage(module.getId(),
+                    new StageLessonBlockImportRequest(List.of(item(first, 1), invalidLesson), true)));
+            assertEquals(HttpStatus.BAD_REQUEST, error.getStatusCode());
+            assertTrue(error.getReason().contains("Formularz” (pozycja 2 w pakiecie), krok 2"));
+            assertTrue(error.getReason().contains(field.equals("mediaType") ? "Typ multimediów / styl separatora" : "Język"));
+            assertTrue(error.getReason().contains("255"));
+            assertEquals(0, blocks.count());
+            assertFalse(first.isPublished());
+            assertFalse(second.isPublished());
+        }
+    }
+
+    @Test
+    void longStylingRequirementsBelongInTheContentAndAreSavedWithoutTruncation() {
+        var module = module();
+        var target = lesson(module, "Formularz", 1);
+        String content = "STYL\n" + "Czytelne etykiety i widoczny fokus.\n".repeat(500);
+        var request = new StageLessonBlockImportRequest(List.of(
+                new StageLessonBlockImportRequest.LessonBlocks(target.getId(), target.getTitle(), List.of(text(content)))), true);
+        assertEquals(1, controller.importStage(module.getId(), request).blocksCreated());
+        assertEquals(content.trim(), blocks.findByLessonIdOrderByOrderIndexAsc(target.getId()).get(0).getContent());
+    }
+
+    @Test
     void invalidBlockInLaterLessonReportsItsPositionStepAndFieldWithoutPartialImport() {
         var module = module();
         var first = lesson(module, "Internet", 1);

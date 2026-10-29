@@ -1,6 +1,7 @@
 export const MAX_LESSON_BLOCKS = 10;
 export const MAX_LANGUAGE_LESSON_BLOCKS = 10;
 export const MAX_BLOCK_TITLE_LENGTH = 2000;
+export const MAX_BLOCK_METADATA_LENGTH = 255;
 
 /**
  * Zwraca maksymalną liczbę bloków dla danego typu lekcji.

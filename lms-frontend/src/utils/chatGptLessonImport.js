@@ -134,6 +134,7 @@ const FIELD_ALIASES = [
     ["wyjasnienie rozwiazania", "solutionExplanation"],
     ["wyjasnienie rozwiazania (od 4. blednej proby)", "solutionExplanation"],
     ["polecenie", "instruction"],
+    ["polecenie lub cel aktywnosci", "activityGoal"],
     ["cel i wymagania", "instruction"],
     ["zadanie naprawcze", "instruction"],
     ["pytanie do kodu", "instruction"],
@@ -245,7 +246,7 @@ function splitSteps(source) {
     return { steps, unclosedFence: Boolean(fence) };
 }
 
-function fieldsFromLines(lines) {
+function fieldsFromLines(lines, heading) {
     const fields = {};
     let activeKey = null;
     let fence = null;
@@ -262,7 +263,10 @@ function fieldsFromLines(lines) {
             activeKey = null;
             return;
         }
-        const field = readField(line);
+        const candidate = readField(line);
+        // "Styl" is a separator setting, but is also a normal heading in CSS lessons.
+        const field = candidate?.key === "mediaType"
+            && resolveType(fields.type, heading).type !== "DIVIDER" ? null : candidate;
         if (field) {
             const fieldAlreadyFilled = Object.prototype.hasOwnProperty.call(fields, field.key)
                 && Boolean(fields[field.key]?.trim());
@@ -348,7 +352,10 @@ function distributeQuizAnswer(answers, correctAnswer, seed) {
 
 function parseStep(step, warnings, errors, variant) {
     const initialErrorCount = errors.length;
-    const fields = fieldsFromLines(step.lines);
+    const fields = fieldsFromLines(step.lines, step.heading);
+    if (fields.activityGoal) {
+        fields.instruction = [fields.activityGoal, fields.instruction].filter(Boolean).join("\n\n");
+    }
     const resolved = resolveType(fields.type, step.heading);
     if (!resolved.type) {
         errors.push(`Krok ${step.number}: nie rozpoznano typu bloku „${fields.type || step.heading || "brak"}”.`);

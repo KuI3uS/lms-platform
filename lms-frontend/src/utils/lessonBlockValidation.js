@@ -1,4 +1,4 @@
-import { MAX_BLOCK_TITLE_LENGTH } from "./lessonBlockLimits.js";
+import { MAX_BLOCK_TITLE_LENGTH, MAX_BLOCK_METADATA_LENGTH } from "./lessonBlockLimits.js";
 import { parseDialogContent } from "./languageInteractiveBlocks.js";
 
 const BLOCK_TYPES = new Set([
@@ -46,6 +46,11 @@ export function getLessonBlockValidationError(block) {
     }
     if (title.length > MAX_BLOCK_TITLE_LENGTH) {
         return fieldError("Tytuł", `Tytuł ma ${title.length} znaków, a maksymalny limit wynosi ${MAX_BLOCK_TITLE_LENGTH}.`);
+    }
+    for (const [key, label] of [["mediaType", "Typ multimediów / styl separatora"], ["language", "Język"]]) {
+        if (text(block[key]).length > MAX_BLOCK_METADATA_LENGTH) {
+            return fieldError(label, `To krótkie ustawienie może mieć maksymalnie ${MAX_BLOCK_METADATA_LENGTH} znaków. Treść lekcji umieść w treści lub poleceniu.`);
+        }
     }
     if (TEXT_TYPES.has(type) && !text(block.content)) {
         return fieldError("Treść", "Uzupełnij treść tego bloku.");
