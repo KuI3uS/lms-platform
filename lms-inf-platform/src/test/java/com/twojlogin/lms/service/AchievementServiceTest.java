@@ -111,13 +111,30 @@ class AchievementServiceTest {
         verify(gamificationService, times(1)).awardAchievementGems(user, 25);
     }
 
+    @Test
+    void mythicAchievementUnlocksAtLevelNinetyOneAndPaysOnlyOnce() {
+        when(gamificationService.snapshot(user)).thenReturn(snapshot(91));
+        var mythic = service.evaluate(user).stream()
+                .filter(item -> item.type() == AchievementType.MYTHIC_LEAGUE)
+                .findFirst().orElseThrow();
+        assertTrue(mythic.unlocked());
+        assertEquals(91, mythic.progressTarget());
+        service.evaluate(user);
+        verify(gamificationService, times(1)).awardAchievementGems(user, 5_000);
+    }
+
     private GamificationService.GamificationSnapshot snapshot() {
+        return snapshot(1);
+    }
+
+    private GamificationService.GamificationSnapshot snapshot(int level) {
+        LearningLeague league = LearningLeague.forLevel(level);
         return new GamificationService.GamificationSnapshot(
-                0, 1, 0, 100, 0, 100,
+                0, level, 0, 100, 0, 100,
                 0, 0, 1, null,
                 0, 0, 5, 250,
                 0, 0, 0, 0, null,
-                "Miedź", "#fb923c", 11
+                league.displayName(), league.color(), league.nextLevel()
         );
     }
 }

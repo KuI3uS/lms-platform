@@ -8,9 +8,9 @@ public enum LearningLeague {
     CRYSTAL("Kryształ", "#a78bfa", 41, 51),
     DIAMOND("Diament", "#38bdf8", 51, 61),
     PRISM("Pryzmat", "#f472b6", 61, 71),
-    LEGENDARY_ONE("Legendarny I", "#fb7185", 71, 91),
-    LEGENDARY_TWO("Legendarny II", "#ef4444", 91, 111),
-    MYTHIC("Mityczny", "#e879f9", 111, null);
+    LEGENDARY_ONE("Legendarny I", "#fb7185", 71, 81),
+    LEGENDARY_TWO("Legendarny II", "#ef4444", 81, 91),
+    MYTHIC("Mityczny", "#e879f9", 91, null);
 
     private final String displayName;
     private final String color;

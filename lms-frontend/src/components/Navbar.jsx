@@ -259,10 +259,11 @@ export default function Navbar({ onMenuClick }) {
                                 </div>
                                 <div className="mx-2 my-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
                                     <div className="flex items-center gap-3">
-                                        <LeagueBadge name={learningStats.leagueName || "Miedź"} size="xs" muted />
+                                        <LeagueBadge name={learningStats.leagueName || "Miedź"} size="xs" />
                                         <div>
                                             <p className="text-sm font-semibold">Liga {learningStats.leagueName || "Miedź"}</p>
                                             <p className="mt-0.5 text-xs text-slate-500">Poziom {learningStats.level || 1} · {Number(learningStats.xp || 0).toLocaleString("pl-PL")} XP</p>
+                                            {learningStats.leagueName && <p className="mt-1 text-xs text-slate-600">{learningStats.nextLeagueLevel ? `Kolejna liga od poziomu ${learningStats.nextLeagueLevel}` : "Najwyższa liga"}</p>}
                                         </div>
                                     </div>
                                     <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-200/70 pt-3 text-xs">

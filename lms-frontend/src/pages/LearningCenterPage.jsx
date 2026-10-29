@@ -600,9 +600,9 @@ function LeagueRoadmap({ currentLeague }) {
         { name: "Kryształ", level: "41–50", color: "#a78bfa" },
         { name: "Diament", level: "51–60", color: "#38bdf8" },
         { name: "Pryzmat", level: "61–70", color: "#f472b6" },
-        { name: "Legendarny I", level: "71–90", color: "#fb7185" },
-        { name: "Legendarny II", level: "91–110", color: "#ef4444" },
-        { name: "Mityczny", level: "111+", color: "#e879f9" }
+        { name: "Legendarny I", level: "71–80", color: "#fb7185" },
+        { name: "Legendarny II", level: "81–90", color: "#ef4444" },
+        { name: "Mityczny", level: "91+", color: "#e879f9" }
     ];
 
     return (
@@ -611,6 +611,7 @@ function LeagueRoadmap({ currentLeague }) {
                 <div>
                     <p className="text-xs font-black uppercase tracking-widest text-slate-500">Droga lig</p>
                     <h3 className="mt-2 text-xl font-black">Każdy próg ma własną, coraz rzadszą odznakę</h3>
+                    <p className="mt-2 text-sm text-slate-400">Nowa liga co 10 poziomów. Mityczny to najwyższa liga, dostępna od poziomu 91.</p>
                 </div>
             </div>
             <div className="mt-5 flex gap-3 overflow-x-auto pb-2">

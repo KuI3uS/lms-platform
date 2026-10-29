@@ -29,7 +29,7 @@ public enum AchievementType {
     LEVEL_10("Dziesiąty poziom", "Osiągnij poziom 10", "level", 250, 10),
     LEVEL_50("Elita EduHub", "Osiągnij poziom 50", "level", 1_000, 50),
     PRISM_LEAGUE("Liga Pryzmatu", "Osiągnij ligę Pryzmatu", "gem", 1_500, 61),
-    MYTHIC_LEAGUE("Mityczny", "Osiągnij najrzadszą ligę Mityczną", "gem", 5_000, 111),
+    MYTHIC_LEAGUE("Mityczny", "Osiągnij najrzadszą ligę Mityczną", "gem", 5_000, 91),
 
     MODULE_MASTER("Mistrz modułu", "Ukończ wszystkie lekcje w module", "layers", 100, 1),
     MODULES_5("Kartograf wiedzy", "Ukończ 5 pełnych modułów", "layers", 350, 5),

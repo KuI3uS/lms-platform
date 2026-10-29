@@ -64,7 +64,7 @@ class RenderMemoryProfileTest {
             try (var response = connection.getInputStream()) {
                 var body = mapper.readTree(response);
                 assertEquals("ok", body.path("status").asText());
-                assertEquals("2026.10.29-import-style-headings", body.path("version").asText());
+                assertEquals("2026.10.29-ten-level-leagues", body.path("version").asText());
             }
         } finally {
             connection.disconnect();
