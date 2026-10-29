@@ -812,6 +812,7 @@ export default function LandingPage() {
                 Korepetycje online
               </Link>
               <a href="#faq">Pytania i odpowiedzi</a>
+              <Link reloadDocument to="/pomoc">Pomoc i kontakt</Link>
             </div>
             <div>
               <h2>Poznaj twórcę</h2>

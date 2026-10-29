@@ -15,12 +15,14 @@ import {
     BsShieldLock,
     BsX,
     BsArrowRepeat,
-    BsKey
+    BsKey,
+    BsLifePreserver
 } from "react-icons/bs";
 import skicodeLogo from "./assets/images/skicode-logo.png";
 import { apiFetch } from "./api/api";
 import { useAuth } from "./context/AuthContext";
 import { getWorkspaceTheme, WORKSPACE_BACKGROUNDS } from "./utils/workspaceTheme";
+import { SUPPORT_EMAIL } from "./utils/support";
 
 export default function Layout() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -209,9 +211,11 @@ export default function Layout() {
                     )}
                 </nav>
 
-                <div className="mx-4 mb-5 border-t border-slate-100 px-2 pt-4 text-xs leading-5 text-slate-500">
-                    <span className="font-semibold text-slate-700">Małe kroki, realny postęp.</span><br />
-                    Ucz się w swoim tempie.
+                <div className="mx-4 mb-5 border-t border-slate-100 pt-4">
+                    <Link to="/pomoc" onClick={closeMenu} className="block rounded-xl p-2 text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600">
+                        <span className="flex items-center gap-2 text-sm font-semibold text-slate-800"><BsLifePreserver aria-hidden="true" /> Pomoc i kontakt</span>
+                        <span className="mt-1 block break-all text-xs">{SUPPORT_EMAIL}</span>
+                    </Link>
                 </div>
             </aside>
 

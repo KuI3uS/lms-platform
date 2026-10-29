@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {
     BsArrowLeft,
     BsArrowRight,
@@ -118,6 +119,9 @@ export default function LessonFooter({
                     </button>
                 )}
             </div>
+            <p className="mt-5 border-t border-gray-800 pt-4 text-center text-sm text-gray-400">
+                Problem z lekcją? <Link to="/pomoc" className="rounded font-semibold text-teal-300 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">Napisz do pomocy technicznej</Link>
+            </p>
         </section>
     );
 }

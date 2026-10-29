@@ -101,7 +101,7 @@ export default function JavaCourseOfferPage() {
                     <details><summary>Czy muszę uczyć się o określonych godzinach?</summary><p>Nie ma tu harmonogramu spotkań na żywo. Pracujesz z opublikowanymi materiałami we własnym tempie, w okresie wynikającym z wybranego wariantu dostępu.</p></details>
                 </section>
             </main>
-            <footer className="java-footer java-container"><Link reloadDocument to="/" className="java-brand"><BsMortarboard aria-hidden="true" /> EduHub</Link><span>Java Backend Developer · Nauka przez praktykę</span><a href="#java-content">Wróć na górę ↑</a></footer>
+            <footer className="java-footer java-container"><Link reloadDocument to="/" className="java-brand"><BsMortarboard aria-hidden="true" /> EduHub</Link><span>Java Backend Developer · Nauka przez praktykę</span><Link reloadDocument to="/pomoc">Pomoc i kontakt</Link><a href="#java-content">Wróć na górę ↑</a></footer>
         </div>
     );
 }

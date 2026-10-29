@@ -1,11 +1,13 @@
 import { lazy, Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { BsLifePreserver } from "react-icons/bs";
 import Layout from "./Layout";
 import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const LandingPage = lazy(() => import("./components/LandingPage"));
 const JavaCourseOfferPage = lazy(() => import("./pages/JavaCourseOfferPage"));
+const SupportPage = lazy(() => import("./pages/SupportPage"));
 const Login = lazy(() => import("./Login"));
 const Register = lazy(() => import("./Register"));
 const ForgotPassword = lazy(() => import("./ForgotPassword"));
@@ -55,11 +57,15 @@ function PageLoader() {
 }
 
 export default function App() {
+    const { pathname } = useLocation();
+    const isAccountPage = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"].includes(pathname);
     return (
         <Suspense fallback={<PageLoader />}>
+            {isAccountPage && <Link to="/pomoc" className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"><BsLifePreserver aria-hidden="true" /> Pomoc i kontakt</Link>}
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/kurs/java-backend-developer" element={<JavaCourseOfferPage />} />
+                <Route path="/pomoc" element={<SupportPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
