@@ -287,7 +287,7 @@ public class TaskEvaluationService {
                     "Przeczytaj wszystkie możliwości i zaznacz tę, która najlepiej odpowiada na pytanie."
             ));
         }
-        if (student.trim().equalsIgnoreCase(expected.trim())) {
+        if (student.trim().equals(expected.trim())) {
             return List.of();
         }
         return List.of(new TaskDiagnosticDto(

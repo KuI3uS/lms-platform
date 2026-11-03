@@ -649,7 +649,9 @@ public class LessonBlockController {
                 throw invalidField("Odpowiedzi — każda w nowym wierszu",
                         "Quiz wymaga co najmniej dwóch odpowiedzi, każdej w osobnym wierszu.");
             }
-            long distinct = options.stream().map(this::normalizeQuizOption).distinct().count();
+            // Case, accents and punctuation can be the skill tested by a quiz
+            // (for example ticketcard vs TicketCard). Only trim option edges.
+            long distinct = options.stream().distinct().count();
             if (distinct != options.size()) {
                 throw invalidField("Odpowiedzi — każda w nowym wierszu", "Wszystkie odpowiedzi quizu muszą być różne.");
             }
@@ -658,14 +660,6 @@ public class LessonBlockController {
                         "Wpisz pełną treść jednej z odpowiedzi quizu, dokładnie tak jak na liście, a nie samą literę.");
             }
         }
-    }
-
-    private String normalizeQuizOption(String value) {
-        return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFD)
-                .replaceAll("[\\u0300-\\u036f]", "")
-                .replace('ł', 'l').replace('Ł', 'L')
-                .replace("**", "").replaceAll("^#{1,6}\\s*", "")
-                .replaceAll("\\s+", " ").trim().toLowerCase(java.util.Locale.ROOT);
     }
 
     private void validateInteractiveContent(LessonBlockRequest request) {

@@ -390,14 +390,18 @@ function parseStep(step, warnings, errors, variant) {
             .split("\n")
             .map((answer) => answer.trim())
             .filter(Boolean);
-        const legacyAnswers = [fields.answerA, fields.answerB, fields.answerC, fields.answerD].filter(Boolean);
-        const answers = answersFromList.length ? answersFromList : legacyAnswers;
-        const correctKey = normalize(fields.correctAnswer).toUpperCase();
+        const legacyAnswers = [fields.answerA, fields.answerB, fields.answerC, fields.answerD];
+        const answers = answersFromList.length ? answersFromList : legacyAnswers.filter(Boolean);
+        // Literal answers win. Only ASCII A–D can refer to legacy option indexes.
+        const correctKey = /^[a-d]$/i.test(fields.correctAnswer || "")
+            ? fields.correctAnswer.toUpperCase()
+            : "";
         const answerIndex = ["A", "B", "C", "D"].indexOf(correctKey);
+        const indexedAnswers = answersFromList.length ? answers : legacyAnswers;
         const correctAnswer = answers.includes(fields.correctAnswer)
             ? fields.correctAnswer
             : answerIndex >= 0
-            ? answers[answerIndex] || ""
+            ? indexedAnswers[answerIndex] || ""
             : fields.correctAnswer || "";
         const distributedAnswers = distributeQuizAnswer(
             answers,
@@ -411,7 +415,7 @@ function parseStep(step, warnings, errors, variant) {
         block.detailedHint = fields.detailedHint || fields.solutionExplanation || "";
         if (answers.length < 2) {
             errors.push(`Krok ${step.number}: quiz wymaga co najmniej dwóch odpowiedzi zapisanych pod polem „Odpowiedzi — każda w nowym wierszu”.`);
-        } else if (new Set(answers.map(normalize)).size !== answers.length) {
+        } else if (new Set(answers).size !== answers.length) {
             errors.push(`Krok ${step.number}: wszystkie odpowiedzi quizu muszą być różne.`);
         } else if (!block.expectedAnswer || !answers.includes(block.expectedAnswer)) {
             errors.push(`Krok ${step.number}: „Poprawna odpowiedź” musi być pełną treścią jednego z wierszy odpowiedzi.`);

@@ -212,6 +212,35 @@ class TaskEvaluationServiceTest {
     }
 
     @Test
+    void quizAnswersDistinguishCaseDiacriticsPunctuationAndInternalSpaces() {
+        block.setType(BlockType.QUIZ);
+        var options = java.util.List.of("ticketcard", "ticket-card", "TicketCard", "ticket_card", "Żółć", "Zolc",
+                "ticket card", "ticket  card");
+        block.setContent(String.join("\n", options));
+
+        for (String expected : options) {
+            block.setExpectedAnswer(expected);
+            for (String selected : options) {
+                TaskCheckResponse response = service.check(block.getId(), selected, authentication);
+                assertEquals(expected.equals(selected), response.correct(), expected + " vs " + selected);
+                if (!expected.equals(selected)) {
+                    assertEquals("INCORRECT_QUIZ_ANSWER", response.diagnostics().get(0).type());
+                }
+            }
+        }
+    }
+
+    @Test
+    void quizAnswersIgnoreOnlyLeadingAndTrailingWhitespace() {
+        block.setType(BlockType.QUIZ);
+        block.setExpectedAnswer("TicketCard");
+
+        TaskCheckResponse response = service.check(block.getId(), "  TicketCard \n", authentication);
+
+        assertTrue(response.correct());
+    }
+
+    @Test
     void checksPredictedOutputLineByLine() {
         block.setType(BlockType.PREDICT_OUTPUT);
         block.setStarterCode("System.out.println(2 + 3);");

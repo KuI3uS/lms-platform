@@ -407,7 +407,7 @@ class LessonBlockControllerPersistenceTest {
         var controller = createController();
         for (var invalid : List.of(
                 request("Quiz", BlockType.QUIZ, "Jedyna odpowiedź", "Jedyna odpowiedź"),
-                request("Quiz", BlockType.QUIZ, "ŻÓŁĆ\nzolc", "ŻÓŁĆ"),
+                request("Quiz", BlockType.QUIZ, "ŻÓŁĆ\n  ŻÓŁĆ  ", "ŻÓŁĆ"),
                 request("Quiz", BlockType.QUIZ, "Pierwsza\nDruga", "A")
         )) {
             var error = assertThrows(ResponseStatusException.class, () -> controller.createBulk(
@@ -415,6 +415,45 @@ class LessonBlockControllerPersistenceTest {
             assertTrue(error.getReason().contains("krok 1, pole „"));
         }
         assertEquals(0, blockRepository.countByLessonId(lesson.getId()));
+    }
+
+    @Test
+    void importsDistinctQuizOptionsWithoutFoldingCaseDiacriticsOrPunctuation() {
+        Lesson lesson = createLesson();
+        String options = "ticketcard\nticket-card\nTicketCard\nticket_card\nŻółć\nZolc";
+
+        var imported = createController().createBulk(lesson.getId(), List.of(
+                request("Poprawna nazwa klasy", BlockType.QUIZ, options, "TicketCard")
+        ), false);
+
+        assertEquals(1, imported.size());
+        assertEquals(options, imported.get(0).content());
+        assertEquals("TicketCard", imported.get(0).expectedAnswer());
+        assertEquals(options, blockRepository.findById(imported.get(0).id()).orElseThrow().getContent());
+    }
+
+    @Test
+    void quizCrudPreservesLiteralOptionsAndRejectsOnlyActualDuplicatesOrMissingLiteralAnswer() {
+        Lesson lesson = createLesson();
+        var controller = createController();
+        String options = "ticketcard\nticket-card\nTicketCard\nticket_card\nticket card\nticket  card";
+        var created = controller.create(lesson.getId(),
+                request("Nazwy", BlockType.QUIZ, options, "TicketCard"));
+        var updated = controller.update(created.id(),
+                request("Nazwy po edycji", BlockType.QUIZ, options, "ticket-card"));
+
+        assertEquals(options, updated.content());
+        assertEquals("ticket-card", updated.expectedAnswer());
+        var missingAnswer = assertThrows(ResponseStatusException.class, () -> controller.update(created.id(),
+                request("Nie zapisuj", BlockType.QUIZ, options, "TICKETCARD")));
+        assertTrue(missingAnswer.getReason().contains("pełną treść"));
+        var duplicate = assertThrows(ResponseStatusException.class, () -> controller.update(created.id(),
+                request("Nie zapisuj", BlockType.QUIZ, "TicketCard\n TicketCard ", "TicketCard")));
+        assertTrue(duplicate.getReason().contains("różne"));
+        var persisted = blockRepository.findById(created.id()).orElseThrow();
+        assertEquals("Nazwy po edycji", persisted.getTitle());
+        assertEquals(options, persisted.getContent());
+        assertEquals("ticket-card", persisted.getExpectedAnswer());
     }
 
     @Test

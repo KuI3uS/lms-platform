@@ -24,13 +24,6 @@ function readInteractiveContent(content) {
     }
 }
 
-function normalizeQuizOption(value) {
-    return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/ł/g, "l").replace(/Ł/g, "L")
-        .replace(/\*\*/g, "").replace(/^#{1,6}\s*/, "")
-        .replace(/\s+/g, " ").trim().toLocaleLowerCase("pl-PL");
-}
-
 /** Validate the actual API payload, without mutating or silently repairing it. */
 export function getLessonBlockValidationError(block) {
     if (!block || typeof block !== "object" || Array.isArray(block)) {
@@ -114,7 +107,7 @@ export function getLessonBlockValidationError(block) {
         if (options.length < 2) {
             return fieldError("Odpowiedzi — każda w nowym wierszu", "Quiz wymaga przynajmniej dwóch odpowiedzi, każdej w osobnym wierszu.");
         }
-        if (new Set(options.map(normalizeQuizOption)).size !== options.length) {
+        if (new Set(options).size !== options.length) {
             return fieldError("Odpowiedzi — każda w nowym wierszu", "Wszystkie odpowiedzi quizu muszą być różne.");
         }
         if (!options.includes(block.expectedAnswer)) {

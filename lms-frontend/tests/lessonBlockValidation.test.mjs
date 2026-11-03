@@ -89,7 +89,7 @@ test("practical laboratories require both the goal and a verification plan", () 
 
 test("quiz errors explain separate options, duplicates and full-answer matching", () => {
     assert.match(validate(block("QUIZ", { content: "Jedna opcja", expectedAnswer: "Jedna opcja" })), /przynajmniej dwóch/);
-    assert.match(validate(block("QUIZ", { content: "Prawda\n**prawda**", expectedAnswer: "Prawda" })), /muszą być różne/);
+    assert.match(validate(block("QUIZ", { content: "Prawda\n Prawda ", expectedAnswer: "Prawda" })), /muszą być różne/);
     assert.match(validate(block("QUIZ", { content: "Opcja A\nOpcja B", expectedAnswer: "A" })), /pełną treść.*nie samą literę/);
     assert.equal(validate(block("QUIZ", { content: "Opcja A\r\nOpcja B", expectedAnswer: "Opcja B" })), "");
 });
