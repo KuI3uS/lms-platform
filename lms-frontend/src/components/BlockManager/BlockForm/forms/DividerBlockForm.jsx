@@ -1,6 +1,8 @@
+import { useLocale } from "../../../../context/LocaleContext.jsx";
 import { BsDashLg } from "react-icons/bs";
 
 export default function DividerBlockForm({ block, setBlock }) {
+    const { t } = useLocale();
     function update(field, value) {
         setBlock(previous => ({ ...previous, [field]: value }));
     }
@@ -12,32 +14,32 @@ export default function DividerBlockForm({ block, setBlock }) {
                     <BsDashLg />
                 </div>
                 <div>
-                    <h3 className="font-black">Separator sekcji</h3>
-                    <p className="text-sm text-gray-400">Może być samą linią albo zapowiadać kolejną część lekcji.</p>
+                    <h3 className="font-black">{t("Separator sekcji")}</h3>
+                    <p className="text-sm text-gray-400">{t("Może być samą linią albo zapowiadać kolejną część lekcji.")}</p>
                 </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-[1fr_220px]">
                 <label className="block space-y-2">
-                    <span className="font-semibold">Nazwa kolejnej części (opcjonalnie)</span>
+                    <span className="font-semibold">{t("Nazwa kolejnej części (opcjonalnie)")}</span>
                     <input
                         value={block.title || ""}
                         onChange={event => update("title", event.target.value)}
-                        placeholder="Np. Czas na praktykę"
+                        placeholder={t("Np. Czas na praktykę")}
                         className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-gray-300/50"
                     />
                 </label>
 
                 <label className="block space-y-2">
-                    <span className="font-semibold">Styl</span>
+                    <span className="font-semibold">{t("Styl")}</span>
                     <select
                         value={block.mediaType || "gradient"}
                         onChange={event => update("mediaType", event.target.value)}
                         className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-gray-300/50"
                     >
-                        <option value="gradient">Gradient</option>
-                        <option value="line">Cienka linia</option>
-                        <option value="dots">Kropki</option>
+                        <option value="gradient">{t("Gradient")}</option>
+                        <option value="line">{t("Cienka linia")}</option>
+                        <option value="dots">{t("Kropki")}</option>
                     </select>
                 </label>
             </div>

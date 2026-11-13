@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import { useAuth } from "../context/AuthContext";
+import { useLocale } from "../context/LocaleContext";
+import LocaleControls from "./LocaleControls";
 import { fetchLearningStats, invalidateLearningStats } from "../api/learningStats";
 import LeagueBadge from "./LeagueBadge";
 import {
@@ -37,23 +39,24 @@ const PAGE_TITLES = [
     ["/admin", "Panel twórcy"]
 ];
 
-function formatExpiry(value) {
-    if (!value) return "Wykonaj zadanie, aby rozpocząć serię";
-    return `Wygasa ${new Intl.DateTimeFormat("pl-PL", {
+function formatExpiry(value, dateLocale, t) {
+    if (!value) return t("Wykonaj zadanie, aby rozpocząć serię");
+    return t("Wygasa {date}", { date: new Intl.DateTimeFormat(dateLocale, {
         timeZone: "Europe/Warsaw",
         day: "2-digit",
         month: "2-digit",
         hour: "2-digit",
         minute: "2-digit"
-    }).format(new Date(value))}`;
+    }).format(new Date(value)) });
 }
 
 export default function Navbar({ onMenuClick }) {
+    const { t, dateLocale, formatNumber } = useLocale();
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
     const identity = {
-        email: user?.email || "Użytkownik",
+        email: user?.email || t("Użytkownik"),
         role: user?.role || "STUDENT"
     };
     const [learningStats, setLearningStats] = useState({ xp: 0, level: 1, taskStreak: 0, xpMultiplier: 1, gemBalance: 0 });
@@ -168,31 +171,31 @@ export default function Navbar({ onMenuClick }) {
             <>
                 <button
                     type="button"
-                    aria-label="Zamknij powiadomienia"
+                    aria-label={t("Zamknij powiadomienia")}
                     tabIndex={-1}
                     onClick={closeNotifications}
                     className="fixed inset-0 z-[9998] cursor-default bg-slate-900/15"
                 />
-                <section ref={notificationPanelRef} id="workspace-notifications" tabIndex={-1} aria-label="Powiadomienia" className="fixed right-3 top-[4.5rem] z-[9999] w-[min(25rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl shadow-slate-900/10 outline-none sm:right-5">
+                <section ref={notificationPanelRef} id="workspace-notifications" tabIndex={-1} aria-label={t("Powiadomienia")} className="fixed right-3 top-[4.5rem] z-[9999] w-[min(25rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl shadow-slate-900/10 outline-none sm:right-5">
                     <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4">
                         <div>
-                            <p className="font-bold">Powiadomienia</p>
-                            <p className="text-xs text-slate-500">{notifications.unreadCount} nowych</p>
+                            <p className="font-bold">{t("Powiadomienia")}</p>
+                            <p className="text-xs text-slate-500">{t("{count} nowych", { count: formatNumber(notifications.unreadCount) })}</p>
                         </div>
                         <div className="flex items-center gap-2">
                             {notifications.unreadCount > 0 && (
                                 <button type="button" onClick={markAllRead} className="rounded-lg p-2 text-xs font-semibold text-teal-700 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600">
-                                    Przeczytaj wszystkie
+                                    {t("Przeczytaj wszystkie")}
                                 </button>
                             )}
-                            <button type="button" aria-label="Zamknij powiadomienia" onClick={closeNotifications} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600">
+                            <button type="button" aria-label={t("Zamknij powiadomienia")} onClick={closeNotifications} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600">
                                 <BsX />
                             </button>
                         </div>
                     </div>
                     <div className="max-h-[min(28rem,calc(100dvh-10rem))] overflow-y-auto p-2">
                         {notifications.notifications.length === 0 ? (
-                            <p className="p-8 text-center text-sm text-slate-500">Wszystko przeczytane. Możesz wracać do nauki.</p>
+                            <p className="p-8 text-center text-sm text-slate-500">{t("Wszystko przeczytane. Możesz wracać do nauki.")}</p>
                         ) : notifications.notifications.slice(0, 10).map((notification) => (
                             <button
                                 key={notification.id}
@@ -215,20 +218,21 @@ export default function Navbar({ onMenuClick }) {
         <>
             <header className="workspace-navbar relative z-40 flex h-[4.5rem] shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 text-slate-900 sm:px-6 lg:px-8">
                 <div className="flex min-w-0 items-center gap-3">
-                    <button type="button" aria-label="Otwórz menu" onClick={onMenuClick} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 lg:hidden">
+                    <button type="button" aria-label={t("Otwórz menu")} onClick={onMenuClick} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 lg:hidden">
                         <BsList size={22} />
                     </button>
-                    <div className="min-w-0">
-                        <p className="text-[11px] font-medium text-slate-500">Twoja przestrzeń</p>
-                        <h2 className="truncate text-base font-bold sm:text-lg">{pageTitle}</h2>
+                    <div className="hidden min-w-0 min-[400px]:block">
+                        <p className="text-[11px] font-medium text-slate-500">{t("Twoja przestrzeń")}</p>
+                        <h2 className="truncate text-base font-bold sm:text-lg">{t(pageTitle)}</h2>
                     </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                    <LocaleControls compact />
                     <button
                         ref={notificationTriggerRef}
                         type="button"
-                        aria-label={`Powiadomienia: ${notifications.unreadCount} nowych`}
+                        aria-label={t("Powiadomienia: {count} nowych", { count: formatNumber(notifications.unreadCount) })}
                         aria-expanded={notificationsOpen}
                         aria-controls={notificationsOpen ? "workspace-notifications" : undefined}
                         onClick={() => { setNotificationsOpen((open) => !open); setProfileOpen(false); }}
@@ -241,7 +245,7 @@ export default function Navbar({ onMenuClick }) {
                         <button
                             ref={profileTriggerRef}
                             type="button"
-                            aria-label="Otwórz profil"
+                            aria-label={t("Otwórz profil")}
                             aria-expanded={profileOpen}
                             aria-controls={profileOpen ? "workspace-profile" : undefined}
                             onClick={() => { setProfileOpen((open) => !open); setNotificationsOpen(false); }}
@@ -252,30 +256,30 @@ export default function Navbar({ onMenuClick }) {
                             <BsChevronDown className="hidden text-xs sm:block" />
                         </button>
                         {profileOpen && (
-                            <section ref={profilePanelRef} id="workspace-profile" tabIndex={-1} aria-label="Twój profil i postęp" className="absolute right-0 top-12 max-h-[calc(100dvh-6rem)] w-[min(20rem,calc(100vw-1.5rem))] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-xl shadow-slate-900/10 outline-none">
+                            <section ref={profilePanelRef} id="workspace-profile" tabIndex={-1} aria-label={t("Twój profil i postęp")} className="absolute right-0 top-12 max-h-[calc(100dvh-6rem)] w-[min(20rem,calc(100vw-1.5rem))] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-xl shadow-slate-900/10 outline-none">
                                 <div className="border-b border-slate-100 px-3 py-3">
                                     <p className="truncate text-sm font-bold">{identity.email}</p>
-                                    <p className="mt-1 text-xs text-slate-500">{identity.role === "ADMIN" ? "Administrator" : "Konto ucznia"}</p>
+                                    <p className="mt-1 text-xs text-slate-500">{t(identity.role === "ADMIN" ? "Administrator" : "Konto ucznia")}</p>
                                 </div>
                                 <div className="mx-2 my-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
                                     <div className="flex items-center gap-3">
                                         <LeagueBadge name={learningStats.leagueName || "Miedź"} size="xs" />
                                         <div>
-                                            <p className="text-sm font-semibold">Liga {learningStats.leagueName || "Miedź"}</p>
-                                            <p className="mt-0.5 text-xs text-slate-500">Poziom {learningStats.level || 1} · {Number(learningStats.xp || 0).toLocaleString("pl-PL")} XP</p>
-                                            {learningStats.leagueName && <p className="mt-1 text-xs text-slate-600">{learningStats.nextLeagueLevel ? `Kolejna liga od poziomu ${learningStats.nextLeagueLevel}` : "Najwyższa liga"}</p>}
+                                            <p className="text-sm font-semibold">{t("Liga {name}", { name: t(learningStats.leagueName || "Miedź") })}</p>
+                                            <p className="mt-0.5 text-xs text-slate-500">{t("Poziom {level} · {xp} XP", { level: formatNumber(learningStats.level || 1), xp: formatNumber(Number(learningStats.xp || 0)) })}</p>
+                                            {learningStats.leagueName && <p className="mt-1 text-xs text-slate-600">{learningStats.nextLeagueLevel ? t("Kolejna liga od poziomu {level}", { level: formatNumber(learningStats.nextLeagueLevel) }) : t("Najwyższa liga")}</p>}
                                         </div>
                                     </div>
                                     <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-200/70 pt-3 text-xs">
-                                        <span title={formatExpiry(streakActive ? learningStats.taskStreakExpiresAt : null)} className="inline-flex items-center gap-1.5 text-slate-600"><BsFire className="text-orange-600" /> Seria {visibleStreak} · ×{visibleMultiplier}</span>
-                                        <span aria-label={`${Number(learningStats.gemBalance || 0).toLocaleString("pl-PL")} klejnotów`} className="inline-flex items-center gap-1.5 font-semibold text-teal-800"><BsGem /> {Number(learningStats.gemBalance || 0).toLocaleString("pl-PL")}</span>
+                                        <span title={formatExpiry(streakActive ? learningStats.taskStreakExpiresAt : null, dateLocale, t)} className="inline-flex items-center gap-1.5 text-slate-600"><BsFire className="text-orange-600" /> {t("Seria {count} · ×{multiplier}", { count: formatNumber(visibleStreak), multiplier: formatNumber(visibleMultiplier) })}</span>
+                                        <span aria-label={t("{count} klejnotów", { count: formatNumber(Number(learningStats.gemBalance || 0)) })} className="inline-flex items-center gap-1.5 font-semibold text-teal-800"><BsGem /> {formatNumber(Number(learningStats.gemBalance || 0))}</span>
                                     </div>
                                 </div>
                                 <button type="button" onClick={() => { setProfileOpen(false); navigate("/learning-center"); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600">
-                                    <BsPerson /> Postęp i nagrody
+                                    <BsPerson /> {t("Postęp i nagrody")}
                                 </button>
                                 <button type="button" onClick={async () => { await logout(); window.location.href = "/login"; }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600">
-                                    <BsBoxArrowRight /> Wyloguj
+                                    <BsBoxArrowRight /> {t("Wyloguj")}
                                 </button>
                             </section>
                         )}

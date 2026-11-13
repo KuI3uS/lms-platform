@@ -11,6 +11,7 @@ import com.twojlogin.lms.security.AuthCookieService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -60,8 +61,9 @@ public class AuthController {
     }
 
     @GetMapping("/csrf")
-    public Map<String, String> csrf(HttpServletResponse response) {
-        return Map.of("csrfToken", cookieService.refreshCsrf(response));
+    public Map<String, String> csrf(HttpServletRequest request, HttpServletResponse response) {
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+        return Map.of("csrfToken", cookieService.getOrCreateCsrf(request, response));
     }
 
     @PostMapping("/logout")

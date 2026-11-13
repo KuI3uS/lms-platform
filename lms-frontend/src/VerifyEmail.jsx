@@ -1,8 +1,10 @@
+import { useLocale } from "./context/LocaleContext";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiFetch } from "./api/api";
 
 export default function VerifyEmail() {
+    const { t } = useLocale();
     const [params] = useSearchParams();
     const token = params.get("token");
     const [status, setStatus] = useState(token ? "loading" : "error");
@@ -48,24 +50,24 @@ export default function VerifyEmail() {
                 }`}>
                     {status === "loading" ? (
                         <span className="h-9 w-9 animate-spin rounded-full border-4 border-current border-t-transparent" />
-                    ) : status === "success" ? "✓" : "!"}
+                    ) : status === "success" ? t("✓") : t("!")}
                 </div>
 
                 <h1 className="mt-6 text-3xl font-black">
                     {status === "loading"
-                        ? "Aktywacja konta"
+                        ? t("Aktywacja konta")
                         : status === "success"
-                            ? "Konto aktywne"
-                            : "Nie udało się aktywować konta"}
+                            ? t("Konto aktywne")
+                            : t("Nie udało się aktywować konta")}
                 </h1>
-                <p className="mt-4 leading-7 text-gray-400">{message}</p>
+                <p className="mt-4 leading-7 text-gray-400">{t(message)}</p>
 
                 {status !== "loading" && (
                     <Link
                         to="/login"
                         className="mt-7 inline-flex rounded-xl bg-blue-600 px-6 py-3 font-bold transition hover:bg-blue-500"
                     >
-                        {status === "success" ? "Zaloguj się" : "Przejdź do logowania"}
+                        {status === "success" ? t("Zaloguj się") : t("Przejdź do logowania")}
                     </Link>
                 )}
             </main>

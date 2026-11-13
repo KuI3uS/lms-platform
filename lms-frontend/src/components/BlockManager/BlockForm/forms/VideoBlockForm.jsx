@@ -1,6 +1,8 @@
+import { useLocale } from "../../../../context/LocaleContext.jsx";
 import { BsPlayBtn } from "react-icons/bs";
 
 export default function VideoBlockForm({ block, setBlock }) {
+    const { t } = useLocale();
     function update(field, value) {
         setBlock(previous => ({ ...previous, [field]: value }));
     }
@@ -12,33 +14,33 @@ export default function VideoBlockForm({ block, setBlock }) {
                     <BsPlayBtn />
                 </div>
                 <div>
-                    <h3 className="font-black">Materiał wideo</h3>
-                    <p className="text-sm text-gray-400">Obsługuje YouTube i bezpośrednie adresy plików wideo.</p>
+                    <h3 className="font-black">{t("Materiał wideo")}</h3>
+                    <p className="text-sm text-gray-400">{t("Obsługuje YouTube i bezpośrednie adresy plików wideo.")}</p>
                 </div>
             </div>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Tytuł filmu</span>
+                <span className="font-semibold">{t("Tytuł filmu")}</span>
                 <input
                     value={block.title || ""}
                     onChange={event => update("title", event.target.value)}
-                    placeholder="Np. Zobacz, jak działa pętla for"
+                    placeholder={t("Np. Zobacz, jak działa pętla for")}
                     className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-rose-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Opis przed filmem</span>
+                <span className="font-semibold">{t("Opis przed filmem")}</span>
                 <textarea
                     value={block.description || ""}
                     onChange={event => update("description", event.target.value)}
-                    placeholder="Napisz, czego uczeń dowie się z nagrania."
+                    placeholder={t("Napisz, czego uczeń dowie się z nagrania.")}
                     className="min-h-24 w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-rose-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Link do filmu</span>
+                <span className="font-semibold">{t("Link do filmu")}</span>
                 <input
                     value={block.mediaUrl || ""}
                     onChange={event => setBlock(previous => ({
@@ -46,7 +48,7 @@ export default function VideoBlockForm({ block, setBlock }) {
                         mediaUrl: event.target.value,
                         mediaType: "video"
                     }))}
-                    placeholder="https://youtube.com/watch?v=... albo https://.../film.mp4"
+                    placeholder={t("https://youtube.com/watch?v=... albo https://.../film.mp4")}
                     className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-rose-300/50"
                 />
             </label>

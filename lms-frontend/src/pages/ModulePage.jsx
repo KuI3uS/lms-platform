@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
@@ -56,6 +57,7 @@ const ROADMAP_CACHE_TTL = 60_000;
 const roadmapCache = new Map();
 
 export default function ModulePage() {
+    const { t } = useLocale();
     const { courseId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -151,7 +153,7 @@ export default function ModulePage() {
 
     const createModule = async () => {
         if (!newModule.trim()) {
-            showToast("Podaj nazwę sekcji.", "warning");
+            showToast(t("Podaj nazwę sekcji."), "warning");
             return;
         }
 
@@ -172,16 +174,16 @@ export default function ModulePage() {
 
     const deleteModule = async (module) => {
         if (!await confirm({
-            title: "Trwale usuń moduł",
-            message: `Czy na pewno usunąć moduł „${module.name}”? Zostaną trwale usunięte wszystkie jego lekcje, bloki, odpowiedzi, wyniki i postępy uczniów. Tej operacji nie można cofnąć.`,
-            confirmLabel: "Usuń wszystko"
+            title: t("Trwale usuń moduł"),
+            message: t("Czy na pewno usunąć moduł „{value1}”? Zostaną trwale usunięte wszystkie jego lekcje, bloki, odpowiedzi, wyniki i postępy uczniów. Tej operacji nie można cofnąć.", { value1: module.name }),
+            confirmLabel: t("Usuń wszystko")
         })) return;
 
         try {
             await apiFetch(`/modules/${module.id}`, { method: "DELETE" });
             setModules(prev => prev.filter(item => item.id !== module.id));
             roadmapCache.delete(String(courseId));
-            showToast("Moduł i cała jego zawartość zostały usunięte.", "success");
+            showToast(t("Moduł i cała jego zawartość zostały usunięte."), "success");
         } catch (deleteError) {
             setError(deleteError.message || "Nie udało się usunąć modułu.");
         }
@@ -202,7 +204,7 @@ export default function ModulePage() {
             item.id === module.id ? { ...item, ...saved } : item
         )));
         roadmapCache.delete(String(courseId));
-        showToast(sectionTitle ? "Nagłówek został zapisany." : "Nagłówek został usunięty.", "success");
+        showToast(sectionTitle ? t("Nagłówek został zapisany.") : t("Nagłówek został usunięty."), "success");
     };
 
     const startEditingModule = module => {
@@ -222,7 +224,7 @@ export default function ModulePage() {
 
     const saveEditedModule = async module => {
         if (!moduleDraft?.name?.trim()) {
-            showToast("Nazwa etapu nie może być pusta.", "warning");
+            showToast(t("Nazwa etapu nie może być pusta."), "warning");
             return;
         }
 
@@ -243,7 +245,7 @@ export default function ModulePage() {
             )));
             roadmapCache.delete(String(courseId));
             cancelEditingModule();
-            showToast("Etap został zapisany.", "success");
+            showToast(t("Etap został zapisany."), "success");
         } catch (saveError) {
             setError(saveError.message || "Nie udało się zapisać etapu.");
         } finally {
@@ -371,7 +373,7 @@ export default function ModulePage() {
     if (error) {
         return (
             <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-red-800">
-                {error}
+                {t(error)}
             </div>
         );
     }
@@ -384,37 +386,33 @@ export default function ModulePage() {
                     onClick={() => navigate("/courses")}
                     className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-700 hover:bg-teal-50 hover:text-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
                 >
-                    <BsArrowLeft />
-                    Wróć do kursów
-                </button>
+                    <BsArrowLeft />{t("Wróć do kursów")}</button>
                 <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
                     <div className="min-w-0">
                         <p className="mb-3 text-sm font-semibold text-teal-800">
                             {isLanguageCourse ? (
                                 <span className="inline-flex items-center gap-2">
                                     <BsTranslate />
-                                    {getCourseLanguageLabel(course?.courseLanguage)} · CEFR {course?.cefrLevel}{course?.cefrEndLevel !== course?.cefrLevel ? `–${course?.cefrEndLevel}` : ""}
+                                    {t(getCourseLanguageLabel(course?.courseLanguage))}{" "}{t("· CEFR")}{" "}{course?.cefrLevel}{course?.cefrEndLevel !== course?.cefrLevel ? `–${course?.cefrEndLevel}` : ""}
                                 </span>
                             ) : (
                                 <span className="inline-flex items-center gap-2">
-                                    <BsCodeSlash />
-                                    Ścieżka technologiczna
-                                </span>
+                                    <BsCodeSlash />{t("Ścieżka technologiczna")}</span>
                             )}
                         </p>
                         <h1 className="break-words text-2xl font-bold leading-tight tracking-tight text-slate-950 [overflow-wrap:anywhere] sm:text-3xl">
-                            {course?.title || course?.name || "Roadmap kursu"}
+                            {course?.title || course?.name || t("Roadmap kursu")}
                         </h1>
                         <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
                             {isLanguageCourse
-                                ? "Krótka lekcja po krótkiej lekcji — aż do certyfikatu."
-                                : "Wybierz etap i przejdź do lekcji. Zapisany postęp pomoże Ci wrócić do nauki."}
+                                ? t("Krótka lekcja po krótkiej lekcji — aż do certyfikatu.")
+                                : t("Wybierz etap i przejdź do lekcji. Zapisany postęp pomoże Ci wrócić do nauki.")}
                         </p>
                     </div>
 
                     <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
                         <div className="mb-2 flex items-center justify-between text-sm">
-                            <span className="font-medium text-slate-700">Postęp całego kursu</span>
+                            <span className="font-medium text-slate-700">{t("Postęp całego kursu")}</span>
                             <span className="font-bold text-teal-800">{progress}%</span>
                         </div>
                         <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
@@ -423,17 +421,13 @@ export default function ModulePage() {
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
-                        <p className="mt-3 text-sm leading-5 text-slate-600">
-                            Zaliczono {completedCount} z {progressLessons.length} dostępnych lekcji lub ich odpowiedników
-                        </p>
+                        <p className="mt-3 text-sm leading-5 text-slate-600">{t("Zaliczono")}{" "}{completedCount}{" "}{t("z")}{" "}{progressLessons.length}{" "}{t("dostępnych lekcji lub ich odpowiedników")}</p>
                         {isLanguageCourse && (
                             <button
                                 type="button"
                                 onClick={() => navigate("/exams")}
                                 className="mt-4 w-full rounded-xl border border-teal-200 bg-white px-4 py-2.5 text-sm font-semibold text-teal-800 transition hover:bg-teal-50"
-                            >
-                                Egzaminy i poziomy CEFR
-                            </button>
+                            >{t("Egzaminy i poziomy CEFR")}</button>
                         )}
                     </div>
                 </div>
@@ -453,24 +447,22 @@ export default function ModulePage() {
 
             {role === "ADMIN" && (
                 <details className="mx-auto max-w-5xl rounded-2xl border border-slate-300 bg-white p-4 sm:p-5">
-                    <summary className="cursor-pointer text-sm font-semibold text-slate-800 focus-visible:outline-2 focus-visible:outline-teal-700">Narzędzia administratora — dodawanie etapów i import</summary>
+                    <summary className="cursor-pointer text-sm font-semibold text-slate-800 focus-visible:outline-2 focus-visible:outline-teal-700">{t("Narzędzia administratora — dodawanie etapów i import")}</summary>
                     <div className="mt-5 space-y-5">
                     <section className="space-y-3">
                         <input
                             value={newSectionTitle}
                             onChange={e => setNewSectionTitle(e.target.value)}
                             maxLength={200}
-                            placeholder="Opcjonalny nagłówek części, np. CZĘŚĆ I — Java od zera"
+                            placeholder={t("Opcjonalny nagłówek części, np. CZĘŚĆ I — Java od zera")}
                             className="w-full rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 font-bold text-violet-900 outline-none transition focus:border-violet-400"
                         />
-                        <p className="text-xs text-slate-600">
-                            Nagłówek możesz też dodać później — wybierz „Dodaj nagłówek” nad dowolnym etapem poniżej.
-                        </p>
+                        <p className="text-xs text-slate-600">{t("Nagłówek możesz też dodać później — wybierz „Dodaj nagłówek” nad dowolnym etapem poniżej.")}</p>
                         <div className="flex gap-3">
                             <input
                                 value={newModule}
                                 onChange={e => setNewModule(e.target.value)}
-                                placeholder="Nazwa nowego modułu, np. Zmienne i typy danych"
+                                placeholder={t("Nazwa nowego modułu, np. Zmienne i typy danych")}
                                 className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500"
                             />
 
@@ -478,9 +470,7 @@ export default function ModulePage() {
                                 onClick={createModule}
                                 className="flex items-center gap-2 rounded-xl bg-teal-800 px-5 py-3 font-semibold text-white transition hover:bg-teal-900"
                             >
-                                <BsPlusCircle />
-                                Dodaj
-                            </button>
+                                <BsPlusCircle />{t("Dodaj")}</button>
                         </div>
                     </section>
 
@@ -508,55 +498,45 @@ export default function ModulePage() {
             <section className="mx-auto max-w-5xl space-y-4 pb-16">
                 {modules.length > 0 && (
                     <div className="flex flex-wrap items-center justify-between gap-3 px-2">
-                        <p className="text-sm font-bold text-slate-600">Części: {sections.length} · Etapy: {modules.length}</p>
+                        <p className="text-sm font-bold text-slate-600">{t("Części:")}{" "}{sections.length}{" "}{t("· Etapy:")}{" "}{modules.length}</p>
                         {!search.active && <div className="flex flex-wrap gap-2">
                             <button
                                 type="button"
                                 disabled={expandedSectionCount === 0}
                                 onClick={() => setAllSectionsExpanded(false)}
                                 className="rounded-xl border border-violet-200 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-800 transition hover:bg-violet-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-default disabled:opacity-40"
-                            >
-                                Zwiń wszystkie części
-                            </button>
+                            >{t("Zwiń wszystkie części")}</button>
                             <button
                                 type="button"
                                 disabled={expandedSectionCount === sections.length}
                                 onClick={() => setAllSectionsExpanded(true)}
                                 className="rounded-xl border border-violet-200 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-800 transition hover:bg-violet-500/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-default disabled:opacity-40"
-                            >
-                                Rozwiń wszystkie części
-                            </button>
+                            >{t("Rozwiń wszystkie części")}</button>
                             <button
                                 type="button"
                                 disabled={expandedModuleCount === 0}
                                 onClick={() => setAllModulesExpanded(false)}
                                 className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-default disabled:opacity-40"
-                            >
-                                Zwiń etapy
-                            </button>
+                            >{t("Zwiń etapy")}</button>
                             <button
                                 type="button"
                                 disabled={expandedModuleCount === modules.length}
                                 onClick={() => setAllModulesExpanded(true)}
                                 className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-default disabled:opacity-40"
-                            >
-                                Rozwiń etapy
-                            </button>
+                            >{t("Rozwiń etapy")}</button>
                         </div>}
                     </div>
                 )}
                 {modules.length === 0 ? (
-                    <div className="py-16 text-center text-slate-600">
-                        Brak sekcji w tym kursie.
-                    </div>
+                    <div className="py-16 text-center text-slate-600">{t("Brak sekcji w tym kursie.")}</div>
                 ) : (
                     search.sections.map(section => {
                         const firstModule = section.firstModule;
                         const sectionExpanded = isSectionExpanded(section);
                         const sectionPanelId = `course-${courseId}-section-${section.id}`;
                         const stageRange = section.startStageNumber === section.endStageNumber
-                            ? `Etap ${section.startStageNumber}`
-                            : `Etapy ${section.startStageNumber}–${section.endStageNumber}`;
+                            ? t("Etap {value1}", { value1: section.startStageNumber })
+                            : t("Etapy {value1}–{value2}", { value1: section.startStageNumber, value2: section.endStageNumber });
                         return (
                             <section key={`${courseId}:section:${section.id}`} className="space-y-4 pt-3">
                                 <CourseSectionHeading
@@ -570,9 +550,9 @@ export default function ModulePage() {
                                     onToggle={() => toggleSection(section)}
                                     panelId={sectionPanelId}
                                     summary={search.active
-                                        ? `${stageRange} · Znalezione etapy: ${section.entries.length} · Lekcje w wynikach: ${section.entries.reduce((count, entry) => count + entry.lessonEntries.length, 0)}`
-                                        : `${stageRange} · Liczba etapów: ${section.entries.length} · Lekcje: ${section.lessonCount}`}
-                                    fallbackTitle={sections.length === 1 ? "Etapy kursu" : "Etapy bez nagłówka"}
+                                        ? t("{value1} · Znalezione etapy: {value2} · Lekcje w wynikach: {value3}", { value1: stageRange, value2: section.entries.length, value3: section.entries.reduce((count, entry) => count + entry.lessonEntries.length, 0) })
+                                        : t("{value1} · Liczba etapów: {value2} · Lekcje: {value3}", { value1: stageRange, value2: section.entries.length, value3: section.lessonCount })}
+                                    fallbackTitle={sections.length === 1 ? t("Etapy kursu") : t("Etapy bez nagłówka")}
                                 />
                                 <div id={sectionPanelId} hidden={!sectionExpanded} className="space-y-4">
                                     {sectionExpanded && section.entries.map(({ module, moduleIndex, lessonEntries }) => {
@@ -613,7 +593,7 @@ export default function ModulePage() {
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                                                                 <p className="text-xs font-black uppercase tracking-[0.18em] text-teal-800">
-                                                                    {isLanguageCourse ? `CEFR ${module.cefrLevel}` : `Etap ${moduleIndex + 1}`}
+                                                                    {isLanguageCourse ? t("CEFR {value1}", { value1: module.cefrLevel }) : t("Etap {value1}", { value1: moduleIndex + 1 })}
                                                                 </p>
                                                                 {role === "ADMIN" && (
                                                                     <button
@@ -621,9 +601,7 @@ export default function ModulePage() {
                                                                         onClick={() => startEditingModule(module)}
                                                                         className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300/20 bg-blue-500/10 px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-teal-800 transition hover:border-blue-300/40 hover:bg-blue-500/20 hover:text-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
                                                                     >
-                                                                        <BsPencilSquare aria-hidden="true" />
-                                                                        Edytuj nazwę
-                                                                    </button>
+                                                                        <BsPencilSquare aria-hidden="true" />{t("Edytuj nazwę")}</button>
                                                                 )}
                                                             </div>
                                                             <h2 className="mt-1 text-lg font-black sm:text-xl">
@@ -631,7 +609,7 @@ export default function ModulePage() {
                                                                     type="button"
                                                                     aria-expanded={expanded}
                                                                     aria-controls={lessonsPanelId}
-                                                                    aria-label={`${expanded ? "Zwiń" : "Rozwiń"} etap ${module.name}`}
+                                                                    aria-label={t("{value1} etap {value2}", { value1: expanded ? t("Zwiń") : t("Rozwiń"), value2: module.name })}
                                                                     onClick={() => toggleModule(module)}
                                                                     className="flex w-full items-center justify-between gap-3 rounded-lg text-left transition hover:text-teal-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-700"
                                                                 >
@@ -645,9 +623,9 @@ export default function ModulePage() {
                                                                 </button>
                                                             </h2>
                                                             <p className="mt-1 text-xs text-slate-600">
-                                                                {progressEligibleLessons.length} {progressEligibleLessons.length === 1 ? "dostępna lekcja" : "dostępnych lekcji"} · ukończono {completedLessons}
-                                                                {isLanguageCourse && !module.levelUnlocked ? " · poziom zablokowany" : ""}
-                                                                {levelBelowCurrent && completedLessons < lessons.length ? " · potwierdzony testem kwalifikacyjnym" : ""}
+                                                                {progressEligibleLessons.length} {progressEligibleLessons.length === 1 ? t("dostępna lekcja") : t("dostępnych lekcji")}{" "}{t("· ukończono")}{" "}{completedLessons}
+                                                                {isLanguageCourse && !module.levelUnlocked ? t(" · poziom zablokowany") : ""}
+                                                                {levelBelowCurrent && completedLessons < lessons.length ? t(" · potwierdzony testem kwalifikacyjnym") : ""}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -667,7 +645,7 @@ export default function ModulePage() {
                                                             <div className="flex gap-2">
                                                                 <button
                                                                     type="button"
-                                                                    aria-label={`Zarządzaj lekcjami etapu ${module.name}`}
+                                                                    aria-label={t("Zarządzaj lekcjami etapu {value1}", { value1: module.name })}
                                                                     onClick={() => navigate(`/admin/lessons/${module.id}`)}
                                                                     className="grid h-10 w-10 place-items-center rounded-full border border-amber-200 bg-amber-50 text-amber-900 transition hover:bg-amber-100"
                                                                 >
@@ -675,7 +653,7 @@ export default function ModulePage() {
                                                                 </button>
                                                                 <button
                                                                     type="button"
-                                                                    aria-label={`Usuń etap ${module.name}`}
+                                                                    aria-label={t("Usuń etap {value1}", { value1: module.name })}
                                                                     onClick={() => deleteModule(module)}
                                                                     className="grid h-10 w-10 place-items-center rounded-full border border-red-200 bg-red-50 text-red-800 transition hover:bg-red-100"
                                                                 >
@@ -690,9 +668,7 @@ export default function ModulePage() {
                                                     <section className="border-t border-blue-400/15 bg-blue-500/[0.04] p-5 sm:p-6">
                                                         <div className="grid gap-5">
                                                             <div>
-                                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-teal-800">
-                                                                    Nazwa etapu
-                                                                </label>
+                                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-teal-800">{t("Nazwa etapu")}</label>
                                                                 <input
                                                                     value={moduleDraft.name}
                                                                     maxLength={255}
@@ -706,9 +682,7 @@ export default function ModulePage() {
                                                             </div>
 
                                                             <div>
-                                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-violet-800">
-                                                                    Nagłówek części nad etapem — opcjonalnie
-                                                                </label>
+                                                                <label className="text-xs font-black uppercase tracking-[0.16em] text-violet-800">{t("Nagłówek części nad etapem — opcjonalnie")}</label>
                                                                 <input
                                                                     value={moduleDraft.sectionTitle}
                                                                     maxLength={200}
@@ -716,7 +690,7 @@ export default function ModulePage() {
                                                                         ...current,
                                                                         sectionTitle: event.target.value
                                                                     }))}
-                                                                    placeholder="Np. CZĘŚĆ XX — Rekrutacja Junior Java Developer"
+                                                                    placeholder={t("Np. CZĘŚĆ XX — Rekrutacja Junior Java Developer")}
                                                                     className="mt-2 w-full rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 font-bold text-violet-900 outline-none focus:border-violet-400"
                                                                 />
                                                             </div>
@@ -731,9 +705,7 @@ export default function ModulePage() {
                                                                             lessonsLocked: event.target.checked
                                                                         }))}
                                                                         className="h-4 w-4 accent-blue-500"
-                                                                    />
-                                                                    Odblokowuj lekcje kolejno
-                                                                </label>
+                                                                    />{t("Odblokowuj lekcje kolejno")}</label>
 
                                                                 <div className="flex gap-2">
                                                                     <button
@@ -741,16 +713,14 @@ export default function ModulePage() {
                                                                         onClick={cancelEditingModule}
                                                                         disabled={savingModuleId === module.id}
                                                                         className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-100 disabled:opacity-40"
-                                                                    >
-                                                                        Anuluj
-                                                                    </button>
+                                                                    >{t("Anuluj")}</button>
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => saveEditedModule(module)}
                                                                         disabled={savingModuleId === module.id || !moduleDraft.name.trim()}
                                                                         className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-black text-white transition hover:bg-blue-500 disabled:opacity-40"
                                                                     >
-                                                                        {savingModuleId === module.id ? "Zapisywanie..." : "Zapisz etap"}
+                                                                        {savingModuleId === module.id ? t("Zapisywanie...") : t("Zapisz etap")}
                                                                     </button>
                                                                 </div>
                                                             </div>
@@ -768,9 +738,7 @@ export default function ModulePage() {
                                                             <div className="grid h-14 w-14 place-items-center rounded-full border-2 border-dashed border-slate-300 text-slate-600">
                                                                 <BsLockFill />
                                                             </div>
-                                                            <p className="mt-3 text-sm text-slate-600">
-                                                                Lekcje w przygotowaniu
-                                                            </p>
+                                                            <p className="mt-3 text-sm text-slate-600">{t("Lekcje w przygotowaniu")}</p>
                                                         </div>
                                                     ) : (
                                                         <ol className="space-y-4 py-2">
@@ -805,13 +773,11 @@ export default function ModulePage() {
                                                                                 onClick={() => lessonAccessible && navigate(`/lesson/${lesson.id}`, {
                                                                                     state: { courseId: Number(courseId) }
                                                                                 })}
-                                                                                aria-label={`Lekcja ${index + 1}: ${lesson.title}`}
+                                                                                aria-label={t("Lekcja {value1}: {value2}", { value1: index + 1, value2: lesson.title })}
                                                                                 className="group flex w-56 flex-col items-center text-center disabled:cursor-not-allowed"
                                                                             >
                                                                                 {current && (
-                                                                                    <span className="mb-2 rounded-full bg-teal-800 px-3 py-1 text-xs font-semibold text-white">
-                                                                                        Kontynuuj
-                                                                                    </span>
+                                                                                    <span className="mb-2 rounded-full bg-teal-800 px-3 py-1 text-xs font-semibold text-white">{t("Kontynuuj")}</span>
                                                                                 )}
                                                                                 <span className={`relative grid h-20 w-20 place-items-center rounded-full border-2 border-b-[7px] text-2xl font-black transition-all duration-200 motion-safe:group-hover:-translate-y-1 motion-safe:group-active:translate-y-0 ${
                                                                                     lesson.completed
@@ -828,8 +794,7 @@ export default function ModulePage() {
                                                                                         <BsLockFill size={23} />
                                                                                     )}
                                                                                 </span>
-                                                                                <span className="mt-3 text-xs font-semibold text-slate-600">
-                                                                                    Lekcja {index + 1}
+                                                                                <span className="mt-3 text-xs font-semibold text-slate-600">{t("Lekcja")}{" "}{index + 1}
                                                                                 </span>
                                                                                 <span className={`mt-1 line-clamp-2 max-w-52 text-sm font-black leading-5 ${
                                                                                     lessonAccessible ? "text-slate-900" : "text-slate-600"
@@ -837,9 +802,7 @@ export default function ModulePage() {
                                                                                     {lesson.title}
                                                                                 </span>
                                                                                 {!hasContent && role !== "ADMIN" && (
-                                                                                    <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">
-                                                                                        Materiały w przygotowaniu
-                                                                                    </span>
+                                                                                    <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">{t("Materiały w przygotowaniu")}</span>
                                                                                 )}
                                                                             </button>
                                                                         </div>
@@ -883,9 +846,10 @@ function isCefrBelow(level, currentLevel) {
 }
 
 function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
+    const { t } = useLocale();
     if (loading) {
         return (
-            <div className="lesson-step-transition mt-7 flex flex-col items-center gap-3" aria-label="Ładowanie podzadań">
+            <div className="lesson-step-transition mt-7 flex flex-col items-center gap-3" aria-label={t("Ładowanie podzadań")}>
                 <div className="h-3 w-36 animate-pulse rounded-full bg-slate-200" />
                 {[0, 1, 2].map(item => (
                     <div
@@ -900,7 +864,7 @@ function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
     if (error) {
         return (
             <p className="mt-6 max-w-xs text-center text-xs text-red-800">
-                {error}
+                {t(error)}
             </p>
         );
     }
@@ -917,18 +881,16 @@ function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
     return (
         <section
             className="lesson-step-transition mt-7 w-full max-w-md"
-            aria-label={`Podzadania lekcji ${lesson.title}`}
+            aria-label={t("Podzadania lekcji {value1}", { value1: lesson.title })}
         >
             <header className="mb-4 text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-800">
-                    Podzadania tej lekcji
-                </p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-800">{t("Podzadania tej lekcji")}</p>
                 <p className={`mt-1 text-xs font-bold ${
                     readyToFinish ? "text-emerald-800" : "text-slate-600"
                 }`}>
                     {readyToFinish
-                        ? "Wszystkie kroki gotowe — zakończ lekcję"
-                        : `${completedCount}/${steps.length} wykonanych kroków`}
+                        ? t("Wszystkie kroki gotowe — zakończ lekcję")
+                        : t("{value1}/{value2} wykonanych kroków", { value1: completedCount, value2: steps.length })}
                 </p>
             </header>
 
@@ -955,7 +917,7 @@ function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
                                     type="button"
                                     disabled={!accessible}
                                     onClick={() => accessible && onOpenStep(step)}
-                                    title={`${index + 1}. ${step.title || stepTypeLabel(step.type)}`}
+                                    title={`${index + 1}. ${step.title || t(stepTypeLabel(step.type))}`}
                                     className="group flex w-44 items-center gap-3 text-left disabled:cursor-not-allowed"
                                 >
                                     <span className={`relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 border-b-4 text-sm transition-all duration-200 motion-safe:group-hover:-translate-y-0.5 ${
@@ -981,13 +943,12 @@ function LessonSubsteps({ lesson, steps, loading, error, onOpenStep }) {
                                                 : completed
                                                     ? "text-emerald-800"
                                                     : "text-slate-600"
-                                        }`}>
-                                            Krok {index + 1}
+                                        }`}>{t("Krok")}{" "}{index + 1}
                                         </span>
                                         <span className={`mt-0.5 line-clamp-2 block text-xs font-semibold leading-5 ${
                                             accessible ? "text-slate-700" : "text-slate-600"
                                         }`}>
-                                            {step.title || stepTypeLabel(step.type)}
+                                            {step.title || t(stepTypeLabel(step.type))}
                                         </span>
                                     </span>
                                 </button>

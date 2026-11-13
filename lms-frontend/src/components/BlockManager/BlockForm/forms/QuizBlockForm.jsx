@@ -1,9 +1,11 @@
+import { useLocale } from "../../../../context/LocaleContext.jsx";
 import {
     BsCheckCircleFill,
     BsQuestionCircle
 } from "react-icons/bs";
 
 export default function QuizBlockForm({ block, setBlock }) {
+    const { t } = useLocale();
     function parseAnswers(value) {
         return (value || "")
             .split("\n")
@@ -36,51 +38,45 @@ export default function QuizBlockForm({ block, setBlock }) {
                     <BsQuestionCircle />
                 </div>
                 <div>
-                    <h3 className="font-black">Quiz jednokrotnego wyboru</h3>
-                    <p className="text-sm text-gray-400">Uczeń wybierze jedną odpowiedź, a system sprawdzi wynik.</p>
+                    <h3 className="font-black">{t("Quiz jednokrotnego wyboru")}</h3>
+                    <p className="text-sm text-gray-400">{t("Uczeń wybierze jedną odpowiedź, a system sprawdzi wynik.")}</p>
                 </div>
             </div>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Pytanie</span>
+                <span className="font-semibold">{t("Pytanie")}</span>
                 <input
                     value={block.title || ""}
                     onChange={event => update("title", event.target.value)}
-                    placeholder="Np. Który typ przechowuje liczbę całkowitą?"
+                    placeholder={t("Np. Który typ przechowuje liczbę całkowitą?")}
                     className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-indigo-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Wprowadzenie (opcjonalnie)</span>
+                <span className="font-semibold">{t("Wprowadzenie (opcjonalnie)")}</span>
                 <textarea
                     value={block.description || ""}
                     onChange={event => update("description", event.target.value)}
-                    placeholder="Dodaj kontekst do pytania."
+                    placeholder={t("Dodaj kontekst do pytania.")}
                     className="min-h-20 w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-indigo-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Odpowiedzi — każda w nowym wierszu</span>
+                <span className="font-semibold">{t("Odpowiedzi — każda w nowym wierszu")}</span>
                 <textarea
                     value={block.content || ""}
                     onChange={event => updateAnswers(event.target.value)}
-                    placeholder={"String\nint\nboolean\nchar"}
+                    placeholder={t("String\nint\nboolean\nchar")}
                     className="min-h-36 w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 leading-7 outline-none focus:border-indigo-300/50"
                 />
-                <span className="block text-xs leading-5 text-indigo-200/70">
-                    Po wpisaniu odpowiedzi zaznacz poniżej tę, która jest poprawna.
-                </span>
+                <span className="block text-xs leading-5 text-indigo-200/70">{t("Po wpisaniu odpowiedzi zaznacz poniżej tę, która jest poprawna.")}</span>
             </label>
 
             <fieldset className="space-y-3">
-                <legend className="font-semibold">
-                    Zaznacz poprawną odpowiedź
-                </legend>
-                <p className="text-xs text-gray-400">
-                    Zielone oznaczenie widzi tylko administrator. Uczeń nie otrzyma odpowiedzi przed sprawdzeniem quizu.
-                </p>
+                <legend className="font-semibold">{t("Zaznacz poprawną odpowiedź")}</legend>
+                <p className="text-xs text-gray-400">{t("Zielone oznaczenie widzi tylko administrator. Uczeń nie otrzyma odpowiedzi przed sprawdzeniem quizu.")}</p>
 
                 {answers.length >= 2 && (
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -113,9 +109,7 @@ export default function QuizBlockForm({ block, setBlock }) {
                                 </span>
                                 {block.expectedAnswer === answer && (
                                     <span className="flex shrink-0 items-center gap-1.5 text-xs font-black uppercase tracking-wide text-emerald-300">
-                                        <BsCheckCircleFill />
-                                        Poprawna
-                                    </span>
+                                        <BsCheckCircleFill />{t("Poprawna")}</span>
                                 )}
                             </label>
                         ))}
@@ -123,29 +117,27 @@ export default function QuizBlockForm({ block, setBlock }) {
                 )}
 
                 {answers.length < 2 && (
-                    <p className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs text-amber-200">
-                        Dodaj przynajmniej dwie odpowiedzi, aby skonfigurować quiz.
-                    </p>
+                    <p className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs text-amber-200">{t("Dodaj przynajmniej dwie odpowiedzi, aby skonfigurować quiz.")}</p>
                 )}
             </fieldset>
 
             <div className="grid gap-4 lg:grid-cols-2">
                 <label className="block space-y-2">
-                    <span className="font-semibold">Wskazówka po pierwszym błędzie</span>
+                    <span className="font-semibold">{t("Wskazówka po pierwszym błędzie")}</span>
                     <textarea
                         value={block.hint || ""}
                         onChange={event => update("hint", event.target.value)}
-                        placeholder="Naprowadź ucznia bez podawania odpowiedzi."
+                        placeholder={t("Naprowadź ucznia bez podawania odpowiedzi.")}
                         className="min-h-24 w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-indigo-300/50"
                     />
                 </label>
 
                 <label className="block space-y-2">
-                    <span className="font-semibold">Wyjaśnienie po kolejnych próbach</span>
+                    <span className="font-semibold">{t("Wyjaśnienie po kolejnych próbach")}</span>
                     <textarea
                         value={block.detailedHint || ""}
                         onChange={event => update("detailedHint", event.target.value)}
-                        placeholder="Wyjaśnij regułę potrzebną do odpowiedzi."
+                        placeholder={t("Wyjaśnij regułę potrzebną do odpowiedzi.")}
                         className="min-h-24 w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-indigo-300/50"
                     />
                 </label>

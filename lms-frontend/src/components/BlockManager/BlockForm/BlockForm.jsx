@@ -1,3 +1,4 @@
+import { useLocale } from "../../../context/LocaleContext.jsx";
 import BlockTypeSelector from "./BlockTypeSelector";
 import BlockRenderer from "./BlockRenderer";
 import BlockFooter from "./BlockFooter";
@@ -10,6 +11,7 @@ export default function BlockForm({
                                       error = "",
                                       variant = "PROGRAMMING"
                                   }) {
+    const { t } = useLocale();
 
     return (
 
@@ -20,16 +22,12 @@ export default function BlockForm({
                 <h2 className="text-2xl font-bold">
 
                     {block.id
-                        ? "Edytuj blok"
-                        : "Dodaj blok"}
+                        ? t("Edytuj blok")
+                        : t("Dodaj blok")}
 
                 </h2>
 
-                <p className="text-gray-400 mt-1">
-
-                    Wybierz typ bloku i uzupełnij jego zawartość.
-
-                </p>
+                <p className="text-gray-400 mt-1">{t("Wybierz typ bloku i uzupełnij jego zawartość.")}</p>
 
             </div>
 
@@ -58,8 +56,7 @@ export default function BlockForm({
                 <div
                     role="alert"
                     className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm font-semibold text-red-200"
-                >
-                    Nie udało się zapisać elementu: {error}
+                >{t("Nie udało się zapisać elementu: ")}{error}
                 </div>
             )}
 

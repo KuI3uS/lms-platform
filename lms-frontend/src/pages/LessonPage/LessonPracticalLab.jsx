@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { BsCheck2Circle, BsClipboardCheck, BsLaptop, BsLightbulb } from "react-icons/bs";
+import { useLocale } from "../../context/LocaleContext";
 
 export default function LessonPracticalLab({ block, result, checking, onCheck }) {
+    const { t } = useLocale();
     const [helpByBlock, setHelpByBlock] = useState({});
     const helpLevel = helpByBlock[block.id] || 0;
     const setHelpLevel = level => setHelpByBlock(previous => ({
@@ -15,7 +17,7 @@ export default function LessonPracticalLab({ block, result, checking, onCheck })
         <section className="overflow-hidden rounded-3xl border border-emerald-400/25 bg-gradient-to-br from-emerald-500/10 via-gray-900 to-gray-950">
             <div className="border-b border-white/10 p-5 sm:p-8">
                 <p className="flex items-center gap-2 font-black uppercase tracking-[0.16em] text-emerald-300">
-                    <BsLaptop /> Laboratorium praktyczne
+                    <BsLaptop /> {t("Laboratorium praktyczne")}
                 </p>
                 <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">
                     {block.title}
@@ -29,13 +31,13 @@ export default function LessonPracticalLab({ block, result, checking, onCheck })
 
             <div className="space-y-6 p-5 sm:p-8">
                 <div>
-                    <p className="mb-3 font-black text-emerald-200">Cel i wymagania</p>
+                    <p className="mb-3 font-black text-emerald-200">{t("Cel i wymagania")}</p>
                     <div className="whitespace-pre-line text-base leading-8 text-gray-200">{block.instruction}</div>
                 </div>
 
                 <div className="rounded-3xl border border-cyan-400/20 bg-cyan-400/[0.07] p-5 sm:p-6">
                     <p className="flex items-center gap-2 font-black text-cyan-100">
-                        <BsClipboardCheck /> Weryfikacja i kryteria ukończenia
+                        <BsClipboardCheck /> {t("Weryfikacja i kryteria ukończenia")}
                     </p>
                     <div className="mt-3 whitespace-pre-line leading-8 text-cyan-50/85">{block.content}</div>
                 </div>
@@ -48,12 +50,12 @@ export default function LessonPracticalLab({ block, result, checking, onCheck })
                                 onClick={() => setHelpLevel(block.hint ? 1 : 2)}
                                 className="flex items-center gap-2 font-black text-yellow-200 transition hover:text-yellow-100"
                             >
-                                <BsLightbulb /> {block.hint ? "Pokaż małą podpowiedź" : "Pokaż podpowiedź"}
+                                <BsLightbulb /> {t(block.hint ? "Pokaż małą podpowiedź" : "Pokaż podpowiedź")}
                             </button>
                         ) : (
                             <div>
                                 <p className="flex items-center gap-2 font-black text-yellow-200">
-                                    <BsLightbulb /> Podpowiedź
+                                    <BsLightbulb /> {t("Podpowiedź")}
                                 </p>
                                 <p className="mt-3 whitespace-pre-line leading-7 text-yellow-50/85">
                                     {helpLevel >= 2 && block.detailedHint ? block.detailedHint : block.hint}
@@ -64,7 +66,7 @@ export default function LessonPracticalLab({ block, result, checking, onCheck })
                                         onClick={() => setHelpLevel(2)}
                                         className="mt-4 rounded-xl border border-yellow-300/25 bg-yellow-300/10 px-4 py-2 text-sm font-black text-yellow-100 transition hover:bg-yellow-300/20"
                                     >
-                                        Nadal nie wiem — pokaż dokładniejszą pomoc
+                                        {t("Nadal nie wiem — pokaż dokładniejszą pomoc")}
                                     </button>
                                 )}
                             </div>
@@ -79,7 +81,7 @@ export default function LessonPracticalLab({ block, result, checking, onCheck })
                     className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 py-4 font-black text-white transition hover:bg-emerald-500 disabled:cursor-default disabled:opacity-70"
                 >
                     <BsCheck2Circle size={20} />
-                    {checking ? "Zapisuję..." : result?.correct ? "Laboratorium ukończone" : "Potwierdzam wykonanie i weryfikację"}
+                    {t(checking ? "Zapisuję..." : result?.correct ? "Laboratorium ukończone" : "Potwierdzam wykonanie i weryfikację")}
                 </button>
 
                 {result?.correct && (

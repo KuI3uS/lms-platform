@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useState } from "react";
 import {
     BsCheckCircleFill,
@@ -7,14 +8,15 @@ import {
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
 
-function formatPrice(value) {
-    return new Intl.NumberFormat("pl-PL", {
+function formatPrice(value, locale) {
+    return new Intl.NumberFormat(locale, {
         style: "currency",
         currency: "PLN"
     }).format(Number(value || 0));
 }
 
 export default function AdminCourseOrdersPage() {
+    const { t, dateLocale } = useLocale();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [busyId, setBusyId] = useState(null);
@@ -57,11 +59,9 @@ export default function AdminCourseOrdersPage() {
     return (
         <div className="space-y-8 text-white">
             <section className="rounded-[36px] border border-blue-500/20 bg-gradient-to-br from-slate-950 via-blue-950 to-violet-950 p-7 sm:p-10">
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-300">Administracja</p>
-                <h1 className="mt-3 text-4xl font-black sm:text-5xl">Zamówienia kursów</h1>
-                <p className="mt-4 max-w-3xl text-slate-300">
-                    Potwierdzenie płatności automatycznie tworzy aktywny dostęp do kursu i wysyła powiadomienie uczniowi.
-                </p>
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-300">{t("Administracja")}</p>
+                <h1 className="mt-3 text-4xl font-black sm:text-5xl">{t("Zamówienia kursów")}</h1>
+                <p className="mt-4 max-w-3xl text-slate-300">{t("Potwierdzenie płatności automatycznie tworzy aktywny dostęp do kursu i wysyła powiadomienie uczniowi.")}</p>
             </section>
 
             {error && (
@@ -75,9 +75,7 @@ export default function AdminCourseOrdersPage() {
                     <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-400 border-t-transparent" />
                 </div>
             ) : orders.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-slate-500">
-                    Brak zamówień kursów.
-                </div>
+                <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-slate-500">{t("Brak zamówień kursów.")}</div>
             ) : (
                 <div className="space-y-4">
                     {orders.map((order) => (
@@ -102,23 +100,22 @@ export default function AdminCourseOrdersPage() {
                                     <p className="mt-1 break-all text-sm text-slate-400">{order.userEmail}</p>
                                     <p className="mt-2 font-mono text-xs text-cyan-300">{order.reference}</p>
                                     <p className="mt-2 text-xs font-bold text-violet-300">
-                                        {order.purchaseType === "SUBSCRIPTION" ? "Abonament miesięczny" : "Zakup jednorazowy"}
-                                        {order.accessUntil && ` · dostęp do ${new Date(order.accessUntil).toLocaleDateString("pl-PL")}`}
+                                        {order.purchaseType === "SUBSCRIPTION" ? t("Abonament miesięczny") : t("Zakup jednorazowy")}
+                                        {order.accessUntil && t(" · dostęp do {value0}", { value0: new Date(order.accessUntil).toLocaleDateString(dateLocale) })}
                                     </p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center">
                                     <div>
-                                        <p className="text-xs uppercase tracking-wider text-slate-600">Kwota</p>
-                                        <p className="mt-1 font-black">{formatPrice(order.amount)}</p>
+                                        <p className="text-xs uppercase tracking-wider text-slate-600">{t("Kwota")}</p>
+                                        <p className="mt-1 font-black">{formatPrice(order.amount, dateLocale)}</p>
                                         {Number(order.discountAmount || 0) > 0 && (
-                                            <p className="mt-1 text-xs font-bold text-emerald-300">
-                                                Zniżka: −{formatPrice(order.discountAmount)}
+                                            <p className="mt-1 text-xs font-bold text-emerald-300">{t("Zniżka: −")}{formatPrice(order.discountAmount, dateLocale)}
                                             </p>
                                         )}
                                     </div>
                                     <div>
-                                        <p className="text-xs uppercase tracking-wider text-slate-600">Status</p>
+                                        <p className="text-xs uppercase tracking-wider text-slate-600">{t("Status")}</p>
                                         <p className="mt-1 font-black">{order.status}</p>
                                     </div>
                                 </div>
@@ -131,16 +128,13 @@ export default function AdminCourseOrdersPage() {
                                             onClick={() => update(order.id, "confirm")}
                                             className="flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-black text-emerald-950 disabled:opacity-50"
                                         >
-                                            <BsCreditCard /> Potwierdź
-                                        </button>
+                                            <BsCreditCard />{t(" Potwierdź")}</button>
                                         <button
                                             type="button"
                                             disabled={busyId === order.id}
                                             onClick={() => update(order.id, "cancel")}
                                             className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 font-black text-red-200 disabled:opacity-50"
-                                        >
-                                            Anuluj
-                                        </button>
+                                        >{t("Anuluj")}</button>
                                     </div>
                                 )}
                             </div>

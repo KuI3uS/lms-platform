@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -45,11 +46,11 @@ function getCachedAnalytics() {
     return null;
 }
 
-function formatDuration(seconds) {
+function formatDuration(seconds, t) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     if (hours === 0) return `${minutes} min`;
-    return `${hours} godz. ${minutes} min`;
+    return t("{value1} godz. {value2} min", { value1: hours, value2: minutes });
 }
 
 const achievementIcons = {
@@ -75,19 +76,20 @@ const ACHIEVEMENT_GROUPS = [
     { key: "mastery", title: "Mistrzostwo", match: () => true }
 ];
 
-function achievementProgress(achievement) {
+function achievementProgress(achievement, t, dateLocale) {
     const current = Number(achievement.progressCurrent || 0);
     const target = Math.max(1, Number(achievement.progressTarget || 1));
     const isTime = achievement.type.startsWith("STUDY_");
     return {
         percent: Math.min(100, current * 100 / target),
         label: isTime
-            ? `${formatDuration(current)} / ${formatDuration(target)}`
-            : `${current.toLocaleString("pl-PL")} / ${target.toLocaleString("pl-PL")}`
+            ? `${formatDuration(current, t)} / ${formatDuration(target, t)}`
+            : `${current.toLocaleString(dateLocale)} / ${target.toLocaleString(dateLocale)}`
     };
 }
 
 export default function LearningCenterPage() {
+    const { t, dateLocale } = useLocale();
     const navigate = useNavigate();
     const [data, setData] = useState(getCachedAnalytics);
     const [stats, setStats] = useState(null);
@@ -166,7 +168,7 @@ export default function LearningCenterPage() {
             setStats(refreshedStats);
             window.dispatchEvent(new Event("eduhub:stats-changed"));
         } catch (requestError) {
-            setRewardMessage(requestError.message || "Nie udało się wykonać tej operacji.");
+            setRewardMessage(requestError.message || t("Nie udało się wykonać tej operacji."));
         } finally {
             setRewardBusy("");
         }
@@ -175,8 +177,8 @@ export default function LearningCenterPage() {
     const purchaseReward = (item) => updateRewardCenter(
         `/rewards/purchase/${item.code}`,
         item.type === "DISCOUNT"
-            ? `Kupon ${item.discountPercent}% trafił do Twojego portfela.`
-            : `Aktywowano ${item.title}.`
+            ? t("Kupon {value1}% trafił do Twojego portfela.", { value1: item.discountPercent })
+            : t("Aktywowano {value1}.", { value1: item.title })
     );
 
     if (loading) {
@@ -190,7 +192,7 @@ export default function LearningCenterPage() {
     if (!data) {
         return (
             <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-8 text-center text-red-200">
-                {error || "Nie udało się pobrać centrum nauki."}
+                {t(error || "Nie udało się pobrać centrum nauki.")}
             </div>
         );
     }
@@ -202,50 +204,46 @@ export default function LearningCenterPage() {
                 <div className="relative grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
                     <div>
                         <div className="flex flex-wrap items-center gap-3">
-                            <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-300">Twój profil rozwoju</p>
+                            <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-300">{t("Twój profil rozwoju")}</p>
                             {stats?.leagueName && (
                                 <span
                                     className="rounded-full border px-3 py-1 text-xs font-black"
                                     style={{ borderColor: `${stats.leagueColor}55`, color: stats.leagueColor, backgroundColor: `${stats.leagueColor}12` }}
-                                >
-                                    Liga {stats.leagueName}
+                                >{t("Liga")}{" "}{stats.leagueName}
                                 </span>
                             )}
                         </div>
-                        <h1 className="mt-4 max-w-3xl text-4xl font-black sm:text-6xl">Uczysz się. Awansujesz. Tworzysz.</h1>
-                        <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-400">
-                            Klejnoty zdobywasz wyłącznie za realne ukończenie lekcji. Wymieniaj je na boostery XP i kupony na kursy.
-                        </p>
+                        <h1 className="mt-4 max-w-3xl text-4xl font-black sm:text-6xl">{t("Uczysz się. Awansujesz. Tworzysz.")}</h1>
+                        <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-400">{t("Klejnoty zdobywasz wyłącznie za realne ukończenie lekcji. Wymieniaj je na boostery XP i kupony na kursy.")}</p>
                         <div className="mt-7 flex flex-wrap gap-3">
                             <span className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 font-black text-cyan-100">
-                                <BsGem /> {Number(stats?.gemBalance || rewards?.gemBalance || 0).toLocaleString("pl-PL")} klejnotów
-                            </span>
+                                <BsGem /> {Number(stats?.gemBalance || rewards?.gemBalance || 0).toLocaleString(dateLocale)}{" "}{t("klejnotów")}</span>
                             <span className="inline-flex items-center gap-2 rounded-2xl border border-violet-300/20 bg-violet-300/10 px-4 py-3 font-black text-violet-100">
-                                <BsLightningChargeFill /> Poziom {stats?.level || 1}
+                                <BsLightningChargeFill />{" "}{t("Poziom")}{" "}{stats?.level || 1}
                             </span>
                         </div>
                     </div>
                     <div className="relative mx-auto flex min-h-[260px] w-full max-w-[280px] flex-col items-center justify-center overflow-hidden rounded-[40px] border border-white/10 bg-black/20 p-7">
                         <div className="absolute inset-10 rounded-full bg-orange-400/10 blur-3xl" />
                         <LeagueBadge name={stats?.leagueName || "Miedź"} size="xl" className="relative" />
-                        <p className="relative mt-3 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Aktualna liga</p>
-                        <p className="relative mt-1 text-xl font-black">{stats?.leagueName || "Miedź"}</p>
+                        <p className="relative mt-3 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{t("Aktualna liga")}</p>
+                        <p className="relative mt-1 text-xl font-black">{t(stats?.leagueName || "Miedź")}</p>
                     </div>
                 </div>
             </section>
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <Stat icon={<BsClockHistory />} label="Czas nauki" value={formatDuration(data.totalStudySeconds)} color="cyan" />
-                <Stat icon={<BsCheckCircleFill />} label="Ukończone lekcje" value={data.completedLessons} color="green" />
-                <Stat icon={<BsGraphUpArrow />} label="Skuteczność zadań" value={`${data.taskAccuracy}%`} color="violet" />
-                <Stat icon={<BsTrophyFill />} label="Średnia egzaminów" value={`${data.examAverage}%`} color="amber" />
+                <Stat icon={<BsClockHistory />} label={t("Czas nauki")} value={formatDuration(data.totalStudySeconds, t)} color="cyan" />
+                <Stat icon={<BsCheckCircleFill />} label={t("Ukończone lekcje")} value={data.completedLessons} color="green" />
+                <Stat icon={<BsGraphUpArrow />} label={t("Skuteczność zadań")} value={`${data.taskAccuracy}%`} color="violet" />
+                <Stat icon={<BsTrophyFill />} label={t("Średnia egzaminów")} value={`${data.examAverage}%`} color="amber" />
             </div>
 
             {stats && (
                 <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-3xl border border-blue-400/20 bg-blue-500/[0.08] p-6">
-                        <p className="text-xs font-black uppercase tracking-widest text-blue-300">Poziom {stats.level}</p>
-                        <p className="mt-3 text-3xl font-black">{stats.xp} XP</p>
+                        <p className="text-xs font-black uppercase tracking-widest text-blue-300">{t("Poziom")}{" "}{stats.level}</p>
+                        <p className="mt-3 text-3xl font-black">{stats.xp}{" "}{t("XP")}</p>
                         <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-black/30">
                             <div
                                 className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500"
@@ -255,51 +253,44 @@ export default function LearningCenterPage() {
                             />
                         </div>
                         <p className="mt-2 text-xs text-slate-400">
-                            {stats.xpIntoLevel} / {stats.xpForNextLevel} XP do kolejnego poziomu
-                        </p>
+                            {stats.xpIntoLevel} / {stats.xpForNextLevel}{" "}{t("XP do kolejnego poziomu")}</p>
                         {stats.xpBoostPercent > 0 && (
                             <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-violet-400/10 px-3 py-1 text-xs font-black text-violet-200">
-                                <BsLightningChargeFill /> +{stats.xpBoostPercent}% XP aktywne
-                            </p>
+                                <BsLightningChargeFill /> +{stats.xpBoostPercent}{t("% XP aktywne")}</p>
                         )}
                     </div>
 
                     <div className="rounded-3xl border border-orange-400/20 bg-orange-500/[0.08] p-6">
-                        <p className="text-xs font-black uppercase tracking-widest text-orange-300">Seria zadań</p>
+                        <p className="text-xs font-black uppercase tracking-widest text-orange-300">{t("Seria zadań")}</p>
                         <div className="mt-3 flex items-end justify-between gap-4">
                             <p className="text-3xl font-black">{stats.taskStreak}</p>
-                            <p className="rounded-full bg-orange-500/15 px-3 py-1 font-black text-orange-200">
-                                x{stats.xpMultiplier} XP
-                            </p>
+                            <p className="rounded-full bg-orange-500/15 px-3 py-1 font-black text-orange-200">{t("x")}{stats.xpMultiplier}{" "}{t("XP")}</p>
                         </div>
-                        <p className="mt-4 text-sm leading-6 text-slate-400">
-                            5 poprawnych zadań uruchamia x2, a 10 poprawnych x3. Licznik zeruje się dokładnie o północy czasu polskiego.
-                        </p>
+                        <p className="mt-4 text-sm leading-6 text-slate-400">{t("5 poprawnych zadań uruchamia x2, a 10 poprawnych x3. Licznik zeruje się dokładnie o północy czasu polskiego.")}</p>
                     </div>
 
                     <div className="rounded-3xl border border-cyan-400/20 bg-cyan-500/[0.08] p-6">
                         <div className="flex items-center justify-between gap-4">
                             <div>
-                                <p className="text-xs font-black uppercase tracking-widest text-cyan-300">Klejnoty</p>
-                                <p className="mt-3 text-3xl font-black">{Number(stats.gemBalance || 0).toLocaleString("pl-PL")}</p>
+                                <p className="text-xs font-black uppercase tracking-widest text-cyan-300">{t("Klejnoty")}</p>
+                                <p className="mt-3 text-3xl font-black">{Number(stats.gemBalance || 0).toLocaleString(dateLocale)}</p>
                             </div>
                             <BsGem className="text-3xl text-cyan-300" />
                         </div>
-                        <p className="mt-4 text-sm leading-6 text-slate-400">
-                            +50 za pierwsze ukończenie lekcji. Kolejne +{stats.nextGemRewardAmount} na poziomie {stats.nextGemRewardLevel}.
+                        <p className="mt-4 text-sm leading-6 text-slate-400">{t("+50 za pierwsze ukończenie lekcji. Kolejne +")}{stats.nextGemRewardAmount}{" "}{t("na poziomie")}{" "}{stats.nextGemRewardLevel}.
                         </p>
                     </div>
 
                     <div className="rounded-3xl border p-6" style={{ borderColor: `${stats.leagueColor}33`, backgroundColor: `${stats.leagueColor}0d` }}>
-                        <p className="text-xs font-black uppercase tracking-widest" style={{ color: stats.leagueColor }}>Liga pierwiastków</p>
+                        <p className="text-xs font-black uppercase tracking-widest" style={{ color: stats.leagueColor }}>{t("Liga pierwiastków")}</p>
                         <div className="mt-3 flex items-center gap-3">
                             <LeagueBadge name={stats.leagueName} size="sm" />
                             <p className="text-3xl font-black">{stats.leagueName}</p>
                         </div>
                         <p className="mt-4 text-sm leading-6 text-slate-400">
                             {stats.nextLeagueLevel
-                                ? `Następna odznaka ligi od poziomu ${stats.nextLeagueLevel}.`
-                                : "Najwyższa, najrzadsza liga Mityczna."}
+                                ? t("Następna odznaka ligi od poziomu {value1}.", { value1: stats.nextLeagueLevel })
+                                : t("Najwyższa, najrzadsza liga Mityczna.")}
                         </p>
                     </div>
                 </section>
@@ -318,13 +309,13 @@ export default function LearningCenterPage() {
                 <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs font-black uppercase tracking-widest text-cyan-300">Aktywność</p>
-                            <h2 className="mt-2 text-2xl font-black">Ostatnie dni nauki</h2>
+                            <p className="text-xs font-black uppercase tracking-widest text-cyan-300">{t("Aktywność")}</p>
+                            <h2 className="mt-2 text-2xl font-black">{t("Ostatnie dni nauki")}</h2>
                         </div>
                         <BsBarChartFill className="text-2xl text-cyan-300" />
                     </div>
                     {data.recentActivity.length === 0 ? (
-                        <p className="mt-8 text-slate-500">Czas zacznie naliczać się podczas korzystania z platformy.</p>
+                        <p className="mt-8 text-slate-500">{t("Czas zacznie naliczać się podczas korzystania z platformy.")}</p>
                     ) : (
                         <div className="mt-8 flex h-52 items-end gap-2">
                             {data.recentActivity.map((item) => (
@@ -333,7 +324,7 @@ export default function LearningCenterPage() {
                                         <div
                                             className="w-full rounded-lg bg-gradient-to-t from-cyan-500 to-blue-500"
                                             style={{ height: `${Math.max(6, item.seconds * 100 / maxActivity)}%` }}
-                                            title={formatDuration(item.seconds)}
+                                            title={formatDuration(item.seconds, t)}
                                         />
                                     </div>
                                     <span className="text-[10px] text-slate-600">{item.date.slice(5)}</span>
@@ -344,10 +335,10 @@ export default function LearningCenterPage() {
                 </section>
 
                 <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-                    <p className="text-xs font-black uppercase tracking-widest text-red-300">Do poprawy</p>
-                    <h2 className="mt-2 text-2xl font-black">Najtrudniejsze zadania</h2>
+                    <p className="text-xs font-black uppercase tracking-widest text-red-300">{t("Do poprawy")}</p>
+                    <h2 className="mt-2 text-2xl font-black">{t("Najtrudniejsze zadania")}</h2>
                     {data.hardestTasks.length === 0 ? (
-                        <p className="mt-8 text-slate-500">Rozwiąż pierwsze zadania, aby zobaczyć analizę.</p>
+                        <p className="mt-8 text-slate-500">{t("Rozwiąż pierwsze zadania, aby zobaczyć analizę.")}</p>
                     ) : (
                         <div className="mt-6 space-y-3">
                             {data.hardestTasks.map((task, index) => (
@@ -362,7 +353,7 @@ export default function LearningCenterPage() {
                                         </div>
                                         <div className="text-right">
                                             <p className="font-black">{task.attemptCount}</p>
-                                            <p className="text-[10px] uppercase text-slate-600">prób</p>
+                                            <p className="text-[10px] uppercase text-slate-600">{t("prób")}</p>
                                         </div>
                                     </div>
                                 )
@@ -375,8 +366,8 @@ export default function LearningCenterPage() {
             <section>
                 <div className="flex items-end justify-between gap-5">
                     <div>
-                        <p className="text-xs font-black uppercase tracking-widest text-violet-300">Motywacja</p>
-                        <h2 className="mt-2 text-3xl font-black">Osiągnięcia</h2>
+                        <p className="text-xs font-black uppercase tracking-widest text-violet-300">{t("Motywacja")}</p>
+                        <h2 className="mt-2 text-3xl font-black">{t("Osiągnięcia")}</h2>
                     </div>
                     <p className="text-sm text-slate-500">
                         {data.achievements.filter((item) => item.unlocked).length}/{data.achievements.length}
@@ -394,10 +385,10 @@ export default function LearningCenterPage() {
                         if (achievements.length === 0) return null;
                         return (
                             <div key={group.key}>
-                                <h3 className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-slate-500">{group.title}</h3>
+                                <h3 className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-slate-500">{t(group.title)}</h3>
                                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                                     {achievements.map((achievement) => {
-                                        const progress = achievementProgress(achievement);
+                                        const progress = achievementProgress(achievement, t, dateLocale);
                                         return (
                                             <article
                                                 key={achievement.type}
@@ -430,7 +421,7 @@ export default function LearningCenterPage() {
                                                     />
                                                 </div>
                                                 <p className="mt-2 text-[11px] font-bold text-slate-600">
-                                                    {achievement.unlocked ? "Zdobyte" : progress.label}
+                                                    {achievement.unlocked ? t("Zdobyte") : progress.label}
                                                 </p>
                                             </article>
                                         );
@@ -443,14 +434,12 @@ export default function LearningCenterPage() {
             </section>
 
             <section>
-                <p className="text-xs font-black uppercase tracking-widest text-amber-300">Dokumenty</p>
-                <h2 className="mt-2 text-3xl font-black">Certyfikaty ukończenia</h2>
+                <p className="text-xs font-black uppercase tracking-widest text-amber-300">{t("Dokumenty")}</p>
+                <h2 className="mt-2 text-3xl font-black">{t("Certyfikaty ukończenia")}</h2>
                 {data.certificates.length === 0 ? (
                     <div className="mt-6 rounded-3xl border border-dashed border-white/15 p-10 text-center">
                         <BsAwardFill className="mx-auto text-5xl text-slate-700" />
-                        <p className="mt-4 text-slate-500">
-                            Certyfikat pojawi się automatycznie po ukończeniu wszystkich lekcji kursu.
-                        </p>
+                        <p className="mt-4 text-slate-500">{t("Certyfikat pojawi się automatycznie po ukończeniu wszystkich lekcji kursu.")}</p>
                     </div>
                 ) : (
                     <div className="mt-6 grid gap-5 lg:grid-cols-2">
@@ -461,12 +450,12 @@ export default function LearningCenterPage() {
                                         <BsAwardFill />
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-xs font-black uppercase tracking-widest text-amber-300">Certyfikat EduHub</p>
+                                        <p className="text-xs font-black uppercase tracking-widest text-amber-300">{t("Certyfikat EduHub")}</p>
                                         <h3 className="mt-2 text-xl font-black">{certificate.courseTitle}</h3>
                                         {certificate.category === "LANGUAGE" && (
                                             <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-black text-violet-200">
                                                 <BsTranslate />
-                                                {getCourseLanguageLabel(certificate.courseLanguage)} · CEFR {certificate.cefrLevel}
+                                                {t(getCourseLanguageLabel(certificate.courseLanguage))}{" "}{t("· CEFR")}{" "}{certificate.cefrLevel}
                                             </p>
                                         )}
                                         <p className="mt-2 break-all font-mono text-xs text-slate-500">{certificate.certificateNumber}</p>
@@ -477,8 +466,7 @@ export default function LearningCenterPage() {
                                     onClick={() => navigate(`/certificates/${certificate.certificateNumber}`)}
                                     className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-5 py-3 font-black text-amber-100"
                                 >
-                                    <BsPrinterFill /> Otwórz i pobierz
-                                </button>
+                                    <BsPrinterFill />{" "}{t("Otwórz i pobierz")}</button>
                             </article>
                         ))}
                     </div>
@@ -505,24 +493,23 @@ function Stat({ icon, label, value, color }) {
 }
 
 function RewardShop({ rewards, busy, message, onPurchase }) {
+    const { t, dateLocale } = useLocale();
     const groups = [
-        { type: "DISCOUNT", title: "Kupony na kursy", description: "Jednorazowe zniżki kupowane za konsekwentną naukę." },
-        { type: "BOOSTER", title: "Boostery XP", description: "Przyspieszają rozwój poziomu, ale nie zwiększają liczby klejnotów." }
+        { type: "DISCOUNT", title: t("Kupony na kursy"), description: t("Jednorazowe zniżki kupowane za konsekwentną naukę.") },
+        { type: "BOOSTER", title: t("Boostery XP"), description: t("Przyspieszają rozwój poziomu, ale nie zwiększają liczby klejnotów.") }
     ];
 
     return (
         <section className="overflow-hidden rounded-[38px] border border-white/10 bg-white/[0.025]">
             <div className="grid gap-6 border-b border-white/[0.08] p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-end">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">Skarbiec EduHub</p>
-                    <h2 className="mt-3 text-3xl font-black sm:text-4xl">Nagrody za wykonaną pracę</h2>
-                    <p className="mt-3 max-w-2xl leading-7 text-slate-400">
-                        Liczy się ukończona lekcja, nie czas spędzony na stronie. Kupon 5% wymaga 2500 klejnotów, czyli 50 pełnych lekcji — około 25 godzin aktywnej pracy przy średnio 30 minutach na lekcję.
-                    </p>
+                    <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">{t("Skarbiec EduHub")}</p>
+                    <h2 className="mt-3 text-3xl font-black sm:text-4xl">{t("Nagrody za wykonaną pracę")}</h2>
+                    <p className="mt-3 max-w-2xl leading-7 text-slate-400">{t("Liczy się ukończona lekcja, nie czas spędzony na stronie. Kupon 5% wymaga 2500 klejnotów, czyli 50 pełnych lekcji — około 25 godzin aktywnej pracy przy średnio 30 minutach na lekcję.")}</p>
                 </div>
                 <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 px-5 py-4 text-right">
-                    <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">Dostępne</p>
-                    <p className="mt-1 flex items-center justify-end gap-2 text-3xl font-black"><BsGem /> {Number(rewards.gemBalance).toLocaleString("pl-PL")}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">{t("Dostępne")}</p>
+                    <p className="mt-1 flex items-center justify-end gap-2 text-3xl font-black"><BsGem /> {Number(rewards.gemBalance).toLocaleString(dateLocale)}</p>
                 </div>
             </div>
 
@@ -534,16 +521,16 @@ function RewardShop({ rewards, busy, message, onPurchase }) {
 
             <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3">
                 <div className="rounded-3xl border border-white/[0.08] bg-black/20 p-5">
-                    <p className="text-xs font-black uppercase tracking-widest text-violet-300">Aktywny booster</p>
-                    <p className="mt-2 text-2xl font-black">{rewards.xpBoostPercent > 0 ? `+${rewards.xpBoostPercent}% XP` : "Brak"}</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-violet-300">{t("Aktywny booster")}</p>
+                    <p className="mt-2 text-2xl font-black">{rewards.xpBoostPercent > 0 ? t("+{value1}% XP", { value1: rewards.xpBoostPercent }) : t("Brak")}</p>
                     <p className="mt-2 text-xs leading-5 text-slate-500">
                         {rewards.xpBoostExpiresAt
-                            ? `Działa do ${new Intl.DateTimeFormat("pl-PL", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Warsaw" }).format(new Date(rewards.xpBoostExpiresAt))}`
-                            : "Booster możesz aktywować w dowolnym momencie."}
+                            ? t("Działa do {value1}", { value1: new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Warsaw" }).format(new Date(rewards.xpBoostExpiresAt)) })
+                            : t("Booster możesz aktywować w dowolnym momencie.")}
                     </p>
                 </div>
                 <div className="rounded-3xl border border-white/[0.08] bg-black/20 p-5">
-                    <p className="text-xs font-black uppercase tracking-widest text-emerald-300">Portfel kuponów</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-emerald-300">{t("Portfel kuponów")}</p>
                     <div className="mt-4 flex gap-2">
                         {[5, 10, 20].map((percent) => (
                             <span key={percent} className="rounded-xl border border-emerald-300/15 bg-emerald-300/[0.07] px-3 py-2 text-sm font-black text-emerald-100">
@@ -553,9 +540,9 @@ function RewardShop({ rewards, busy, message, onPurchase }) {
                     </div>
                 </div>
                 <div className="rounded-3xl border border-white/[0.08] bg-black/20 p-5">
-                    <p className="text-xs font-black uppercase tracking-widest text-amber-300">Premia ligowa</p>
-                    <p className="mt-2 text-2xl font-black">+{rewards.nextGemRewardAmount} klejnotów</p>
-                    <p className="mt-2 text-xs leading-5 text-slate-500">Na poziomie {rewards.nextGemRewardLevel}. Premia wpada co 5 poziomów.</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-amber-300">{t("Premia ligowa")}</p>
+                    <p className="mt-2 text-2xl font-black">+{rewards.nextGemRewardAmount}{" "}{t("klejnotów")}</p>
+                    <p className="mt-2 text-xs leading-5 text-slate-500">{t("Na poziomie")}{" "}{rewards.nextGemRewardLevel}{t(". Premia wpada co 5 poziomów.")}</p>
                 </div>
             </div>
 
@@ -568,7 +555,7 @@ function RewardShop({ rewards, busy, message, onPurchase }) {
                         <div key={group.type}>
                             <div className="flex flex-wrap items-end justify-between gap-3">
                                 <div>
-                                    <h3 className="text-2xl font-black">{group.title}</h3>
+                                    <h3 className="text-2xl font-black">{t(group.title)}</h3>
                                     <p className="mt-1 text-sm text-slate-500">{group.description}</p>
                                 </div>
                             </div>
@@ -592,6 +579,7 @@ function RewardShop({ rewards, busy, message, onPurchase }) {
 }
 
 function LeagueRoadmap({ currentLeague }) {
+    const { t } = useLocale();
     const leagues = [
         { name: "Miedź", level: "1–10", color: "#fb923c" },
         { name: "Srebro", level: "11–20", color: "#e2e8f0" },
@@ -609,9 +597,9 @@ function LeagueRoadmap({ currentLeague }) {
         <div className="border-t border-white/[0.08] px-6 py-7 sm:px-8">
             <div className="flex items-end justify-between gap-4">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">Droga lig</p>
-                    <h3 className="mt-2 text-xl font-black">Każdy próg ma własną, coraz rzadszą odznakę</h3>
-                    <p className="mt-2 text-sm text-slate-400">Nowa liga co 10 poziomów. Mityczny to najwyższa liga, dostępna od poziomu 91.</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500">{t("Droga lig")}</p>
+                    <h3 className="mt-2 text-xl font-black">{t("Każdy próg ma własną, coraz rzadszą odznakę")}</h3>
+                    <p className="mt-2 text-sm text-slate-400">{t("Nowa liga co 10 poziomów. Mityczny to najwyższa liga, dostępna od poziomu 91.")}</p>
                 </div>
             </div>
             <div className="mt-5 flex gap-3 overflow-x-auto pb-2">
@@ -620,8 +608,8 @@ function LeagueRoadmap({ currentLeague }) {
                     return (
                         <div key={league.name} className={`min-w-[132px] rounded-2xl border p-4 ${active ? "bg-white/[0.08]" : "bg-black/15 opacity-65"}`} style={{ borderColor: `${league.color}${active ? "77" : "22"}`, boxShadow: active ? `0 0 24px ${league.color}22` : "none" }}>
                             <LeagueBadge name={league.name} size="md" muted={!active} />
-                            <p className="mt-3 text-sm font-black" style={{ color: active ? league.color : undefined }}>{league.name}</p>
-                            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-600">Poziom {league.level}</p>
+                            <p className="mt-3 text-sm font-black" style={{ color: active ? league.color : undefined }}>{t(league.name)}</p>
+                            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-600">{t("Poziom")}{" "}{league.level}</p>
                         </div>
                     );
                 })}
@@ -631,13 +619,14 @@ function LeagueRoadmap({ currentLeague }) {
 }
 
 function RewardCard({ item, gemBalance, busy, onPurchase }) {
+    const { t, dateLocale } = useLocale();
     const canAfford = Number(gemBalance) >= item.cost;
     const disabled = Boolean(busy) || !item.available || !canAfford;
     const label = !item.available
-        ? `Poziom ${item.requiredLevel}`
+        ? t("Poziom {value1}", { value1: item.requiredLevel })
         : !canAfford
-            ? "Za mało klejnotów"
-            : "Kup";
+            ? t("Za mało klejnotów")
+            : t("Kup");
 
     return (
         <article className="group rounded-3xl border border-white/[0.08] bg-black/20 p-5 transition hover:-translate-y-1 hover:border-white/20">
@@ -645,19 +634,19 @@ function RewardCard({ item, gemBalance, busy, onPurchase }) {
                 <span className={`grid h-12 w-12 place-items-center rounded-2xl text-xl ${item.type === "DISCOUNT" ? "bg-emerald-400/10 text-emerald-300" : "bg-violet-400/10 text-violet-300"}`}>
                     {item.type === "DISCOUNT" ? `${item.discountPercent}%` : <BsLightningChargeFill />}
                 </span>
-                {item.quantity > 0 && <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-black text-emerald-300">Masz {item.quantity}</span>}
+                {item.quantity > 0 && <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-black text-emerald-300">{t("Masz")}{" "}{item.quantity}</span>}
             </div>
             <h4 className="mt-4 text-lg font-black">{item.title}</h4>
             <p className="mt-2 min-h-12 text-sm leading-6 text-slate-500">{item.description}</p>
             <div className="mt-5 flex items-center justify-between gap-3">
-                <span className="flex items-center gap-1.5 text-sm font-black text-cyan-200"><BsGem /> {item.cost.toLocaleString("pl-PL")}</span>
+                <span className="flex items-center gap-1.5 text-sm font-black text-cyan-200"><BsGem /> {item.cost.toLocaleString(dateLocale)}</span>
                 <button
                     type="button"
                     disabled={disabled}
                     onClick={() => onPurchase(item)}
                     className="rounded-xl bg-white px-4 py-2 text-xs font-black text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-600"
                 >
-                    {busy === `/rewards/purchase/${item.code}` ? "Chwila…" : label}
+                    {busy === `/rewards/purchase/${item.code}` ? t("Chwila…") : label}
                 </button>
             </div>
         </article>

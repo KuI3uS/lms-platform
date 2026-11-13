@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../../api/api";
@@ -15,6 +16,7 @@ import LessonBlock from "./LessonBlock";
 import LessonFooter from "./LessonFooter";
 
 export default function LessonPage() {
+    const { t } = useLocale();
     const { showToast } = useFeedback();
     const { lessonId } = useParams();
     const navigate = useNavigate();
@@ -319,16 +321,14 @@ export default function LessonPage() {
                         className="rounded-xl border border-white/10 bg-white/[0.04] px-5 py-3 font-bold text-gray-200 hover:bg-white/[0.08]"
                     >
                         {lesson?.courseId || location.state?.courseId
-                            ? "Wróć do kursu"
-                            : "Wróć do kursów"}
+                            ? t("Wróć do kursu")
+                            : t("Wróć do kursów")}
                     </button>
                     <button
                         type="button"
                         onClick={loadLesson}
                         className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700"
-                    >
-                        Spróbuj ponownie
-                    </button>
+                    >{t("Spróbuj ponownie")}</button>
                 </div>
             </div>
         );

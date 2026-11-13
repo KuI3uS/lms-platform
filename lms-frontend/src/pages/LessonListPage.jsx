@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
@@ -14,12 +15,13 @@ import {
 } from "react-icons/bs";
 
 export default function LessonListPage() {
+    const { t } = useLocale();
 
     const { moduleId } = useParams();
     const navigate = useNavigate();
 
     const [lessons, setLessons] = useState([]);
-    const [moduleName, setModuleName] = useState("Ścieżka nauki");
+    const [moduleName, setModuleName] = useState(t("Ścieżka nauki"));
     const [learningStats, setLearningStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -215,11 +217,7 @@ export default function LessonListPage() {
                                 font-semibold
                             ">
 
-                                <BsStars/>
-
-                                EDUHUB 2026
-
-                            </div>
+                                <BsStars/>{t("EDUHUB 2026")}</div>
 
                             <h1 className="
                                 mt-8
@@ -238,14 +236,7 @@ export default function LessonListPage() {
                                 text-xl
                                 leading-9
                                 text-gray-300
-                            ">
-
-                                Zdobywaj kolejne umiejętności,
-                                rozwiązuj zadania,
-                                odblokowuj nowe lekcje
-                                i rozwijaj swoje doświadczenie.
-
-                            </p>
+                            ">{t("Zdobywaj kolejne umiejętności, rozwiązuj zadania, odblokowuj nowe lekcje i rozwijaj swoje doświadczenie.")}</p>
 
                             {currentLesson && (
 
@@ -273,11 +264,7 @@ export default function LessonListPage() {
 
                                 >
 
-                                    <BsPlayFill/>
-
-                                    Kontynuuj naukę
-
-                                    <BsArrowRight/>
+                                    <BsPlayFill/>{t("Kontynuuj naukę")}<BsArrowRight/>
 
                                 </button>
 
@@ -316,11 +303,7 @@ export default function LessonListPage() {
 
                                     <div>
 
-                                        <p className="text-gray-400">
-
-                                            Poziom
-
-                                        </p>
+                                        <p className="text-gray-400">{t("Poziom")}</p>
 
                                         <h2 className="text-4xl font-black">
 
@@ -336,11 +319,7 @@ export default function LessonListPage() {
 
                                     <div className="flex justify-between mb-3 text-sm">
 
-                                        <span className="text-gray-400">
-
-                                            Postęp modułu
-
-                                        </span>
+                                        <span className="text-gray-400">{t("Postęp modułu")}</span>
 
                                         <span>
 
@@ -392,28 +371,28 @@ export default function LessonListPage() {
                 <StatCard
                     icon={<BsBookHalf size={22} />}
                     value={lessons.length}
-                    label="Lekcji"
+                    label={t("Lekcji")}
                     color="cyan"
                 />
 
                 <StatCard
                     icon={<BsCheckCircleFill size={22} />}
                     value={completed}
-                    label="Ukończono"
+                    label={t("Ukończono")}
                     color="green"
                 />
 
                 <StatCard
                     icon={<BsFire size={22} />}
                     value={xp}
-                    label="Łączne XP"
+                    label={t("Łączne XP")}
                     color="orange"
                 />
 
                 <StatCard
                     icon={<BsLightningChargeFill size={22} />}
                     value={level}
-                    label="Level"
+                    label={t("Poziom")}
                     color="blue"
                 />
 
@@ -467,11 +446,7 @@ export default function LessonListPage() {
                 py-2
                 text-cyan-300
                 font-semibold
-            ">
-
-                        Następna lekcja
-
-                    </div>
+            ">{t("Następna lekcja")}</div>
 
                     <h2 className="mt-6 text-5xl font-black">
 
@@ -479,14 +454,7 @@ export default function LessonListPage() {
 
                     </h2>
 
-                    <p className="mt-6 text-gray-400 text-lg leading-8 max-w-2xl">
-
-                        Kontynuuj naukę dokładnie tam,
-                        gdzie skończyłeś.
-                        Zdobywaj kolejne XP
-                        i odblokowuj następne lekcje.
-
-                    </p>
+                    <p className="mt-6 text-gray-400 text-lg leading-8 max-w-2xl">{t("Kontynuuj naukę dokładnie tam, gdzie skończyłeś. Zdobywaj kolejne XP i odblokowuj następne lekcje.")}</p>
 
                     <button
 
@@ -512,11 +480,7 @@ export default function LessonListPage() {
 
                     >
 
-                        <BsPlayFill />
-
-                        Rozpocznij lekcję
-
-                        <BsArrowRight />
+                        <BsPlayFill />{t("Rozpocznij lekcję")}<BsArrowRight />
 
                     </button>
 
@@ -525,17 +489,17 @@ export default function LessonListPage() {
                 <div className="space-y-5">
 
                     <InfoBox
-                        title="Numer lekcji"
+                        title={t("Numer lekcji")}
                         value={currentLesson.orderIndex ?? "-"}
                     />
 
                     <InfoBox
-                        title="Status"
-                        value="Gotowa"
+                        title={t("Status")}
+                        value={t("Gotowa")}
                     />
 
                     <InfoBox
-                        title="Postęp"
+                        title={t("Postęp")}
                         value={`${progress}%`}
                     />
 
@@ -557,17 +521,9 @@ export default function LessonListPage() {
 
         <div>
 
-            <h2 className="text-4xl font-black">
+            <h2 className="text-4xl font-black">{t("Wszystkie lekcje")}</h2>
 
-                Wszystkie lekcje
-
-            </h2>
-
-            <p className="text-gray-400 mt-3">
-
-                Odblokowuj kolejne etapy nauki i zdobywaj doświadczenie.
-
-            </p>
+            <p className="text-gray-400 mt-3">{t("Odblokowuj kolejne etapy nauki i zdobywaj doświadczenie.")}</p>
 
         </div>
 
@@ -636,26 +592,11 @@ export default function LessonListPage() {
                 px-5
                 py-2
                 font-semibold
-            ">
+            ">{t("Final Challenge")}</div>
 
-                    Final Challenge
+                <h2 className="text-5xl font-black mt-6">{t("Projekt końcowy")}</h2>
 
-                </div>
-
-                <h2 className="text-5xl font-black mt-6">
-
-                    Projekt końcowy
-
-                </h2>
-
-                <p className="mt-6 text-gray-400 text-lg leading-8 max-w-2xl">
-
-                    Po ukończeniu wszystkich lekcji odblokujesz
-                    praktyczny projekt,
-                    który sprawdzi Twoje umiejętności
-                    w realnym zadaniu.
-
-                </p>
+                <p className="mt-6 text-gray-400 text-lg leading-8 max-w-2xl">{t("Po ukończeniu wszystkich lekcji odblokujesz praktyczny projekt, który sprawdzi Twoje umiejętności w realnym zadaniu.")}</p>
 
             </div>
 
@@ -803,6 +744,7 @@ function LessonCard({
                         navigate
 
                     }) {
+    const { t } = useLocale();
 
     const completed = lesson.completed;
     const locked = !lesson.canAccess;
@@ -863,9 +805,7 @@ function LessonCard({
 
                 <div className="flex justify-between items-center">
 
-                    <span className="text-sm text-gray-400">
-
-                        Lekcja {index + 1}
+                    <span className="text-sm text-gray-400">{t("Lekcja")}{" "}{index + 1}
 
                     </span>
 
@@ -912,10 +852,10 @@ function LessonCard({
 
                     {
                         completed
-                            ? "Lekcja ukończona."
+                            ? t("Lekcja ukończona.")
                             : active
-                                ? "Gotowa do rozpoczęcia."
-                                : "Odblokuj poprzednią lekcję."
+                                ? t("Gotowa do rozpoczęcia.")
+                                : t("Odblokuj poprzednią lekcję.")
                     }
 
                 </p>

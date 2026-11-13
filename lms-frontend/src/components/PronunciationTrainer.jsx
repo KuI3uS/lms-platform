@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
     BsMicFill,
@@ -23,6 +24,7 @@ export default function PronunciationTrainer({
                                                   compact = false,
                                                   onReviewed
                                               }) {
+    const { t } = useLocale();
     const speechLanguage = language || "en-US";
     const letter = englishLetter(phrase, speechLanguage);
     const { showToast } = useFeedback();
@@ -143,35 +145,32 @@ export default function PronunciationTrainer({
     return (
         <div className={`rounded-3xl border border-violet-400/20 bg-violet-500/[0.07] ${compact ? "p-4" : "p-5 sm:p-7"}`}>
             {audioUrl && (
-                <audio ref={audioRef} controls preload="none" className="mb-5 w-full" src={audioUrl}>
-                    Twoja przeglądarka nie obsługuje odtwarzania audio.
-                </audio>
+                <audio ref={audioRef} controls preload="none" className="mb-5 w-full" src={audioUrl}>{t("Twoja przeglądarka nie obsługuje odtwarzania audio.")}</audio>
             )}
 
             <div className="flex flex-wrap gap-3">
                 <button type="button" onClick={speak} disabled={listening} className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-3 font-black text-cyan-100 hover:bg-cyan-300/15">
-                    <BsPlayFill /> Odsłuchaj lektora
-                </button>
+                    <BsPlayFill />{t(" Odsłuchaj lektora")}</button>
                 <button type="button" onClick={listening ? stop : start} className={`inline-flex items-center gap-2 rounded-xl px-4 py-3 font-black text-white ${listening ? "bg-red-600" : "bg-violet-600 hover:bg-violet-500"}`}>
                     {listening ? <BsStopFill /> : <BsMicFill />}
-                    {listening ? "Zatrzymaj" : "Powiedz na głos"}
+                    {listening ? t("Zatrzymaj") : t("Powiedz na głos")}
                 </button>
             </div>
 
             {letter && (
-                <p className="mt-4 text-sm text-slate-400">Wymowa {letter}: <strong className="text-white">/{letterPronunciation(phrase, speechLanguage)}/</strong>. Powiedz tylko nazwę litery.</p>
+                <p className="mt-4 text-sm text-slate-400">{t("Wymowa ")}{letter}: <strong className="text-white">/{letterPronunciation(phrase, speechLanguage)}/</strong>{t(". Powiedz tylko nazwę litery.")}</p>
             )}
             {listening && (
-                <p className="mt-4 flex items-center gap-2 text-sm font-bold text-violet-200"><BsSoundwave className="animate-pulse" /> Słucham… Nagranie zakończy się automatycznie po krótkiej ciszy.</p>
+                <p className="mt-4 flex items-center gap-2 text-sm font-bold text-violet-200"><BsSoundwave className="animate-pulse" />{t(" Słucham… Nagranie zakończy się automatycznie po krótkiej ciszy.")}</p>
             )}
             {score !== null && (
                 <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
                     <div className="flex items-center justify-between gap-4">
-                        <p className="text-sm text-slate-400">Rozpoznano: <strong className="text-white">{transcript}</strong></p>
+                        <p className="text-sm text-slate-400">{t("Rozpoznano: ")}<strong className="text-white">{transcript}</strong></p>
                         <span className={`shrink-0 text-2xl font-black ${score >= 90 ? "text-emerald-300" : score >= 70 ? "text-amber-300" : "text-red-300"}`}>{score}%</span>
                     </div>
                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/40"><div className={`h-full rounded-full ${score >= 90 ? "bg-emerald-400" : score >= 70 ? "bg-amber-400" : "bg-red-400"}`} style={{ width: `${score}%` }} /></div>
-                    <p className="mt-3 text-xs leading-5 text-slate-500">Ocena porównuje rozpoznane słowa ze wzorcem. Nie zastępuje oceny akcentu przez nauczyciela.</p>
+                    <p className="mt-3 text-xs leading-5 text-slate-500">{t("Ocena porównuje rozpoznane słowa ze wzorcem. Nie zastępuje oceny akcentu przez nauczyciela.")}</p>
                 </div>
             )}
         </div>

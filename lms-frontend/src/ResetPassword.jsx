@@ -1,9 +1,11 @@
+import { useLocale } from "./context/LocaleContext";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiFetch } from "./api/api";
 import { useFeedback } from "./context/FeedbackContext";
 
 export default function ResetPassword() {
+    const { t } = useLocale();
     const { showToast } = useFeedback();
     const [params] = useSearchParams();
     const token = params.get("token");
@@ -34,7 +36,7 @@ export default function ResetPassword() {
                 })
             });
 
-            showToast("Hasło zostało zmienione. Możesz się teraz zalogować.", "success");
+            showToast(t("Hasło zostało zmienione. Możesz się teraz zalogować."), "success");
             window.setTimeout(() => { window.location.href = "/login"; }, 900);
         } catch (e) {
             setError(e.message || "Nie udało się zmienić hasła.");
@@ -46,11 +48,11 @@ export default function ResetPassword() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
             <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl w-96 space-y-4">
-                <h1 className="text-2xl font-bold">Nowe hasło</h1>
+                <h1 className="text-2xl font-bold">{t("Nowe hasło")}</h1>
 
                 {error && (
                     <div role="alert" className="rounded-xl bg-red-500/15 p-3 text-sm text-red-300">
-                        {error}
+                        {t(error)}
                     </div>
                 )}
 
@@ -60,7 +62,7 @@ export default function ResetPassword() {
                     type="password"
                     minLength={8}
                     autoComplete="new-password"
-                    placeholder="Nowe hasło"
+                    placeholder={t("Nowe hasło")}
                     className="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl"
                 />
 
@@ -69,7 +71,7 @@ export default function ResetPassword() {
                     disabled={loading}
                     className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold disabled:opacity-50"
                 >
-                    {loading ? "Zapisywanie..." : "Zmień hasło"}
+                    {loading ? t("Zapisywanie...") : t("Zmień hasło")}
                 </button>
             </div>
         </div>

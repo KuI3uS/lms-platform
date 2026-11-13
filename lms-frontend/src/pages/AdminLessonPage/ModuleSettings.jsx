@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import {
     BsCollection,
     BsLockFill,
@@ -14,6 +15,7 @@ export default function ModuleSettings({
                                            onSave
 
                                        }) {
+    const { t } = useLocale();
 
     return (
 
@@ -65,24 +67,11 @@ export default function ModuleSettings({
                             font-semibold
                         ">
 
-                            <BsStars />
+                            <BsStars />{t("EDUHUB 2026")}</div>
 
-                            EDUHUB 2026
+                        <h2 className="text-4xl font-black mt-6">{t("Ustawienia modułu")}</h2>
 
-                        </div>
-
-                        <h2 className="text-4xl font-black mt-6">
-
-                            Ustawienia modułu
-
-                        </h2>
-
-                        <p className="text-gray-400 mt-4 max-w-2xl">
-
-                            Skonfiguruj nazwę modułu oraz sposób
-                            odblokowywania kolejnych lekcji.
-
-                        </p>
+                        <p className="text-gray-400 mt-4 max-w-2xl">{t("Skonfiguruj nazwę modułu oraz sposób odblokowywania kolejnych lekcji.")}</p>
 
                     </div>
 
@@ -140,11 +129,7 @@ export default function ModuleSettings({
                         "
                     >
 
-                        <BsCollection/>
-
-                        Nazwa modułu
-
-                    </label>
+                        <BsCollection/>{t("Nazwa modułu")}</label>
 
                     <input
 
@@ -162,7 +147,7 @@ export default function ModuleSettings({
 
                         }
 
-                        placeholder="np. Java Podstawy"
+                        placeholder={t("np. Java Podstawy")}
 
                         className="
                             w-full
@@ -185,12 +170,8 @@ export default function ModuleSettings({
 
                 <div className="rounded-3xl border border-violet-400/20 bg-violet-500/[0.06] p-6 backdrop-blur-xl">
                     <label className="mb-3 flex items-center gap-3 font-semibold text-violet-300">
-                        <BsCollection />
-                        Nagłówek części nad tym modułem
-                    </label>
-                    <p className="mb-5 text-sm leading-6 text-gray-400">
-                        Uzupełnij tylko wtedy, gdy ten moduł rozpoczyna nową część kursu. Uczeń zobaczy wyraźny separator nad modułem.
-                    </p>
+                        <BsCollection />{t("Nagłówek części nad tym modułem")}</label>
+                    <p className="mb-5 text-sm leading-6 text-gray-400">{t("Uzupełnij tylko wtedy, gdy ten moduł rozpoczyna nową część kursu. Uczeń zobaczy wyraźny separator nad modułem.")}</p>
                     <input
                         value={moduleSettings.sectionTitle || ""}
                         maxLength={200}
@@ -198,7 +179,7 @@ export default function ModuleSettings({
                             ...previous,
                             sectionTitle: event.target.value
                         }))}
-                        placeholder="np. CZĘŚĆ XX — Rekrutacja Junior Java Developer"
+                        placeholder={t("np. CZĘŚĆ XX — Rekrutacja Junior Java Developer")}
                         className="w-full rounded-2xl border border-violet-300/15 bg-black/20 px-5 py-4 font-bold outline-none transition focus:border-violet-400"
                     />
                 </div>
@@ -220,18 +201,9 @@ export default function ModuleSettings({
 
                         <div>
 
-                            <div className="font-bold text-xl">
+                            <div className="font-bold text-xl">{t("Blokowanie lekcji")}</div>
 
-                                Blokowanie lekcji
-
-                            </div>
-
-                            <p className="text-gray-400 mt-2">
-
-                                Następna lekcja odblokuje się
-                                dopiero po ukończeniu poprzedniej.
-
-                            </p>
+                            <p className="text-gray-400 mt-2">{t("Następna lekcja odblokuje się dopiero po ukończeniu poprzedniej.")}</p>
 
                         </div>
 
@@ -320,11 +292,7 @@ export default function ModuleSettings({
 
                 >
 
-                    <BsSave/>
-
-                    Zapisz ustawienia modułu
-
-                    <BsLightningChargeFill/>
+                    <BsSave/>{t("Zapisz ustawienia modułu")}<BsLightningChargeFill/>
 
                 </button>
 

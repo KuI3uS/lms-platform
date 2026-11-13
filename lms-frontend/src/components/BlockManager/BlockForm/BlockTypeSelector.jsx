@@ -1,16 +1,18 @@
+import { useLocale } from "../../../context/LocaleContext.jsx";
 import { BsCheck2Circle } from "react-icons/bs";
 import { getBlockTypes } from "../blockTypes.jsx";
 
 export default function BlockTypeSelector({ value, onChange, variant = "PROGRAMMING" }) {
+    const { t } = useLocale();
     const blockTypes = getBlockTypes(variant);
     return (
         <section className="space-y-4">
             <div>
-                <h3 className="text-lg font-semibold">Typ bloku</h3>
+                <h3 className="text-lg font-semibold">{t("Typ bloku")}</h3>
                 <p className="mt-1 text-sm text-gray-400">
                     {variant === "LANGUAGE"
-                        ? "Wyświetlamy tylko elementy potrzebne do krótkiej lekcji językowej."
-                        : "Każdy element ma własny wygląd i pola dopasowane do swojej roli."}
+                        ? t("Wyświetlamy tylko elementy potrzebne do krótkiej lekcji językowej.")
+                        : t("Każdy element ma własny wygląd i pola dopasowane do swojej roli.")}
                 </p>
             </div>
 
@@ -42,10 +44,10 @@ export default function BlockTypeSelector({ value, onChange, variant = "PROGRAMM
                             </div>
 
                             <span className="mt-4 block font-black text-white">
-                                {type.label}
+                                {t(type.label)}
                             </span>
                             <span className="mt-1.5 block text-xs leading-5 text-gray-400">
-                                {type.description}
+                                {t(type.description)}
                             </span>
                         </button>
                     );

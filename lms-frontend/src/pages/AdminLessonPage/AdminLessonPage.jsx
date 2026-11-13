@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import { useParams } from "react-router-dom";
 
 import LessonForm from "./LessonForm";
@@ -11,6 +12,7 @@ import useExpandedLesson from "./hooks/useExpandedLesson";
 import useModule from "./hooks/useModule";
 
 export default function AdminLessonPage() {
+    const { t } = useLocale();
 
     const { moduleId } = useParams();
 
@@ -29,25 +31,25 @@ export default function AdminLessonPage() {
             <section className="rounded-3xl border border-cyan-400/20 bg-cyan-400/[0.07] p-5 text-cyan-50 sm:p-6">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
                     {moduleData.isLanguageCourse
-                        ? `Kreator językowy · CEFR ${moduleData.moduleSettings.cefrLevel || "A1"}`
-                        : "Jak zbudować ścieżkę"}
+                        ? t("Kreator językowy · CEFR {value0}", { value0: moduleData.moduleSettings.cefrLevel || "A1" })
+                        : t("Jak zbudować ścieżkę")}
                 </p>
                 <h2 className="mt-2 text-xl font-black">
                     {moduleData.isLanguageCourse
-                        ? "Jedna krótka lekcja powinna ćwiczyć jeden cel komunikacyjny"
-                        : "Jedna karta poniżej to jedna lekcja na roadmapie ucznia"}
+                        ? t("Jedna krótka lekcja powinna ćwiczyć jeden cel komunikacyjny")
+                        : t("Jedna karta poniżej to jedna lekcja na roadmapie ucznia")}
                 </h2>
                 <p className="mt-3 max-w-4xl leading-7 text-cyan-100/75">
                     {moduleData.isLanguageCourse
-                        ? "Dodaj kilka słów lub zwrotów, krótki przykład użycia i 2–4 proste ćwiczenia. Kreator ukrywa elementy programistyczne, aby budowanie lekcji było szybsze i czytelniejsze."
-                        : "Jeżeli uczeń ma osobno ukończyć „Wprowadzenie”, „Pierwszy program” i „Zmienne”, utwórz trzy oddzielne lekcje. Bloki tekstu, informacji, zadań i quizów są krokami wewnątrz jednej lekcji."}
+                        ? t("Dodaj kilka słów lub zwrotów, krótki przykład użycia i 2–4 proste ćwiczenia. Kreator ukrywa elementy programistyczne, aby budowanie lekcji było szybsze i czytelniejsze.")
+                        : t("Jeżeli uczeń ma osobno ukończyć „Wprowadzenie”, „Pierwszy program” i „Zmienne”, utwórz trzy oddzielne lekcje. Bloki tekstu, informacji, zadań i quizów są krokami wewnątrz jednej lekcji.")}
                 </p>
             </section>
 
             {readyDraftCount > 0 && <section className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-5 text-amber-100">
-                <h2 className="font-black">{readyDraftCount} lekcji ma opublikowane bloki, ale cała lekcja pozostaje szkicem</h2>
-                <p className="mt-2 text-sm leading-6">Możesz udostępnić te lekcje uczniom bez ponownego importu. Puste karty i ukryte bloki pozostaną bez zmian.</p>
-                <button type="button" disabled={lessons.publishingReady || lessons.packageImporting} onClick={lessons.publishReadyLessons} className="mt-4 rounded-xl bg-amber-300 px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-40">{lessons.publishingReady ? "Publikowanie…" : "Udostępnij lekcje z materiałami"}</button>
+                <h2 className="font-black">{readyDraftCount}{t(" lekcji ma opublikowane bloki, ale cała lekcja pozostaje szkicem")}</h2>
+                <p className="mt-2 text-sm leading-6">{t("Możesz udostępnić te lekcje uczniom bez ponownego importu. Puste karty i ukryte bloki pozostaną bez zmian.")}</p>
+                <button type="button" disabled={lessons.publishingReady || lessons.packageImporting} onClick={lessons.publishReadyLessons} className="mt-4 rounded-xl bg-amber-300 px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-40">{lessons.publishingReady ? t("Publikowanie…") : t("Udostępnij lekcje z materiałami")}</button>
             </section>}
 
             <StageLessonPackageImport
@@ -95,11 +97,7 @@ export default function AdminLessonPage() {
                     p-10
                     text-center
                     text-gray-400
-                ">
-
-                    Ten moduł nie posiada jeszcze żadnych lekcji.
-
-                </div>
+                ">{t("Ten moduł nie posiada jeszcze żadnych lekcji.")}</div>
 
             )}
 

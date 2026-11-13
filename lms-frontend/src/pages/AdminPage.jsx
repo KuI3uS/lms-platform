@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { Link } from "react-router-dom";
 import {
     BsPeopleFill,
@@ -71,6 +72,7 @@ const cards = [
 ];
 
 export default function AdminPage() {
+    const { t } = useLocale();
 
     return (
 
@@ -80,23 +82,11 @@ export default function AdminPage() {
 
                 <div>
 
-                    <div className="uppercase tracking-[0.25em] text-sm text-blue-300 font-bold">
+                    <div className="uppercase tracking-[0.25em] text-sm text-blue-300 font-bold">{t("EduHub Admin")}</div>
 
-                        EduHub Admin
+                    <h1 className="text-5xl font-black mt-2">{t("Panel administratora")}</h1>
 
-                    </div>
-
-                    <h1 className="text-5xl font-black mt-2">
-
-                        Panel administratora
-
-                    </h1>
-
-                    <p className="text-gray-400 mt-4 text-lg">
-
-                        Zarządzaj kursami, lekcjami, użytkownikami oraz całą platformą z jednego miejsca.
-
-                    </p>
+                    <p className="text-gray-400 mt-4 text-lg">{t("Zarządzaj kursami, lekcjami, użytkownikami oraz całą platformą z jednego miejsca.")}</p>
 
                 </div>
 
@@ -122,21 +112,17 @@ export default function AdminPage() {
 
                                 <h2 className="mt-8 text-2xl font-black">
 
-                                    {card.title}
+                                    {t(card.title)}
 
                                 </h2>
 
                                 <p className="mt-4 text-gray-400 leading-7">
 
-                                    {card.description}
+                                    {t(card.description)}
 
                                 </p>
 
-                                <div className="mt-8 flex items-center gap-2 text-blue-300 font-bold group-hover:translate-x-2 transition">
-
-                                    Otwórz
-
-                                    <BsArrowRight />
+                                <div className="mt-8 flex items-center gap-2 text-blue-300 font-bold group-hover:translate-x-2 transition">{t("Otwórz")}<BsArrowRight />
 
                                 </div>
 

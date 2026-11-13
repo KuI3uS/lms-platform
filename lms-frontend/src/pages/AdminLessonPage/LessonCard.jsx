@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import {
     BsChevronDown,
     BsChevronUp,
@@ -27,6 +28,7 @@ export default function LessonCard({
                                        variant = "PROGRAMMING"
 
                                    }) {
+    const { t } = useLocale();
 
     return (
 
@@ -117,9 +119,7 @@ export default function LessonCard({
                                 "
                             >
 
-                                <BsStars />
-
-                                Lekcja {displayNumber}
+                                <BsStars />{t("Lekcja ")}{displayNumber}
 
                             </div>
 
@@ -130,14 +130,14 @@ export default function LessonCard({
                             </h2>
 
                             <p className={`mt-3 text-sm font-bold ${lesson.published ? "text-emerald-300" : "text-amber-300"}`}>
-                                {lesson.published ? lesson.publishedBlockCount > 0 ? "Opublikowana — dostępna dla uczniów z dostępem do kursu" : "Opublikowana karta — dodaj i opublikuj bloki, aby uczeń mógł ją otworzyć" : lesson.publishedBlockCount > 0 ? "Ma opublikowane bloki — udostępnij całą lekcję przyciskiem powyżej" : "Szkic lekcji — niewidoczny dla uczniów"}
+                                {lesson.published ? lesson.publishedBlockCount > 0 ? t("Opublikowana — dostępna dla uczniów z dostępem do kursu") : t("Opublikowana karta — dodaj i opublikuj bloki, aby uczeń mógł ją otworzyć") : lesson.publishedBlockCount > 0 ? t("Ma opublikowane bloki — udostępnij całą lekcję przyciskiem powyżej") : t("Szkic lekcji — niewidoczny dla uczniów")}
                             </p>
 
                             <p className="text-gray-400 mt-3">
 
                                 {variant === "LANGUAGE"
-                                    ? "Dodaj słownictwo, przykłady, obrazy i krótkie ćwiczenia."
-                                    : "Zarządzaj blokami, zadaniami, teorią, quizami oraz multimediami."}
+                                    ? t("Dodaj słownictwo, przykłady, obrazy i krótkie ćwiczenia.")
+                                    : t("Zarządzaj blokami, zadaniami, teorią, quizami oraz multimediami.")}
 
                             </p>
 
@@ -244,11 +244,7 @@ export default function LessonCard({
                     "
                 >
 
-                    <div className="text-gray-500 text-sm">
-
-                        Kliknij kartę aby rozwinąć edytor lekcji.
-
-                    </div>
+                    <div className="text-gray-500 text-sm">{t("Kliknij kartę aby rozwinąć edytor lekcji.")}</div>
 
                     <button
 
@@ -270,9 +266,9 @@ export default function LessonCard({
 
                             expanded
 
-                                ? "Ukryj edytor"
+                                ? t("Ukryj edytor")
 
-                                : "Otwórz edytor"
+                                : t("Otwórz edytor")
 
                         }
 

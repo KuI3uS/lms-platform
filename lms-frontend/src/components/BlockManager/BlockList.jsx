@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import {
     BsPencilSquare,
     BsTrash,
@@ -16,6 +17,7 @@ export default function BlockList({
                                       onEdit,
                                       onDelete
                                   }) {
+    const { t } = useLocale();
 
     if (blocks.length === 0) {
 
@@ -27,13 +29,9 @@ export default function BlockList({
                     📚
                 </div>
 
-                <h3 className="text-xl font-bold">
-                    Lekcja jest pusta
-                </h3>
+                <h3 className="text-xl font-bold">{t("Lekcja jest pusta")}</h3>
 
-                <p className="text-gray-500 mt-2">
-                    Wybierz typ bloku poniżej i dodaj pierwszy element lekcji.
-                </p>
+                <p className="text-gray-500 mt-2">{t("Wybierz typ bloku poniżej i dodaj pierwszy element lekcji.")}</p>
 
             </div>
 
@@ -90,7 +88,7 @@ export default function BlockList({
 
                                         <span className="font-bold text-white">
 
-                                            {block.title || "Bez tytułu"}
+                                            {block.title || t("Bez tytułu")}
 
                                         </span>
 

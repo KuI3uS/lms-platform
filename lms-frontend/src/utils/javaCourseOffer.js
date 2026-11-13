@@ -27,6 +27,6 @@ export function getPublicOfferPlans(offer) {
     return plans;
 }
 
-export function formatOfferPrice(price) {
-    return new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", maximumFractionDigits: price % 1 === 0 ? 0 : 2 }).format(price);
+export function formatOfferPrice(price, dateLocale = "pl-PL") {
+    return new Intl.NumberFormat(dateLocale, { style: "currency", currency: "PLN", maximumFractionDigits: price % 1 === 0 ? 0 : 2 }).format(price);
 }

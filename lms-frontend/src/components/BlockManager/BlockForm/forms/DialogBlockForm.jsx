@@ -1,3 +1,4 @@
+import { useLocale } from "../../../../context/LocaleContext.jsx";
 import {
     useState
 } from "react";
@@ -24,6 +25,7 @@ export default function DialogBlockForm({
                                             block,
                                             setBlock
                                         }) {
+    const { t } = useLocale();
     const config = parseDialogContent(
         block.content
     );
@@ -190,13 +192,9 @@ export default function DialogBlockForm({
                 </div>
 
                 <div>
-                    <h3 className="font-black">
-                        Dialog interaktywny
-                    </h3>
+                    <h3 className="font-black">{t("Dialog interaktywny")}</h3>
 
-                    <p className="text-sm text-gray-400">
-                        Cała scenka — nawet 60 wypowiedzi — zajmuje tylko jeden blok lekcji.
-                    </p>
+                    <p className="text-sm text-gray-400">{t("Cała scenka — nawet 60 wypowiedzi — zajmuje tylko jeden blok lekcji.")}</p>
                 </div>
 
             </div>
@@ -206,9 +204,7 @@ export default function DialogBlockForm({
 
                 <label className="block space-y-2">
 
-                    <span className="font-semibold">
-                        Tytuł dialogu
-                    </span>
+                    <span className="font-semibold">{t("Tytuł dialogu")}</span>
 
                     <input
                         value={block.title || ""}
@@ -218,7 +214,7 @@ export default function DialogBlockForm({
                                 title: event.target.value
                             }))
                         }
-                        placeholder="np. Pierwsze spotkanie"
+                        placeholder={t("np. Pierwsze spotkanie")}
                         className={FIELD}
                     />
 
@@ -228,9 +224,7 @@ export default function DialogBlockForm({
                 <label className="block space-y-2">
 
                     <span className="flex items-center gap-2 font-semibold">
-                        <BsHeadphones />
-                        Język rozmowy
-                    </span>
+                        <BsHeadphones />{t("Język rozmowy")}</span>
 
                     <select
                         value={
@@ -250,33 +244,19 @@ export default function DialogBlockForm({
                         className={FIELD}
                     >
 
-                        <option value="en-GB">
-                            Angielski (Wielka Brytania)
-                        </option>
+                        <option value="en-GB">{t("Angielski (Wielka Brytania)")}</option>
 
-                        <option value="en-US">
-                            Angielski (USA)
-                        </option>
+                        <option value="en-US">{t("Angielski (USA)")}</option>
 
-                        <option value="de-DE">
-                            Niemiecki
-                        </option>
+                        <option value="de-DE">{t("Niemiecki")}</option>
 
-                        <option value="es-ES">
-                            Hiszpański
-                        </option>
+                        <option value="es-ES">{t("Hiszpański")}</option>
 
-                        <option value="fr-FR">
-                            Francuski
-                        </option>
+                        <option value="fr-FR">{t("Francuski")}</option>
 
-                        <option value="it-IT">
-                            Włoski
-                        </option>
+                        <option value="it-IT">{t("Włoski")}</option>
 
-                        <option value="pl-PL">
-                            Polski
-                        </option>
+                        <option value="pl-PL">{t("Polski")}</option>
 
                     </select>
 
@@ -287,9 +267,7 @@ export default function DialogBlockForm({
 
             <label className="block space-y-2">
 
-                <span className="font-semibold">
-                    Opis sytuacji
-                </span>
+                <span className="font-semibold">{t("Opis sytuacji")}</span>
 
                 <textarea
                     value={block.description || ""}
@@ -300,7 +278,7 @@ export default function DialogBlockForm({
                             event.target.value
                         }))
                     }
-                    placeholder="Emma rano wchodzi do kawiarni i spotyka Leo."
+                    placeholder={t("Emma rano wchodzi do kawiarni i spotyka Leo.")}
                     className={`${FIELD} min-h-24`}
                 />
 
@@ -310,9 +288,7 @@ export default function DialogBlockForm({
             <div className="rounded-2xl border border-white/10 bg-black/20 p-4 sm:p-5">
 
                 <p className="mb-4 flex items-center gap-2 font-black text-white">
-                    <BsPeople />
-                    Bohaterowie scenki
-                </p>
+                    <BsPeople />{t("Bohaterowie scenki")}</p>
 
 
                 <div className="grid gap-4 lg:grid-cols-2">
@@ -330,9 +306,7 @@ export default function DialogBlockForm({
 
                                 <label className="space-y-2">
 
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                                        Avatar
-                                    </span>
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("Avatar")}</span>
 
                                     <input
                                         value={
@@ -354,8 +328,7 @@ export default function DialogBlockForm({
 
                                 <label className="space-y-2">
 
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                                        Postać {index + 1}
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("Postać ")}{index + 1}
                                     </span>
 
                                     <input
@@ -371,8 +344,8 @@ export default function DialogBlockForm({
                                         }
                                         placeholder={
                                             index === 0
-                                                ? "Emma"
-                                                : "Leo"
+                                                ? t("Emma")
+                                                : t("Leo")
                                         }
                                         className={FIELD}
                                     />
@@ -380,10 +353,10 @@ export default function DialogBlockForm({
                                 </label>
 
                                 <label className="col-span-2 space-y-2">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Głos</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("Głos")}</span>
                                     <select value={characterVoiceGender(character)} onChange={event => updateCharacter(index, "voiceGender", event.target.value)} className={FIELD}>
-                                        <option value="female">Kobieta</option>
-                                        <option value="male">Mężczyzna</option>
+                                        <option value="female">{t("Kobieta")}</option>
+                                        <option value="male">{t("Mężczyzna")}</option>
                                     </select>
                                 </label>
                             </div>
@@ -398,9 +371,7 @@ export default function DialogBlockForm({
             <label className="block space-y-2">
 
                 <span className="flex items-center gap-2 font-semibold">
-                    <BsPersonCheck />
-                    W którą postać wciela się uczeń?
-                </span>
+                    <BsPersonCheck />{t("W którą postać wciela się uczeń?")}</span>
 
                 <select
                     value={
@@ -435,9 +406,7 @@ export default function DialogBlockForm({
 
             <label className="block space-y-2">
 
-                <span className="font-semibold">
-                    Dialog — jedna wypowiedź w każdym wierszu
-                </span>
+                <span className="font-semibold">{t("Dialog — jedna wypowiedź w każdym wierszu")}</span>
 
 
                 <textarea
@@ -476,53 +445,30 @@ export default function DialogBlockForm({
                 />
 
 
-                <span className="block text-xs leading-5 text-slate-500">
+                <span className="block text-xs leading-5 text-slate-500">{t("Każda wypowiedź musi znajdować się w osobnym wierszu. Format:")}{" "}
 
-                    Każda wypowiedź musi znajdować się
-                    w osobnym wierszu.
+                    <strong className="text-slate-300">{t("Postać: wypowiedź")}</strong>
 
-                    Format:{" "}
+                    <br />{t("Przykład:")}<br />
 
-                    <strong className="text-slate-300">
-                        Postać: wypowiedź
-                    </strong>
+                    <strong className="text-slate-300">{t("Emma: Good morning!")}</strong>
 
                     <br />
 
-                    Przykład:
+                    <strong className="text-slate-300">{t("Leo: Good morning!")}</strong>
 
-                    <br />
-
-                    <strong className="text-slate-300">
-                        Emma: Good morning!
-                    </strong>
-
-                    <br />
-
-                    <strong className="text-slate-300">
-                        Leo: Good morning!
-                    </strong>
-
-                    <br />
-
-                    Opcjonalnie po{" "}
+                    <br />{t("Opcjonalnie po")}{" "}
 
                     <strong className="text-slate-300">
                         ||
-                    </strong>{" "}
-
-                    możesz podać kolejno: inne poprawne odpowiedzi,
-                    wyjaśnienie i polskie zdanie do przetłumaczenia.
-
-                </span>
+                    </strong>{" "}{t("możesz podać kolejno: inne poprawne odpowiedzi, wyjaśnienie i polskie zdanie do przetłumaczenia.")}</span>
 
             </label>
 
 
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-300/15 bg-cyan-300/[0.06] px-4 py-3 text-sm">
 
-                <span className="font-bold text-cyan-100">
-                    Wypowiedzi w tym bloku:{" "}
+                <span className="font-bold text-cyan-100">{t("Wypowiedzi w tym bloku:")}{" "}
                     {
                         Array.isArray(config.turns)
                             ? config.turns.length
@@ -530,9 +476,7 @@ export default function DialogBlockForm({
                     }
                 </span>
 
-                <span className="text-cyan-200/70">
-                    Wszystkie kwestie wybranej postaci będą ćwiczone głosem lub tekstem.
-                </span>
+                <span className="text-cyan-200/70">{t("Wszystkie kwestie wybranej postaci będą ćwiczone głosem lub tekstem.")}</span>
 
             </div>
 

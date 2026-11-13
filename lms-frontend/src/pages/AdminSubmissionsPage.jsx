@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../api/api";
 import { useFeedback } from "../context/FeedbackContext";
@@ -8,6 +9,7 @@ import {
 } from "react-icons/bs";
 
 export default function AdminSubmissionsPage() {
+    const { t } = useLocale();
     const { confirm, showToast } = useFeedback();
     const [submissions, setSubmissions] = useState([]);
     const [selected, setSelected] = useState(null);
@@ -85,32 +87,17 @@ export default function AdminSubmissionsPage() {
 
                 <div className="relative z-10">
 
-                    <p className="uppercase tracking-[0.35em] text-blue-300 font-black text-sm">
+                    <p className="uppercase tracking-[0.35em] text-blue-300 font-black text-sm">{t("EDUHUB ADMIN")}</p>
 
-                        EDUHUB ADMIN
+                    <h1 className="text-5xl font-black mt-4">{t("Sprawdzanie prac uczniów")}</h1>
 
-                    </p>
-
-                    <h1 className="text-5xl font-black mt-4">
-
-                        Sprawdzanie prac uczniów
-
-                    </h1>
-
-                    <p className="text-gray-400 mt-5 text-lg max-w-3xl leading-8">
-
-                        Oceniaj rozwiązania, wystawiaj oceny, dodawaj komentarze
-                        i śledź postępy uczniów w czasie rzeczywistym.
-
-                    </p>
+                    <p className="text-gray-400 mt-5 text-lg max-w-3xl leading-8">{t("Oceniaj rozwiązania, wystawiaj oceny, dodawaj komentarze i śledź postępy uczniów w czasie rzeczywistym.")}</p>
 
                     <div className="grid md:grid-cols-3 gap-5 mt-10">
 
                         <div className="rounded-3xl bg-black/20 p-6">
 
-                            <p className="text-gray-400">
-                                Wszystkich prac
-                            </p>
+                            <p className="text-gray-400">{t("Wszystkich prac")}</p>
 
                             <h2 className="text-5xl font-black mt-3">
 
@@ -122,9 +109,7 @@ export default function AdminSubmissionsPage() {
 
                         <div className="rounded-3xl bg-black/20 p-6">
 
-                            <p className="text-gray-400">
-                                Do sprawdzenia
-                            </p>
+                            <p className="text-gray-400">{t("Do sprawdzenia")}</p>
 
                             <h2 className="text-5xl font-black mt-3">
 
@@ -136,9 +121,7 @@ export default function AdminSubmissionsPage() {
 
                         <div className="rounded-3xl bg-black/20 p-6">
 
-                            <p className="text-gray-400">
-                                Sprawdzone
-                            </p>
+                            <p className="text-gray-400">{t("Sprawdzone")}</p>
 
                             <h2 className="text-5xl font-black mt-3">
 
@@ -159,7 +142,7 @@ export default function AdminSubmissionsPage() {
             <div className="grid xl:grid-cols-[430px_1fr] gap-8">
 
             <div className="space-y-4">
-                <h1 className="text-3xl font-bold">Prace uczniów</h1>
+                <h1 className="text-3xl font-bold">{t("Prace uczniów")}</h1>
 
                 <div
                     className="
@@ -174,7 +157,7 @@ export default function AdminSubmissionsPage() {
                 >
 
                     <input
-                        placeholder="Klasa, np. 3TIA"
+                        placeholder={t("Klasa, np. 3TIA")}
                         value={className}
                         onChange={e => setClassName(e.target.value)}
                         className="
@@ -192,7 +175,7 @@ transition
                     />
 
                     <input
-                        placeholder="Email ucznia"
+                        placeholder={t("Email ucznia")}
                         value={email}
                         onChange={e => setEmail(e.target.value)}
                         className="
@@ -225,7 +208,7 @@ focus:border-blue-500
 transition
 "
                     >
-                        <option value="">Wszystkie statusy</option>
+                        <option value="">{t("Wszystkie statusy")}</option>
                         <option value="NEW">NEW</option>
                         <option value="CHECKED">CHECKED</option>
                         <option value="TO_FIX">TO_FIX</option>
@@ -245,9 +228,7 @@ hover:scale-[1.02]
 transition
 shadow-lg
 "
-                    >
-                        Szukaj
-                    </button>
+                    >{t("Szukaj")}</button>
 
                 </div>
                 {/* =========================================== */}
@@ -264,13 +245,9 @@ shadow-lg
                                 📚
                             </div>
 
-                            <h2 className="text-2xl font-black">
-                                Brak prac
-                            </h2>
+                            <h2 className="text-2xl font-black">{t("Brak prac")}</h2>
 
-                            <p className="text-gray-400 mt-3">
-                                Żaden uczeń nie wysłał jeszcze rozwiązania.
-                            </p>
+                            <p className="text-gray-400 mt-3">{t("Żaden uczeń nie wysłał jeszcze rozwiązania.")}</p>
 
                         </div>
 
@@ -406,11 +383,7 @@ shadow-lg
 
                                         <div className="rounded-2xl bg-black/20 border border-white/5 p-4">
 
-                                            <p className="text-xs uppercase tracking-wider text-gray-500">
-
-                                                Ocena
-
-                                            </p>
+                                            <p className="text-xs uppercase tracking-wider text-gray-500">{t("Ocena")}</p>
 
                                             <p className="text-3xl font-black mt-2">
 
@@ -422,11 +395,7 @@ shadow-lg
 
                                         <div className="rounded-2xl bg-black/20 border border-white/5 p-4">
 
-                                            <p className="text-xs uppercase tracking-wider text-gray-500">
-
-                                                Zadania
-
-                                            </p>
+                                            <p className="text-xs uppercase tracking-wider text-gray-500">{t("Zadania")}</p>
 
                                             <p className="text-3xl font-black mt-2">
 
@@ -438,11 +407,7 @@ shadow-lg
 
                                         <div className="rounded-2xl bg-black/20 border border-white/5 p-4">
 
-                                            <p className="text-xs uppercase tracking-wider text-gray-500">
-
-                                                Data
-
-                                            </p>
+                                            <p className="text-xs uppercase tracking-wider text-gray-500">{t("Data")}</p>
 
                                             <p className="font-bold mt-2">
 
@@ -460,11 +425,7 @@ shadow-lg
 
                                         <div className="flex items-center gap-2 text-sm text-gray-500">
 
-                                            <div className="w-2 h-2 rounded-full bg-green-400" />
-
-                                            Kliknij aby otworzyć
-
-                                        </div>
+                                            <div className="w-2 h-2 rounded-full bg-green-400" />{t("Kliknij aby otworzyć")}</div>
 
                                         <div
                                             className="
@@ -515,18 +476,9 @@ shadow-lg
                             🎯
                         </div>
 
-                        <h2 className="text-3xl font-black">
+                        <h2 className="text-3xl font-black">{t("Wybierz pracę")}</h2>
 
-                            Wybierz pracę
-
-                        </h2>
-
-                        <p className="text-gray-400 mt-4 max-w-md">
-
-                            Kliknij kartę po lewej stronie,
-                            aby rozpocząć sprawdzanie rozwiązania.
-
-                        </p>
+                        <p className="text-gray-400 mt-4 max-w-md">{t("Kliknij kartę po lewej stronie, aby rozpocząć sprawdzanie rozwiązania.")}</p>
 
                     </div>
                 ) : (
@@ -536,8 +488,7 @@ shadow-lg
                             {selected.lesson?.title}
                         </h2>
 
-                        <p className="text-gray-400">
-                            Uczeń: {selected.user?.email}
+                        <p className="text-gray-400">{t("Uczeń: ")}{selected.user?.email}
                         </p>
 
                         <div className="space-y-4">
@@ -547,32 +498,27 @@ shadow-lg
                                     className="rounded-3xl border border-white/10 bg-black/20 p-6"
                                 >
 
-                                    <h3 className="text-yellow-400 font-semibold">
-                                        Zadanie {index + 1}
+                                    <h3 className="text-yellow-400 font-semibold">{t("Zadanie ")}{index + 1}
                                     </h3>
 
                                     <p className="mt-2 text-gray-300">
                                         {a.taskContent}
                                     </p>
 
-                                    <p className="mt-3 text-blue-400">
-                                        Odpowiedź ucznia:
-                                    </p>
+                                    <p className="mt-3 text-blue-400">{t("Odpowiedź ucznia:")}</p>
 
                                     <pre className="bg-black p-3 rounded whitespace-pre-wrap text-green-400">
-                                        {a.studentAnswer || "Brak odpowiedzi"}
+                                        {a.studentAnswer || t("Brak odpowiedzi")}
                                     </pre>
 
-                                    <p className="mt-3 text-gray-400">
-                                        Poprawna odpowiedź:
-                                    </p>
+                                    <p className="mt-3 text-gray-400">{t("Poprawna odpowiedź:")}</p>
 
                                     <pre className="bg-black p-3 rounded whitespace-pre-wrap text-gray-300">
-                                        {a.expectedAnswer || "Brak"}
+                                        {a.expectedAnswer || t("Brak")}
                                     </pre>
 
                                     <p className={a.correct ? "text-green-400" : "text-red-400"}>
-                                        {a.correct ? "Poprawne" : "Błędne"}
+                                        {a.correct ? t("Poprawne") : t("Błędne")}
                                     </p>
                                 </div>
                             ))}
@@ -602,7 +548,7 @@ transition
                         </select>
 
                         <input
-                            placeholder="Ocena, np. 5 albo 80%"
+                            placeholder={t("Ocena, np. 5 albo 80%")}
                             value={selected.grade || ""}
                             onChange={e => setSelected({
                                 ...selected,
@@ -622,7 +568,7 @@ transition
                         />
 
                         <textarea
-                            placeholder="Komentarz nauczyciela"
+                            placeholder={t("Komentarz nauczyciela")}
                             value={selected.teacherComment || ""}
                             onChange={e => setSelected({
                                 ...selected,
@@ -656,9 +602,7 @@ hover:scale-[1.02]
 transition
 shadow-xl
 "
-                        >
-                            Zapisz sprawdzenie
-                        </button>
+                        >{t("Zapisz sprawdzenie")}</button>
 
                         <button
                             onClick={() => deleteSubmission(selected.id)}
@@ -674,9 +618,7 @@ text-red-300
 hover:bg-red-500/30
 transition
 "
-                        >
-                            Usuń
-                        </button>
+                        >{t("Usuń")}</button>
 
                     </div>
                 )}

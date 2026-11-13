@@ -1,16 +1,18 @@
+import { useLocale } from "./context/LocaleContext";
 import { useState } from "react";
 
 import { apiFetch } from "./api/api";
 import { useFeedback } from "./context/FeedbackContext";
 
 export default function ForgotPassword() {
+    const { t } = useLocale();
     const { showToast } = useFeedback();
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
 
     const submit = async () => {
         if (!email.trim()) {
-            showToast("Podaj adres email.", "warning");
+            showToast(t("Podaj adres email."), "warning");
             return;
         }
 
@@ -21,9 +23,9 @@ export default function ForgotPassword() {
                 method: "POST",
                 body: JSON.stringify({ email })
             });
-            showToast("Jeśli konto istnieje, link do resetu hasła został wysłany.", "success");
+            showToast(t("Jeśli konto istnieje, link do resetu hasła został wysłany."), "success");
         } catch (e) {
-            showToast(e.message || "Nie udało się wysłać linku.", "error");
+            showToast(t(e.message || "Nie udało się wysłać linku."), "error");
         } finally {
             setLoading(false);
         }
@@ -32,16 +34,14 @@ export default function ForgotPassword() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
             <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl w-96 space-y-4">
-                <h1 className="text-2xl font-bold">Reset hasła</h1>
+                <h1 className="text-2xl font-bold">{t("Reset hasła")}</h1>
 
-                <p className="text-gray-400 text-sm">
-                    Podaj email, a wyślemy link do ustawienia nowego hasła.
-                </p>
+                <p className="text-gray-400 text-sm">{t("Podaj email, a wyślemy link do ustawienia nowego hasła.")}</p>
 
                 <input
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="Email"
+                    placeholder={t("Email")}
                     className="w-full bg-gray-800 border border-gray-700 p-3 rounded-xl"
                 />
 
@@ -50,7 +50,7 @@ export default function ForgotPassword() {
                     disabled={loading}
                     className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold disabled:opacity-50"
                 >
-                    {loading ? "Wysyłanie..." : "Wyślij link"}
+                    {loading ? t("Wysyłanie...") : t("Wyślij link")}
                 </button>
             </div>
         </div>

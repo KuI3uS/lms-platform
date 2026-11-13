@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import { useState } from "react";
 import {
     BsImage,
@@ -6,6 +7,7 @@ import {
 } from "react-icons/bs";
 
 export default function LessonImage({ block }) {
+    const { t } = useLocale();
 
     const [open, setOpen] = useState(false);
     const [imageError, setImageError] = useState(false);
@@ -14,11 +16,7 @@ export default function LessonImage({ block }) {
 
         return (
 
-            <section className="rounded-3xl border border-red-500/30 bg-red-500/10 p-8 text-red-300">
-
-                Nie udało się załadować grafiki.
-
-            </section>
+            <section className="rounded-3xl border border-red-500/30 bg-red-500/10 p-8 text-red-300">{t("Nie udało się załadować grafiki.")}</section>
 
         );
 
@@ -42,15 +40,11 @@ export default function LessonImage({ block }) {
 
                         <div>
 
-                            <p className="text-sm text-purple-300 font-semibold">
-
-                                Grafika
-
-                            </p>
+                            <p className="text-sm text-purple-300 font-semibold">{t("Grafika")}</p>
 
                             <h2 className="text-xl font-bold">
 
-                                {block.title || "Materiał graficzny"}
+                                {block.title || t("Materiał graficzny")}
 
                             </h2>
 
@@ -63,11 +57,7 @@ export default function LessonImage({ block }) {
                         className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl transition"
                     >
 
-                        <BsArrowsFullscreen />
-
-                        Powiększ
-
-                    </button>
+                        <BsArrowsFullscreen />{t("Powiększ")}</button>
 
                 </div>
 
@@ -85,7 +75,7 @@ export default function LessonImage({ block }) {
 
                     <img
                         src={block.mediaUrl}
-                        alt={block.title || "Grafika lekcji"}
+                        alt={block.title || t("Grafika lekcji")}
                         onError={() => setImageError(true)}
                         onClick={() => setOpen(true)}
                         className="w-full rounded-2xl border border-gray-800 cursor-zoom-in shadow-2xl"
@@ -110,7 +100,7 @@ export default function LessonImage({ block }) {
 
                     <img
                         src={block.mediaUrl}
-                        alt={block.title || "Grafika lekcji"}
+                        alt={block.title || t("Grafika lekcji")}
                         className="max-w-full max-h-full rounded-2xl border border-gray-700"
                     />
 

@@ -1,8 +1,10 @@
+import { useLocale } from "../../../../context/LocaleContext.jsx";
 
 import { BsCodeSlash } from "react-icons/bs";
 import { CODE_LANGUAGE_OPTIONS } from "../../../../utils/codeLanguages";
 
 export default function ExampleBlockForm({ block, setBlock }) {
+    const { t } = useLocale();
     function update(field, value) {
         setBlock(previous => ({ ...previous, [field]: value }));
     }
@@ -14,24 +16,24 @@ export default function ExampleBlockForm({ block, setBlock }) {
                     <BsCodeSlash />
                 </div>
                 <div>
-                    <h3 className="font-black">Przykład kodu</h3>
-                    <p className="text-sm text-gray-400">Uczeń dostanie opis, kod i przycisk kopiowania.</p>
+                    <h3 className="font-black">{t("Przykład kodu")}</h3>
+                    <p className="text-sm text-gray-400">{t("Uczeń dostanie opis, kod i przycisk kopiowania.")}</p>
                 </div>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
                 <label className="block space-y-2">
-                    <span className="font-semibold">Tytuł przykładu</span>
+                    <span className="font-semibold">{t("Tytuł przykładu")}</span>
                     <input
                         value={block.title || ""}
                         onChange={event => update("title", event.target.value)}
-                        placeholder="Np. Pierwszy program w Javie"
+                        placeholder={t("Np. Pierwszy program w Javie")}
                         className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-teal-300/50"
                     />
                 </label>
 
                 <label className="block space-y-2">
-                    <span className="font-semibold">Język</span>
+                    <span className="font-semibold">{t("Język")}</span>
                     <select
                         value={block.language || "java"}
                         onChange={event => update("language", event.target.value)}
@@ -45,21 +47,21 @@ export default function ExampleBlockForm({ block, setBlock }) {
             </div>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Co pokazuje ten przykład?</span>
+                <span className="font-semibold">{t("Co pokazuje ten przykład?")}</span>
                 <textarea
                     value={block.description || ""}
                     onChange={event => update("description", event.target.value)}
-                    placeholder="Krótko wyjaśnij cel i najważniejsze linie kodu."
+                    placeholder={t("Krótko wyjaśnij cel i najważniejsze linie kodu.")}
                     className="min-h-24 w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-teal-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Kod przykładu</span>
+                <span className="font-semibold">{t("Kod przykładu")}</span>
                 <textarea
                     value={block.content || ""}
                     onChange={event => update("content", event.target.value)}
-                    placeholder="Wklej kod..."
+                    placeholder={t("Wklej kod...")}
                     spellCheck="false"
                     className="min-h-80 w-full rounded-2xl border border-white/10 bg-[#07111f] p-5 font-mono leading-7 text-teal-100 outline-none focus:border-teal-300/50"
                 />

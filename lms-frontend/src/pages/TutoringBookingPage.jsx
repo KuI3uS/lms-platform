@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useMemo, useState } from "react";
 
 import Calendar from "react-calendar";
@@ -20,6 +21,7 @@ import {
 } from "react-icons/bs";
 
 export default function TutoringBookingPage() {
+    const { t, dateLocale } = useLocale();
     const { showToast } = useFeedback();
     const [availability, setAvailability] = useState([]);
     const [selectedAvailability, setSelectedAvailability] = useState(null);
@@ -128,7 +130,7 @@ export default function TutoringBookingPage() {
     };
 
     const formatDate = (date) =>
-        new Date(date).toLocaleDateString("pl-PL", {
+        new Date(date).toLocaleDateString(dateLocale, {
             weekday: "long",
             day: "2-digit",
             month: "2-digit",
@@ -136,7 +138,7 @@ export default function TutoringBookingPage() {
         });
 
     const formatTime = (date) =>
-        new Date(date).toLocaleTimeString("pl-PL", {
+        new Date(date).toLocaleTimeString(dateLocale, {
             hour: "2-digit",
             minute: "2-digit"
         });
@@ -247,51 +249,40 @@ export default function TutoringBookingPage() {
                 <div className="max-w-3xl mx-auto bg-gray-900 border border-gray-800 rounded-2xl p-8 space-y-5">
                     <BsCheckCircle className="text-green-400 text-5xl" />
 
-                    <h1 className="text-3xl font-bold">
-                        Rezerwacja utworzona
-                    </h1>
+                    <h1 className="text-3xl font-bold">{t("Rezerwacja utworzona")}</h1>
 
-                    <p className="text-gray-400">
-                        Termin został wstępnie zarezerwowany. Następny krok to podpięcie płatności online.
-                    </p>
+                    <p className="text-gray-400">{t("Termin został wstępnie zarezerwowany. Następny krok to podpięcie płatności online.")}</p>
 
                     <div className="bg-gray-800 rounded-xl p-5 space-y-2">
                         <p>
-                            <strong>Termin:</strong>{" "}
+                            <strong>{t("Termin:")}</strong>{" "}
                             {formatDate(booking.startTime)}, {formatTime(booking.startTime)}–{formatTime(booking.endTime)}
                         </p>
 
                         <p>
-                            <strong>Temat:</strong> {booking.topic}
+                            <strong>{t("Temat:")}</strong> {booking.topic}
                         </p>
 
                         <p>
-                            <strong>Czas:</strong> {booking.hours} godz.
-                        </p>
+                            <strong>{t("Czas:")}</strong> {booking.hours}{t(" godz.")}</p>
 
                         <p>
-                            <strong>Kwota:</strong> {booking.price} zł
-                        </p>
+                            <strong>{t("Kwota:")}</strong> {booking.price}{t(" zł")}</p>
 
                         <p>
-                            <strong>Status:</strong> {booking.status}
+                            <strong>{t("Status:")}</strong> {booking.status}
                         </p>
                     </div>
 
                     <div className="bg-gray-800 rounded-2xl p-6 space-y-5 text-center">
-                        <h2 className="text-2xl font-bold">
-                            Zapłać wygodnie
-                        </h2>
+                        <h2 className="text-2xl font-bold">{t("Zapłać wygodnie")}</h2>
 
-                        <p className="text-gray-400">
-                            Zeskanuj kod QR telefonem albo kliknij przycisk poniżej,
-                            aby przejść do płatności Revolut.
-                        </p>
+                        <p className="text-gray-400">{t("Zeskanuj kod QR telefonem albo kliknij przycisk poniżej, aby przejść do płatności Revolut.")}</p>
 
                         <div className="flex justify-center">
                             <img
                                 src={getQrImage(booking.price)}
-                                alt="Kod QR płatności Revolut"
+                                alt={t("Kod QR płatności Revolut")}
                                 className="max-w-xs rounded-2xl border border-gray-700"
                             />
                         </div>
@@ -301,17 +292,13 @@ export default function TutoringBookingPage() {
                             target="_blank"
                             rel="noreferrer"
                             className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold inline-block"
-                        >
-                            Przejdź do płatności
-                        </a>
+                        >{t("Przejdź do płatności")}</a>
                     </div>
 
                     <button
                         onClick={() => window.location.href = "/"}
                         className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
-                    >
-                        Wróć na stronę główną
-                    </button>
+                    >{t("Wróć na stronę główną")}</button>
                 </div>
             </div>
         );
@@ -325,18 +312,12 @@ export default function TutoringBookingPage() {
                         onClick={() => window.location.href = "/"}
                         className="text-gray-400 hover:text-white flex items-center gap-2 mb-6"
                     >
-                        <BsArrowLeft />
-                        Wróć
-                    </button>
+                        <BsArrowLeft />{t("Wróć")}</button>
 
                     <h1 className="text-4xl font-bold flex items-center gap-3">
-                        <BsCalendarCheck className="text-blue-400" />
-                        Rezerwacja korepetycji
-                    </h1>
+                        <BsCalendarCheck className="text-blue-400" />{t("Rezerwacja korepetycji")}</h1>
 
-                    <p className="text-gray-400 mt-3">
-                        Wybierz dostępny dzień, godzinę rozpoczęcia, liczbę godzin i uzupełnij dane.
-                    </p>
+                    <p className="text-gray-400 mt-3">{t("Wybierz dostępny dzień, godzinę rozpoczęcia, liczbę godzin i uzupełnij dane.")}</p>
                 </div>
 
                 {error && (
@@ -347,16 +328,12 @@ export default function TutoringBookingPage() {
 
                 <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-8">
                     <div className="space-y-5">
-                        <h2 className="text-2xl font-bold">Dostępne dni</h2>
+                        <h2 className="text-2xl font-bold">{t("Dostępne dni")}</h2>
 
                         {loading ? (
-                            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">
-                                Ładowanie terminów...
-                            </div>
+                            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">{t("Ładowanie terminów...")}</div>
                         ) : availability.length === 0 ? (
-                            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">
-                                Brak dostępnych terminów.
-                            </div>
+                            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">{t("Brak dostępnych terminów.")}</div>
                         ) : (
                             <div className="grid gap-4">
                                 <div className="tutoring-calendar-card">
@@ -367,7 +344,7 @@ export default function TutoringBookingPage() {
                                             setSelectedStart("");
                                         }}
                                         value={selectedDate}
-                                        locale="pl-PL"
+                                        locale={dateLocale}
                                         next2Label={null}
                                         prev2Label={null}
                                         tileClassName={({ date }) => {
@@ -381,19 +358,16 @@ export default function TutoringBookingPage() {
                                     />
 
                                     <div className="calendar-legend">
-                                        <span><span className="legend-dot"></span>Dostępne terminy</span>
-                                        <span>Brak kropki = brak terminu</span>
+                                        <span><span className="legend-dot"></span>{t("Dostępne terminy")}</span>
+                                        <span>{t("Brak kropki = brak terminu")}</span>
                                     </div>
                                 </div>
 
-                                <h2 className="text-2xl font-bold mt-6">
-                                    Dostępne godziny: {formatDate(selectedDate)}
+                                <h2 className="text-2xl font-bold mt-6">{t("Dostępne godziny: ")}{formatDate(selectedDate)}
                                 </h2>
 
                                 {availabilityForSelectedDate.length === 0 ? (
-                                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">
-                                        Brak dostępnych godzin w tym dniu.
-                                    </div>
+                                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">{t("Brak dostępnych godzin w tym dniu.")}</div>
                                 ) : (
                                     <div className="grid gap-4">
                                         {availabilityForSelectedDate.map(term => {
@@ -431,21 +405,19 @@ export default function TutoringBookingPage() {
                     </div>
 
                     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 h-fit sticky top-8 space-y-5">
-                        <h2 className="text-2xl font-bold">Szczegóły</h2>
+                        <h2 className="text-2xl font-bold">{t("Szczegóły")}</h2>
 
                         {selectedAvailability ? (
                             <>
                                 <div>
-                                    <label className="text-sm text-gray-400">
-                                        Godzina rozpoczęcia
-                                    </label>
+                                    <label className="text-sm text-gray-400">{t("Godzina rozpoczęcia")}</label>
 
                                     <select
                                         value={selectedStart}
                                         onChange={(e) => setSelectedStart(e.target.value)}
                                         className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500"
                                     >
-                                        <option value="">Wybierz godzinę</option>
+                                        <option value="">{t("Wybierz godzinę")}</option>
 
                                         {possibleStartTimes.map(time => (
                                             <option key={time} value={time}>
@@ -456,9 +428,7 @@ export default function TutoringBookingPage() {
                                 </div>
 
                                 <div>
-                                    <label className="text-sm text-gray-400">
-                                        Liczba godzin
-                                    </label>
+                                    <label className="text-sm text-gray-400">{t("Liczba godzin")}</label>
 
                                     <select
                                         value={hours}
@@ -468,22 +438,19 @@ export default function TutoringBookingPage() {
                                         }}
                                         className="w-full mt-1 bg-gray-800 border border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500"
                                     >
-                                        <option value={1}>1 godzina</option>
-                                        <option value={2}>2 godziny</option>
-                                        <option value={3}>3 godziny</option>
+                                        <option value={1}>{t("1 godzina")}</option>
+                                        <option value={2}>{t("2 godziny")}</option>
+                                        <option value={3}>{t("3 godziny")}</option>
                                     </select>
                                 </div>
 
                                 {selectedStart && (
                                     <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-blue-300">
-                                        {formatTime(selectedStart)}–{formatTime(selectedEnd)} · {hours * PRICE_PER_HOUR} zł
-                                    </div>
+                                        {formatTime(selectedStart)}–{formatTime(selectedEnd)} · {hours * PRICE_PER_HOUR}{t(" zł")}</div>
                                 )}
                             </>
                         ) : (
-                            <div className="bg-gray-800 rounded-xl p-4 text-gray-400">
-                                Najpierw wybierz dostępny dzień z kalendarza.
-                            </div>
+                            <div className="bg-gray-800 rounded-xl p-4 text-gray-400">{t("Najpierw wybierz dostępny dzień z kalendarza.")}</div>
                         )}
 
                         <div className="space-y-3 pt-3">
@@ -492,7 +459,7 @@ export default function TutoringBookingPage() {
                                 <input
                                     value={form.name}
                                     onChange={(e) => updateForm("name", e.target.value)}
-                                    placeholder="Imię i nazwisko"
+                                    placeholder={t("Imię i nazwisko")}
                                     className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 pl-10 outline-none focus:border-blue-500"
                                 />
                             </div>
@@ -502,7 +469,7 @@ export default function TutoringBookingPage() {
                                 <input
                                     value={form.email}
                                     onChange={(e) => updateForm("email", e.target.value)}
-                                    placeholder="Email"
+                                    placeholder={t("Email")}
                                     className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 pl-10 outline-none focus:border-blue-500"
                                 />
                             </div>
@@ -512,7 +479,7 @@ export default function TutoringBookingPage() {
                                 <input
                                     value={form.phone}
                                     onChange={(e) => updateForm("phone", e.target.value)}
-                                    placeholder="Telefon"
+                                    placeholder={t("Telefon")}
                                     className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 pl-10 outline-none focus:border-blue-500"
                                 />
                             </div>
@@ -522,7 +489,7 @@ export default function TutoringBookingPage() {
                                 <textarea
                                     value={form.topic}
                                     onChange={(e) => updateForm("topic", e.target.value)}
-                                    placeholder="Temat, np. INF.03 SQL JOIN"
+                                    placeholder={t("Temat, np. INF.03 SQL JOIN")}
                                     rows={4}
                                     className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 pl-10 outline-none focus:border-blue-500"
                                 />
@@ -533,9 +500,7 @@ export default function TutoringBookingPage() {
                             onClick={reserve}
                             className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl py-3 font-semibold flex items-center justify-center gap-2"
                         >
-                            <BsCreditCard />
-                            Przejdź do rezerwacji
-                        </button>
+                            <BsCreditCard />{t("Przejdź do rezerwacji")}</button>
                     </div>
                 </div>
             </div>

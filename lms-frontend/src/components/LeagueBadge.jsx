@@ -8,6 +8,7 @@ import prismBadge from "../assets/leagues/pryzmat.webp";
 import legendOneBadge from "../assets/leagues/legenda-i.webp";
 import legendTwoBadge from "../assets/leagues/legenda-ii.webp";
 import mythicBadge from "../assets/leagues/mityczny.webp";
+import { useLocale } from "../context/LocaleContext.jsx";
 
 const LEAGUES = {
     Miedź: { image: copperBadge, glow: "#fb923c" },
@@ -31,12 +32,13 @@ const SIZES = {
 };
 
 export default function LeagueBadge({ name = "Miedź", size = "md", muted = false, className = "" }) {
+    const { t } = useLocale();
     const config = LEAGUES[name] || LEAGUES.Miedź;
 
     return (
         <span
             role="img"
-            aria-label={`Odznaka ligi ${name}`}
+            aria-label={t("Odznaka ligi {name}", { name: t(name) })}
             className={`relative inline-grid shrink-0 place-items-center ${SIZES[size] || SIZES.md} ${className}`}
             style={{
                 filter: muted

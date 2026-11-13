@@ -1,3 +1,4 @@
+import { useLocale } from "../../../context/LocaleContext.jsx";
 import {
     BsCheckCircle,
     BsStar,
@@ -11,6 +12,7 @@ export default function BlockFooter({
                                         onSave,
                                         saving = false
                                     }) {
+    const { t } = useLocale();
 
     return (
 
@@ -35,17 +37,9 @@ export default function BlockFooter({
 
                         <div className="flex items-center gap-2 font-semibold">
 
-                            <BsCheckCircle />
+                            <BsCheckCircle />{t("Opublikowany")}</div>
 
-                            Opublikowany
-
-                        </div>
-
-                        <div className="text-sm text-gray-400">
-
-                            Widoczny dla uczniów, gdy cała lekcja jest opublikowana.
-
-                        </div>
+                        <div className="text-sm text-gray-400">{t("Widoczny dla uczniów, gdy cała lekcja jest opublikowana.")}</div>
 
                     </div>
 
@@ -55,11 +49,7 @@ export default function BlockFooter({
 
                     <label className="flex items-center gap-2 text-sm text-gray-300 mb-3">
 
-                        <BsStar />
-
-                        Punkty (XP)
-
-                    </label>
+                        <BsStar />{t("Punkty (XP)")}</label>
 
                     <input
                         type="number"
@@ -75,8 +65,8 @@ export default function BlockFooter({
                     />
                     <p className="mt-2 text-xs leading-5 text-gray-400">
                         {REWARDED_BLOCK_TYPES.has(block.type)
-                            ? `Nagroda za pierwsze zaliczenie ćwiczenia. Wartość 0 oznacza domyślne ${DEFAULT_EXERCISE_XP} XP.`
-                            : "Ten blok jest materiałem do nauki. XP otrzymuje się za ćwiczenia i ukończenie lekcji."}
+                            ? t("Nagroda za pierwsze zaliczenie ćwiczenia. Wartość 0 oznacza domyślne {value0} XP.", { value0: DEFAULT_EXERCISE_XP })
+                            : t("Ten blok jest materiałem do nauki. XP otrzymuje się za ćwiczenia i ukończenie lekcji.")}
                     </p>
 
                 </div>
@@ -93,10 +83,10 @@ export default function BlockFooter({
                 <BsSave />
 
                 {saving
-                    ? "Zapisywanie..."
+                    ? t("Zapisywanie...")
                     : block.id
-                        ? "Zapisz zmiany"
-                        : "Dodaj element"}
+                        ? t("Zapisz zmiany")
+                        : t("Dodaj element")}
 
             </button>
 

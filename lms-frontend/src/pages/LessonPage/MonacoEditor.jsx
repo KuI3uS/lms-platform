@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import Editor from "@monaco-editor/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getMonacoLanguage, normalizeCodeLanguage } from "../../utils/codeLanguages.js";
@@ -20,6 +21,7 @@ function needsNativeEditor() {
 }
 
 function EditorHeader({ language, native }) {
+    const { t } = useLocale();
     return (
         <div className="relative z-10 flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4 backdrop-blur-xl sm:px-6">
             <div className="flex items-center gap-4">
@@ -28,9 +30,7 @@ function EditorHeader({ language, native }) {
                 </div>
 
                 <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-blue-300">
-                        Code Editor
-                    </div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-blue-300">{t("Code Editor")}</div>
                     <div className="text-xl font-black">
                         {language.toUpperCase()}
                     </div>
@@ -41,13 +41,13 @@ function EditorHeader({ language, native }) {
                 <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
                     <BsTerminal className="text-green-400"/>
                     <span className="text-sm text-gray-300">
-                        {native ? "Tryb zgodności" : "Monaco"}
+                        {native ? t("Tryb zgodności") : t("Monaco")}
                     </span>
                 </div>
 
                 <div className="flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/15 px-4 py-2">
                     <BsLightningChargeFill className="text-yellow-300"/>
-                    <span className="text-sm font-semibold">{language === "php" ? "Edycja" : "Live"}</span>
+                    <span className="text-sm font-semibold">{language === "php" ? t("Edycja") : t("Live")}</span>
                 </div>
             </div>
         </div>
@@ -55,6 +55,7 @@ function EditorHeader({ language, native }) {
 }
 
 function NativeCodeEditor({ value, language, onChange }) {
+    const { t } = useLocale();
     const gutterRef = useRef(null);
     const editorRef = useRef(null);
     const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
@@ -100,7 +101,7 @@ function NativeCodeEditor({ value, language, onChange }) {
 
                 <textarea
                     ref={editorRef}
-                    aria-label="Edytor kodu"
+                    aria-label={t("Edytor kodu")}
                     className="native-code-editor h-full min-w-0 flex-1 resize-none overflow-auto whitespace-pre bg-transparent px-5 py-6 pb-14 text-[17px] leading-7 outline-none focus:bg-cyan-400/[0.025]"
                     style={{ fontFamily: CODE_FONT, tabSize: 4, caretColor: "#67e8f9" }}
                     value={value}
@@ -117,8 +118,7 @@ function NativeCodeEditor({ value, language, onChange }) {
                 />
 
                 <div className="pointer-events-none absolute bottom-0 right-0 flex items-center gap-3 rounded-tl-xl border-l border-t border-cyan-300/20 bg-[#07101f]/95 px-4 py-2 font-mono text-xs text-cyan-200 shadow-lg">
-                    <span className="h-4 w-[3px] animate-pulse rounded-full bg-cyan-200 shadow-[0_0_10px_rgba(103,232,249,.9)]" />
-                    Wiersz {cursorPosition.line}, kolumna {cursorPosition.column}
+                    <span className="h-4 w-[3px] animate-pulse rounded-full bg-cyan-200 shadow-[0_0_10px_rgba(103,232,249,.9)]" />{t("Wiersz ")}{cursorPosition.line}{t(", kolumna ")}{cursorPosition.column}
                 </div>
             </div>
         </section>

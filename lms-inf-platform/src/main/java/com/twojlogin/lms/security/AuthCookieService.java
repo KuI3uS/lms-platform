@@ -1,5 +1,7 @@
 package com.twojlogin.lms.security;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -40,10 +42,26 @@ public class AuthCookieService {
         return csrfToken;
     }
 
-    public String refreshCsrf(HttpServletResponse response) {
+    public String getOrCreateCsrf(HttpServletRequest request, HttpServletResponse response) {
+        // Browser cookies are shared between tabs, unlike the client's sessionStorage.
+        // Rotating this cookie on every bootstrap invalidates other open tabs.
+        if (request.getCookies() != null) {
+            for (Cookie existing : request.getCookies()) {
+                if (CSRF_COOKIE.equals(existing.getName())) {
+                    if (isCsrfToken(existing.getValue())) return existing.getValue();
+                    break;
+                }
+            }
+        }
         String csrfToken = newCsrfToken();
         add(response, cookie(CSRF_COOKIE, csrfToken, false, SESSION_TTL));
         return csrfToken;
+    }
+
+    private boolean isCsrfToken(String token) {
+        if (token == null || !token.matches("[A-Za-z0-9_-]{43}")) return false;
+        byte[] decoded = Base64.getUrlDecoder().decode(token);
+        return decoded.length == 32 && Base64.getUrlEncoder().withoutPadding().encodeToString(decoded).equals(token);
     }
 
     public void clearSession(HttpServletResponse response) {

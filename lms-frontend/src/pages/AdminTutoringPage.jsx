@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../api/api";
 import { useFeedback } from "../context/FeedbackContext";
@@ -13,6 +14,7 @@ import {
 } from "react-icons/bs";
 
 export default function AdminTutoringPage() {
+    const { t, dateLocale } = useLocale();
     const { confirm, showToast } = useFeedback();
     const [terms, setTerms] = useState([]);
     const [bookings, setBookings] = useState([]);
@@ -137,7 +139,7 @@ export default function AdminTutoringPage() {
     };
 
     const formatDate = (date) =>
-        new Date(date).toLocaleString("pl-PL", {
+        new Date(date).toLocaleString(dateLocale, {
             weekday: "long",
             day: "2-digit",
             month: "2-digit",
@@ -147,7 +149,7 @@ export default function AdminTutoringPage() {
         });
 
     const formatTime = (date) =>
-        new Date(date).toLocaleTimeString("pl-PL", {
+        new Date(date).toLocaleTimeString(dateLocale, {
             hour: "2-digit",
             minute: "2-digit"
         });
@@ -171,17 +173,11 @@ export default function AdminTutoringPage() {
 
                     <div>
 
-                        <p className="uppercase tracking-[0.35em] text-cyan-300 font-black text-sm">
-                            EDUHUB ADMIN
-                        </p>
+                        <p className="uppercase tracking-[0.35em] text-cyan-300 font-black text-sm">{t("EDUHUB ADMIN")}</p>
 
-                        <h1 className="text-5xl font-black mt-4">
-                            Korepetycje
-                        </h1>
+                        <h1 className="text-5xl font-black mt-4">{t("Korepetycje")}</h1>
 
-                        <p className="text-gray-400 mt-5 text-lg max-w-3xl leading-8">
-                            Zarządzaj dostępnością, kontroluj rezerwacje oraz monitoruj spotkania z uczniami.
-                        </p>
+                        <p className="text-gray-400 mt-5 text-lg max-w-3xl leading-8">{t("Zarządzaj dostępnością, kontroluj rezerwacje oraz monitoruj spotkania z uczniami.")}</p>
 
                     </div>
 
@@ -206,7 +202,7 @@ export default function AdminTutoringPage() {
             )}
 
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
-                <h2 className="text-xl font-bold">Dodaj dostępność</h2>
+                <h2 className="text-xl font-bold">{t("Dodaj dostępność")}</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
@@ -230,17 +226,15 @@ export default function AdminTutoringPage() {
                     className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold flex items-center gap-2 disabled:cursor-wait disabled:opacity-60"
                 >
                     <BsCheckCircle />
-                    {savingTerm ? "Dodawanie..." : "Dodaj dostępność"}
+                    {savingTerm ? t("Dodawanie...") : t("Dodaj dostępność")}
                 </button>
             </div>
 
             <div className="space-y-4">
-                <h2 className="text-xl font-bold">Dostępne terminy</h2>
+                <h2 className="text-xl font-bold">{t("Dostępne terminy")}</h2>
 
                 {terms.length === 0 ? (
-                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">
-                        Brak dostępności.
-                    </div>
+                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">{t("Brak dostępności.")}</div>
                 ) : (
                     <div className="grid gap-4">
                         {terms.map(term => (
@@ -253,8 +247,7 @@ export default function AdminTutoringPage() {
                                         <BsClock className="text-blue-400" />
                                         {formatDate(term.startTime)}
                                     </p>
-                                    <p className="text-gray-500 text-sm">
-                                        Do: {formatDate(term.endTime)}
+                                    <p className="text-gray-500 text-sm">{t("Do: ")}{formatDate(term.endTime)}
                                     </p>
                                 </div>
 
@@ -271,16 +264,12 @@ export default function AdminTutoringPage() {
             </div>
 
             <div className="space-y-4">
-                <h2 className="text-xl font-bold">Rezerwacje</h2>
+                <h2 className="text-xl font-bold">{t("Rezerwacje")}</h2>
 
                 {loading ? (
-                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">
-                        Ładowanie...
-                    </div>
+                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">{t("Ładowanie...")}</div>
                 ) : bookings.length === 0 ? (
-                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">
-                        Brak rezerwacji.
-                    </div>
+                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400">{t("Brak rezerwacji.")}</div>
                 ) : (
                     <div className="grid gap-4">
                         {bookings.map(booking => (
@@ -291,7 +280,7 @@ export default function AdminTutoringPage() {
                                 <div className="flex flex-col lg:flex-row lg:justify-between gap-4">
                                     <div>
                                         <h3 className="text-lg font-bold">
-                                            {booking.topic || "Bez tematu"}
+                                            {booking.topic || t("Bez tematu")}
                                         </h3>
 
                                         <p className="text-gray-400 mt-1">
@@ -299,8 +288,7 @@ export default function AdminTutoringPage() {
                                         </p>
 
                                         <p className="text-gray-500 text-sm mt-1">
-                                            {booking.hours} godz. · {booking.price} zł
-                                        </p>
+                                            {booking.hours}{t(" godz. · ")}{booking.price}{t(" zł")}</p>
                                     </div>
 
                                     <span className={`h-fit border px-3 py-1 rounded-full text-sm ${statusClass(booking.status)}`}>
@@ -311,17 +299,17 @@ export default function AdminTutoringPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                                     <p className="flex items-center gap-2 text-gray-300">
                                         <BsPerson className="text-blue-400" />
-                                        {booking.guestName || "Brak imienia"}
+                                        {booking.guestName || t("Brak imienia")}
                                     </p>
 
                                     <p className="flex items-center gap-2 text-gray-300">
                                         <BsEnvelope className="text-blue-400" />
-                                        {booking.guestEmail || "Brak emaila"}
+                                        {booking.guestEmail || t("Brak emaila")}
                                     </p>
 
                                     <p className="flex items-center gap-2 text-gray-300">
                                         <BsTelephone className="text-blue-400" />
-                                        {booking.guestPhone || "Brak telefonu"}
+                                        {booking.guestPhone || t("Brak telefonu")}
                                     </p>
                                 </div>
 
@@ -330,23 +318,17 @@ export default function AdminTutoringPage() {
                                         onClick={() => updateBookingStatus(booking.id, "PAID")}
                                         className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl font-semibold flex items-center gap-2"
                                     >
-                                        <BsCreditCard />
-                                        Oznacz jako opłacone
-                                    </button>
+                                        <BsCreditCard />{t("Oznacz jako opłacone")}</button>
 
                                     <button
                                         onClick={() => updateBookingStatus(booking.id, "COMPLETED")}
                                         className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-xl font-semibold"
-                                    >
-                                        Odbyte
-                                    </button>
+                                    >{t("Odbyte")}</button>
 
                                     <button
                                         onClick={() => updateBookingStatus(booking.id, "CANCELLED")}
                                         className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl font-semibold"
-                                    >
-                                        Anuluj
-                                    </button>
+                                    >{t("Anuluj")}</button>
 
                                     {booking.status === "CANCELLED" && (
                                         <button
@@ -356,8 +338,8 @@ export default function AdminTutoringPage() {
                                         >
                                             <BsTrash />
                                             {deletingBookingId === booking.id
-                                                ? "Usuwanie..."
-                                                : "Usuń z historii"}
+                                                ? t("Usuwanie...")
+                                                : t("Usuń z historii")}
                                         </button>
                                     )}
                                 </div>

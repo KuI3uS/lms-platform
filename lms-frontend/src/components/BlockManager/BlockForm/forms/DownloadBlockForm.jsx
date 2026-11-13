@@ -1,6 +1,8 @@
+import { useLocale } from "../../../../context/LocaleContext.jsx";
 import { BsDownload } from "react-icons/bs";
 
 export default function DownloadBlockForm({ block, setBlock }) {
+    const { t } = useLocale();
     function update(field, value) {
         setBlock(previous => ({ ...previous, [field]: value }));
     }
@@ -12,33 +14,33 @@ export default function DownloadBlockForm({ block, setBlock }) {
                     <BsDownload />
                 </div>
                 <div>
-                    <h3 className="font-black">Plik do pobrania</h3>
-                    <p className="text-sm text-gray-400">Dodaj nazwę, opis oraz bezpośredni adres dokumentu.</p>
+                    <h3 className="font-black">{t("Plik do pobrania")}</h3>
+                    <p className="text-sm text-gray-400">{t("Dodaj nazwę, opis oraz bezpośredni adres dokumentu.")}</p>
                 </div>
             </div>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Nazwa pliku</span>
+                <span className="font-semibold">{t("Nazwa pliku")}</span>
                 <input
                     value={block.title || ""}
                     onChange={event => update("title", event.target.value)}
-                    placeholder="Np. Ściąga — podstawy Javy.pdf"
+                    placeholder={t("Np. Ściąga — podstawy Javy.pdf")}
                     className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-cyan-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Opis załącznika</span>
+                <span className="font-semibold">{t("Opis załącznika")}</span>
                 <textarea
                     value={block.description || ""}
                     onChange={event => update("description", event.target.value)}
-                    placeholder="Napisz, co znajduje się w pliku."
+                    placeholder={t("Napisz, co znajduje się w pliku.")}
                     className="min-h-24 w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-cyan-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Adres pliku</span>
+                <span className="font-semibold">{t("Adres pliku")}</span>
                 <input
                     value={block.mediaUrl || ""}
                     onChange={event => setBlock(previous => ({
@@ -46,7 +48,7 @@ export default function DownloadBlockForm({ block, setBlock }) {
                         mediaUrl: event.target.value,
                         mediaType: "file"
                     }))}
-                    placeholder="https://.../material.pdf"
+                    placeholder={t("https://.../material.pdf")}
                     className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-cyan-300/50"
                 />
             </label>

@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BsArrowLeft, BsAwardFill, BsPrinterFill, BsShieldCheck, BsTranslate } from "react-icons/bs";
@@ -5,6 +6,7 @@ import { apiFetch } from "../api/api";
 import { getCourseLanguageLabel } from "../utils/courseTaxonomy";
 
 export default function CertificatePage() {
+    const { t, dateLocale } = useLocale();
     const { certificateNumber } = useParams();
     const navigate = useNavigate();
     const [certificate, setCertificate] = useState(null);
@@ -34,29 +36,27 @@ export default function CertificatePage() {
                     onClick={() => navigate("/learning-center")}
                     className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 font-bold text-slate-300"
                 >
-                    <BsArrowLeft /> Wróć
-                </button>
+                    <BsArrowLeft />{t(" Wróć")}</button>
                 <button
                     type="button"
                     onClick={() => window.print()}
                     className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 font-black text-slate-950"
                 >
-                    <BsPrinterFill /> Drukuj / zapisz PDF
-                </button>
+                    <BsPrinterFill />{t(" Drukuj / zapisz PDF")}</button>
             </div>
 
             <article className="certificate-sheet relative overflow-hidden rounded-[36px] border-[10px] border-amber-400/30 bg-[#fcfaf2] px-8 py-14 text-center text-slate-900 shadow-2xl sm:px-16 sm:py-20">
                 <div className="absolute inset-4 rounded-[24px] border border-amber-600/30" />
                 <div className="relative">
                     <BsAwardFill className="mx-auto text-6xl text-amber-600" />
-                    <p className="mt-7 text-sm font-black uppercase tracking-[0.45em] text-amber-700">EduHub Certificate</p>
-                    <h1 className="mt-5 font-serif text-4xl font-black sm:text-6xl">Certyfikat ukończenia</h1>
-                    <p className="mt-8 text-lg text-slate-600">Niniejszym potwierdzamy, że</p>
+                    <p className="mt-7 text-sm font-black uppercase tracking-[0.45em] text-amber-700">{t("EduHub Certificate")}</p>
+                    <h1 className="mt-5 font-serif text-4xl font-black sm:text-6xl">{t("Certyfikat ukończenia")}</h1>
+                    <p className="mt-8 text-lg text-slate-600">{t("Niniejszym potwierdzamy, że")}</p>
                     <p className="mt-3 font-serif text-3xl font-black sm:text-5xl">{certificate.studentName}</p>
                     <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-slate-600">
                         {isLanguageCertificate
-                            ? `ukończył(a) kurs języka ${getCourseLanguageLabel(certificate.courseLanguage).toLowerCase()} na poziomie`
-                            : "ukończył(a) wszystkie lekcje i zadania kursu"}
+                            ? t("ukończył(a) kurs języka {value0} na poziomie", { value0: getCourseLanguageLabel(certificate.courseLanguage).toLowerCase() })
+                            : t("ukończył(a) wszystkie lekcje i zadania kursu")}
                     </p>
                     {isLanguageCertificate && (
                         <div className="mx-auto mt-4 inline-flex items-center gap-3 rounded-2xl border border-violet-300 bg-violet-50 px-6 py-3 text-violet-900">
@@ -68,18 +68,17 @@ export default function CertificatePage() {
 
                     <div className="mx-auto mt-12 grid max-w-2xl gap-6 border-t border-amber-700/20 pt-8 sm:grid-cols-2">
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Data wystawienia</p>
-                            <p className="mt-2 font-black">{new Date(certificate.issuedAt).toLocaleDateString("pl-PL")}</p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">{t("Data wystawienia")}</p>
+                            <p className="mt-2 font-black">{new Date(certificate.issuedAt).toLocaleDateString(dateLocale)}</p>
                         </div>
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Numer certyfikatu</p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">{t("Numer certyfikatu")}</p>
                             <p className="mt-2 font-mono font-black">{certificate.certificateNumber}</p>
                         </div>
                     </div>
 
                     <p className="mt-10 inline-flex items-center gap-2 text-xs font-bold text-emerald-700">
-                        <BsShieldCheck /> Certyfikat możliwy do zweryfikowania w systemie EduHub
-                    </p>
+                        <BsShieldCheck />{t(" Certyfikat możliwy do zweryfikowania w systemie EduHub")}</p>
                 </div>
             </article>
         </div>

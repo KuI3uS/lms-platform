@@ -7,13 +7,15 @@ import {
 } from "react-icons/bs";
 import { lazy, Suspense } from "react";
 import { normalizeCodeLanguage } from "../../utils/codeLanguages.js";
+import { useLocale } from "../../context/LocaleContext";
 
 const MonacoEditorBox = lazy(() => import("./MonacoEditor"));
 
 function EditorLoader() {
+    const { t } = useLocale();
     return (
         <div className="flex min-h-72 items-center justify-center rounded-3xl border border-white/10 bg-gray-950 text-gray-400">
-            Ładowanie edytora kodu...
+            {t("Ładowanie edytora kodu...")}
         </div>
     );
 }
@@ -90,7 +92,7 @@ export default function LessonTask({
                                        onReset,
                                        onCheck
                                    }) {
-
+    const { t, formatNumber } = useLocale();
     const presentation = TASK_PRESENTATION[block.type] || TASK_PRESENTATION.TASK;
     const isPrediction = block.type === "PREDICT_OUTPUT";
     const isReflection = block.type === "CODE_REVIEW" || block.type === "OPEN_RESPONSE";
@@ -102,9 +104,9 @@ export default function LessonTask({
     return (
         <section className="overflow-hidden rounded-3xl border border-yellow-500/20 bg-gradient-to-br from-yellow-500/10 via-gray-900 to-gray-950">
             <div className="border-b border-gray-800 p-5 sm:p-8">
-                <p className="mb-2 font-bold text-yellow-300">{presentation.eyebrow}</p>
+                <p className="mb-2 font-bold text-yellow-300">{t(presentation.eyebrow)}</p>
                 <h2 className="text-2xl font-black leading-tight text-white sm:text-3xl">
-                    {block.title || presentation.fallbackTitle}
+                    {block.title || t(presentation.fallbackTitle)}
                 </h2>
 
                 {block.description && (
@@ -119,19 +121,19 @@ export default function LessonTask({
 
                 {isEditableCodeTask && block.language?.toLowerCase() === "html" && (
                     <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.07] p-4 text-sm leading-6 text-cyan-50 sm:text-base">
-                        <strong>Jak działa sprawdzanie:</strong> liczy się poprawna struktura, wymagane znaczniki, atrybuty i treść. Wielkość liter, wcięcia oraz podział kodu na linie nie wpływają na wynik. Po sprawdzeniu zobaczysz dokładnie, czego brakuje i w której linii szukać błędu.
+                        <strong>{t("Jak działa sprawdzanie:")}</strong> {t("liczy się poprawna struktura, wymagane znaczniki, atrybuty i treść. Wielkość liter, wcięcia oraz podział kodu na linie nie wpływają na wynik. Po sprawdzeniu zobaczysz dokładnie, czego brakuje i w której linii szukać błędu.")}
                     </div>
                 )}
 
                 {isEditableCodeTask && block.language?.toLowerCase() === "sql" && (
                     <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.07] p-4 text-sm leading-6 text-cyan-50 sm:text-base">
-                        <strong>Jak działa sprawdzanie:</strong> porównujemy instrukcje i dane z wymaganiami zadania. Wielkość liter w poleceniach SQL, komentarze, wcięcia i podział na linie nie wpływają na wynik. Wartości tekstowe rekordów muszą być zgodne z poleceniem. Wykonanie kodu i wynik sprawdź w phpMyAdmin lub środowisku wskazanym przez nauczyciela.
+                        <strong>{t("Jak działa sprawdzanie:")}</strong> {t("porównujemy instrukcje i dane z wymaganiami zadania. Wielkość liter w poleceniach SQL, komentarze, wcięcia i podział na linie nie wpływają na wynik. Wartości tekstowe rekordów muszą być zgodne z poleceniem. Wykonanie kodu i wynik sprawdź w phpMyAdmin lub środowisku wskazanym przez nauczyciela.")}
                     </div>
                 )}
 
                 {isEditableCodeTask && isPhp && (
                     <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.07] p-4 text-sm leading-6 text-cyan-50 sm:text-base">
-                        <strong>Jak działa sprawdzanie PHP:</strong> porównujemy przesłany kod ze wzorcem zadania. EduHub nie uruchamia PHP ani ukrytych testów PHP. Sprawdź działanie skryptu samodzielnie w XAMPP lub środowisku PHP wskazanym w poleceniu. Zachowaj znacznik &lt;?php, nazwy zmiennych z $ i wymagane wartości tekstowe.
+                        <strong>{t("Jak działa sprawdzanie PHP:")}</strong> {t("porównujemy przesłany kod ze wzorcem zadania. EduHub nie uruchamia PHP ani ukrytych testów PHP. Sprawdź działanie skryptu samodzielnie w XAMPP lub środowisku PHP wskazanym w poleceniu. Zachowaj znacznik <?php, nazwy zmiennych z $ i wymagane wartości tekstowe.")}
                     </div>
                 )}
             </div>
@@ -140,7 +142,7 @@ export default function LessonTask({
                 {hasReadOnlyCode && (
                     <div className="overflow-hidden rounded-3xl border border-cyan-400/20 bg-[#07111f]">
                         <div className="border-b border-white/10 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
-                            Kod do analizy · {(block.language || "text").toUpperCase()}
+                            {t("Kod do analizy")} · {(block.language || "text").toUpperCase()}
                         </div>
                         <pre className="max-h-[520px] overflow-auto p-5 text-sm leading-7 text-cyan-50 sm:text-base">
                             <code>{block.starterCode}</code>
@@ -159,11 +161,11 @@ export default function LessonTask({
                 ) : (
                     <textarea
                         className="min-h-40 w-full rounded-3xl border border-gray-700 bg-gray-950 p-6 text-gray-200 outline-none focus:border-blue-500"
-                        placeholder={isPrediction
+                        placeholder={t(isPrediction
                             ? "Wpisz dokładny wynik programu..."
                             : isReflection
                                 ? "Zapisz własną analizę lub odpowiedź..."
-                                : "Wpisz swoją odpowiedź..."}
+                                : "Wpisz swoją odpowiedź...")}
                         value={value}
                         onChange={(event) => onAnswerChange(block.id, event.target.value)}
                     />
@@ -177,7 +179,7 @@ export default function LessonTask({
                         className="flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 font-bold transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"
                     >
                         <BsPlayFill />
-                        {checking ? "Sprawdzam..." : presentation.action}
+                        {t(checking ? "Sprawdzam..." : presentation.action)}
                     </button>
 
                     <button
@@ -187,7 +189,7 @@ export default function LessonTask({
                         className="flex items-center gap-2 rounded-2xl bg-gray-800 px-6 py-3 font-bold transition hover:bg-gray-700 disabled:opacity-60"
                     >
                         <BsArrowRepeat />
-                        Reset
+                        {t("Reset")}
                     </button>
                 </div>
 
@@ -216,7 +218,7 @@ export default function LessonTask({
                                     <p className={`text-lg font-black ${
                                         result.correct ? "text-emerald-200" : "text-white"
                                     }`}>
-                                        {result.correct
+                                        {t(result.correct
                                             ? isEditableCodeTask
                                                 ? block.language?.toLowerCase() === "sql"
                                                     ? "Dobra robota — SQL spełnia wymagania"
@@ -228,11 +230,11 @@ export default function LessonTask({
                                                     : "Dobra robota — odpowiedź jest poprawna"
                                             : isEditableCodeTask
                                                 ? "Sprawdź wskazane miejsca"
-                                                : "Spróbuj poprawić odpowiedź"}
+                                                : "Spróbuj poprawić odpowiedź")}
                                     </p>
                                     {result.attemptCount > 0 && (
                                         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-slate-400">
-                                            Próba {result.attemptCount}
+                                            {t("Próba {number}", { number: formatNumber(result.attemptCount) })}
                                         </span>
                                     )}
                                 </div>
@@ -244,14 +246,14 @@ export default function LessonTask({
                                 {result.correct && result.xpEarned > 0 && (
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         <span className="rounded-full bg-blue-500/15 px-3 py-1 text-xs font-black text-blue-200">
-                                            +{result.xpEarned} XP
+                                            +{formatNumber(result.xpEarned)} XP
                                         </span>
                                         <span className="rounded-full bg-orange-500/15 px-3 py-1 text-xs font-black text-orange-200">
-                                            Seria {result.taskStreak} · x{result.xpMultiplier}
+                                            {t("Seria {count} · x{multiplier}", { count: formatNumber(result.taskStreak), multiplier: formatNumber(result.xpMultiplier) })}
                                         </span>
                                         {result.levelUp && (
                                             <span className="rounded-full bg-violet-500/15 px-3 py-1 text-xs font-black text-violet-200">
-                                                Nowy poziom {result.level}
+                                                {t("Nowy poziom {level}", { level: formatNumber(result.level) })}
                                             </span>
                                         )}
                                     </div>
@@ -271,11 +273,11 @@ export default function LessonTask({
                                                 {index + 1}
                                             </span>
                                             <p className="font-black text-white">
-                                                {DIAGNOSTIC_LABELS[diagnostic.type] || "Element do poprawy"}
+                                                {t(DIAGNOSTIC_LABELS[diagnostic.type] || "Element do poprawy")}
                                             </p>
                                             {diagnostic.line && (
                                                 <span className="rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-bold text-blue-200">
-                                                    Linia {diagnostic.line}
+                                                    {t("Linia {number}", { number: formatNumber(diagnostic.line) })}
                                                 </span>
                                             )}
                                         </div>
@@ -284,7 +286,7 @@ export default function LessonTask({
                                         </p>
                                         {diagnostic.suggestion && (
                                             <div className="mt-3 rounded-xl bg-cyan-500/10 px-4 py-3 text-sm leading-6 text-cyan-100">
-                                                <strong>Jak poprawić:</strong> {diagnostic.suggestion}
+                                                <strong>{t("Jak poprawić:")}</strong> {diagnostic.suggestion}
                                             </div>
                                         )}
                                     </li>
@@ -297,11 +299,11 @@ export default function LessonTask({
                                 <BsLightbulb className="mt-0.5 shrink-0 text-yellow-300" size={20}/>
                                 <div>
                                     <p className="font-bold">
-                                        {result.hintLevel >= 3
+                                        {t(result.hintLevel >= 3
                                             ? "Wyjaśnienie rozwiązania"
                                             : result.hintLevel >= 2
                                                 ? "Większa podpowiedź"
-                                                : "Wskazówka"}
+                                                : "Wskazówka")}
                                     </p>
                                     <p className="mt-1 whitespace-pre-line text-sm sm:text-base">{result.hint}</p>
                                 </div>
@@ -311,7 +313,7 @@ export default function LessonTask({
                         {result.solutionPreview && (
                             <div className="mx-4 mb-4 sm:mx-5 sm:mb-5">
                                 <p className="mb-2 font-bold text-yellow-100">
-                                    {isReflection ? "Model odpowiedzi i kryteria samooceny" : "Przykładowe poprawne rozwiązanie"}
+                                    {t(isReflection ? "Model odpowiedzi i kryteria samooceny" : "Przykładowe poprawne rozwiązanie")}
                                 </p>
                                 <div className="whitespace-pre-wrap rounded-xl border border-white/10 bg-gray-950 p-4 text-sm leading-7 text-gray-100">
                                     {result.solutionPreview}

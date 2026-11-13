@@ -1,3 +1,4 @@
+import { useLocale } from "./context/LocaleContext";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "./api/api";
@@ -5,6 +6,7 @@ import { useAuth } from "./context/AuthContext";
 import { clearCoursePurchase, purchaseCourseId, safeLoginDestination } from "./utils/coursePurchaseIntent";
 
 export default function Login() {
+    const { t } = useLocale();
     const { completeLogin } = useAuth();
     const purchaseId = purchaseCourseId(window.location.search);
     const sessionExpired = new URLSearchParams(window.location.search)
@@ -80,24 +82,22 @@ export default function Login() {
                 onSubmit={login}
                 className="bg-gray-800 p-8 rounded-2xl shadow-lg w-[min(24rem,calc(100vw-2rem))]"
             >
-                <h2 className="text-2xl font-bold text-white mb-6 text-center">
-                    Logowanie
-                </h2>
+                <h2 className="text-2xl font-bold text-white mb-6 text-center">{t("Logowanie")}</h2>
 
                 {error && (
                     <div role="alert" className="bg-red-500/20 text-red-300 p-3 rounded-xl mb-4 text-sm">
-                        {error}
+                        {t(error)}
                     </div>
                 )}
                 {message && (
                     <div className="bg-emerald-500/15 text-emerald-300 p-3 rounded-xl mb-4 text-sm">
-                        {message}
+                        {t(message)}
                     </div>
                 )}
 
                 <input
                     className="w-full mb-3 p-3 rounded bg-gray-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Email"
+                    placeholder={t("Email")}
                     type="email"
                     autoComplete="email"
                     value={email}
@@ -107,7 +107,7 @@ export default function Login() {
 
                 <input
                     className="w-full mb-4 p-3 rounded bg-gray-700 text-white outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Hasło"
+                    placeholder={t("Hasło")}
                     type="password"
                     autoComplete="current-password"
                     value={password}
@@ -120,7 +120,7 @@ export default function Login() {
                     disabled={loading}
                     className="w-full bg-blue-600 hover:bg-blue-700 transition p-3 rounded text-white font-semibold disabled:opacity-50"
                 >
-                    {loading ? "Logowanie..." : "Zaloguj się"}
+                    {loading ? t("Logowanie...") : t("Zaloguj się")}
                 </button>
 
                 {accountNotActive && (
@@ -130,21 +130,15 @@ export default function Login() {
                         disabled={resending}
                         className="mt-3 w-full rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3 font-semibold text-cyan-300 disabled:opacity-50"
                     >
-                        {resending ? "Wysyłanie..." : "Wyślij ponownie link aktywacyjny"}
+                        {resending ? t("Wysyłanie...") : t("Wyślij ponownie link aktywacyjny")}
                     </button>
                 )}
 
-                <p className="text-sm text-gray-400 mt-3 text-center">
-                    Nie masz konta?{" "}
-                    <Link to={purchaseId ? `/register?course=${purchaseId}` : "/register"} className="text-blue-400">
-                        Zarejestruj się
-                    </Link>
+                <p className="text-sm text-gray-400 mt-3 text-center">{t("Nie masz konta?")}{" "}
+                    <Link to={purchaseId ? `/register?course=${purchaseId}` : "/register"} className="text-blue-400">{t("Zarejestruj się")}</Link>
                 </p>
-                <p className="text-sm text-gray-400 mt-3 text-center">
-                    Nie pamiętasz hasła?{" "}
-                    <Link to="/forgot-password" className="text-blue-400 hover:text-blue-300">
-                        Zresetuj hasło
-                    </Link>
+                <p className="text-sm text-gray-400 mt-3 text-center">{t("Nie pamiętasz hasła?")}{" "}
+                    <Link to="/forgot-password" className="text-blue-400 hover:text-blue-300">{t("Zresetuj hasło")}</Link>
                 </p>
             </form>
         </div>

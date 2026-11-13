@@ -1,3 +1,4 @@
+import { useLocale } from "../../../../context/LocaleContext.jsx";
 import {
     BsBook,
     BsCardText,
@@ -12,10 +13,9 @@ import { CODE_LANGUAGE_OPTIONS, normalizeCodeLanguage } from "../../../../utils/
 const MonacoEditorBox = lazy(() => import("../../../../pages/LessonPage/MonacoEditor"));
 
 function EditorLoader() {
+    const { t } = useLocale();
     return (
-        <div className="flex min-h-72 items-center justify-center rounded-3xl border border-white/10 bg-gray-950 text-gray-400">
-            Ładowanie edytora kodu...
-        </div>
+        <div className="flex min-h-72 items-center justify-center rounded-3xl border border-white/10 bg-gray-950 text-gray-400">{t("Ładowanie edytora kodu...")}</div>
     );
 }
 
@@ -104,6 +104,7 @@ export default function TaskBlockForm({
                                           mode = "TASK"
 
                                       }) {
+    const { t } = useLocale();
 
     function update(field, value) {
 
@@ -153,17 +154,17 @@ export default function TaskBlockForm({
                 <h2 className="text-2xl font-bold">
 
                     {task.id
-                        ? `Edytuj: ${formTitle.toLowerCase()}`
-                        : `Nowy blok: ${formTitle.toLowerCase()}`}
+                        ? t("Edytuj: {value0}", { value0: formTitle.toLowerCase() })
+                        : t("Nowy blok: {value0}", { value0: formTitle.toLowerCase() })}
 
                 </h2>
 
                 <p className="text-gray-400 mt-1">
                     {isDebugging
-                        ? "Dodaj kod z błędem, objaw, testy i progresywne podpowiedzi."
+                        ? t("Dodaj kod z błędem, objaw, testy i progresywne podpowiedzi.")
                         : isPrediction
-                            ? "Uczeń analizuje kod i podaje wynik przed jego uruchomieniem."
-                            : "Skonfiguruj zadanie praktyczne dla uczniów."}
+                            ? t("Uczeń analizuje kod i podaje wynik przed jego uruchomieniem.")
+                            : t("Skonfiguruj zadanie praktyczne dla uczniów.")}
                 </p>
 
             </div>
@@ -174,25 +175,19 @@ export default function TaskBlockForm({
 
             <div className="space-y-5">
 
-                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">
-                    Podstawowe informacje
-                </h3>
+                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">{t("Podstawowe informacje")}</h3>
 
                 <div className="space-y-2">
 
                     <label className="flex items-center gap-2 text-gray-300">
 
-                        <BsBook />
-
-                        Tytuł
-
-                    </label>
+                        <BsBook />{t("Tytuł")}</label>
 
                     <input
                         value={task.title || ""}
                         onChange={(e)=>update("title", e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-3"
-                        placeholder="Np. Pierwsza zmienna"
+                        placeholder={t("Np. Pierwsza zmienna")}
                     />
 
                 </div>
@@ -203,7 +198,7 @@ export default function TaskBlockForm({
 
                         <BsCardText />
 
-                        {isDebugging ? "Objaw błędu" : "Opis"}
+                        {isDebugging ? t("Objaw błędu") : t("Opis")}
 
                     </label>
 
@@ -211,7 +206,7 @@ export default function TaskBlockForm({
                         value={task.description || ""}
                         onChange={(e)=>update("description", e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-28"
-                        placeholder={isDebugging ? "Np. Program kompiluje się, ale zwraca błędną sumę..." : "Krótki opis zadania..."}
+                        placeholder={isDebugging ? t("Np. Program kompiluje się, ale zwraca błędną sumę...") : t("Krótki opis zadania...")}
                     />
 
                 </div>
@@ -222,7 +217,7 @@ export default function TaskBlockForm({
 
                         <BsCardText />
 
-                        {isDebugging ? "Zadanie naprawcze" : isPrediction ? "Pytanie do kodu" : "Polecenie"}
+                        {isDebugging ? t("Zadanie naprawcze") : isPrediction ? t("Pytanie do kodu") : t("Polecenie")}
 
                     </label>
 
@@ -230,13 +225,11 @@ export default function TaskBlockForm({
                         value={task.instruction || ""}
                         onChange={(e)=>update("instruction", e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-40"
-                        placeholder={isDebugging ? "Wyjaśnij, co uczeń ma naprawić i po czym pozna poprawny rezultat." : isPrediction ? "Np. Jaki dokładnie tekst wypisze ten program?" : "Treść zadania..."}
+                        placeholder={isDebugging ? t("Wyjaśnij, co uczeń ma naprawić i po czym pozna poprawny rezultat.") : isPrediction ? t("Np. Jaki dokładnie tekst wypisze ten program?") : t("Treść zadania...")}
                     />
 
                     {hasEmptyRequirements && (
-                        <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.08] px-4 py-3 text-sm text-amber-100">
-                            Nagłówek „Wymagania” jest pusty. Uzupełnij go ręcznie albo użyj przycisku pod poprawną odpowiedzią.
-                        </p>
+                        <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.08] px-4 py-3 text-sm text-amber-100">{t("Nagłówek „Wymagania” jest pusty. Uzupełnij go ręcznie albo użyj przycisku pod poprawną odpowiedzią.")}</p>
                     )}
 
                 </div>
@@ -249,15 +242,13 @@ export default function TaskBlockForm({
 
             <div className="space-y-5">
 
-                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">
-                    Kod
-                </h3>
+                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">{t("Kod")}</h3>
 
                 <div className="space-y-2">
 
                     <label className="flex items-center gap-2 text-gray-300">
                         <BsCodeSlash />
-                        {isDebugging ? "Kod z błędem" : isPrediction ? "Kod do przeanalizowania" : "Kod startowy"}
+                        {isDebugging ? t("Kod z błędem") : isPrediction ? t("Kod do przeanalizowania") : t("Kod startowy")}
                     </label>
 
                     <Suspense fallback={<EditorLoader />}>
@@ -273,17 +264,14 @@ export default function TaskBlockForm({
                 {!isPrediction && (task.language || "java") === "java" && (
                     <div className="space-y-2 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-4">
                         <label className="flex items-center gap-2 font-black text-cyan-200">
-                            <BsCheckCircle /> Ukryte testy uruchomieniowe
-                        </label>
+                            <BsCheckCircle />{t(" Ukryte testy uruchomieniowe")}</label>
                         <textarea
                             value={task.hiddenTests || ""}
                             onChange={(event) => update("hiddenTests", event.target.value)}
                             className="min-h-36 w-full rounded-xl border border-gray-700 bg-gray-950 p-4 font-mono text-sm"
-                            placeholder={"<brak> => Hello World\\n5 => 25\\n-2 => 4"}
+                            placeholder={t("<brak> => Hello World\\n5 => 25\\n-2 => 4")}
                         />
-                        <p className="text-xs leading-5 text-slate-500">
-                            Jeden test w wierszu: <strong className="text-slate-300">wejście =&gt; oczekiwane wyjście</strong>. Użyj <strong className="text-slate-300">&lt;brak&gt;</strong>, gdy program nie pobiera danych. Uczeń nie zobaczy wartości testów.
-                        </p>
+                        <p className="text-xs leading-5 text-slate-500">{t("Jeden test w wierszu: ")}<strong className="text-slate-300">{t("wejście => oczekiwane wyjście")}</strong>{t(". Użyj ")}<strong className="text-slate-300">{t("<brak>")}</strong>{t(", gdy program nie pobiera danych. Uczeń nie zobaczy wartości testów.")}</p>
                     </div>
                 )}
 
@@ -291,11 +279,7 @@ export default function TaskBlockForm({
 
                     <label className="flex items-center gap-2 text-gray-300">
 
-                        <BsGlobe />
-
-                        Język
-
-                    </label>
+                        <BsGlobe />{t("Język")}</label>
 
                     <select
                         value={task.language || "java"}
@@ -311,8 +295,7 @@ export default function TaskBlockForm({
 
                     {isPhp && (
                         <p className="rounded-xl border border-cyan-400/20 bg-cyan-400/[0.06] px-4 py-3 text-sm leading-6 text-cyan-50">
-                            <strong>PHP — porównanie ze wzorcem.</strong> Wpisz pełny poprawny kod w polu „{isDebugging ? "Poprawiony kod" : "Poprawna odpowiedź"}”. EduHub nie uruchamia PHP ani ukrytych testów PHP. Uczeń uruchamia skrypt samodzielnie w XAMPP lub innym środowisku PHP, a tutaj wysyła kod do porównania z rozwiązaniem.
-                        </p>
+                            <strong>{t("PHP — porównanie ze wzorcem.")}</strong>{t(" Wpisz pełny poprawny kod w polu „")}{isDebugging ? t("Poprawiony kod") : t("Poprawna odpowiedź")}{t("”. EduHub nie uruchamia PHP ani ukrytych testów PHP. Uczeń uruchamia skrypt samodzielnie w XAMPP lub innym środowisku PHP, a tutaj wysyła kod do porównania z rozwiązaniem.")}</p>
                     )}
 
                 </div>
@@ -325,9 +308,7 @@ export default function TaskBlockForm({
 
             <div className="space-y-5">
 
-                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">
-                    Sprawdzanie
-                </h3>
+                <h3 className="text-lg font-bold border-b border-gray-800 pb-2">{t("Sprawdzanie")}</h3>
 
                 <div className="space-y-2">
 
@@ -335,7 +316,7 @@ export default function TaskBlockForm({
 
                         <BsCheckCircle />
 
-                        {isPrediction ? "Poprawny wynik programu" : isDebugging ? "Poprawiony kod" : "Poprawna odpowiedź"}
+                        {isPrediction ? t("Poprawny wynik programu") : isDebugging ? t("Poprawiony kod") : t("Poprawna odpowiedź")}
 
                     </label>
 
@@ -349,27 +330,21 @@ export default function TaskBlockForm({
 
                     {isHtml && (
                         <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] p-4 text-sm leading-6 text-cyan-50">
-                            <p className="font-black">Elastyczne sprawdzanie HTML</p>
-                            <p className="mt-1 text-cyan-100/75">
-                                System użyje tego rozwiązania jako listy wymagań. Sprawdzi deklarację HTML5, znaczniki, ich liczbę, atrybuty oraz treść elementów. Nie będzie wymagał identycznych wcięć, układu linii ani wielkości liter.
-                            </p>
+                            <p className="font-black">{t("Elastyczne sprawdzanie HTML")}</p>
+                            <p className="mt-1 text-cyan-100/75">{t("System użyje tego rozwiązania jako listy wymagań. Sprawdzi deklarację HTML5, znaczniki, ich liczbę, atrybuty oraz treść elementów. Nie będzie wymagał identycznych wcięć, układu linii ani wielkości liter.")}</p>
                             <button
                                 type="button"
                                 onClick={fillHtmlRequirements}
                                 disabled={!String(task.expectedAnswer || "").trim()}
                                 className="mt-3 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 font-black text-cyan-100 transition hover:bg-cyan-300/20 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                Uzupełnij wymagania z rozwiązania
-                            </button>
+                            >{t("Uzupełnij wymagania z rozwiązania")}</button>
                         </div>
                     )}
 
                     {isSql && (
                         <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] p-4 text-sm leading-6 text-cyan-50">
-                            <p className="font-black">Sprawdzanie instrukcji i danych SQL</p>
-                            <p className="mt-1 text-cyan-100/75">
-                                Wpisz kompletne rozwiązanie SQL jako wzorzec. System pominie wielkość liter w poleceniach, komentarze oraz formatowanie. Rekordy można dodać jednym INSERT albo osobnymi instrukcjami, zachowując tę samą listę kolumn i wartości. Dane tekstowe są sprawdzane dokładnie. Końcowe SELECT * FROM utworzona_tabela jest opcjonalne, chyba że występuje we wzorcu. Kod nie jest uruchamiany w bazie EduHub — wynik wykonania uczeń sprawdza w swoim środowisku.
-                            </p>
+                            <p className="font-black">{t("Sprawdzanie instrukcji i danych SQL")}</p>
+                            <p className="mt-1 text-cyan-100/75">{t("Wpisz kompletne rozwiązanie SQL jako wzorzec. System pominie wielkość liter w poleceniach, komentarze oraz formatowanie. Rekordy można dodać jednym INSERT albo osobnymi instrukcjami, zachowując tę samą listę kolumn i wartości. Dane tekstowe są sprawdzane dokładnie. Końcowe SELECT * FROM utworzona_tabela jest opcjonalne, chyba że występuje we wzorcu. Kod nie jest uruchamiany w bazie EduHub — wynik wykonania uczeń sprawdza w swoim środowisku.")}</p>
                         </div>
                     )}
 
@@ -379,17 +354,13 @@ export default function TaskBlockForm({
 
                     <label className="flex items-center gap-2 text-gray-300">
 
-                        <BsLightbulb />
-
-                        Podstawowa podpowiedź (1. błędna próba)
-
-                    </label>
+                        <BsLightbulb />{t("Podstawowa podpowiedź (1. błędna próba)")}</label>
 
                     <textarea
                         value={task.hint || ""}
                         onChange={(e)=>update("hint", e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-32"
-                        placeholder="Delikatnie naprowadź ucznia bez podawania gotowego rozwiązania."
+                        placeholder={t("Delikatnie naprowadź ucznia bez podawania gotowego rozwiązania.")}
                     />
 
                 </div>
@@ -398,17 +369,13 @@ export default function TaskBlockForm({
 
                     <label className="flex items-center gap-2 text-gray-300">
 
-                        <BsLightbulb />
-
-                        Dokładniejsza podpowiedź (od 2. błędnej próby)
-
-                    </label>
+                        <BsLightbulb />{t("Dokładniejsza podpowiedź (od 2. błędnej próby)")}</label>
 
                     <textarea
                         value={task.detailedHint || ""}
                         onChange={(e)=>update("detailedHint", e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-32"
-                        placeholder="Wskaż konkretny fragment, składnię albo kolejny krok rozwiązania."
+                        placeholder={t("Wskaż konkretny fragment, składnię albo kolejny krok rozwiązania.")}
                     />
 
                 </div>
@@ -417,17 +384,13 @@ export default function TaskBlockForm({
 
                     <label className="flex items-center gap-2 text-gray-300">
 
-                        <BsCheckCircle />
-
-                        Wyjaśnienie rozwiązania (od 4. błędnej próby)
-
-                    </label>
+                        <BsCheckCircle />{t("Wyjaśnienie rozwiązania (od 4. błędnej próby)")}</label>
 
                     <textarea
                         value={task.solutionExplanation || ""}
                         onChange={(e)=>update("solutionExplanation", e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 min-h-36"
-                        placeholder="Wyjaśnij, dlaczego poprawne rozwiązanie działa. System pokaże wtedy również przykładowy kod."
+                        placeholder={t("Wyjaśnij, dlaczego poprawne rozwiązanie działa. System pokaże wtedy również przykładowy kod.")}
                     />
 
                 </div>

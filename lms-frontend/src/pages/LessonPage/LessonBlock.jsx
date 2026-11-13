@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import LessonText from "./LessonText";
 import LessonExample from "./LessonExample";
 import LessonImage from "./LessonImage";
@@ -25,12 +26,11 @@ export default function LessonBlock({
                                         onCheck,
                                         onInteractiveComplete
                                     }) {
+    const { t } = useLocale();
 
     if (!block) {
         return (
-            <section className="bg-gray-900 border border-gray-800 rounded-3xl p-8 text-gray-400">
-                Brak treści w tej lekcji.
-            </section>
+            <section className="bg-gray-900 border border-gray-800 rounded-3xl p-8 text-gray-400">{t("Brak treści w tej lekcji.")}</section>
         );
     }
 

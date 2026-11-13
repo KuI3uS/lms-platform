@@ -24,6 +24,7 @@ import {
 } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { ASSESSMENT_BLOCK_TYPES } from "../../utils/lessonBlockRewards";
+import { useLocale } from "../../context/LocaleContext";
 
 function blockIcon(type) {
     switch (type) {
@@ -82,6 +83,7 @@ export default function LessonSidebar({
                                           canAccessBlock,
                                           lessonCompleted
                                       }) {
+    const { t, formatNumber } = useLocale();
     const navigate = useNavigate();
     const selectedIndex = blocks.findIndex(
         block => Number(block.id) === Number(selectedBlock?.id)
@@ -103,22 +105,22 @@ export default function LessonSidebar({
 
     return (
         <nav
-            aria-label="Ścieżka lekcji"
+            aria-label={t("Ścieżka lekcji")}
             className="mx-auto w-full max-w-5xl px-1 py-3 sm:px-4"
         >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
-                        Lekcja {currentLessonIndex + 1} z {moduleLessons.length}
+                        {t("Lekcja {number} z {total}", { number: formatNumber(currentLessonIndex + 1), total: formatNumber(moduleLessons.length) })}
                     </p>
                     <h2 className="mt-1 truncate text-base font-black text-white sm:text-lg">
-                        Krok {selectedIndex + 1} z {blocks.length}: {selectedBlock?.title || "Materiał"}
+                        {t("Krok {number} z {total}", { number: formatNumber(selectedIndex + 1), total: formatNumber(blocks.length) })}: {selectedBlock?.title || t("Materiał")}
                     </h2>
                 </div>
 
                 <div
                     className="flex max-w-full items-center gap-2 overflow-x-auto pb-1"
-                    aria-label="Lekcje w tym etapie"
+                    aria-label={t("Lekcje w tym etapie")}
                 >
                     {moduleLessons.map((lesson, index) => {
                         const active = Number(currentLessonId) === Number(lesson.id);
@@ -126,8 +128,8 @@ export default function LessonSidebar({
                             <button
                                 key={lesson.id}
                                 type="button"
-                                title={`Lekcja ${index + 1}: ${lesson.title}`}
-                                aria-label={`Lekcja ${index + 1}: ${lesson.title}`}
+                                title={`${t("Lekcja {number}", { number: formatNumber(index + 1) })}: ${lesson.title}`}
+                                aria-label={`${t("Lekcja {number}", { number: formatNumber(index + 1) })}: ${lesson.title}`}
                                 disabled={!lesson.canAccess}
                                 onClick={() => lesson.canAccess && navigate(`/lesson/${lesson.id}`)}
                                 className={`grid h-9 w-9 shrink-0 place-items-center rounded-full border text-xs font-black transition-all duration-200 ${
@@ -140,7 +142,7 @@ export default function LessonSidebar({
                                                 : "cursor-not-allowed border-white/5 bg-gray-900 text-gray-700"
                                 }`}
                             >
-                                {lesson.completed ? <BsCheckCircleFill /> : index + 1}
+                                {lesson.completed ? <BsCheckCircleFill /> : formatNumber(index + 1)}
                             </button>
                         );
                     })}
@@ -199,7 +201,7 @@ export default function LessonSidebar({
                                         <span className={`mt-2 text-[10px] font-black uppercase tracking-wider ${
                                             active ? "text-cyan-200" : "text-gray-600"
                                         }`}>
-                                            Krok {index + 1}
+                                            {t("Krok {number}", { number: formatNumber(index + 1) })}
                                         </span>
                                     </button>
                                 </li>

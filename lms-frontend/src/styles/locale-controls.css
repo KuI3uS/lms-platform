@@ -1,0 +1,18 @@
+.locale-controls{position:relative;display:inline-flex;align-items:center;flex-shrink:0;gap:4px;font:500 13px/1.2 system-ui,sans-serif;color:#173344;isolation:isolate}
+.locale-controls button,.locale-language{display:inline-flex;align-items:center;justify-content:center;min-height:38px;border:1px solid #d1dfe5;border-radius:10px;background:#fff;color:#173344;cursor:pointer;box-shadow:none;letter-spacing:normal;text-transform:none}
+.locale-controls button{min-width:36px;padding:8px;font-size:17px}
+.locale-controls button:disabled{cursor:default;opacity:.55}
+.locale-controls button:focus-visible,.locale-controls select:focus-visible,.locale-volume input:focus-visible{outline:3px solid #0d9488;outline-offset:2px}
+.locale-language{gap:5px;padding-left:9px}
+.locale-language select{border:0;background:transparent;color:inherit;max-width:115px;min-height:36px;padding:5px 5px 5px 0;font:inherit;cursor:pointer}
+.locale-music-toggle[aria-pressed=true]{background:#e5f6f2;color:#0f665c;border-color:#8bbdb5}
+.locale-music-panel{position:absolute;z-index:1000;right:0;top:calc(100% + 10px);width:min(310px,calc(100vw - 32px));padding:18px;border:1px solid #d1dfe5;border-radius:16px;background:#fff;color:#173344;text-align:left;font:400 13px/1.6 system-ui,sans-serif;box-shadow:0 18px 50px #001d3426}
+.locale-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:16px}
+.locale-panel-heading button{border:0;min-height:28px;min-width:28px;padding:4px}
+.locale-track-title{font-weight:600;margin:10px 0 6px}
+.locale-volume{display:grid;gap:8px;margin-top:16px}
+.locale-volume input{width:100%;accent-color:#0d9488}
+.locale-controls .locale-play-button{display:flex;gap:8px;margin-top:14px;padding:9px 12px;width:100%;font-size:13px;line-height:1.4;background:#edf7f5;color:#0f665c}
+.locale-account-dock{position:absolute;left:16px;top:16px;z-index:40}
+@media(max-width:420px){.locale-controls--compact{gap:3px}.locale-controls--compact .locale-settings{min-width:30px;padding:6px}.locale-controls--compact .locale-language{padding-left:6px;gap:3px}.locale-controls--compact select{max-width:55px}.locale-controls--compact button{min-width:32px}}
+@media print{.locale-controls{display:none!important}}

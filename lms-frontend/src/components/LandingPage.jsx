@@ -1,3 +1,5 @@
+import { useLocale } from "../context/LocaleContext";
+import LocaleControls from "./LocaleControls";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -33,11 +35,12 @@ import {
 import "../styles/landing.css";
 
 function Brand({ footer = false }) {
+    const { t } = useLocale();
   return (
     <a
       className="eh-brand"
       href={footer ? "#start" : "/"}
-      aria-label="EduHub — strona główna"
+      aria-label={t("EduHub — strona główna")}
     >
       <span className="eh-brand-mark">
         <BsMortarboard aria-hidden="true" />
@@ -54,6 +57,7 @@ function CourseLink({
   secondary = false,
   className = "",
 }) {
+  const { t } = useLocale();
   return (
     <Link
       reloadDocument
@@ -64,12 +68,13 @@ function CourseLink({
           : "eh-button eh-button-primary ") + className
       }
     >
-      {children}
+      {typeof children === "string" ? t(children) : children}
       <BsArrowUpRight aria-hidden="true" />
     </Link>
   );
 }
 function PracticeStudio() {
+    const { t } = useLocale();
   const [active, setActive] = useState("java");
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState(null);
@@ -91,13 +96,13 @@ function PracticeStudio() {
           <i />
           <i />
         </span>
-        <span>Twoja pierwsza lekcja</span>
+        <span>{t("Twoja pierwsza lekcja")}</span>
         <span className="eh-demo-badge">DEMO</span>
       </div>
       <div
         className="eh-studio-tabs"
         role="tablist"
-        aria-label="Wybierz przykładowe zadanie"
+        aria-label={t("Wybierz przykładowe zadanie")}
       >
         {PRACTICE_EXAMPLES.map((item, index) => (
           <button
@@ -132,7 +137,7 @@ function PracticeStudio() {
             }}
           >
             <BsCodeSlash aria-hidden="true" />
-            {item.label}
+            {t(item.label)}
           </button>
         ))}
       </div>
@@ -144,7 +149,7 @@ function PracticeStudio() {
       >
         <div className="eh-code-heading">
           <span>{example.file}</span>
-          <span>Przykład w przeglądarce</span>
+          <span>{t("Przykład w przeglądarce")}</span>
         </div>
         <div className="eh-code-editor">
           <div className="eh-line-numbers" aria-hidden="true">
@@ -157,31 +162,27 @@ function PracticeStudio() {
           </pre>
         </div>
         <div className="eh-challenge">
-          <p className="eh-small-label">TERAZ TWOJA KOLEJ</p>
-          <h2 id="eh-studio-title">{example.question}</h2>
+          <p className="eh-small-label">{t("TERAZ TWOJA KOLEJ")}</p>
+          <h2 id="eh-studio-title">{t(example.question)}</h2>
           <form
             onSubmit={(event) => {
               event.preventDefault();
               setResult(checkPracticeAnswer(active, answer));
             }}
           >
-            <label className="eh-sr-only" htmlFor="eh-demo-answer">
-              Twoja odpowiedź
-            </label>
+            <label className="eh-sr-only" htmlFor="eh-demo-answer">{t("Twoja odpowiedź")}</label>
             <div className="eh-answer-row">
               <input
                 id="eh-demo-answer"
                 autoComplete="off"
                 value={answer}
-                placeholder={example.placeholder}
+                placeholder={t(example.placeholder)}
                 onChange={(event) => {
                   setAnswer(event.target.value);
                   setResult(null);
                 }}
               />
-              <button className="eh-check-button" type="submit">
-                Sprawdź
-                <BsArrowRight aria-hidden="true" />
+              <button className="eh-check-button" type="submit">{t("Sprawdź")}<BsArrowRight aria-hidden="true" />
               </button>
             </div>
           </form>
@@ -196,78 +197,66 @@ function PracticeStudio() {
             {result === "correct" ? (
               <>
                 <BsCheckCircleFill aria-hidden="true" />
-                {example.explanation}
+                {t(example.explanation)}
               </>
             ) : result === "retry" ? (
-              example.hint
+              t(example.hint)
             ) : result === "empty" ? (
-              "Wpisz odpowiedź, a potem sprawdź rozwiązanie."
+              t("Wpisz odpowiedź, a potem sprawdź rozwiązanie.")
             ) : (
               <>
-                <BsPlayFill aria-hidden="true" />
-                Sprawdź sposób nauki. Bez konta i bez zapisywania wyniku.
-              </>
+                <BsPlayFill aria-hidden="true" />{t("Sprawdź sposób nauki. Bez konta i bez zapisywania wyniku.")}</>
             )}
           </div>
         </div>
       </div>
       <div className="eh-studio-footer">
         <span>
-          <BsCheck2 aria-hidden="true" /> Teoria
-        </span>
+          <BsCheck2 aria-hidden="true" />{" "}{t("Teoria")}</span>
         <span className="is-current">
-          <BsCodeSlash aria-hidden="true" /> Praktyka
-        </span>
+          <BsCodeSlash aria-hidden="true" />{" "}{t("Praktyka")}</span>
         <span>
-          <BsLayers aria-hidden="true" /> Kolejny krok
-        </span>
+          <BsLayers aria-hidden="true" />{" "}{t("Kolejny krok")}</span>
       </div>
     </section>
   );
 }
 function JavaOffer() {
+    const { t, dateLocale } = useLocale();
   const { offer, loading, error } = usePublicJavaOffer();
   const plans = getPublicOfferPlans(offer);
   return (
     <aside
       className="eh-course-access"
-      aria-label="Aktualny dostęp do kursu Java"
+      aria-label={t("Aktualny dostęp do kursu Java")}
     >
-      <p className="eh-small-label">TWÓJ KOLEJNY KROK</p>
-      <h3>Zacznij od solidnych podstaw.</h3>
-      <p>
-        Sprawdź program i wybierz wariant dostępu, który pasuje do Twojej nauki.
-      </p>
+      <p className="eh-small-label">{t("TWÓJ KOLEJNY KROK")}</p>
+      <h3>{t("Zacznij od solidnych podstaw.")}</h3>
+      <p>{t("Sprawdź program i wybierz wariant dostępu, który pasuje do Twojej nauki.")}</p>
       <div className="eh-live-offer" aria-live="polite">
         {loading ? (
-          <p role="status" className="eh-offer-status">
-            Pobieranie aktualnej oferty…
-          </p>
+          <p role="status" className="eh-offer-status">{t("Pobieranie aktualnej oferty…")}</p>
         ) : error || !plans.length ? (
-          <p className="eh-offer-status">
-            Aktualne warunki dostępu sprawdzisz na stronie kursu.
-          </p>
+          <p className="eh-offer-status">{t("Aktualne warunki dostępu sprawdzisz na stronie kursu.")}</p>
         ) : (
           plans.map((plan) => (
             <div className="eh-price-row" key={plan.id}>
-              <span>{plan.title}</span>
+              <span>{t(plan.title)}</span>
               <strong>
-                {formatOfferPrice(plan.price)}
-                {plan.id === "SUBSCRIPTION" && <small> / mies.</small>}
+                {formatOfferPrice(plan.price, dateLocale)}
+                {plan.id === "SUBSCRIPTION" && <small>{" "}{t("/ mies.")}</small>}
               </strong>
             </div>
           ))
         )}
       </div>
-      <CourseLink>Program i dostęp do kursu</CourseLink>
-      <p className="eh-access-note">
-        Materiały są udostępniane etapami. Założenie konta nie uruchamia
-        płatności.
-      </p>
+      <CourseLink>{t("Program i dostęp do kursu")}</CourseLink>
+      <p className="eh-access-note">{t("Materiały są udostępniane etapami. Założenie konta nie uruchamia płatności.")}</p>
     </aside>
   );
 }
 export default function LandingPage() {
+    const { t } = useLocale();
   const [menuOpen, setMenuOpen] = useState(false);
   const [pathFilter, setPathFilter] = useState("all");
   const paths = LEARNING_PATHS.filter(
@@ -276,13 +265,10 @@ export default function LandingPage() {
   const closeMenu = () => setMenuOpen(false);
   return (
     <div className="eh-home" id="start">
-      <a className="eh-skip-link" href="#eh-main">
-        Przejdź do treści
-      </a>
+      <a className="eh-skip-link" href="#eh-main">{t("Przejdź do treści")}</a>
       <div className="eh-announcement">
-        <span>Nauka zaczyna się od praktyki.</span>
-        <Link reloadDocument to={JAVA_COURSE_PATH}>
-          Odkryj Java Backend Developer <BsArrowRight aria-hidden="true" />
+        <span>{t("Nauka zaczyna się od praktyki.")}</span>
+        <Link reloadDocument to={JAVA_COURSE_PATH}>{t("Odkryj Java Backend Developer")}{" "}<BsArrowRight aria-hidden="true" />
         </Link>
       </div>
       <header
@@ -299,45 +285,30 @@ export default function LandingPage() {
           <nav
             id="eh-navigation"
             className={"eh-navigation" + (menuOpen ? " is-open" : "")}
-            aria-label="Główna nawigacja"
+            aria-label={t("Główna nawigacja")}
           >
-            <Link reloadDocument to={JAVA_COURSE_PATH} onClick={closeMenu}>
-              Kurs Java
-            </Link>
-            <a href="#metoda" onClick={closeMenu}>
-              Jak uczymy
-            </a>
-            <a href="#sciezki" onClick={closeMenu}>
-              Ścieżki nauki
-            </a>
-            <a href="#korepetycje" onClick={closeMenu}>
-              Korepetycje
-            </a>
-            <a href="#faq" onClick={closeMenu}>
-              FAQ
-            </a>
+            <Link reloadDocument to={JAVA_COURSE_PATH} onClick={closeMenu}>{t("Kurs Java")}</Link>
+            <a href="#metoda" onClick={closeMenu}>{t("Jak uczymy")}</a>
+            <a href="#sciezki" onClick={closeMenu}>{t("Ścieżki nauki")}</a>
+            <a href="#korepetycje" onClick={closeMenu}>{t("Korepetycje")}</a>
+            <a href="#faq" onClick={closeMenu}>{t("FAQ")}</a>
             <Link
               reloadDocument
               to="/login"
               className="eh-mobile-login"
               onClick={closeMenu}
-            >
-              Zaloguj się
-            </Link>
+            >{t("Zaloguj się")}</Link>
           </nav>
           <div className="eh-nav-actions">
-            <Link reloadDocument to="/login" className="eh-login-link">
-              Zaloguj się
-            </Link>
-            <Link reloadDocument to="/register" className="eh-nav-register">
-              Załóż konto <BsArrowUpRight aria-hidden="true" />
+            <Link reloadDocument to="/login" className="eh-login-link">{t("Zaloguj się")}</Link>
+            <Link reloadDocument to="/register" className="eh-nav-register">{t("Załóż konto")}{" "}<BsArrowUpRight aria-hidden="true" />
             </Link>
             <button
               type="button"
               className="eh-menu-toggle"
               aria-expanded={menuOpen}
               aria-controls="eh-navigation"
-              aria-label={menuOpen ? "Zamknij menu" : "Otwórz menu"}
+              aria-label={menuOpen ? t("Zamknij menu") : t("Otwórz menu")}
               onClick={() => setMenuOpen(!menuOpen)}
               onKeyDown={(event) => {
                 if (event.key === "Escape") setMenuOpen(false);
@@ -347,6 +318,9 @@ export default function LandingPage() {
             </button>
           </div>
         </div>
+        <div className="eh-container" style={{ display: "flex", justifyContent: "flex-end", paddingBottom: 8 }}>
+          <LocaleControls compact />
+        </div>
       </header>
       <main id="eh-main">
         <section
@@ -355,47 +329,31 @@ export default function LandingPage() {
         >
           <div className="eh-hero-copy">
             <p className="eh-eyebrow">
-              <span /> TWOJA DROGA DO PROGRAMOWANIA
-            </p>
-            <h1 id="eh-hero-title">
-              Naucz się Javy.
-              <br />
-              <span>Zrób pierwszy krok.</span>
+              <span />{" "}{t("TWOJA DROGA DO PROGRAMOWANIA")}</p>
+            <h1 id="eh-hero-title">{t("Naucz się Javy.")}<br />
+              <span>{t("Zrób pierwszy krok.")}</span>
             </h1>
-            <p className="eh-hero-lead">
-              Od pierwszej linijki kodu do samodzielnych rozwiązań. Poznaj kurs{" "}
-              <strong>Java Backend Developer</strong> — uporządkowany plan,
-              praktyczne zadania i naukę we własnym tempie.
-            </p>
+            <p className="eh-hero-lead">{t("Od pierwszej linijki kodu do samodzielnych rozwiązań. Poznaj kurs")}{" "}
+              <strong>Java Backend Developer</strong>{" "}{t("— uporządkowany plan, praktyczne zadania i naukę we własnym tempie.")}</p>
             <div className="eh-hero-actions">
               <CourseLink />
               <a className="eh-demo-link" href="#wyprobuj">
                 <span>
                   <BsPlayFill aria-hidden="true" />
-                </span>
-                Wypróbuj zadanie
-              </a>
+                </span>{t("Wypróbuj zadanie")}</a>
             </div>
             <ul className="eh-hero-promises">
               <li>
-                <BsCheck2 aria-hidden="true" />
-                Od podstaw
-              </li>
+                <BsCheck2 aria-hidden="true" />{t("Od podstaw")}</li>
               <li>
-                <BsCheck2 aria-hidden="true" />
-                Ćwiczenia z kodem
-              </li>
+                <BsCheck2 aria-hidden="true" />{t("Ćwiczenia z kodem")}</li>
               <li>
-                <BsCheck2 aria-hidden="true" />
-                Postęp na koncie
-              </li>
+                <BsCheck2 aria-hidden="true" />{t("Postęp na koncie")}</li>
             </ul>
             <div className="eh-hero-note">
               <span className="eh-note-line" />
-              <p>
-                Przeczytaj. Napisz. Sprawdź.
-                <br />
-                <strong>Zrozum, dlaczego Twój kod działa.</strong>
+              <p>{t("Przeczytaj. Napisz. Sprawdź.")}<br />
+                <strong>{t("Zrozum, dlaczego Twój kod działa.")}</strong>
               </p>
             </div>
           </div>
@@ -403,9 +361,9 @@ export default function LandingPage() {
         </section>
         <div
           className="eh-foundations eh-container"
-          aria-label="Początek programu kursu Java"
+          aria-label={t("Początek programu kursu Java")}
         >
-          <span className="eh-foundations-label">SOLIDNY POCZĄTEK</span>
+          <span className="eh-foundations-label">{t("SOLIDNY POCZĄTEK")}</span>
           {[
             ["01", "Java i JVM"],
             ["02", "Pierwszy program"],
@@ -414,7 +372,7 @@ export default function LandingPage() {
           ].map(([number, text]) => (
             <span key={number}>
               <small>{number}</small>
-              {text}
+              {t(text)}
             </span>
           ))}
         </div>
@@ -425,60 +383,39 @@ export default function LandingPage() {
         >
           <div className="eh-container">
             <div className="eh-section-intro">
-              <p className="eh-eyebrow">JEDEN KURS. UPORZĄDKOWANA ŚCIEŻKA.</p>
+              <p className="eh-eyebrow">{t("JEDEN KURS. UPORZĄDKOWANA ŚCIEŻKA.")}</p>
               <div className="eh-section-heading">
-                <h2 id="eh-course-title">
-                  Twoja nauka Javy
-                  <br />
-                  ma teraz swój kierunek.
-                </h2>
-                <p>
-                  Nie musisz samodzielnie układać kolejności tematów. Zacznij od
-                  środowiska pracy, poznaj język i ćwicz to, czego właśnie się
-                  uczysz.
-                </p>
+                <h2 id="eh-course-title">{t("Twoja nauka Javy")}<br />{t("ma teraz swój kierunek.")}</h2>
+                <p>{t("Nie musisz samodzielnie układać kolejności tematów. Zacznij od środowiska pracy, poznaj język i ćwicz to, czego właśnie się uczysz.")}</p>
               </div>
             </div>
             <div className="eh-course-feature">
               <div className="eh-course-details">
                 <div className="eh-course-tag">
-                  <BsCodeSlash aria-hidden="true" /> KURS ONLINE{" "}
-                  <span>DLA POCZĄTKUJĄCYCH</span>
+                  <BsCodeSlash aria-hidden="true" />{" "}{t("KURS ONLINE")}{" "}
+                  <span>{t("DLA POCZĄTKUJĄCYCH")}</span>
                 </div>
                 <h3>
                   Java Backend
                   <br />
                   Developer<span>.</span>
                 </h3>
-                <p>
-                  Pojęcia stają się zrozumiałe, kiedy używasz ich w kodzie. W
-                  EduHub przechodzisz od materiału lekcji do własnego
-                  rozwiązania i informacji zwrotnej.
-                </p>
+                <p>{t("Pojęcia stają się zrozumiałe, kiedy używasz ich w kodzie. W EduHub przechodzisz od materiału lekcji do własnego rozwiązania i informacji zwrotnej.")}</p>
                 <ul className="eh-course-topics">
                   <li>
-                    <BsCheckCircleFill aria-hidden="true" /> JDK, JVM i
-                    konfiguracja środowiska
-                  </li>
+                    <BsCheckCircleFill aria-hidden="true" />{" "}{t("JDK, JVM i konfiguracja środowiska")}</li>
                   <li>
-                    <BsCheckCircleFill aria-hidden="true" /> Pierwszy program i
-                    praca w IntelliJ IDEA
-                  </li>
+                    <BsCheckCircleFill aria-hidden="true" />{" "}{t("Pierwszy program i praca w IntelliJ IDEA")}</li>
                   <li>
-                    <BsCheckCircleFill aria-hidden="true" /> Zmienne, typy
-                    danych i operatory
-                  </li>
+                    <BsCheckCircleFill aria-hidden="true" />{" "}{t("Zmienne, typy danych i operatory")}</li>
                   <li>
-                    <BsCheckCircleFill aria-hidden="true" /> Git, GitHub i
-                    czytelny kod
-                  </li>
+                    <BsCheckCircleFill aria-hidden="true" />{" "}{t("Git, GitHub i czytelny kod")}</li>
                 </ul>
                 <Link
                   reloadDocument
                   className="eh-inline-link"
                   to={JAVA_COURSE_PATH}
-                >
-                  Zobacz program kursu <BsArrowRight aria-hidden="true" />
+                >{t("Zobacz program kursu")}{" "}<BsArrowRight aria-hidden="true" />
                 </Link>
               </div>
               <JavaOffer />
@@ -491,17 +428,10 @@ export default function LandingPage() {
           aria-labelledby="eh-method-title"
         >
           <div className="eh-section-intro">
-            <p className="eh-eyebrow">MAŁE KROKI. KONKRETNA PRAKTYKA.</p>
+            <p className="eh-eyebrow">{t("MAŁE KROKI. KONKRETNA PRAKTYKA.")}</p>
             <div className="eh-section-heading">
-              <h2 id="eh-method-title">
-                Uczysz się.
-                <br />
-                Od razu sprawdzasz.
-              </h2>
-              <p>
-                Każda kolejna rzecz ma swoje miejsce. Wracasz do materiału,
-                poprawiasz rozwiązanie i budujesz samodzielność.
-              </p>
+              <h2 id="eh-method-title">{t("Uczysz się.")}<br />{t("Od razu sprawdzasz.")}</h2>
+              <p>{t("Każda kolejna rzecz ma swoje miejsce. Wracasz do materiału, poprawiasz rozwiązanie i budujesz samodzielność.")}</p>
             </div>
           </div>
           <ol className="eh-method-steps">
@@ -536,20 +466,16 @@ export default function LandingPage() {
                   <span>{number}</span>
                   <Icon aria-hidden="true" />
                 </div>
-                <h3>{title}</h3>
-                <p>{text}</p>
+                <h3>{t(title)}</h3>
+                <p>{t(text)}</p>
               </li>
             ))}
           </ol>
           <div className="eh-learning-note">
             <BsBook aria-hidden="true" />
             <p>
-              <strong>Twoje tempo jest w porządku.</strong> Materiały
-              przeglądasz wtedy, kiedy masz przestrzeń na naukę. Wróć do
-              trudniejszego tematu i przejdź dalej, gdy go zrozumiesz.
-            </p>
-            <a href="#wyprobuj" className="eh-inline-link">
-              Sprawdź przykład <BsArrowRight aria-hidden="true" />
+              <strong>{t("Twoje tempo jest w porządku.")}</strong>{" "}{t("Materiały przeglądasz wtedy, kiedy masz przestrzeń na naukę. Wróć do trudniejszego tematu i przejdź dalej, gdy go zrozumiesz.")}</p>
+            <a href="#wyprobuj" className="eh-inline-link">{t("Sprawdź przykład")}{" "}<BsArrowRight aria-hidden="true" />
             </a>
           </div>
         </section>
@@ -560,23 +486,16 @@ export default function LandingPage() {
         >
           <div className="eh-container">
             <div className="eh-section-intro">
-              <p className="eh-eyebrow">WYBIERZ SWÓJ CEL</p>
+              <p className="eh-eyebrow">{t("WYBIERZ SWÓJ CEL")}</p>
               <div className="eh-section-heading">
-                <h2 id="eh-paths-title">
-                  Programowanie?
-                  <br />A może egzamin?
-                </h2>
-                <p>
-                  Kurs Java to główna ścieżka EduHub. Jeśli uczysz się w
-                  technikum, sprawdź też materiały i przygotowanie do
-                  kwalifikacji zawodowych.
-                </p>
+                <h2 id="eh-paths-title">{t("Programowanie?")}<br />{t("A może egzamin?")}</h2>
+                <p>{t("Kurs Java to główna ścieżka EduHub. Jeśli uczysz się w technikum, sprawdź też materiały i przygotowanie do kwalifikacji zawodowych.")}</p>
               </div>
             </div>
             <div
               className="eh-path-filters"
               role="group"
-              aria-label="Filtruj ścieżki nauki"
+              aria-label={t("Filtruj ścieżki nauki")}
             >
               {[
                 ["all", "Wszystkie ścieżki"],
@@ -589,7 +508,7 @@ export default function LandingPage() {
                   aria-pressed={pathFilter === id}
                   onClick={() => setPathFilter(id)}
                 >
-                  {label}
+                  {t(label)}
                 </button>
               ))}
             </div>
@@ -609,12 +528,12 @@ export default function LandingPage() {
                     <i />
                   </div>
                   <div className="eh-path-body">
-                    <p className="eh-path-type">{path.type}</p>
+                    <p className="eh-path-type">{t(path.type)}</p>
                     <h3>{path.title}</h3>
-                    <p>{path.description}</p>
+                    <p>{t(path.description)}</p>
                     <ul>
                       {path.tags.map((tag) => (
-                        <li key={tag}>{tag}</li>
+                        <li key={tag}>{t(tag)}</li>
                       ))}
                     </ul>
                     <Link
@@ -622,17 +541,14 @@ export default function LandingPage() {
                       className="eh-path-link"
                       to={path.href}
                     >
-                      {path.cta}
+                      {t(path.cta)}
                       <BsArrowUpRight aria-hidden="true" />
                     </Link>
                   </div>
                 </article>
               ))}
             </div>
-            <p className="eh-path-note">
-              Program i ceny kursu Java są publiczne. Pozostałe materiały i
-              warunki dostępu sprawdzisz po zalogowaniu na platformę.
-            </p>
+            <p className="eh-path-note">{t("Program i ceny kursu Java są publiczne. Pozostałe materiały i warunki dostępu sprawdzisz po zalogowaniu na platformę.")}</p>
           </div>
         </section>
         <section
@@ -642,61 +558,48 @@ export default function LandingPage() {
         >
           <div className="eh-tutoring">
             <div className="eh-tutoring-copy">
-              <p className="eh-eyebrow">CZASEM WYSTARCZY DOBRE WYJAŚNIENIE</p>
-              <h2 id="eh-tutoring-title">
-                Utknąłeś w zadaniu?
-                <br />
-                Przejdźmy przez nie razem.
-              </h2>
-              <p>
-                Indywidualne korepetycje online z informatyki i programowania.
-                Przyjdź z pytaniem z Javy, SQL, zadaniem szkolnym albo tematem
-                do egzaminu.
-              </p>
+              <p className="eh-eyebrow">{t("CZASEM WYSTARCZY DOBRE WYJAŚNIENIE")}</p>
+              <h2 id="eh-tutoring-title">{t("Utknąłeś w zadaniu?")}<br />{t("Przejdźmy przez nie razem.")}</h2>
+              <p>{t("Indywidualne korepetycje online z informatyki i programowania. Przyjdź z pytaniem z Javy, SQL, zadaniem szkolnym albo tematem do egzaminu.")}</p>
               <Link
                 reloadDocument
                 to="/tutoring-booking"
                 className="eh-button eh-button-primary"
-              >
-                Sprawdź dostępne terminy <BsCalendarCheck aria-hidden="true" />
+              >{t("Sprawdź dostępne terminy")}{" "}<BsCalendarCheck aria-hidden="true" />
               </Link>
-              <span className="eh-tutoring-note">
-                Temat i termin wybierzesz na stronie rezerwacji.
-              </span>
+              <span className="eh-tutoring-note">{t("Temat i termin wybierzesz na stronie rezerwacji.")}</span>
             </div>
             <div className="eh-session-plan">
               <div className="eh-session-heading">
                 <BsCalendarCheck aria-hidden="true" />
-                <span>Jak wygląda rezerwacja</span>
+                <span>{t("Jak wygląda rezerwacja")}</span>
                 <span>1:1</span>
               </div>
               <ol>
                 <li>
                   <span>01</span>
                   <div>
-                    <h3>Znajdź swój termin</h3>
-                    <p>Zobacz dostępne godziny w kalendarzu.</p>
+                    <h3>{t("Znajdź swój termin")}</h3>
+                    <p>{t("Zobacz dostępne godziny w kalendarzu.")}</p>
                   </div>
                 </li>
                 <li>
                   <span>02</span>
                   <div>
-                    <h3>Opisz, nad czym pracujesz</h3>
-                    <p>Podaj temat, zadanie lub zagadnienie do wyjaśnienia.</p>
+                    <h3>{t("Opisz, nad czym pracujesz")}</h3>
+                    <p>{t("Podaj temat, zadanie lub zagadnienie do wyjaśnienia.")}</p>
                   </div>
                 </li>
                 <li>
                   <span>03</span>
                   <div>
-                    <h3>Przygotuj się do spotkania</h3>
-                    <p>Dokończ rezerwację zgodnie z instrukcjami.</p>
+                    <h3>{t("Przygotuj się do spotkania")}</h3>
+                    <p>{t("Dokończ rezerwację zgodnie z instrukcjami.")}</p>
                   </div>
                 </li>
               </ol>
               <p>
-                <BsCodeSlash aria-hidden="true" /> Java · SQL · INF.02 · INF.03
-                · INF.04
-              </p>
+                <BsCodeSlash aria-hidden="true" />{" "}{t("Java · SQL · INF.02 · INF.03 · INF.04")}</p>
             </div>
           </div>
         </section>
@@ -708,21 +611,16 @@ export default function LandingPage() {
             JM<span>&lt;/&gt;</span>
           </div>
           <div>
-            <p className="eh-eyebrow">AUTORSKA PLATFORMA EDUKACYJNA</p>
-            <h2 id="eh-creator-title">Zbudowana z myślą o praktyce.</h2>
-            <p>
-              EduHub to projekt Jakuba Marcinkowskiego — miejsce łączące
-              materiały do nauki, zadania i własną platformę. Chcesz poznać
-              twórcę lub zobaczyć inne projekty?
-            </p>
+            <p className="eh-eyebrow">{t("AUTORSKA PLATFORMA EDUKACYJNA")}</p>
+            <h2 id="eh-creator-title">{t("Zbudowana z myślą o praktyce.")}</h2>
+            <p>{t("EduHub to projekt Jakuba Marcinkowskiego — miejsce łączące materiały do nauki, zadania i własną platformę. Chcesz poznać twórcę lub zobaczyć inne projekty?")}</p>
           </div>
           <a
             className="eh-inline-link"
             href="https://kui3us.github.io/portfolio/"
             target="_blank"
             rel="noopener noreferrer"
-          >
-            Poznaj twórcę <BsArrowUpRight aria-hidden="true" />
+          >{t("Poznaj twórcę")}{" "}<BsArrowUpRight aria-hidden="true" />
           </a>
         </section>
         <section
@@ -732,23 +630,19 @@ export default function LandingPage() {
         >
           <div className="eh-container eh-faq-layout">
             <div className="eh-faq-intro">
-              <p className="eh-eyebrow">DOBRZE WIEDZIEĆ NA START</p>
-              <h2 id="eh-faq-title">
-                Masz pytania?
-                <br />
-                Zacznij tutaj.
-              </h2>
-              <p>Najważniejsze informacje o kursie, koncie i sposobie nauki.</p>
-              <CourseLink secondary>Sprawdź pełną ofertę Javy</CourseLink>
+              <p className="eh-eyebrow">{t("DOBRZE WIEDZIEĆ NA START")}</p>
+              <h2 id="eh-faq-title">{t("Masz pytania?")}<br />{t("Zacznij tutaj.")}</h2>
+              <p>{t("Najważniejsze informacje o kursie, koncie i sposobie nauki.")}</p>
+              <CourseLink secondary>{t("Sprawdź pełną ofertę Javy")}</CourseLink>
             </div>
             <div className="eh-faq-list">
               {HOME_FAQ.map((item) => (
                 <details key={item.question}>
                   <summary>
-                    {item.question}
+                    {t(item.question)}
                     <span aria-hidden="true">+</span>
                   </summary>
-                  <p>{item.answer}</p>
+                  <p>{t(item.answer)}</p>
                 </details>
               ))}
             </div>
@@ -759,24 +653,17 @@ export default function LandingPage() {
           aria-labelledby="eh-final-title"
         >
           <p className="eh-eyebrow">
-            <span /> TERAZ TWÓJ RUCH
-          </p>
-          <h2 id="eh-final-title">
-            Pierwsza linijka kodu.
-            <br />
-            <span>Twój kolejny krok.</span>
+            <span />{" "}{t("TERAZ TWÓJ RUCH")}</p>
+          <h2 id="eh-final-title">{t("Pierwsza linijka kodu.")}<br />
+            <span>{t("Twój kolejny krok.")}</span>
           </h2>
-          <p>
-            Zobacz program, spróbuj ćwiczenia i zdecyduj, jak chcesz się uczyć.
-          </p>
+          <p>{t("Zobacz program, spróbuj ćwiczenia i zdecyduj, jak chcesz się uczyć.")}</p>
           <div>
-            <CourseLink>Poznaj Java Backend Developer</CourseLink>
-            <Link reloadDocument to="/register" className="eh-inline-link">
-              Załóż konto w EduHub <BsArrowRight aria-hidden="true" />
+            <CourseLink>{t("Poznaj Java Backend Developer")}</CourseLink>
+            <Link reloadDocument to="/register" className="eh-inline-link">{t("Załóż konto w EduHub")}{" "}<BsArrowRight aria-hidden="true" />
             </Link>
           </div>
-          <a className="eh-back-top" href="#start">
-            Wróć na górę <BsArrowDown aria-hidden="true" />
+          <a className="eh-back-top" href="#start">{t("Wróć na górę")}{" "}<BsArrowDown aria-hidden="true" />
           </a>
         </section>
       </main>
@@ -785,43 +672,30 @@ export default function LandingPage() {
           <div className="eh-footer-top">
             <div className="eh-footer-brand">
               <Brand footer />
-              <p>
-                Programowanie zaczyna się od zrozumienia.
-                <br />
-                Ucz się. Próbuj. Twórz.
-              </p>
+              <p>{t("Programowanie zaczyna się od zrozumienia.")}<br />{t("Ucz się. Próbuj. Twórz.")}</p>
             </div>
             <div>
-              <h2>Nauka</h2>
-              <Link reloadDocument to={JAVA_COURSE_PATH}>
-                Kurs Java Backend Developer
-              </Link>
-              <a href="#sciezki">Egzaminy zawodowe</a>
-              <a href="#metoda">Jak działa EduHub</a>
-              <a href="#wyprobuj">Wypróbuj zadanie</a>
+              <h2>{t("Nauka")}</h2>
+              <Link reloadDocument to={JAVA_COURSE_PATH}>{t("Kurs Java Backend Developer")}</Link>
+              <a href="#sciezki">{t("Egzaminy zawodowe")}</a>
+              <a href="#metoda">{t("Jak działa EduHub")}</a>
+              <a href="#wyprobuj">{t("Wypróbuj zadanie")}</a>
             </div>
             <div>
               <h2>EduHub</h2>
-              <Link reloadDocument to="/login">
-                Logowanie
-              </Link>
-              <Link reloadDocument to="/register">
-                Załóż konto
-              </Link>
-              <Link reloadDocument to="/tutoring-booking">
-                Korepetycje online
-              </Link>
-              <a href="#faq">Pytania i odpowiedzi</a>
-              <Link reloadDocument to="/pomoc">Pomoc i kontakt</Link>
+              <Link reloadDocument to="/login">{t("Logowanie")}</Link>
+              <Link reloadDocument to="/register">{t("Załóż konto")}</Link>
+              <Link reloadDocument to="/tutoring-booking">{t("Korepetycje online")}</Link>
+              <a href="#faq">{t("Pytania i odpowiedzi")}</a>
+              <Link reloadDocument to="/pomoc">{t("Pomoc i kontakt")}</Link>
             </div>
             <div>
-              <h2>Poznaj twórcę</h2>
+              <h2>{t("Poznaj twórcę")}</h2>
               <a
                 href="https://kui3us.github.io/portfolio/"
                 target="_blank"
                 rel="noopener noreferrer"
-              >
-                Portfolio <BsArrowUpRight aria-hidden="true" />
+              >{t("Portfolio")}{" "}<BsArrowUpRight aria-hidden="true" />
               </a>
               <a
                 href="https://github.com/KuI3uS"
@@ -841,9 +715,8 @@ export default function LandingPage() {
           </div>
           <div className="eh-footer-bottom">
             <span>
-              © {new Date().getFullYear()} EduHub. Wszystkie prawa zastrzeżone.
-            </span>
-            <span>Java · Praktyka · Rozwój</span>
+              © {new Date().getFullYear()}{" "}{t("EduHub. Wszystkie prawa zastrzeżone.")}</span>
+            <span>{t("Java · Praktyka · Rozwój")}</span>
           </div>
         </div>
       </footer>

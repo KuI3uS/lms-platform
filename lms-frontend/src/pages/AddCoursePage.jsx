@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -57,6 +58,7 @@ function getErrorMessage(error) {
 }
 
 export default function AddCoursePage() {
+    const { t } = useLocale();
     const { courseId } = useParams();
     const navigate = useNavigate();
     const isEditing = Boolean(courseId);
@@ -199,9 +201,7 @@ export default function AddCoursePage() {
                 onClick={() => navigate("/courses")}
                 className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-slate-400 transition hover:bg-white/5 hover:text-white"
             >
-                <BsArrowLeft />
-                Wróć do kursów
-            </button>
+                <BsArrowLeft />{t("Wróć do kursów")}</button>
 
             <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] shadow-2xl shadow-black/20">
                 <header className="border-b border-white/10 p-6 sm:p-8">
@@ -210,15 +210,11 @@ export default function AddCoursePage() {
                             <BsCollection size={30} />
                         </div>
                         <div>
-                            <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">
-                                EduHub Creator
-                            </p>
+                            <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">{t("EduHub Creator")}</p>
                             <h1 className="mt-2 text-3xl font-black sm:text-4xl">
-                                {isEditing ? "Edytuj kurs" : "Nowy kurs"}
+                                {isEditing ? t("Edytuj kurs") : t("Nowy kurs")}
                             </h1>
-                            <p className="mt-2 max-w-2xl text-slate-400">
-                                Uzupełnij informacje widoczne dla uczniów. Moduły i lekcje dodasz po zapisaniu kursu.
-                            </p>
+                            <p className="mt-2 max-w-2xl text-slate-400">{t("Uzupełnij informacje widoczne dla uczniów. Moduły i lekcje dodasz po zapisaniu kursu.")}</p>
                         </div>
                     </div>
                 </header>
@@ -232,10 +228,8 @@ export default function AddCoursePage() {
                         )}
 
                         <fieldset>
-                            <legend className="text-sm font-bold text-slate-300">Rodzaj ścieżki nauki</legend>
-                            <p className="mt-1 text-xs leading-5 text-slate-500">
-                                Kategoria decyduje, w której części katalogu pojawi się kurs i jak będzie wyglądał certyfikat.
-                            </p>
+                            <legend className="text-sm font-bold text-slate-300">{t("Rodzaj ścieżki nauki")}</legend>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">{t("Kategoria decyduje, w której części katalogu pojawi się kurs i jak będzie wyglądał certyfikat.")}</p>
                             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                                 {COURSE_CATEGORIES.map((category) => {
                                     const Icon = category.value === "LANGUAGE"
@@ -267,9 +261,9 @@ export default function AddCoursePage() {
                                                 onChange={updateField}
                                             />
                                             <Icon className={selected ? "text-cyan-300" : "text-slate-500"} size={22} />
-                                            <span className="mt-3 block text-sm font-black">{category.label}</span>
+                                            <span className="mt-3 block text-sm font-black">{t(category.label)}</span>
                                             <span className="mt-1 block text-xs leading-5 text-slate-500">
-                                                {category.description}
+                                                {t(category.description)}
                                             </span>
                                         </label>
                                     );
@@ -280,33 +274,32 @@ export default function AddCoursePage() {
                         <div className="grid gap-5 sm:grid-cols-2">
                             <label className="space-y-2">
                                 <span className="flex items-center gap-2 text-sm font-bold text-slate-300">
-                                    <BsBookHalf /> Nazwa kursu
-                                </span>
+                                    <BsBookHalf />{t(" Nazwa kursu")}</span>
                                 <input
                                     name="name"
                                     value={course.name}
                                     onChange={updateField}
-                                    placeholder="np. INF.03"
+                                    placeholder={t("np. INF.03")}
                                     className={fieldClass}
                                     required
                                 />
                             </label>
 
                             <label className="space-y-2">
-                                <span className="text-sm font-bold text-slate-300">Tytuł wyświetlany</span>
+                                <span className="text-sm font-bold text-slate-300">{t("Tytuł wyświetlany")}</span>
                                 <input
                                     name="title"
                                     value={course.title}
                                     onChange={updateField}
-                                    placeholder="np. Tworzenie aplikacji webowych"
+                                    placeholder={t("np. Tworzenie aplikacji webowych")}
                                     className={fieldClass}
                                 />
                             </label>
                         </div>
 
                         <fieldset>
-                            <legend className="text-sm font-bold text-slate-300">Sposób dostępu do kursu</legend>
-                            <p className="mt-1 text-xs leading-5 text-slate-500">Możesz udostępnić kurs bezpłatnie, jednorazowo, w abonamencie lub dać uczniowi wybór.</p>
+                            <legend className="text-sm font-bold text-slate-300">{t("Sposób dostępu do kursu")}</legend>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">{t("Możesz udostępnić kurs bezpłatnie, jednorazowo, w abonamencie lub dać uczniowi wybór.")}</p>
                             <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
                                 {[
                                     ["FREE", "Bezpłatny", "Dostęp bez płatności"],
@@ -326,26 +319,26 @@ export default function AddCoursePage() {
 
                         {(course.billingMode === "ONE_TIME" || course.billingMode === "FLEXIBLE") && (
                             <label className="block space-y-2">
-                                <span className="text-sm font-bold text-slate-300">Link do płatności jednorazowej</span>
-                                <input name="paymentUrl" type="url" value={course.paymentUrl} onChange={updateField} placeholder="https://checkout.revolut.com/pay/..." className={fieldClass} />
+                                <span className="text-sm font-bold text-slate-300">{t("Link do płatności jednorazowej")}</span>
+                                <input name="paymentUrl" type="url" value={course.paymentUrl} onChange={updateField} placeholder={t("https://checkout.revolut.com/pay/...")} className={fieldClass} />
                             </label>
                         )}
 
                         {(course.billingMode === "SUBSCRIPTION" || course.billingMode === "FLEXIBLE") && (
                             <label className="block space-y-2">
-                                <span className="text-sm font-bold text-slate-300">Link do płatności miesięcznej</span>
-                                <input name="monthlyPaymentUrl" type="url" value={course.monthlyPaymentUrl} onChange={updateField} placeholder="https://checkout.revolut.com/pay/..." className={fieldClass} />
-                                <span className="block text-xs leading-5 text-slate-500">Po zatwierdzeniu płatności dostęp będzie aktywny przez jeden miesiąc.</span>
+                                <span className="text-sm font-bold text-slate-300">{t("Link do płatności miesięcznej")}</span>
+                                <input name="monthlyPaymentUrl" type="url" value={course.monthlyPaymentUrl} onChange={updateField} placeholder={t("https://checkout.revolut.com/pay/...")} className={fieldClass} />
+                                <span className="block text-xs leading-5 text-slate-500">{t("Po zatwierdzeniu płatności dostęp będzie aktywny przez jeden miesiąc.")}</span>
                             </label>
                         )}
 
                         <label className="block space-y-2">
-                            <span className="text-sm font-bold text-slate-300">Opis</span>
+                            <span className="text-sm font-bold text-slate-300">{t("Opis")}</span>
                             <textarea
                                 name="description"
                                 value={course.description}
                                 onChange={updateField}
-                                placeholder="Krótko opisz, czego uczeń nauczy się w tym kursie."
+                                placeholder={t("Krótko opisz, czego uczeń nauczy się w tym kursie.")}
                                 rows={5}
                                 className={`${fieldClass} resize-y`}
                             />
@@ -355,7 +348,7 @@ export default function AddCoursePage() {
                             {course.category === "LANGUAGE" ? (
                                 <>
                                     <label className="space-y-2">
-                                        <span className="text-sm font-bold text-slate-300">Język</span>
+                                        <span className="text-sm font-bold text-slate-300">{t("Język")}</span>
                                         <select
                                             name="courseLanguage"
                                             value={course.courseLanguage}
@@ -364,13 +357,13 @@ export default function AddCoursePage() {
                                         >
                                             {COURSE_LANGUAGES.map((language) => (
                                                 <option key={language.value} value={language.value}>
-                                                    {language.label}
+                                                    {t(language.label)}
                                                 </option>
                                             ))}
                                         </select>
                                     </label>
                                     <label className="space-y-2">
-                                        <span className="text-sm font-bold text-slate-300">Poziom początkowy</span>
+                                        <span className="text-sm font-bold text-slate-300">{t("Poziom początkowy")}</span>
                                         <select
                                             name="cefrLevel"
                                             value={course.cefrLevel}
@@ -383,7 +376,7 @@ export default function AddCoursePage() {
                                         </select>
                                     </label>
                                     <label className="space-y-2">
-                                        <span className="text-sm font-bold text-slate-300">Poziom końcowy</span>
+                                        <span className="text-sm font-bold text-slate-300">{t("Poziom końcowy")}</span>
                                         <select
                                             name="cefrEndLevel"
                                             value={course.cefrEndLevel}
@@ -400,7 +393,7 @@ export default function AddCoursePage() {
                                 </>
                             ) : course.category === "SCHOOL" ? (
                                 <label className="space-y-2">
-                                    <span className="text-sm font-bold text-slate-300">Klasa</span>
+                                    <span className="text-sm font-bold text-slate-300">{t("Klasa")}</span>
                                     <select
                                         name="level"
                                         value={course.level}
@@ -414,7 +407,7 @@ export default function AddCoursePage() {
                                 </label>
                             ) : course.category === "UNIVERSITY" ? (
                                 <label className="space-y-2">
-                                    <span className="text-sm font-bold text-slate-300">Poziom studiów</span>
+                                    <span className="text-sm font-bold text-slate-300">{t("Poziom studiów")}</span>
                                     <select
                                         name="level"
                                         value={course.level}
@@ -428,47 +421,45 @@ export default function AddCoursePage() {
                                 </label>
                             ) : (
                                 <label className="space-y-2">
-                                    <span className="text-sm font-bold text-slate-300">Poziom</span>
+                                    <span className="text-sm font-bold text-slate-300">{t("Poziom")}</span>
                                     <select
                                         name="level"
                                         value={course.level}
                                         onChange={updateField}
                                         className={fieldClass}
                                     >
-                                        <option>Podstawy</option>
-                                        <option>Średniozaawansowany</option>
-                                        <option>Zaawansowany</option>
+                                        <option value="Podstawy">{t("Podstawy")}</option>
+                                        <option value="Średniozaawansowany">{t("Średniozaawansowany")}</option>
+                                        <option value="Zaawansowany">{t("Zaawansowany")}</option>
                                     </select>
                                 </label>
                             )}
 
                             {(course.billingMode === "ONE_TIME" || course.billingMode === "FLEXIBLE" || course.billingMode === "MONTHLY_OPTIONS") && (
                                 <label className="space-y-2">
-                                    <span className="text-sm font-bold text-slate-300">{course.billingMode === "MONTHLY_OPTIONS" ? "Cena za 30 dni bez odnowienia (zł)" : "Cena jednorazowa (zł)"}</span>
+                                    <span className="text-sm font-bold text-slate-300">{course.billingMode === "MONTHLY_OPTIONS" ? t("Cena za 30 dni bez odnowienia (zł)") : t("Cena jednorazowa (zł)")}</span>
                                     <input name="price" type="number" min="0.01" step="0.01" value={course.price} onChange={updateField} className={fieldClass} />
                                 </label>
                             )}
                             {(course.billingMode === "SUBSCRIPTION" || course.billingMode === "FLEXIBLE" || course.billingMode === "MONTHLY_OPTIONS") && (
                                 <label className="space-y-2">
-                                    <span className="text-sm font-bold text-slate-300">Cena miesięczna (zł)</span>
+                                    <span className="text-sm font-bold text-slate-300">{t("Cena miesięczna (zł)")}</span>
                                     <input name="monthlyPrice" type="number" min="0.01" step="0.01" value={course.monthlyPrice} onChange={updateField} className={fieldClass} />
                                 </label>
                             )}
                         </div>
 
                         <label className="block space-y-2">
-                            <span className="text-sm font-bold text-slate-300">Adres własnej okładki (opcjonalnie)</span>
+                            <span className="text-sm font-bold text-slate-300">{t("Adres własnej okładki (opcjonalnie)")}</span>
                             <input
                                 name="thumbnailUrl"
                                 type="url"
                                 value={course.thumbnailUrl}
                                 onChange={updateField}
-                                placeholder="https://..."
+                                placeholder={t("https://...")}
                                 className={fieldClass}
                             />
-                            <span className="block text-xs leading-5 text-slate-500">
-                                Bez adresu EduHub automatycznie dobierze przygotowaną okładkę na podstawie nazwy kursu.
-                            </span>
+                            <span className="block text-xs leading-5 text-slate-500">{t("Bez adresu EduHub automatycznie dobierze przygotowaną okładkę na podstawie nazwy kursu.")}</span>
                         </label>
 
                         <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
@@ -480,10 +471,8 @@ export default function AddCoursePage() {
                                 className="mt-1 h-4 w-4 accent-cyan-500"
                             />
                             <span>
-                                <span className="block font-bold">Opublikowany</span>
-                                <span className="mt-1 block text-sm text-slate-500">
-                                    Opublikowany kurs jest widoczny dla uczniów. Administrator zawsze widzi wszystkie kursy.
-                                </span>
+                                <span className="block font-bold">{t("Opublikowany")}</span>
+                                <span className="mt-1 block text-sm text-slate-500">{t("Opublikowany kurs jest widoczny dla uczniów. Administrator zawsze widzi wszystkie kursy.")}</span>
                             </span>
                         </label>
                     </div>
@@ -492,7 +481,7 @@ export default function AddCoursePage() {
                         <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950">
                             <img
                                 src={getCourseCover(course)}
-                                alt="Podgląd okładki kursu"
+                                alt={t("Podgląd okładki kursu")}
                                 onError={({ currentTarget }) => {
                                     currentTarget.onerror = null;
                                     currentTarget.src = getGeneratedCourseCover(course);
@@ -500,17 +489,17 @@ export default function AddCoursePage() {
                                 className="aspect-[3/2] w-full object-cover"
                             />
                             <div className="p-5">
-                                <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">Podgląd</p>
+                                <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">{t("Podgląd")}</p>
                                 <h2 className="mt-2 text-xl font-black">
-                                    {course.title || course.name || "Nazwa kursu"}
+                                    {course.title || course.name || t("Nazwa kursu")}
                                 </h2>
                                 <p className="mt-2 text-sm text-slate-500">
                                     {course.category === "LANGUAGE"
-                                        ? "Ścieżka językowa"
+                                        ? t("Ścieżka językowa")
                                         : course.category === "SCHOOL"
-                                            ? `Technikum · ${course.level}`
+                                            ? t("Technikum · {value0}", { value0: course.level })
                                             : course.category === "UNIVERSITY"
-                                                ? `Uczelnia · ${course.level}`
+                                                ? t("Uczelnia · {value0}", { value0: course.level })
                                                 : course.level}
                                 </p>
                                 {course.category === "LANGUAGE" && (
@@ -539,10 +528,10 @@ export default function AddCoursePage() {
                                 <BsCheckCircle size={19} />
                             )}
                             {saving
-                                ? "Zapisywanie..."
+                                ? t("Zapisywanie...")
                                 : isEditing
-                                    ? "Zapisz zmiany"
-                                    : "Utwórz kurs"}
+                                    ? t("Zapisz zmiany")
+                                    : t("Utwórz kurs")}
                         </button>
                     </aside>
                 </form>

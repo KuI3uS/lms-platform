@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useMemo, useState } from "react";
 import {
     BsCheckCircle,
@@ -10,6 +11,7 @@ import { useFeedback } from "../context/FeedbackContext";
 import { parseLessonPlan, previewLessonPlan, buildLessonPlanBatches } from "../utils/lessonPlanImport";
 
 export default function LessonPlanImport({ courseId, moduleCount, existingModules = [], onImported }) {
+    const { t } = useLocale();
     const { confirm, showToast } = useFeedback();
     const [open, setOpen] = useState(false);
     const [source, setSource] = useState("");
@@ -96,9 +98,7 @@ export default function LessonPlanImport({ courseId, moduleCount, existingModule
                 onClick={() => setOpen(true)}
                 className="flex w-full items-center justify-center gap-3 rounded-2xl border border-cyan-400/25 bg-cyan-500/[0.08] px-5 py-4 font-black text-cyan-200 transition hover:border-cyan-300/45 hover:bg-cyan-500/[0.14] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
             >
-                <BsCloudArrowUp className="text-xl" />
-                Importuj plan — utwórz etapy i szkielety lekcji
-            </button>
+                <BsCloudArrowUp className="text-xl" />{t("Importuj plan — utwórz etapy i szkielety lekcji")}</button>
         );
     }
 
@@ -106,19 +106,13 @@ export default function LessonPlanImport({ courseId, moduleCount, existingModule
         <section className="rounded-3xl border border-cyan-400/25 bg-gradient-to-br from-cyan-500/[0.09] via-slate-950 to-blue-500/[0.08] p-5 sm:p-7">
             <header className="flex items-start justify-between gap-5">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
-                        Import zbiorczy
-                    </p>
-                    <h2 className="mt-2 text-2xl font-black">
-                        Wklej cały plan etapów i lekcji
-                    </h2>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">
-                        Wklej „ETAP 1 — nazwa”, a pod nim „Lekcje: temat 1; temat 2; temat 3”. Ten import tworzy brakujące etapy i puste szkielety lekcji — także w pustym kursie. Bez limitu liczby etapów i tematów w całym planie: duże plany zapisujemy automatycznie partiami. Bloki uzupełnisz później importem wewnątrz etapu.
-                    </p>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">{t("Import zbiorczy")}</p>
+                    <h2 className="mt-2 text-2xl font-black">{t("Wklej cały plan etapów i lekcji")}</h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-400">{t("Wklej „ETAP 1 — nazwa”, a pod nim „Lekcje: temat 1; temat 2; temat 3”. Ten import tworzy brakujące etapy i puste szkielety lekcji — także w pustym kursie. Bez limitu liczby etapów i tematów w całym planie: duże plany zapisujemy automatycznie partiami. Bloki uzupełnisz później importem wewnątrz etapu.")}</p>
                 </div>
                 <button
                     type="button"
-                    aria-label="Zamknij import lekcji"
+                    aria-label={t("Zamknij import lekcji")}
                     onClick={() => setOpen(false)}
                     disabled={importing}
                     className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 text-gray-400 transition hover:bg-white/10 hover:text-white"
@@ -129,9 +123,7 @@ export default function LessonPlanImport({ courseId, moduleCount, existingModule
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
                 <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-black text-gray-200 transition hover:bg-white/10">
-                    <BsFileEarmarkText />
-                    Wczytaj plik .txt lub .md
-                    <input
+                    <BsFileEarmarkText />{t("Wczytaj plik .txt lub .md")}<input
                         type="file"
                         accept=".txt,.md,text/plain,text/markdown"
                         onChange={loadFile}
@@ -139,7 +131,7 @@ export default function LessonPlanImport({ courseId, moduleCount, existingModule
                         className="sr-only"
                     />
                 </label>
-                <span className="text-xs text-gray-500">albo wklej tekst poniżej</span>
+                <span className="text-xs text-gray-500">{t("albo wklej tekst poniżej")}</span>
             </div>
 
             <textarea
@@ -147,19 +139,19 @@ export default function LessonPlanImport({ courseId, moduleCount, existingModule
                 disabled={importing}
                 onChange={event => setSource(event.target.value)}
                 rows={14}
-                placeholder={'## ETAP 16 — Operatory warunkowe\nLekcje: Kilka kryteriów naraz; AND w praktyce; OR w praktyce'}
+                placeholder={t("## ETAP 16 — Operatory warunkowe\nLekcje: Kilka kryteriów naraz; AND w praktyce; OR w praktyce")}
                 className="mt-4 w-full resize-y rounded-2xl border border-white/10 bg-slate-950/80 p-4 font-mono text-sm leading-6 text-gray-100 outline-none transition placeholder:text-slate-700 focus:border-cyan-400"
             />
 
             {source.trim() && (
                 <div className="mt-5 space-y-4">
                     <div className="grid gap-3 sm:grid-cols-3">
-                        <Summary value={parsed.stages.length} label="rozpoznanych etapów" />
-                        <Summary value={parsed.lessonCount} label="lekcji do sprawdzenia" />
-                        <Summary value={preview.stagesToCreate} label="nowych etapów do utworzenia" />
+                        <Summary value={parsed.stages.length} label={t("rozpoznanych etapów")} />
+                        <Summary value={parsed.lessonCount} label={t("lekcji do sprawdzenia")} />
+                        <Summary value={preview.stagesToCreate} label={t("nowych etapów do utworzenia")} />
                     </div>
 
-                    <p className="text-sm leading-6 text-slate-400">Etapy już w kursie: {moduleCount}. Dopasowania po nazwie: {preview.stagesToReuse}. Istniejące lekcje nie zostaną powielone ani nadpisane.</p>
+                    <p className="text-sm leading-6 text-slate-400">{t("Etapy już w kursie: ")}{moduleCount}{t(". Dopasowania po nazwie: ")}{preview.stagesToReuse}{t(". Istniejące lekcje nie zostaną powielone ani nadpisane.")}</p>
                     {errors.length > 0 && (
                         <Message tone="error">
                             {errors.slice(0, 5).map(error => (
@@ -170,8 +162,7 @@ export default function LessonPlanImport({ courseId, moduleCount, existingModule
                     {canImport && (
                         <Message tone="success">
                             <span className="inline-flex items-center gap-2 font-bold">
-                                <BsCheckCircle /> Plan jest gotowy do importu.
-                            </span>
+                                <BsCheckCircle />{t(" Plan jest gotowy do importu.")}</span>
                         </Message>
                     )}
                 </div>
@@ -185,8 +176,8 @@ export default function LessonPlanImport({ courseId, moduleCount, existingModule
             >
                 <BsCloudArrowUp />
                 {importing
-                    ? `Importowanie partii ${progress?.current || 1} z ${progress?.total || 1}...`
-                    : `Importuj plan: ${parsed.stages.length} etapów · ${parsed.lessonCount || 0} lekcji`}
+                    ? t("Importowanie partii {value0} z {value1}...", { value0: progress?.current || 1, value1: progress?.total || 1 })
+                    : t("Importuj plan: {value0} etapów · {value1} lekcji", { value0: parsed.stages.length, value1: parsed.lessonCount || 0 })}
             </button>
         </section>
     );

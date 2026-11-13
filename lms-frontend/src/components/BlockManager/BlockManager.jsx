@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import { BsCollection, BsTrash } from "react-icons/bs";
 
 import BlockList from "./BlockList";
@@ -13,6 +14,7 @@ export default function BlockManager({
                                          variant = "PROGRAMMING"
 
                                      }) {
+    const { t } = useLocale();
 
     const blocks = lessonBlocks.getBlocks(lessonId);
 
@@ -38,18 +40,17 @@ export default function BlockManager({
                 <div>
 
                     <h3 className="text-xl font-bold">
-                        {variant === "LANGUAGE" ? "Kroki lekcji językowej" : "Bloki lekcji"}
+                        {variant === "LANGUAGE" ? t("Kroki lekcji językowej") : t("Bloki lekcji")}
                     </h3>
 
                     <p className="text-gray-400 text-sm">
                         {variant === "LANGUAGE"
-                            ? "Dodawaj tylko krótkie porcje materiału i ćwiczenia utrwalające."
-                            : "Buduj lekcję z tekstów, obrazów, filmów, przykładów oraz zadań."}
+                            ? t("Dodawaj tylko krótkie porcje materiału i ćwiczenia utrwalające.")
+                            : t("Buduj lekcję z tekstów, obrazów, filmów, przykładów oraz zadań.")}
                     </p>
 
                     <p className="mt-1 text-xs font-bold text-cyan-300/80">
-                        {blocks.length}/{maxBlocks} bloków · jedna lekcja = jeden konkretny cel
-                    </p>
+                        {blocks.length}/{maxBlocks}{t(" bloków · jedna lekcja = jeden konkretny cel")}</p>
 
                 </div>
 
@@ -66,8 +67,8 @@ export default function BlockManager({
                             ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-red-200 border-t-transparent" />
                             : <BsTrash />}
                         {lessonBlocks.deletingAllByLesson?.[lessonId]
-                            ? "Usuwanie..."
-                            : `Usuń wszystkie (${blocks.length})`}
+                            ? t("Usuwanie...")
+                            : t("Usuń wszystkie ({value0})", { value0: blocks.length })}
                     </button>
                 )}
 
@@ -93,9 +94,7 @@ export default function BlockManager({
             />
 
             {blockLimitReached ? (
-                <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] p-5 text-sm leading-6 text-cyan-100">
-                    Ta lekcja ma już {maxBlocks} bloków. Edytuj istniejący element, usuń zbędny blok albo przenieś dalszy materiał do kolejnej lekcji.
-                </div>
+                <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] p-5 text-sm leading-6 text-cyan-100">{t("Ta lekcja ma już ")}{maxBlocks}{t(" bloków. Edytuj istniejący element, usuń zbędny blok albo przenieś dalszy materiał do kolejnej lekcji.")}</div>
             ) : <BlockForm
 
                 lessonId={lessonId}

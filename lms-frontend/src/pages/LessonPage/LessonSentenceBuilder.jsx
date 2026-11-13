@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import { useMemo, useRef, useState } from "react";
 import { BsArrowCounterclockwise, BsCheckCircleFill, BsGrid3X3Gap } from "react-icons/bs";
 import { parseSentenceBuilderContent, sentenceWordMatches } from "../../utils/sentenceBuilder";
@@ -15,6 +16,7 @@ function shuffledTiles(words) {
 }
 
 export default function LessonSentenceBuilder({ block, onComplete }) {
+    const { t } = useLocale();
     const config = useMemo(() => parseSentenceBuilderContent(block.content), [block.content]);
     const [available, setAvailable] = useState(() => shuffledTiles(config.words));
     const [chosen, setChosen] = useState([]);
@@ -81,9 +83,9 @@ export default function LessonSentenceBuilder({ block, onComplete }) {
     return (
         <section className="overflow-hidden rounded-3xl border border-amber-400/25 bg-gradient-to-br from-amber-500/10 via-gray-900 to-gray-950">
             <div className="border-b border-white/10 p-5 sm:p-8">
-                <p className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-amber-300"><BsGrid3X3Gap /> Układanie zdania</p>
+                <p className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-amber-300"><BsGrid3X3Gap />{t(" Układanie zdania")}</p>
                 <h2 className="mt-3 text-2xl font-black sm:text-3xl">{block.title}</h2>
-                <p className="mt-5 text-sm font-black uppercase tracking-wider text-slate-500">Ułóż zdanie po angielsku</p>
+                <p className="mt-5 text-sm font-black uppercase tracking-wider text-slate-500">{t("Ułóż zdanie po angielsku")}</p>
                 <p className="mt-2 text-xl font-black leading-8 text-white sm:text-2xl">{config.polishSentence}</p>
             </div>
 
@@ -93,7 +95,7 @@ export default function LessonSentenceBuilder({ block, onComplete }) {
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={() => dropIntoSentence()}
                 >
-                    <p className="mb-3 text-xs font-black uppercase tracking-wider text-slate-500">Twoje zdanie</p>
+                    <p className="mb-3 text-xs font-black uppercase tracking-wider text-slate-500">{t("Twoje zdanie")}</p>
                     <div className="flex min-h-11 flex-wrap gap-2">
                         {chosen.map((tile, index) => {
                             const matches = checked && sentenceWordMatches(tile.word, config.words[index]);
@@ -112,12 +114,12 @@ export default function LessonSentenceBuilder({ block, onComplete }) {
                                 </button>
                             );
                         })}
-                        {chosen.length === 0 && <span className="py-2 text-sm text-slate-600">Kliknij kafelki w odpowiedniej kolejności.</span>}
+                        {chosen.length === 0 && <span className="py-2 text-sm text-slate-600">{t("Kliknij kafelki w odpowiedniej kolejności.")}</span>}
                     </div>
                 </div>
 
                 <div>
-                    <p className="mb-3 text-xs font-black uppercase tracking-wider text-slate-500">Dostępne kafelki</p>
+                    <p className="mb-3 text-xs font-black uppercase tracking-wider text-slate-500">{t("Dostępne kafelki")}</p>
                     <div
                         className="flex min-h-12 flex-wrap gap-2"
                         onDragOver={(event) => event.preventDefault()}
@@ -139,15 +141,15 @@ export default function LessonSentenceBuilder({ block, onComplete }) {
 
                 {checked && (
                     <div className={`rounded-2xl border p-4 ${correct ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100" : "border-red-400/30 bg-red-500/10 text-red-100"}`}>
-                        <p className="flex items-center gap-2 font-black">{correct && <BsCheckCircleFill />}{correct ? "Świetnie! Zdanie jest ułożone poprawnie." : "Nie wszystko jest na swoim miejscu."}</p>
-                        {!correct && <p className="mt-2 text-sm leading-6">Zielone kafelki są poprawne. Pierwszy błąd jest na pozycji {firstWrongIndex + 1}. Powinno tam być: <strong>{config.words[firstWrongIndex]}</strong>. Ułóż całe zdanie ponownie.</p>}
+                        <p className="flex items-center gap-2 font-black">{correct && <BsCheckCircleFill />}{correct ? t("Świetnie! Zdanie jest ułożone poprawnie.") : t("Nie wszystko jest na swoim miejscu.")}</p>
+                        {!correct && <p className="mt-2 text-sm leading-6">{t("Zielone kafelki są poprawne. Pierwszy błąd jest na pozycji ")}{firstWrongIndex + 1}{t(". Powinno tam być: ")}<strong>{config.words[firstWrongIndex]}</strong>{t(". Ułóż całe zdanie ponownie.")}</p>}
                     </div>
                 )}
 
                 <div className="flex flex-wrap gap-3">
-                    {!checked && <button type="button" disabled={chosen.length !== config.words.length} onClick={check} className="rounded-xl bg-amber-400 px-5 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-40">Sprawdź zdanie</button>}
-                    {checked && !correct && <button type="button" onClick={retry} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-black text-white hover:bg-blue-500"><BsArrowCounterclockwise /> Spróbuj ponownie</button>}
-                    {checked && correct && attempts > 1 && <span className="self-center text-sm text-slate-400">Poprawnie po {attempts} próbach.</span>}
+                    {!checked && <button type="button" disabled={chosen.length !== config.words.length} onClick={check} className="rounded-xl bg-amber-400 px-5 py-3 font-black text-slate-950 disabled:cursor-not-allowed disabled:opacity-40">{t("Sprawdź zdanie")}</button>}
+                    {checked && !correct && <button type="button" onClick={retry} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-black text-white hover:bg-blue-500"><BsArrowCounterclockwise />{t(" Spróbuj ponownie")}</button>}
+                    {checked && correct && attempts > 1 && <span className="self-center text-sm text-slate-400">{t("Poprawnie po ")}{attempts}{t(" próbach.")}</span>}
                 </div>
             </div>
         </section>

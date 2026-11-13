@@ -1,7 +1,9 @@
+import { useLocale } from "../../../../context/LocaleContext.jsx";
 import { BsCardText, BsCheckCircle, BsCodeSlash, BsGlobe, BsLightbulb } from "react-icons/bs";
 import { CODE_LANGUAGE_OPTIONS } from "../../../../utils/codeLanguages";
 
 export default function ReflectiveBlockForm({ block, setBlock, mode }) {
+    const { t } = useLocale();
     const isCodeReview = mode === "CODE_REVIEW";
 
     function update(field, value) {
@@ -12,39 +14,37 @@ export default function ReflectiveBlockForm({ block, setBlock, mode }) {
         <section className="space-y-6 rounded-3xl border border-violet-500/25 bg-violet-500/[0.08] p-5 sm:p-6">
             <div>
                 <h2 className="text-2xl font-black text-violet-100">
-                    {block.id ? "Edytuj" : "Nowy blok:"} {isCodeReview ? "analiza kodu / code review" : "odpowiedź otwarta"}
+                    {block.id ? t("Edytuj") : t("Nowy blok:")} {isCodeReview ? t("analiza kodu / code review") : t("odpowiedź otwarta")}
                 </h2>
-                <p className="mt-1 text-gray-400">
-                    Uczeń najpierw formułuje własną odpowiedź, a potem porównuje ją z modelem i kryteriami samooceny.
-                </p>
+                <p className="mt-1 text-gray-400">{t("Uczeń najpierw formułuje własną odpowiedź, a potem porównuje ją z modelem i kryteriami samooceny.")}</p>
             </div>
 
             <label className="block space-y-2">
-                <span className="font-bold">Tytuł</span>
+                <span className="font-bold">{t("Tytuł")}</span>
                 <input
                     value={block.title || ""}
                     onChange={event => update("title", event.target.value)}
-                    placeholder={isCodeReview ? "Np. Znajdź naruszenia zasad Clean Code" : "Np. Wyjaśnij odpowiedzialność warstwy serwisowej"}
+                    placeholder={isCodeReview ? t("Np. Znajdź naruszenia zasad Clean Code") : t("Np. Wyjaśnij odpowiedzialność warstwy serwisowej")}
                     className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-violet-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="flex items-center gap-2 font-bold"><BsCardText /> Kontekst</span>
+                <span className="flex items-center gap-2 font-bold"><BsCardText />{t(" Kontekst")}</span>
                 <textarea
                     value={block.description || ""}
                     onChange={event => update("description", event.target.value)}
-                    placeholder="Sytuacja, ograniczenia i potrzebny kontekst."
+                    placeholder={t("Sytuacja, ograniczenia i potrzebny kontekst.")}
                     className="min-h-24 w-full rounded-xl border border-white/10 bg-gray-950/70 p-4 outline-none focus:border-violet-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="font-bold">Pytanie i kryteria odpowiedzi</span>
+                <span className="font-bold">{t("Pytanie i kryteria odpowiedzi")}</span>
                 <textarea
                     value={block.instruction || ""}
                     onChange={event => update("instruction", event.target.value)}
-                    placeholder="Napisz, co uczeń ma przeanalizować i do jakich punktów powinien się odnieść."
+                    placeholder={t("Napisz, co uczeń ma przeanalizować i do jakich punktów powinien się odnieść.")}
                     className="min-h-36 w-full rounded-xl border border-white/10 bg-gray-950/70 p-4 outline-none focus:border-violet-300/50"
                 />
             </label>
@@ -53,7 +53,7 @@ export default function ReflectiveBlockForm({ block, setBlock, mode }) {
                 <>
                     <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
                         <label className="block space-y-2">
-                            <span className="flex items-center gap-2 font-bold"><BsCodeSlash /> Kod do analizy</span>
+                            <span className="flex items-center gap-2 font-bold"><BsCodeSlash />{t(" Kod do analizy")}</span>
                             <textarea
                                 value={block.starterCode || ""}
                                 onChange={event => update("starterCode", event.target.value)}
@@ -62,7 +62,7 @@ export default function ReflectiveBlockForm({ block, setBlock, mode }) {
                             />
                         </label>
                         <label className="block space-y-2">
-                            <span className="flex items-center gap-2 font-bold"><BsGlobe /> Język</span>
+                            <span className="flex items-center gap-2 font-bold"><BsGlobe />{t(" Język")}</span>
                             <select
                                 value={block.language || "java"}
                                 onChange={event => update("language", event.target.value)}
@@ -78,22 +78,22 @@ export default function ReflectiveBlockForm({ block, setBlock, mode }) {
             )}
 
             <label className="block space-y-2">
-                <span className="flex items-center gap-2 font-bold"><BsCheckCircle /> Model odpowiedzi i kryteria samooceny</span>
+                <span className="flex items-center gap-2 font-bold"><BsCheckCircle />{t(" Model odpowiedzi i kryteria samooceny")}</span>
                 <textarea
                     value={block.expectedAnswer || ""}
                     onChange={event => update("expectedAnswer", event.target.value)}
-                    placeholder={"Model odpowiedzi:\n...\n\nSprawdź, czy Twoja odpowiedź zawiera:\n- ...\n- ..."}
+                    placeholder={t("Model odpowiedzi:\n...\n\nSprawdź, czy Twoja odpowiedź zawiera:\n- ...\n- ...")}
                     className="min-h-52 w-full rounded-xl border border-white/10 bg-gray-950/70 p-4 outline-none focus:border-violet-300/50"
                 />
-                <p className="text-xs leading-5 text-gray-500">Uczeń zobaczy ten materiał dopiero po wysłaniu własnej odpowiedzi.</p>
+                <p className="text-xs leading-5 text-gray-500">{t("Uczeń zobaczy ten materiał dopiero po wysłaniu własnej odpowiedzi.")}</p>
             </label>
 
             <label className="block space-y-2">
-                <span className="flex items-center gap-2 font-bold"><BsLightbulb /> Podpowiedź przed wysłaniem</span>
+                <span className="flex items-center gap-2 font-bold"><BsLightbulb />{t(" Podpowiedź przed wysłaniem")}</span>
                 <textarea
                     value={block.hint || ""}
                     onChange={event => update("hint", event.target.value)}
-                    placeholder="Naprowadź na obszary analizy bez podawania modelu odpowiedzi."
+                    placeholder={t("Naprowadź na obszary analizy bez podawania modelu odpowiedzi.")}
                     className="min-h-24 w-full rounded-xl border border-white/10 bg-gray-950/70 p-4 outline-none focus:border-violet-300/50"
                 />
             </label>

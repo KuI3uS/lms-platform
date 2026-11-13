@@ -4,6 +4,8 @@ import { BsLifePreserver } from "react-icons/bs";
 import Layout from "./Layout";
 import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
+import LocaleControls from "./components/LocaleControls.jsx";
+import { useLocale } from "./context/LocaleContext.jsx";
 
 const LandingPage = lazy(() => import("./components/LandingPage"));
 const JavaCourseOfferPage = lazy(() => import("./pages/JavaCourseOfferPage"));
@@ -45,11 +47,12 @@ const AdminAccessCodesPage = lazy(() => import("./pages/AdminAccessCodesPage"));
 const RedeemAccessCodePage = lazy(() => import("./pages/RedeemAccessCodePage"));
 
 function PageLoader() {
+    const { t } = useLocale();
     return (
         <div className="flex min-h-[45vh] items-center justify-center bg-slate-950 text-white">
             <div
                 role="status"
-                aria-label="Ładowanie strony"
+                aria-label={t("Ładowanie strony")}
                 className="h-12 w-12 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent"
             />
         </div>
@@ -57,11 +60,12 @@ function PageLoader() {
 }
 
 export default function App() {
+    const { t } = useLocale();
     const { pathname } = useLocation();
     const isAccountPage = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"].includes(pathname);
     return (
         <Suspense fallback={<PageLoader />}>
-            {isAccountPage && <Link to="/pomoc" className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"><BsLifePreserver aria-hidden="true" /> Pomoc i kontakt</Link>}
+            {isAccountPage && <div className="absolute inset-x-4 top-4 z-40 flex flex-wrap items-center justify-between gap-3"><LocaleControls compact/><Link to="/pomoc" className="inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"><BsLifePreserver aria-hidden="true" />{t("Pomoc i kontakt")}</Link></div>}
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/kurs/java-backend-developer" element={<JavaCourseOfferPage />} />
@@ -107,7 +111,7 @@ export default function App() {
                         <Route path="/admin/access-codes" element={<AdminRoute><AdminAccessCodesPage /></AdminRoute>} />
 
                         <Route path="*" element={
-                            <div className="p-10 text-white">404 - Strona nie istnieje</div>
+                            <div className="p-10 text-white">{t("404 - Strona nie istnieje")}</div>
                         } />
                     </Route>
                 </Route>

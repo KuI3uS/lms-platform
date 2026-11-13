@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useState } from "react";
 import { apiFetch } from "../api/api";
 import { useFeedback } from "../context/FeedbackContext";
@@ -10,6 +11,7 @@ import {
 } from "react-icons/bs";
 
 export default function AddQuestionPage() {
+    const { t } = useLocale();
     const { showToast } = useFeedback();
 
     const [moduleId, setModuleId] = useState("");
@@ -147,23 +149,11 @@ export default function AddQuestionPage() {
 
                     <div>
 
-                        <div className="uppercase tracking-[0.25em] text-sm text-blue-300 font-bold">
+                        <div className="uppercase tracking-[0.25em] text-sm text-blue-300 font-bold">{t("EduHub Quiz Builder")}</div>
 
-                            EduHub Quiz Builder
+                        <h1 className="text-4xl font-black">{t("Nowe pytanie")}</h1>
 
-                        </div>
-
-                        <h1 className="text-4xl font-black">
-
-                            Nowe pytanie
-
-                        </h1>
-
-                        <p className="text-gray-400 mt-2">
-
-                            Dodaj pytanie wraz z odpowiedziami.
-
-                        </p>
+                        <p className="text-gray-400 mt-2">{t("Dodaj pytanie wraz z odpowiedziami.")}</p>
 
                     </div>
 
@@ -175,11 +165,7 @@ export default function AddQuestionPage() {
 
                         <label className="text-gray-300 font-semibold flex items-center gap-2 mb-3">
 
-                            <BsCollection />
-
-                            ID modułu
-
-                        </label>
+                            <BsCollection />{t("ID modułu")}</label>
 
                         <input
                             value={moduleId}
@@ -191,11 +177,7 @@ export default function AddQuestionPage() {
 
                     <div>
 
-                        <label className="text-gray-300 font-semibold mb-3 block">
-
-                            Treść pytania
-
-                        </label>
+                        <label className="text-gray-300 font-semibold mb-3 block">{t("Treść pytania")}</label>
 
                         <textarea
                             value={content}
@@ -209,22 +191,14 @@ export default function AddQuestionPage() {
 
                         <div className="flex items-center justify-between">
 
-                            <h2 className="text-2xl font-bold">
-
-                                Odpowiedzi
-
-                            </h2>
+                            <h2 className="text-2xl font-bold">{t("Odpowiedzi")}</h2>
 
                             <button
                                 onClick={addAnswer}
                                 className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-2xl flex items-center gap-2 font-bold"
                             >
 
-                                <BsPlusCircleFill />
-
-                                Dodaj odpowiedź
-
-                            </button>
+                                <BsPlusCircleFill />{t("Dodaj odpowiedź")}</button>
 
                         </div>
 
@@ -237,9 +211,7 @@ export default function AddQuestionPage() {
 
                                 <div className="flex justify-between items-center">
 
-                                    <h3 className="font-bold">
-
-                                        Odpowiedź {index + 1}
+                                    <h3 className="font-bold">{t("Odpowiedź ")}{index + 1}
 
                                     </h3>
 
@@ -261,7 +233,7 @@ export default function AddQuestionPage() {
                                 <input
                                     value={answer.content}
                                     onChange={(e)=>updateAnswer(index,"content",e.target.value)}
-                                    placeholder="Treść odpowiedzi..."
+                                    placeholder={t("Treść odpowiedzi...")}
                                     className="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3"
                                 />
 
@@ -273,11 +245,7 @@ export default function AddQuestionPage() {
                                         onChange={(e)=>updateAnswer(index,"correct",e.target.checked)}
                                     />
 
-                                    <BsCheckCircle className="text-green-400"/>
-
-                                    Poprawna odpowiedź
-
-                                </label>
+                                    <BsCheckCircle className="text-green-400"/>{t("Poprawna odpowiedź")}</label>
 
                             </div>
 
@@ -292,8 +260,8 @@ export default function AddQuestionPage() {
                     >
 
                         {loading
-                            ? "Zapisywanie..."
-                            : "Dodaj pytanie"}
+                            ? t("Zapisywanie...")
+                            : t("Dodaj pytanie")}
 
                     </button>
 

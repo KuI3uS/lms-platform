@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useLocale } from "./LocaleContext";
 import {
     BsCheckCircleFill,
     BsExclamationTriangleFill,
@@ -18,6 +19,7 @@ const TOAST_STYLES = {
 };
 
 export function FeedbackProvider({ children }) {
+    const { t } = useLocale();
     const [toasts, setToasts] = useState([]);
     const [dialog, setDialog] = useState(null);
     const sequence = useRef(0);
@@ -71,7 +73,7 @@ export function FeedbackProvider({ children }) {
                                         {toast.title && <p className="font-black text-white">{toast.title}</p>}
                                         <p className="text-sm leading-6 text-slate-300">{toast.message}</p>
                                     </div>
-                                    <button type="button" onClick={() => dismiss(toast.id)} aria-label="Zamknij powiadomienie" className="h-8 w-8 rounded-lg text-slate-500 hover:bg-white/5 hover:text-white"><BsX className="mx-auto" /></button>
+                                    <button type="button" onClick={() => dismiss(toast.id)} aria-label={t("Zamknij powiadomienie")} className="h-8 w-8 rounded-lg text-slate-500 hover:bg-white/5 hover:text-white"><BsX className="mx-auto" /></button>
                                 </article>
                             );
                         })}
@@ -81,11 +83,11 @@ export function FeedbackProvider({ children }) {
                         <div className="fixed inset-0 z-[10060] grid place-items-center bg-black/70 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeDialog(false)}>
                             <section role="dialog" aria-modal="true" aria-labelledby="feedback-dialog-title" className="w-full max-w-md rounded-[28px] border border-white/10 bg-[#0b0f19] p-6 shadow-2xl shadow-black/70">
                                 <div className={`grid h-12 w-12 place-items-center rounded-2xl text-xl ${dialog.danger ? "bg-red-500/10 text-red-300" : "bg-cyan-500/10 text-cyan-300"}`}><BsExclamationTriangleFill /></div>
-                                <h2 id="feedback-dialog-title" className="mt-5 text-2xl font-black text-white">{dialog.title}</h2>
-                                <p className="mt-3 leading-7 text-slate-400">{dialog.message}</p>
+                                <h2 id="feedback-dialog-title" className="mt-5 text-2xl font-black text-white">{t(dialog.title)}</h2>
+                                <p className="mt-3 leading-7 text-slate-400">{t(dialog.message)}</p>
                                 <div className="mt-7 flex justify-end gap-3">
-                                    <button type="button" onClick={() => closeDialog(false)} className="rounded-xl border border-white/10 px-5 py-3 font-black text-slate-300 hover:bg-white/5">{dialog.cancelLabel}</button>
-                                    <button type="button" autoFocus onClick={() => closeDialog(true)} className={`rounded-xl px-5 py-3 font-black text-white ${dialog.danger ? "bg-red-600 hover:bg-red-500" : "bg-cyan-500 text-slate-950 hover:bg-cyan-400"}`}>{dialog.confirmLabel}</button>
+                                    <button type="button" onClick={() => closeDialog(false)} className="rounded-xl border border-white/10 px-5 py-3 font-black text-slate-300 hover:bg-white/5">{t(dialog.cancelLabel)}</button>
+                                    <button type="button" autoFocus onClick={() => closeDialog(true)} className={`rounded-xl px-5 py-3 font-black text-white ${dialog.danger ? "bg-red-600 hover:bg-red-500" : "bg-cyan-500 text-slate-950 hover:bg-cyan-400"}`}>{t(dialog.confirmLabel)}</button>
                                 </div>
                             </section>
                         </div>

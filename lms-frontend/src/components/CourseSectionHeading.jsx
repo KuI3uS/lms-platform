@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext";
 import { useState } from "react";
 import { BsChevronDown, BsPencil, BsPlusCircle, BsTrash } from "react-icons/bs";
 
@@ -5,6 +6,7 @@ export default function CourseSectionHeading({
     title, moduleName, stageNumber, canEdit, onSave,
     expanded, onToggle, panelId, summary, fallbackTitle = "Etapy kursu", appearance = "dark"
 }) {
+    const { t } = useLocale();
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState("");
     const [saving, setSaving] = useState(false);
@@ -25,7 +27,7 @@ export default function CourseSectionHeading({
             await onSave(value);
             setEditing(false);
         } catch (saveError) {
-            setError(saveError.message || "Nie udało się zapisać nagłówka. Spróbuj ponownie.");
+            setError(saveError.message || t("Nie udało się zapisać nagłówka. Spróbuj ponownie."));
         } finally {
             setSaving(false);
         }
@@ -41,8 +43,7 @@ export default function CourseSectionHeading({
                 aria-busy={saving}
                 className={`mb-4 rounded-2xl border p-4 sm:p-5 ${light ? "border-slate-200 bg-white" : "border-violet-400/30 bg-violet-500/[0.06]"}`}
             >
-                <label htmlFor={inputId} className={`font-bold ${light ? "text-slate-900" : "text-violet-100"}`}>
-                    Nagłówek przed etapem {stageNumber}
+                <label htmlFor={inputId} className={`font-bold ${light ? "text-slate-900" : "text-violet-100"}`}>{t("Nagłówek przed etapem")}{" "}{stageNumber}
                 </label>
                 <p className={`mt-1 text-sm ${light ? "text-slate-600" : "text-gray-400"}`}>{moduleName}</p>
                 <input
@@ -50,7 +51,7 @@ export default function CourseSectionHeading({
                     value={draft}
                     onChange={event => setDraft(event.target.value)}
                     maxLength={200}
-                    placeholder="Np. CZĘŚĆ II — Praca z bazami danych"
+                    placeholder={t("Np. CZĘŚĆ II — Praca z bazami danych")}
                     autoFocus
                     disabled={saving}
                     aria-invalid={Boolean(error)}
@@ -66,16 +67,14 @@ export default function CourseSectionHeading({
                         disabled={saving || !draft.trim()}
                         className={`rounded-xl px-4 py-2 text-sm font-bold text-white transition disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 ${light ? "bg-teal-800 hover:bg-teal-900 focus-visible:outline-teal-700" : "bg-violet-600 hover:bg-violet-500 focus-visible:outline-violet-300"}`}
                     >
-                        {saving ? "Zapisywanie…" : "Zapisz nagłówek"}
+                        {saving ? t("Zapisywanie…") : t("Zapisz nagłówek")}
                     </button>
                     <button
                         type="button"
                         onClick={() => setEditing(false)}
                         disabled={saving}
                         className={`rounded-xl border px-4 py-2 text-sm font-bold transition disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 ${light ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline-teal-700" : "border-white/10 text-gray-300 hover:bg-white/5 focus-visible:outline-violet-300"}`}
-                    >
-                        Anuluj
-                    </button>
+                    >{t("Anuluj")}</button>
                     {title && (
                         <button
                             type="button"
@@ -83,8 +82,7 @@ export default function CourseSectionHeading({
                             disabled={saving}
                             className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 sm:ml-auto ${light ? "text-red-700 hover:bg-red-50 focus-visible:outline-red-700" : "text-red-300 hover:bg-red-500/10 focus-visible:outline-red-300"}`}
                         >
-                            <BsTrash aria-hidden="true" /> Usuń nagłówek
-                        </button>
+                            <BsTrash aria-hidden="true" />{" "}{t("Usuń nagłówek")}</button>
                     )}
                 </div>
             </form>
@@ -97,11 +95,10 @@ export default function CourseSectionHeading({
                 <button
                     type="button"
                     onClick={startEditing}
-                    aria-label={`Dodaj nagłówek przed etapem ${stageNumber}: ${moduleName}`}
+                    aria-label={t("Dodaj nagłówek przed etapem {value1}: {value2}", { value1: stageNumber, value2: moduleName })}
                     className={`inline-flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 ${light ? "text-teal-800 hover:bg-teal-50 focus-visible:outline-teal-700" : "text-violet-300 hover:bg-violet-500/10 focus-visible:outline-violet-300"}`}
                 >
-                    <BsPlusCircle aria-hidden="true" /> Dodaj nagłówek
-                </button>
+                    <BsPlusCircle aria-hidden="true" />{" "}{t("Dodaj nagłówek")}</button>
             </div>
         ) : null;
     }
@@ -111,19 +108,19 @@ export default function CourseSectionHeading({
             {!light && <div className="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-violet-500/15 blur-3xl" />}
             <div className="relative flex flex-wrap items-center justify-between gap-3">
                 <p className={`text-[11px] font-black uppercase tracking-[0.28em] ${light ? "text-teal-800" : "text-violet-300"}`}>
-                    {title ? "Część kursu" : "Etapy kursu"}
+                    {title ? t("Część kursu") : t("Etapy kursu")}
                 </p>
                 {canEdit && (
                     <button
                         type="button"
                         onClick={startEditing}
                         aria-label={title
-                            ? `Edytuj nagłówek przed etapem ${stageNumber}: ${title}`
-                            : `Dodaj nagłówek przed etapem ${stageNumber}: ${moduleName}`}
+                            ? t("Edytuj nagłówek przed etapem {value1}: {value2}", { value1: stageNumber, value2: title })
+                            : t("Dodaj nagłówek przed etapem {value1}: {value2}", { value1: stageNumber, value2: moduleName })}
                         className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 ${light ? "border-slate-300 bg-white text-teal-800 hover:bg-teal-50 focus-visible:outline-teal-700" : "border-violet-400/20 text-violet-200 hover:bg-violet-500/15 focus-visible:outline-violet-300"}`}
                     >
                         {title ? <BsPencil aria-hidden="true" /> : <BsPlusCircle aria-hidden="true" />}
-                        {title ? "Edytuj nagłówek" : "Dodaj nagłówek"}
+                        {title ? t("Edytuj nagłówek") : t("Dodaj nagłówek")}
                     </button>
                 )}
             </div>
@@ -133,13 +130,13 @@ export default function CourseSectionHeading({
                         type="button"
                         aria-expanded={expanded}
                         aria-controls={panelId}
-                        aria-label={`${expanded ? "Zwiń" : "Rozwiń"} część ${title || fallbackTitle}`}
+                        aria-label={t("{value1} część {value2}", { value1: expanded ? t("Zwiń") : t("Rozwiń"), value2: title || t(fallbackTitle) })}
                         onClick={onToggle}
                         className={`flex w-full items-start justify-between gap-4 rounded-xl text-left transition focus-visible:outline-2 focus-visible:outline-offset-4 ${light ? "hover:text-teal-800 focus-visible:outline-teal-700" : "hover:text-cyan-200 focus-visible:outline-cyan-300"}`}
                     >
-                        <span className="min-w-0">{title || fallbackTitle}</span>
+                        <span className="min-w-0">{title || t(fallbackTitle)}</span>
                         <span className={`mt-1 flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 ${light ? "border-slate-300 bg-white text-teal-800" : "border-violet-300/20 bg-white/[0.04] text-violet-200"}`}>
-                            <span className="hidden text-xs font-bold sm:inline">{expanded ? "Zwiń" : "Rozwiń"}</span>
+                            <span className="hidden text-xs font-bold sm:inline">{expanded ? t("Zwiń") : t("Rozwiń")}</span>
                             <BsChevronDown aria-hidden="true" className={`text-base transition-transform duration-200 motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`} />
                         </span>
                     </button>

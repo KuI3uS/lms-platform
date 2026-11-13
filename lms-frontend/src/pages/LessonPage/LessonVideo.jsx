@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import { BsPlayBtn } from "react-icons/bs";
 
 function youtubeEmbedUrl(value) {
@@ -29,6 +30,7 @@ function youtubeEmbedUrl(value) {
 }
 
 export default function LessonVideo({ block }) {
+    const { t } = useLocale();
     const embedUrl = youtubeEmbedUrl(block.mediaUrl);
 
     return (
@@ -38,11 +40,9 @@ export default function LessonVideo({ block }) {
                     <BsPlayBtn />
                 </div>
                 <div>
-                    <p className="text-sm font-bold uppercase tracking-[0.18em] text-rose-300">
-                        Materiał wideo
-                    </p>
+                    <p className="text-sm font-bold uppercase tracking-[0.18em] text-rose-300">{t("Materiał wideo")}</p>
                     <h2 className="mt-1 text-2xl font-black text-white">
-                        {block.title || "Film do lekcji"}
+                        {block.title || t("Film do lekcji")}
                     </h2>
                 </div>
             </header>
@@ -55,14 +55,12 @@ export default function LessonVideo({ block }) {
 
             <div className="p-5 sm:p-6">
                 {!block.mediaUrl ? (
-                    <div className="rounded-2xl border border-dashed border-rose-400/30 p-10 text-center text-gray-400">
-                        Brak adresu filmu.
-                    </div>
+                    <div className="rounded-2xl border border-dashed border-rose-400/30 p-10 text-center text-gray-400">{t("Brak adresu filmu.")}</div>
                 ) : embedUrl ? (
                     <div className="aspect-video overflow-hidden rounded-2xl border border-white/10 bg-black">
                         <iframe
                             src={embedUrl}
-                            title={block.title || "Film do lekcji"}
+                            title={block.title || t("Film do lekcji")}
                             loading="lazy"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
@@ -75,9 +73,7 @@ export default function LessonVideo({ block }) {
                         controls
                         preload="metadata"
                         className="max-h-[70vh] w-full rounded-2xl border border-white/10 bg-black"
-                    >
-                        Twoja przeglądarka nie obsługuje tego filmu.
-                    </video>
+                    >{t("Twoja przeglądarka nie obsługuje tego filmu.")}</video>
                 )}
             </div>
         </section>

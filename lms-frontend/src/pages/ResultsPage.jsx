@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../api/api";
 import {
@@ -9,6 +10,7 @@ import {
 } from "react-icons/bs";
 
 export default function ResultsPage() {
+    const { t } = useLocale();
 
     const [results, setResults] = useState([]);
 
@@ -91,25 +93,11 @@ export default function ResultsPage() {
                         font-semibold
                     ">
 
-                        <BsStars />
+                        <BsStars />{t("EDUHUB 2026")}</div>
 
-                        EDUHUB 2026
+                    <h1 className="text-6xl font-black mt-7">{t("Twoje wyniki")}</h1>
 
-                    </div>
-
-                    <h1 className="text-6xl font-black mt-7">
-
-                        Twoje wyniki
-
-                    </h1>
-
-                    <p className="mt-6 max-w-3xl text-xl text-gray-300 leading-9">
-
-                        Śledź swoje postępy,
-                        analizuj wyniki testów
-                        i zdobywaj kolejne osiągnięcia.
-
-                    </p>
+                    <p className="mt-6 max-w-3xl text-xl text-gray-300 leading-9">{t("Śledź swoje postępy, analizuj wyniki testów i zdobywaj kolejne osiągnięcia.")}</p>
 
                 </div>
 
@@ -121,28 +109,28 @@ export default function ResultsPage() {
 
                 <StatCard
                     icon={<BsGraphUpArrow />}
-                    title="Średnia"
+                    title={t("Średnia")}
                     value={`${average}%`}
                     color="cyan"
                 />
 
                 <StatCard
                     icon={<BsCheckCircleFill />}
-                    title="Zdane"
+                    title={t("Zdane")}
                     value={passed}
                     color="green"
                 />
 
                 <StatCard
                     icon={<BsTrophyFill />}
-                    title="Najlepszy wynik"
+                    title={t("Najlepszy wynik")}
                     value={`${best}%`}
                     color="yellow"
                 />
 
                 <StatCard
                     icon={<BsLightningChargeFill />}
-                    title="Testy"
+                    title={t("Testy")}
                     value={results.length}
                     color="blue"
                 />
@@ -153,11 +141,7 @@ export default function ResultsPage() {
 
             <section className="space-y-6">
 
-                <h2 className="text-3xl font-black">
-
-                    Historia testów
-
-                </h2>
+                <h2 className="text-3xl font-black">{t("Historia testów")}</h2>
 
                 {results.length === 0 ? (
 
@@ -170,11 +154,7 @@ export default function ResultsPage() {
                         p-10
                         text-center
                         text-gray-400
-                    ">
-
-                        Nie masz jeszcze żadnych wyników.
-
-                    </div>
+                    ">{t("Nie masz jeszcze żadnych wyników.")}</div>
 
                 ) : (
 
@@ -275,6 +255,7 @@ function StatCard({
 }
 
 function ResultCard({ result }) {
+    const { t } = useLocale();
 
     const passed = result.percentage >= 50;
 
@@ -299,11 +280,7 @@ function ResultCard({ result }) {
 
                 <div>
 
-                    <p className="text-cyan-300 text-sm font-semibold">
-
-                        Test
-
-                    </p>
+                    <p className="text-cyan-300 text-sm font-semibold">{t("Test")}</p>
 
                     <h2 className="text-2xl font-black mt-2">
 
@@ -339,11 +316,7 @@ function ResultCard({ result }) {
 
                 <div className="flex justify-between mb-3">
 
-                    <span className="text-gray-400">
-
-                        Wynik
-
-                    </span>
+                    <span className="text-gray-400">{t("Wynik")}</span>
 
                     <span className="font-bold">
 

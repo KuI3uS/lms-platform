@@ -3,11 +3,12 @@ import { createRoot, hydrateRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import LandingPage from "./components/LandingPage.jsx";
 import "./index.css";
+import SiteExperience from "./context/SiteExperience.jsx";
 
 const page = (
   <StrictMode>
     <BrowserRouter>
-      <LandingPage />
+      <SiteExperience><LandingPage /></SiteExperience>
     </BrowserRouter>
   </StrictMode>
 );

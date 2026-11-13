@@ -1,6 +1,8 @@
+import { useLocale } from "../../../../context/LocaleContext.jsx";
 import { BsImage } from "react-icons/bs";
 
 export default function ImageBlockForm({ block, setBlock }) {
+    const { t } = useLocale();
     function update(field, value) {
         setBlock(previous => ({ ...previous, [field]: value }));
     }
@@ -12,33 +14,33 @@ export default function ImageBlockForm({ block, setBlock }) {
                     <BsImage />
                 </div>
                 <div>
-                    <h3 className="font-black">Materiał graficzny</h3>
-                    <p className="text-sm text-gray-400">Dodaj tytuł, objaśnienie i adres obrazu.</p>
+                    <h3 className="font-black">{t("Materiał graficzny")}</h3>
+                    <p className="text-sm text-gray-400">{t("Dodaj tytuł, objaśnienie i adres obrazu.")}</p>
                 </div>
             </div>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Tytuł grafiki</span>
+                <span className="font-semibold">{t("Tytuł grafiki")}</span>
                 <input
                     value={block.title || ""}
                     onChange={event => update("title", event.target.value)}
-                    placeholder="Np. Schemat działania pętli"
+                    placeholder={t("Np. Schemat działania pętli")}
                     className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-fuchsia-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Opis pod grafiką</span>
+                <span className="font-semibold">{t("Opis pod grafiką")}</span>
                 <textarea
                     value={block.description || ""}
                     onChange={event => update("description", event.target.value)}
-                    placeholder="Wyjaśnij, na co uczeń powinien zwrócić uwagę."
+                    placeholder={t("Wyjaśnij, na co uczeń powinien zwrócić uwagę.")}
                     className="min-h-24 w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-fuchsia-300/50"
                 />
             </label>
 
             <label className="block space-y-2">
-                <span className="font-semibold">Adres obrazu</span>
+                <span className="font-semibold">{t("Adres obrazu")}</span>
                 <input
                     value={block.mediaUrl || ""}
                     onChange={event => setBlock(previous => ({
@@ -46,7 +48,7 @@ export default function ImageBlockForm({ block, setBlock }) {
                         mediaUrl: event.target.value,
                         mediaType: "image"
                     }))}
-                    placeholder="https://..."
+                    placeholder={t("https://...")}
                     className="w-full rounded-xl border border-white/10 bg-gray-950/70 p-3 outline-none focus:border-fuchsia-300/50"
                 />
             </label>

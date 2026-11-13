@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -11,6 +12,7 @@ import {
 import { API_URL, apiFetch } from "../api/api";
 
 export default function AdminSettingsPage() {
+    const { t } = useLocale();
     const [profile, setProfile] = useState(null);
     const [status, setStatus] = useState("loading");
     const [error, setError] = useState("");
@@ -36,12 +38,9 @@ export default function AdminSettingsPage() {
     return (
         <div className="mx-auto max-w-6xl space-y-8 text-white">
             <header className="rounded-[34px] border border-slate-500/20 bg-gradient-to-br from-slate-800 to-slate-950 p-7 sm:p-10">
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-300">EduHub System</p>
-                <h1 className="mt-3 text-4xl font-black sm:text-5xl">Ustawienia</h1>
-                <p className="mt-4 max-w-3xl text-slate-400">
-                    Konfiguracja treści i płatności jest przypisana do konkretnych kursów.
-                    Tutaj możesz sprawdzić połączenie platformy i najważniejsze punkty konfiguracji.
-                </p>
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-300">{t("EduHub System")}</p>
+                <h1 className="mt-3 text-4xl font-black sm:text-5xl">{t("Ustawienia")}</h1>
+                <p className="mt-4 max-w-3xl text-slate-400">{t("Konfiguracja treści i płatności jest przypisana do konkretnych kursów. Tutaj możesz sprawdzić połączenie platformy i najważniejsze punkty konfiguracji.")}</p>
             </header>
 
             {error && (
@@ -57,9 +56,9 @@ export default function AdminSettingsPage() {
                             <BsShieldCheck size={22} />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500">Połączenie z API</p>
+                            <p className="text-sm text-slate-500">{t("Połączenie z API")}</p>
                             <p className="font-black">
-                                {status === "loading" ? "Sprawdzanie..." : status === "online" ? "Działa poprawnie" : "Brak połączenia"}
+                                {status === "loading" ? t("Sprawdzanie...") : status === "online" ? t("Działa poprawnie") : t("Brak połączenia")}
                             </p>
                         </div>
                     </div>
@@ -74,38 +73,35 @@ export default function AdminSettingsPage() {
                             <BsPersonBadge size={22} />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500">Konto administratora</p>
-                            <p className="font-black">{profile?.email || "Pobieranie danych..."}</p>
+                            <p className="text-sm text-slate-500">{t("Konto administratora")}</p>
+                            <p className="font-black">{profile?.email || t("Pobieranie danych...")}</p>
                         </div>
                     </div>
-                    <p className="mt-5 text-sm leading-6 text-slate-400">
-                        Uprawnienia administratora są sprawdzane na backendzie dla każdej operacji zapisu.
-                    </p>
+                    <p className="mt-5 text-sm leading-6 text-slate-400">{t("Uprawnienia administratora są sprawdzane na backendzie dla każdej operacji zapisu.")}</p>
                 </article>
             </section>
 
             <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-8">
                 <h2 className="flex items-center gap-3 text-2xl font-black">
-                    <BsGear className="text-slate-300" /> Konfiguracja platformy
-                </h2>
+                    <BsGear className="text-slate-300" />{t(" Konfiguracja platformy")}</h2>
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
                     <SettingCard
                         icon={<BsCreditCard />}
-                        title="Ceny i płatności"
+                        title={t("Ceny i płatności")}
                         text="Cena oraz bezpieczny link płatności są ustawiane osobno dla każdego kursu."
                         to="/admin/courses"
                         action="Otwórz kursy"
                     />
                     <SettingCard
                         icon={<BsEnvelopeCheck />}
-                        title="Weryfikacja email"
+                        title={t("Weryfikacja email")}
                         text="Nowe konta otrzymują link ważny 24 godziny. Link można wysłać ponownie z logowania."
                         to="/admin/users"
                         action="Otwórz użytkowników"
                     />
                     <SettingCard
                         icon={<BsCheckCircle />}
-                        title="Kontrola publikacji"
+                        title={t("Kontrola publikacji")}
                         text="Tylko opublikowane kursy są widoczne w katalogu zwykłego użytkownika."
                         to="/admin/courses"
                         action="Sprawdź publikację"

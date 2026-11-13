@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useLocale } from "../../context/LocaleContext";
 import {
     BsArrowLeft,
     BsArrowRight,
@@ -25,6 +26,7 @@ export default function LessonFooter({
                                          totalAssessments,
                                          hasTasks
                                      }) {
+    const { t, formatNumber } = useLocale();
     const hasPreviousDestination = hasPreviousStep || previousLesson;
     const finishSucceeded = Boolean(finishResult?.success);
 
@@ -60,12 +62,12 @@ export default function LessonFooter({
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 text-sm">
                 <p className="font-semibold text-gray-300">
                     {hasTasks
-                        ? `Zaliczone ćwiczenia: ${completedAssessments} / ${totalAssessments}`
-                        : "Ta lekcja nie zawiera zadań automatycznych."
+                        ? t("Zaliczone ćwiczenia: {completed} / {total}", { completed: formatNumber(completedAssessments), total: formatNumber(totalAssessments) })
+                        : t("Ta lekcja nie zawiera zadań automatycznych.")
                     }
                 </p>
                 <p className="text-gray-500">
-                    Każde ćwiczenie jest zaliczane osobno.
+                    {t("Każde ćwiczenie jest zaliczane osobno.")}
                 </p>
             </div>
 
@@ -81,7 +83,7 @@ export default function LessonFooter({
                     }`}
                 >
                     <BsArrowLeft />
-                    {hasPreviousStep ? "Poprzedni krok" : "Poprzednia lekcja"}
+                    {t(hasPreviousStep ? "Poprzedni krok" : "Poprzednia lekcja")}
                 </button>
 
                 {hasNextStep ? (
@@ -95,7 +97,7 @@ export default function LessonFooter({
                                 : "cursor-not-allowed bg-gray-800 text-gray-500"
                         }`}
                     >
-                        {canContinue ? "Dalej" : "Najpierw zalicz ten krok"}
+                        {t(canContinue ? "Dalej" : "Najpierw zalicz ten krok")}
                         <BsArrowRight />
                     </button>
                 ) : finishSucceeded ? (
@@ -104,7 +106,7 @@ export default function LessonFooter({
                         onClick={nextLesson ? onNextLesson : onBack}
                         className="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 font-bold transition hover:bg-blue-700"
                     >
-                        {nextLesson ? "Rozpocznij następną lekcję" : "Wróć do kursu"}
+                        {t(nextLesson ? "Rozpocznij następną lekcję" : "Wróć do kursu")}
                         <BsArrowRight />
                     </button>
                 ) : (
@@ -115,12 +117,12 @@ export default function LessonFooter({
                         className="flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-4 font-bold shadow-lg transition hover:from-purple-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <BsCheck2All />
-                        {finishing ? "Kończę lekcję..." : "Zakończ lekcję"}
+                        {t(finishing ? "Kończę lekcję..." : "Zakończ lekcję")}
                     </button>
                 )}
             </div>
             <p className="mt-5 border-t border-gray-800 pt-4 text-center text-sm text-gray-400">
-                Problem z lekcją? <Link to="/pomoc" className="rounded font-semibold text-teal-300 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">Napisz do pomocy technicznej</Link>
+                {t("Problem z lekcją?")} <Link to="/pomoc" className="rounded font-semibold text-teal-300 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">{t("Napisz do pomocy technicznej")}</Link>
             </p>
         </section>
     );

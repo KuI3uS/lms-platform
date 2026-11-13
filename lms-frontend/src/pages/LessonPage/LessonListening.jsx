@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BsCheckCircleFill, BsHeadphones, BsPlayFill, BsXCircleFill } from "react-icons/bs";
 import { parseVocabularyContent } from "../../utils/languageInteractiveBlocks";
@@ -5,6 +6,7 @@ import { speakWithBrowser } from "../../utils/browserSpeech";
 import { checkVocabularyAnswer, vocabularyHint } from "../../utils/vocabularyPractice";
 
 export default function LessonListening({ block, onComplete }) {
+    const { t } = useLocale();
     const config = useMemo(() => parseVocabularyContent(block.content), [block.content]);
     const [index, setIndex] = useState(0);
     const [answer, setAnswer] = useState("");
@@ -43,11 +45,11 @@ export default function LessonListening({ block, onComplete }) {
     };
     if (!item) return null;
     return <section className="rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/[0.08] via-gray-900 to-gray-950 p-5 sm:p-8">
-        <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em] text-cyan-300"><BsHeadphones /> Rozpoznawanie ze słuchu</p><h2 className="mt-3 text-2xl font-black">{block.title}</h2>{block.description && <p className="mt-2 text-slate-400">{block.description}</p>}
-        <div className="mx-auto mt-7 max-w-2xl rounded-3xl border border-white/10 bg-black/20 p-6 text-center sm:p-8"><p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Nagranie {index + 1} z {config.items.length}</p><button type="button" onClick={play} aria-label="Odtwórz nagranie" className="mx-auto mt-5 grid h-20 w-20 place-items-center rounded-full bg-cyan-500 text-3xl text-cyan-950"><BsPlayFill /></button><p className="mt-4 text-sm text-slate-500">Odpowiedź pojawi się dopiero po poprawnej próbie.</p>
-        <input autoFocus value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={(event) => event.key === "Enter" && (result?.accepted ? next() : check())} disabled={result?.accepted} placeholder="Twoja odpowiedź…" className="mt-6 w-full rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 text-lg font-bold text-white outline-none focus:border-cyan-300/50" />
-        {!result?.accepted && <button type="button" onClick={check} disabled={!answer.trim()} className="mt-4 w-full rounded-2xl bg-cyan-500 px-5 py-4 font-black text-cyan-950 disabled:opacity-40">Sprawdź odpowiedź</button>}
-        {result && <div className={`mt-4 rounded-2xl border p-4 text-left ${result.accepted ? "border-emerald-400/25 bg-emerald-500/10" : "border-amber-400/25 bg-amber-500/10"}`}><p className={`flex items-center gap-2 font-black ${result.accepted ? "text-emerald-300" : "text-amber-200"}`}>{result.accepted ? <BsCheckCircleFill /> : <BsXCircleFill />}{result.accepted ? `Poprawnie: ${item.translation}` : "Posłuchaj jeszcze raz i popraw odpowiedź"}</p>{!result.accepted && <><p className="mt-2 text-sm text-slate-400">Nieudane próby: {failedAttempts}.</p>{hint && <p role="status" className="mt-3 text-sm font-bold text-amber-100">Podpowiedź: {hint}</p>}</>}</div>}
-        {result?.accepted && <button type="button" onClick={next} className="mt-4 w-full rounded-2xl bg-emerald-500 px-5 py-4 font-black text-emerald-950">{index + 1 === config.items.length ? "Zakończ ćwiczenie" : "Następne nagranie"}</button>}</div>
+        <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em] text-cyan-300"><BsHeadphones />{t(" Rozpoznawanie ze słuchu")}</p><h2 className="mt-3 text-2xl font-black">{block.title}</h2>{block.description && <p className="mt-2 text-slate-400">{block.description}</p>}
+        <div className="mx-auto mt-7 max-w-2xl rounded-3xl border border-white/10 bg-black/20 p-6 text-center sm:p-8"><p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{t("Nagranie ")}{index + 1}{t(" z ")}{config.items.length}</p><button type="button" onClick={play} aria-label={t("Odtwórz nagranie")} className="mx-auto mt-5 grid h-20 w-20 place-items-center rounded-full bg-cyan-500 text-3xl text-cyan-950"><BsPlayFill /></button><p className="mt-4 text-sm text-slate-500">{t("Odpowiedź pojawi się dopiero po poprawnej próbie.")}</p>
+        <input autoFocus value={answer} onChange={(event) => setAnswer(event.target.value)} onKeyDown={(event) => event.key === "Enter" && (result?.accepted ? next() : check())} disabled={result?.accepted} placeholder={t("Twoja odpowiedź…")} className="mt-6 w-full rounded-2xl border border-white/10 bg-slate-950 px-5 py-4 text-lg font-bold text-white outline-none focus:border-cyan-300/50" />
+        {!result?.accepted && <button type="button" onClick={check} disabled={!answer.trim()} className="mt-4 w-full rounded-2xl bg-cyan-500 px-5 py-4 font-black text-cyan-950 disabled:opacity-40">{t("Sprawdź odpowiedź")}</button>}
+        {result && <div className={`mt-4 rounded-2xl border p-4 text-left ${result.accepted ? "border-emerald-400/25 bg-emerald-500/10" : "border-amber-400/25 bg-amber-500/10"}`}><p className={`flex items-center gap-2 font-black ${result.accepted ? "text-emerald-300" : "text-amber-200"}`}>{result.accepted ? <BsCheckCircleFill /> : <BsXCircleFill />}{result.accepted ? t("Poprawnie: {value0}", { value0: item.translation }) : t("Posłuchaj jeszcze raz i popraw odpowiedź")}</p>{!result.accepted && <><p className="mt-2 text-sm text-slate-400">{t("Nieudane próby: ")}{failedAttempts}.</p>{hint && <p role="status" className="mt-3 text-sm font-bold text-amber-100">{t("Podpowiedź: ")}{hint}</p>}</>}</div>}
+        {result?.accepted && <button type="button" onClick={next} className="mt-4 w-full rounded-2xl bg-emerald-500 px-5 py-4 font-black text-emerald-950">{index + 1 === config.items.length ? t("Zakończ ćwiczenie") : t("Następne nagranie")}</button>}</div>
     </section>;
 }

@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
     BsChatDots,
@@ -51,6 +52,7 @@ function inferPolishPrompt(text) {
 }
 
 function DialogueBubble({ character, text, onSpeak, active = false, muted = false, children }) {
+    const { t } = useLocale();
     const right = character.side === "right";
     return (
         <div className={`flex items-end gap-3 ${right ? "flex-row-reverse" : ""}`}>
@@ -61,9 +63,8 @@ function DialogueBubble({ character, text, onSpeak, active = false, muted = fals
                     {text && <p className={`text-base font-bold leading-7 sm:text-lg ${muted ? "text-slate-500" : "text-white"}`}>{text}</p>}
                     {children}
                     {text && !muted && onSpeak && (
-                        <button type="button" onClick={onSpeak} aria-label={`Odsłuchaj: ${character.name} — ${text}`} className="mt-3 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-cyan-300 hover:text-cyan-200">
-                            <BsPlayFill /> Odsłuchaj
-                        </button>
+                        <button type="button" onClick={onSpeak} aria-label={t("Odsłuchaj: {value0} — {value1}", { value0: character.name, value1: text })} className="mt-3 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-cyan-300 hover:text-cyan-200">
+                            <BsPlayFill />{t(" Odsłuchaj")}</button>
                     )}
                 </div>
             </div>
@@ -72,6 +73,7 @@ function DialogueBubble({ character, text, onSpeak, active = false, muted = fals
 }
 
 function PracticeTurn({ turn, character, coach, language, result, onResult, onSpeak, onStop }) {
+    const { t } = useLocale();
     const [answer, setAnswer] = useState("");
     const [listening, setListening] = useState(false);
     const [showHint, setShowHint] = useState(false);
@@ -164,9 +166,9 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
                 <div className="mt-3 space-y-3 text-left">
                     <div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.07] p-3 text-sm leading-6 text-amber-50">
                         {polishPrompt ? (
-                            <><span className="font-black text-amber-300">Powiedz po angielsku:</span>{" "}{polishPrompt}</>
+                            <><span className="font-black text-amber-300">{t("Powiedz po angielsku:")}</span>{" "}{polishPrompt}</>
                         ) : (
-                            <><span className="font-black text-amber-300">Powiedz po angielsku odpowiedź pasującą do rozmowy.</span></>
+                            <><span className="font-black text-amber-300">{t("Powiedz po angielsku odpowiedź pasującą do rozmowy.")}</span></>
                         )}
                     </div>
                     {turn.explanation && (
@@ -176,7 +178,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
                                 onClick={() => setShowHint((visible) => !visible)}
                                 className="text-xs font-black uppercase tracking-wider text-cyan-300 hover:text-cyan-200"
                             >
-                                {showHint ? "Ukryj podpowiedź" : "Pokaż podpowiedź"}
+                                {showHint ? t("Ukryj podpowiedź") : t("Pokaż podpowiedź")}
                             </button>
                             {showHint && (
                                 <p className="mt-2 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.06] p-3 text-sm leading-6 text-cyan-50">
@@ -191,14 +193,14 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
                             value={answer}
                             onChange={(event) => setAnswer(event.target.value)}
                             onKeyDown={(event) => event.key === "Enter" && evaluate(answer, "text")}
-                            placeholder={polishPrompt ? "Wpisz to po angielsku…" : "Wpisz odpowiedź po angielsku…"}
+                            placeholder={polishPrompt ? t("Wpisz to po angielsku…") : t("Wpisz odpowiedź po angielsku…")}
                             className="w-full rounded-xl border border-white/10 bg-slate-950 py-3 pl-10 pr-3 text-white outline-none focus:border-blue-300/50"
                         />
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <button type="button" onClick={() => evaluate(answer, "text")} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white hover:bg-blue-500">Odpowiedz</button>
+                        <button type="button" onClick={() => evaluate(answer, "text")} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white hover:bg-blue-500">{t("Odpowiedz")}</button>
                         <button type="button" onClick={listening ? () => recognitionRef.current?.stop() : startListening} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black text-white ${listening ? "bg-red-600" : "bg-violet-600 hover:bg-violet-500"}`}>
-                            {listening ? <BsStopFill /> : <BsMicFill />}{listening ? "Zatrzymaj" : "Powiedz"}
+                            {listening ? <BsStopFill /> : <BsMicFill />}{listening ? t("Zatrzymaj") : t("Powiedz")}
                         </button>
                     </div>
                 </div>
@@ -207,14 +209,14 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
                 <div className="mt-3 text-left">
                     <p className={`flex items-center gap-2 text-sm font-black ${result.score >= 88 ? "text-emerald-300" : result.score >= 70 ? "text-amber-300" : "text-cyan-200"}`}>
                         {result.score >= 70 && <BsCheckCircleFill />}
-                        {result.score >= 88 ? "Bardzo dobrze!" : result.score >= 70 ? "Zaliczone — drobna korekta" : "Idziemy dalej — zobacz naturalną odpowiedź"}
+                        {result.score >= 88 ? t("Bardzo dobrze!") : result.score >= 70 ? t("Zaliczone — drobna korekta") : t("Idziemy dalej — zobacz naturalną odpowiedź")}
                     </p>
-                    {result.answer && <p className="mt-2 text-sm text-slate-400">Rozpoznano: <strong className="text-white">{result.answer}</strong></p>}
+                    {result.answer && <p className="mt-2 text-sm text-slate-400">{t("Rozpoznano: ")}<strong className="text-white">{result.answer}</strong></p>}
                     <div className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-300/[0.06] p-3 text-sm leading-6 text-cyan-50">
                         <strong>{coach.avatar} {coach.name}:</strong>{" "}
                         {result.message || (result.score >= 88
-                            ? "Brzmi naturalnie."
-                            : `${turn.explanation || "W tej sytuacji najlepiej użyć wzorcowej wypowiedzi."} Wzorzec: „${turn.text}”`)}
+                            ? t("Brzmi naturalnie.")
+                            : t("{value0} Wzorzec: „{value1}”", { value0: turn.explanation || "W tej sytuacji najlepiej użyć wzorcowej wypowiedzi.", value1: turn.text }))}
                     </div>
                 </div>
             )}
@@ -223,6 +225,7 @@ function PracticeTurn({ turn, character, coach, language, result, onResult, onSp
 }
 
 export default function LessonDialog({ block, onComplete }) {
+    const { t } = useLocale();
     const config = useMemo(() => parseDialogContent(block.content), [block.content]);
     const [mode, setMode] = useState("watch");
     const [results, setResults] = useState({});
@@ -259,30 +262,30 @@ export default function LessonDialog({ block, onComplete }) {
     return (
         <section className="overflow-hidden rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/[0.08] via-gray-900 to-gray-950">
             <div className="border-b border-white/10 p-5 sm:p-8">
-                <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em] text-cyan-300"><BsChatDots /> Dialog interaktywny</p>
+                <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em] text-cyan-300"><BsChatDots />{t(" Dialog interaktywny")}</p>
                 <h2 className="mt-3 text-2xl font-black sm:text-3xl">{block.title}</h2>
                 {block.description && <p className="mt-3 max-w-3xl leading-7 text-slate-400">{block.description}</p>}
                 <div className="mt-5 flex flex-wrap items-center gap-2">
-                    <button type="button" onClick={() => { setMode("watch"); play(); }} className={`rounded-xl px-4 py-2.5 text-sm font-black ${mode === "watch" ? "bg-cyan-500 text-slate-950" : "border border-white/10 bg-white/5 text-slate-300"}`}><BsHeadphones className="mr-2 inline" />{playback.status === "done" ? "Posłuchaj ponownie" : "Posłuchaj całej rozmowy"}</button>
-                    {speaking && <button type="button" onClick={stop} className="rounded-xl border border-white/20 px-4 py-2.5 text-sm font-black text-white"><BsStopFill className="mr-2 inline" />Zatrzymaj</button>}
-                    <button type="button" onClick={() => { stop(); setMode("practice"); }} className={`rounded-xl px-4 py-2.5 text-sm font-black ${mode === "practice" ? "bg-blue-600 text-white" : "border border-white/10 bg-white/5 text-slate-300"}`}><BsMicFill className="mr-2 inline" />Wciel się w: {studentCharacter.avatar} {studentCharacter.name}</button>
+                    <button type="button" onClick={() => { setMode("watch"); play(); }} className={`rounded-xl px-4 py-2.5 text-sm font-black ${mode === "watch" ? "bg-cyan-500 text-slate-950" : "border border-white/10 bg-white/5 text-slate-300"}`}><BsHeadphones className="mr-2 inline" />{playback.status === "done" ? t("Posłuchaj ponownie") : t("Posłuchaj całej rozmowy")}</button>
+                    {speaking && <button type="button" onClick={stop} className="rounded-xl border border-white/20 px-4 py-2.5 text-sm font-black text-white"><BsStopFill className="mr-2 inline" />{t("Zatrzymaj")}</button>}
+                    <button type="button" onClick={() => { stop(); setMode("practice"); }} className={`rounded-xl px-4 py-2.5 text-sm font-black ${mode === "practice" ? "bg-blue-600 text-white" : "border border-white/10 bg-white/5 text-slate-300"}`}><BsMicFill className="mr-2 inline" />{t("Wciel się w: ")}{studentCharacter.avatar} {studentCharacter.name}</button>
                 </div>
                 <p role="status" className="mt-3 text-sm text-cyan-100/80">
-                    {speaking ? `Wypowiedź ${playback.index + 1} z ${config.turns.length}`
-                        : playback.status === "blocked" ? "Przeglądarka wstrzymała dźwięk. Kliknij „Posłuchaj całej rozmowy”, aby rozpocząć."
-                        : playback.status === "unsupported" ? "Ta przeglądarka nie obsługuje odczytywania tekstu. Możesz nadal przeczytać dialog i wykonać ćwiczenie."
-                        : playback.status === "no-voice" ? "Na tym urządzeniu nie znaleziono odpowiedniego głosu kobiecego lub męskiego w języku lekcji. Dodaj głosy w ustawieniach mowy urządzenia. Nadal możesz przeczytać dialog i wykonać ćwiczenie."
-                        : playback.status === "error" ? "Nie udało się odtworzyć dźwięku. Spróbuj ponownie."
-                        : playback.status === "done" ? "Koniec odsłuchu. Możesz teraz wcielić się w swoją postać."
-                        : "Kliknij „Posłuchaj całej rozmowy”, aby odtworzyć kwestie po kolei, lub odsłuchaj wybrany dymek."}
+                    {speaking ? t("Wypowiedź {value0} z {value1}", { value0: playback.index + 1, value1: config.turns.length })
+                        : playback.status === "blocked" ? t("Przeglądarka wstrzymała dźwięk. Kliknij „Posłuchaj całej rozmowy”, aby rozpocząć.")
+                        : playback.status === "unsupported" ? t("Ta przeglądarka nie obsługuje odczytywania tekstu. Możesz nadal przeczytać dialog i wykonać ćwiczenie.")
+                        : playback.status === "no-voice" ? t("Na tym urządzeniu nie znaleziono odpowiedniego głosu kobiecego lub męskiego w języku lekcji. Dodaj głosy w ustawieniach mowy urządzenia. Nadal możesz przeczytać dialog i wykonać ćwiczenie.")
+                        : playback.status === "error" ? t("Nie udało się odtworzyć dźwięku. Spróbuj ponownie.")
+                        : playback.status === "done" ? t("Koniec odsłuchu. Możesz teraz wcielić się w swoją postać.")
+                        : t("Kliknij „Posłuchaj całej rozmowy”, aby odtworzyć kwestie po kolei, lub odsłuchaj wybrany dymek.")}
                 </p>
             </div>
 
             <div className="space-y-5 p-5 sm:p-8">
                 {mode === "practice" && studentTurns.length > 0 && (
                     <div className="rounded-2xl border border-blue-400/20 bg-blue-500/[0.07] p-4 text-sm text-blue-100">
-                        <strong>Postęp scenki: {completed}/{studentTurns.length}</strong>
-                        <p className="mt-1 text-blue-200/70">Możesz mówić lub pisać. Pomyłka pokaże korektę, ale nigdy nie zablokuje dalszej nauki.</p>
+                        <strong>{t("Postęp scenki: ")}{completed}/{studentTurns.length}</strong>
+                        <p className="mt-1 text-blue-200/70">{t("Możesz mówić lub pisać. Pomyłka pokaże korektę, ale nigdy nie zablokuje dalszej nauki.")}</p>
                     </div>
                 )}
 
@@ -308,7 +311,7 @@ export default function LessonDialog({ block, onComplete }) {
                     return <DialogueBubble key={`${index}-${turn.text}`} character={character} text={turn.text} onSpeak={mode === "watch" ? undefined : () => play(index)} active={speaking && playback.index === index} />;
                 })}
 
-                {config.turns.length === 0 && <p className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-slate-500">Ten dialog nie ma jeszcze wypowiedzi.</p>}
+                {config.turns.length === 0 && <p className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-slate-500">{t("Ten dialog nie ma jeszcze wypowiedzi.")}</p>}
             </div>
         </section>
     );

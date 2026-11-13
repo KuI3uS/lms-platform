@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import {
     BsBook,
     BsEye,
@@ -15,6 +16,7 @@ export default function LessonForm({
     onUpdate,
     variant = "PROGRAMMING"
 }) {
+    const { t } = useLocale();
     const language = variant === "LANGUAGE";
     const accent = language ? "text-violet-300" : "text-cyan-300";
     const focus = language ? "focus:border-violet-400" : "focus:border-cyan-400";
@@ -33,24 +35,24 @@ export default function LessonForm({
                 <header>
                     <div className={`inline-flex items-center gap-2 rounded-full border border-current/20 bg-white/[0.04] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] ${accent}`}>
                         {language ? <BsTranslate /> : <BsStars />}
-                        {language ? "Prosty kreator językowy" : "EduHub Creator"}
+                        {language ? t("Prosty kreator językowy") : t("EduHub Creator")}
                     </div>
                     <h1 className="mt-5 text-4xl font-black sm:text-5xl">
-                        {editingId ? "Edytuj lekcję" : "Nowa lekcja"}
+                        {editingId ? t("Edytuj lekcję") : t("Nowa lekcja")}
                     </h1>
                     <p className="mt-3 max-w-3xl leading-7 text-slate-400">
                         {language
-                            ? "Ustal jeden cel, dodaj kilka zwrotów, a następnie zbuduj krótkie ćwiczenia. Bez pól programistycznych i zbędnej konfiguracji."
-                            : "Zdefiniuj cel lekcji i jej podstawowe materiały. Rozbudowane przykłady, zadania i quizy dodasz później jako bloki."}
+                            ? t("Ustal jeden cel, dodaj kilka zwrotów, a następnie zbuduj krótkie ćwiczenia. Bez pól programistycznych i zbędnej konfiguracji.")
+                            : t("Zdefiniuj cel lekcji i jej podstawowe materiały. Rozbudowane przykłady, zadania i quizy dodasz później jako bloki.")}
                     </p>
                 </header>
 
                 <div className="grid gap-5 xl:grid-cols-2">
-                    <Panel icon={<BsBook />} title="Tytuł lekcji" accent={accent}>
+                    <Panel icon={<BsBook />} title={t("Tytuł lekcji")} accent={accent}>
                         <input
                             value={form.title || ""}
                             onChange={(event) => update("title", event.target.value)}
-                            placeholder={language ? "np. Przedstawianie się" : "np. Zmienne i typy danych"}
+                            placeholder={language ? t("np. Przedstawianie się") : t("np. Zmienne i typy danych")}
                             className={`${fieldClass} ${focus}`}
                         />
                     </Panel>
@@ -58,17 +60,17 @@ export default function LessonForm({
 
 
 
-                <Panel icon={<BsImage />} title="Grafika wprowadzająca (opcjonalnie)" accent={accent}>
+                <Panel icon={<BsImage />} title={t("Grafika wprowadzająca (opcjonalnie)")} accent={accent}>
                     <input
                         value={form.imageUrl || ""}
                         onChange={(event) => update("imageUrl", event.target.value)}
-                        placeholder="https://..."
+                        placeholder={t("https://...")}
                         className={`${fieldClass} ${focus}`}
                     />
                     {form.imageUrl && (
                         <img
                             src={form.imageUrl}
-                            alt="Podgląd grafiki lekcji"
+                            alt={t("Podgląd grafiki lekcji")}
                             className="mt-4 max-h-72 w-full rounded-2xl border border-white/10 object-cover"
                         />
                     )}
@@ -77,14 +79,14 @@ export default function LessonForm({
                 <div className="grid gap-4 md:grid-cols-2">
                     <Toggle
                         icon={<BsEye />}
-                        title="Opublikowana"
+                        title={t("Opublikowana")}
                         description="Lekcja jest widoczna dla uczniów."
                         checked={form.published ?? true}
                         onChange={(checked) => update("published", checked)}
                     />
                     <Toggle
                         icon={<BsStars />}
-                        title="Bezpłatny podgląd"
+                        title={t("Bezpłatny podgląd")}
                         description="Lekcję można otworzyć przed zakupem kursu."
                         checked={form.freePreview ?? false}
                         onChange={(checked) => update("freePreview", checked)}
@@ -100,7 +102,7 @@ export default function LessonForm({
                             : "bg-gradient-to-r from-cyan-500 to-blue-600"
                     }`}
                 >
-                    <BsSave /> {editingId ? "Zapisz zmiany" : "Dodaj lekcję"}
+                    <BsSave /> {editingId ? t("Zapisz zmiany") : t("Dodaj lekcję")}
                 </button>
             </div>
         </section>

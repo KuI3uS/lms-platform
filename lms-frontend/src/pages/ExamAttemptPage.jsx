@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -17,6 +18,7 @@ function formatTime(seconds) {
 }
 
 export default function ExamAttemptPage() {
+    const { t } = useLocale();
     const { attemptId } = useParams();
     const navigate = useNavigate();
     const [attempt, setAttempt] = useState(null);
@@ -118,7 +120,7 @@ export default function ExamAttemptPage() {
     if (!attempt) {
         return (
             <div className="mx-auto max-w-2xl rounded-3xl border border-red-500/20 bg-red-500/10 p-8 text-center text-red-200">
-                {error || "Nie znaleziono egzaminu."}
+                {error || t("Nie znaleziono egzaminu.")}
             </div>
         );
     }
@@ -133,22 +135,21 @@ export default function ExamAttemptPage() {
                     {attempt.passed ? <BsTrophyFill /> : <BsCheckCircleFill />}
                 </div>
                 <p className="mt-8 text-sm font-black uppercase tracking-[0.3em] text-violet-300">
-                    {expired ? "Czas minął" : "Egzamin zakończony"}
+                    {expired ? t("Czas minął") : t("Egzamin zakończony")}
                 </p>
                 <h1 className="mt-3 text-4xl font-black sm:text-6xl">{attempt.courseTitle}</h1>
                 <p className="mt-7 text-7xl font-black">{Math.round(attempt.percentage)}%</p>
                 <p className="mt-3 text-lg text-slate-400">
-                    {attempt.correctAnswers} z {attempt.totalQuestions} poprawnych odpowiedzi
-                </p>
+                    {attempt.correctAnswers}{t(" z ")}{attempt.totalQuestions}{t(" poprawnych odpowiedzi")}</p>
                 {attempt.examType !== "PRACTICE" && attempt.cefrLevel && (
                     <p className={`mx-auto mt-5 max-w-xl rounded-2xl px-5 py-4 font-bold ${attempt.passed ? "bg-emerald-500/10 text-emerald-200" : "bg-amber-500/10 text-amber-200"}`}>
                         {attempt.passed
                             ? attempt.examType === "PLACEMENT"
-                                ? `Poziom ${attempt.cefrLevel} został odblokowany. Możesz rozpocząć naukę od tego miejsca.`
+                                ? t("Poziom {value0} został odblokowany. Możesz rozpocząć naukę od tego miejsca.", { value0: attempt.cefrLevel })
                                 : attempt.cefrLevel === "C2"
-                                    ? "Egzamin C2 został zaliczony. Ukończyłeś całą ścieżkę językową."
-                                    : `Egzamin poziomu ${attempt.cefrLevel} został zaliczony. Następny poziom jest już dostępny.`
-                            : "Do zaliczenia egzaminu poziomu potrzeba co najmniej 80%. Możesz spróbować ponownie z nowym zestawem pytań."}
+                                    ? t("Egzamin C2 został zaliczony. Ukończyłeś całą ścieżkę językową.")
+                                    : t("Egzamin poziomu {value0} został zaliczony. Następny poziom jest już dostępny.", { value0: attempt.cefrLevel })
+                            : t("Do zaliczenia egzaminu poziomu potrzeba co najmniej 80%. Możesz spróbować ponownie z nowym zestawem pytań.")}
                     </p>
                 )}
                 <button
@@ -156,8 +157,7 @@ export default function ExamAttemptPage() {
                     onClick={() => navigate("/exams")}
                     className="mt-9 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-blue-600 px-6 py-4 font-black"
                 >
-                    <BsArrowLeft /> Wróć do egzaminów
-                </button>
+                    <BsArrowLeft />{t(" Wróć do egzaminów")}</button>
             </div>
         );
     }
@@ -166,7 +166,7 @@ export default function ExamAttemptPage() {
         <div className="mx-auto max-w-5xl space-y-7 text-white">
             <header className="sticky top-0 z-30 flex flex-col gap-4 rounded-3xl border border-white/10 bg-slate-950/90 p-5 shadow-xl backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-violet-300">Egzamin w toku</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-violet-300">{t("Egzamin w toku")}</p>
                     <h1 className="mt-1 text-xl font-black sm:text-2xl">{attempt.courseTitle}</h1>
                 </div>
                 <div className={`flex items-center gap-3 rounded-2xl px-5 py-3 text-xl font-black ${
@@ -185,8 +185,7 @@ export default function ExamAttemptPage() {
             <div className="space-y-5">
                 {attempt.questions.map((question, questionIndex) => (
                     <section key={question.id} className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-7">
-                        <p className="text-xs font-black uppercase tracking-widest text-slate-500">
-                            Pytanie {questionIndex + 1} z {attempt.totalQuestions}
+                        <p className="text-xs font-black uppercase tracking-widest text-slate-500">{t("Pytanie ")}{questionIndex + 1}{t(" z ")}{attempt.totalQuestions}
                         </p>
                         <h2 className="mt-3 text-lg font-black leading-8 sm:text-xl">{question.content}</h2>
                         <div className="mt-5 grid gap-3">
@@ -219,8 +218,7 @@ export default function ExamAttemptPage() {
 
             <div className="sticky bottom-4 rounded-3xl border border-white/10 bg-slate-950/90 p-4 shadow-2xl backdrop-blur-xl">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm text-slate-400">
-                        Udzielono odpowiedzi: <strong className="text-white">{Object.keys(answers).length}/{attempt.totalQuestions}</strong>
+                    <p className="text-sm text-slate-400">{t("Udzielono odpowiedzi: ")}<strong className="text-white">{Object.keys(answers).length}/{attempt.totalQuestions}</strong>
                     </p>
                     <button
                         type="button"
@@ -228,7 +226,7 @@ export default function ExamAttemptPage() {
                         onClick={finishExam}
                         className="rounded-2xl bg-gradient-to-r from-violet-500 to-blue-600 px-7 py-3.5 font-black disabled:opacity-60"
                     >
-                        {submitting ? "Sprawdzanie..." : "Zakończ i sprawdź wynik"}
+                        {submitting ? t("Sprawdzanie...") : t("Zakończ i sprawdź wynik")}
                     </button>
                 </div>
             </div>

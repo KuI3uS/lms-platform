@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 const BULLET_PATTERN = /^[-*•]\s+(.+)$/;
 const ORDERED_PATTERN = /^(\d+)[.)]\s+(.+)$/;
 const HEADING_PATTERN = /^(#{1,3})\s+(.+)$/;
@@ -172,10 +173,11 @@ export default function LessonArticleContent({
                                                  content,
                                                  compact = false
                                              }) {
+    const { t } = useLocale();
     const sections = parseLessonContent(content);
 
     if (!sections.length) {
-        return <p className="text-gray-400">Brak treści.</p>;
+        return <p className="text-gray-400">{t("Brak treści.")}</p>;
     }
 
     return (

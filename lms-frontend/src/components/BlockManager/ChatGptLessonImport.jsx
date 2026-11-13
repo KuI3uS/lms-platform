@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import { useMemo, useState } from "react";
 import {
     BsArrowRepeat,
@@ -19,6 +20,7 @@ import { cleanChatGptText } from "../../utils/chatGptReferences";
 import { getImportRepairPrompt } from "../../utils/lessonImportPrompt";
 
 export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks, variant = "PROGRAMMING" }) {
+    const { t } = useLocale();
     const { showToast } = useFeedback();
     const [open, setOpen] = useState(false);
     const [source, setSource] = useState("");
@@ -83,9 +85,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                 onClick={() => setOpen(true)}
                 className="flex w-full items-center justify-center gap-3 rounded-2xl border border-violet-400/25 bg-violet-500/10 px-5 py-4 font-black text-violet-100 transition hover:border-violet-300/50 hover:bg-violet-500/15"
             >
-                <BsStars />
-                Importuj lekcję z ChatGPT
-            </button>
+                <BsStars />{t("Importuj lekcję z ChatGPT")}</button>
         );
     }
 
@@ -93,22 +93,17 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
         <section className="rounded-3xl border border-violet-400/25 bg-violet-500/[0.07] p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-300">Import ze sprawdzeniem pól</p>
-                    <h4 className="mt-2 text-xl font-black text-white">Wklej lekcję przygotowaną w ChatGPT</h4>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                        1. Skopiuj wzór do ChatGPT. 2. Wklej tutaj gotową odpowiedź, nie sam prompt. 3. Sprawdź podgląd i zapisz. Maksymalnie {maxBlocks} bloków. Nic nie zapisze się automatycznie.
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-300">{t("Import ze sprawdzeniem pól")}</p>
+                    <h4 className="mt-2 text-xl font-black text-white">{t("Wklej lekcję przygotowaną w ChatGPT")}</h4>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">{t("1. Skopiuj wzór do ChatGPT. 2. Wklej tutaj gotową odpowiedź, nie sam prompt. 3. Sprawdź podgląd i zapisz. Maksymalnie ")}{maxBlocks}{t(" bloków. Nic nie zapisze się automatycznie.")}</p>
+                    <p className="mt-2 text-xs font-black uppercase tracking-wider text-cyan-300/80">{t("Obecna lekcja: ")}{existingCount}/{maxBlocks}{t(" bloków · wolne miejsce: ")}{remainingSlots}
                     </p>
-                    <p className="mt-2 text-xs font-black uppercase tracking-wider text-cyan-300/80">
-                        Obecna lekcja: {existingCount}/{maxBlocks} bloków · wolne miejsce: {remainingSlots}
-                    </p>
-                    <p className="mt-2 text-sm text-slate-400">
-                        Jeśli w ćwiczeniu brakuje punktów, importer ustawi {DEFAULT_EXERCISE_XP} XP. Tekst i podsumowanie nie mają osobnej nagrody.
-                    </p>
+                    <p className="mt-2 text-sm text-slate-400">{t("Jeśli w ćwiczeniu brakuje punktów, importer ustawi ")}{DEFAULT_EXERCISE_XP}{t(" XP. Tekst i podsumowanie nie mają osobnej nagrody.")}</p>
                 </div>
                 <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    aria-label="Zamknij importer"
+                    aria-label={t("Zamknij importer")}
                     className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 text-slate-400 transition hover:bg-white/5 hover:text-white"
                 >
                     <BsX />
@@ -121,17 +116,16 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                     onClick={copyPrompt}
                     className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm font-bold text-slate-200 transition hover:border-violet-300/30 hover:bg-white/5"
                 >
-                    <BsClipboard /> Skopiuj wzór promptu
-                </button>
+                    <BsClipboard />{t(" Skopiuj wzór promptu")}</button>
             </div>
 
             <label className="mt-5 block">
-                <span className="sr-only">Treść lekcji z ChatGPT</span>
+                <span className="sr-only">{t("Treść lekcji z ChatGPT")}</span>
                 <textarea
                     value={source}
                     onChange={(event) => setSource(cleanChatGptText(event.target.value))}
                     rows={14}
-                    placeholder="Wklej tutaj tekst rozpoczynający się od KROK 1..."
+                    placeholder={t("Wklej tutaj tekst rozpoczynający się od KROK 1...")}
                     className="w-full resize-y rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-4 font-mono text-sm leading-6 text-slate-200 outline-none transition placeholder:text-slate-600 focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10"
                 />
             </label>
@@ -146,10 +140,9 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                         <div className="flex items-center gap-2 font-black text-white">
                             {result.errors.length > 0
                                 ? <BsExclamationTriangle className="text-red-300" />
-                                : <BsCheckCircle className="text-emerald-300" />}
-                            Wykryto {result.blocks.length} {result.blocks.length === 1 ? "blok" : "bloków"}
+                                : <BsCheckCircle className="text-emerald-300" />}{t("Wykryto ")}{result.blocks.length} {result.blocks.length === 1 ? t("blok") : t("bloków")}
                         </div>
-                        <p className="mt-2 text-sm text-emerald-200">Nagrody za ćwiczenia: {totalXp} bazowych XP. Mnożniki i bonus za ukończenie lekcji są naliczane osobno.</p>
+                        <p className="mt-2 text-sm text-emerald-200">{t("Nagrody za ćwiczenia: ")}{totalXp}{t(" bazowych XP. Mnożniki i bonus za ukończenie lekcji są naliczane osobno.")}</p>
                         {result.errors.map((error) => (
                             <p key={error} className="mt-2 text-sm text-red-200">{error}</p>
                         ))}
@@ -157,14 +150,12 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                             <p key={warning} className="mt-2 text-sm text-amber-200">{warning}</p>
                         ))}
                         {(result.errors.length > 0 || importError) && <button type="button" onClick={copyRepair} disabled={importing} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-100 hover:bg-red-500/20 disabled:opacity-40">
-                            <BsClipboard aria-hidden="true" /> Skopiuj polecenie naprawy do ChatGPT
-                        </button>}
+                            <BsClipboard aria-hidden="true" />{t(" Skopiuj polecenie naprawy do ChatGPT")}</button>}
                         {exceedsLessonLimit && (
                             <div className="mt-3 rounded-xl border border-amber-400/25 bg-amber-500/10 p-3 text-sm leading-6 text-amber-100">
-                                <p className="font-bold">Nie można dopisać tych bloków do obecnych.</p>
-                                <p>
-                                    Wklejony materiał ma {result.blocks.length} bloków i jest poprawny, ale w lekcji istnieje już {existingCount}.
-                                    {canReplace && " Wybierz poniżej „Zastąp całą lekcję”, aby usunąć stare bloki i zapisać nowe."}
+                                <p className="font-bold">{t("Nie można dopisać tych bloków do obecnych.")}</p>
+                                <p>{t("Wklejony materiał ma ")}{result.blocks.length}{t(" bloków i jest poprawny, ale w lekcji istnieje już ")}{existingCount}.
+                                    {canReplace && t(" Wybierz poniżej „Zastąp całą lekcję”, aby usunąć stare bloki i zapisać nowe.")}
                                 </p>
                             </div>
                         )}
@@ -177,22 +168,21 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                                     <span className="text-xs font-black uppercase tracking-wider text-violet-300">
                                         {index + 1}. {getBlockLabel(block.type)}
                                     </span>
-                                    <p className="mt-1 truncate text-sm font-bold text-slate-200">{block.title || "Separator"}</p>
-                                    <p className="mt-2 text-xs font-bold text-slate-400">{getBlockBaseXp(block) > 0 ? `${getBlockBaseXp(block)} XP za pierwsze zaliczenie` : "Materiał bez osobnej nagrody XP"}</p>
+                                    <p className="mt-1 truncate text-sm font-bold text-slate-200">{block.title || t("Separator")}</p>
+                                    <p className="mt-2 text-xs font-bold text-slate-400">{getBlockBaseXp(block) > 0 ? t("{value0} XP za pierwsze zaliczenie", { value0: getBlockBaseXp(block) }) : t("Materiał bez osobnej nagrody XP")}</p>
                                 </li>
                             ))}
                         </ol>
                     )}
 
                     {importError && (
-                        <div role="alert" className="rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm leading-6 text-red-200">
-                            Import nie został zapisany: {importError}
+                        <div role="alert" className="rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm leading-6 text-red-200">{t("Import nie został zapisany: ")}{importError}
                         </div>
                     )}
 
                     <label className="flex items-start gap-3 rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-4 text-sm text-emerald-100">
                         <input type="checkbox" checked={publishLesson} disabled={importing} onChange={event => setPublishLesson(event.target.checked)} className="mt-1 h-4 w-4 shrink-0" />
-                        <span><strong className="block">Opublikuj lekcję po udanym imporcie</strong><span className="mt-1 block leading-6">Udostępni lekcję uczniom mającym dostęp do kursu. Odznacz, aby zachować obecny status publikacji.</span></span>
+                        <span><strong className="block">{t("Opublikuj lekcję po udanym imporcie")}</strong><span className="mt-1 block leading-6">{t("Udostępni lekcję uczniom mającym dostęp do kursu. Odznacz, aby zachować obecny status publikacji.")}</span></span>
                     </label>
 
                     <div className={`grid gap-3 ${existingCount > 0 ? "sm:grid-cols-2" : ""}`}>
@@ -205,7 +195,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                             {importing
                                 ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                 : <BsCloudArrowUp />}
-                            {importing ? "Importowanie..." : `Dodaj ${result.blocks.length} bloków`}
+                            {importing ? t("Importowanie...") : t("Dodaj {value0} bloków", { value0: result.blocks.length })}
                         </button>
 
                         {existingCount > 0 && (
@@ -218,7 +208,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
                                 {importing
                                     ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-amber-100 border-t-transparent" />
                                     : <BsArrowRepeat />}
-                                {importing ? "Zapisywanie..." : `Zastąp całą lekcję (${result.blocks.length})`}
+                                {importing ? t("Zapisywanie...") : t("Zastąp całą lekcję ({value0})", { value0: result.blocks.length })}
                             </button>
                         )}
                     </div>

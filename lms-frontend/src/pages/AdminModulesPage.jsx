@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -13,6 +14,7 @@ import { CEFR_LEVELS } from "../utils/courseTaxonomy";
 import CourseDuplicateCleanup from "../components/CourseDuplicateCleanup";
 
 export default function AdminModulesPage() {
+    const { t } = useLocale();
     const { confirm } = useFeedback();
     const [courses, setCourses] = useState([]);
     const [courseId, setCourseId] = useState("");
@@ -146,15 +148,15 @@ export default function AdminModulesPage() {
         <div className="mx-auto max-w-6xl space-y-8 text-white">
             <header className="rounded-[34px] border border-emerald-500/20 bg-gradient-to-br from-emerald-950/80 to-slate-950 p-7 sm:p-10">
                 <p className="text-xs font-black uppercase tracking-[0.3em] text-emerald-300">
-                    {isLanguageCourse ? "EduHub Languages" : "EduHub Creator"}
+                    {isLanguageCourse ? t("EduHub Languages") : t("EduHub Creator")}
                 </p>
                 <h1 className="mt-3 text-4xl font-black sm:text-5xl">
-                    {isLanguageCourse ? "Rozdziały kursu językowego" : "Moduły kursów"}
+                    {isLanguageCourse ? t("Rozdziały kursu językowego") : t("Moduły kursów")}
                 </h1>
                 <p className="mt-4 max-w-3xl text-slate-400">
                     {isLanguageCourse
-                        ? "Podziel kurs na proste sytuacje komunikacyjne, np. poznawanie ludzi, podróż albo praca."
-                        : "Wybierz kurs, uporządkuj jego moduły i przejdź bezpośrednio do edycji lekcji."}
+                        ? t("Podziel kurs na proste sytuacje komunikacyjne, np. poznawanie ludzi, podróż albo praca.")
+                        : t("Wybierz kurs, uporządkuj jego moduły i przejdź bezpośrednio do edycji lekcji.")}
                 </p>
             </header>
 
@@ -166,8 +168,7 @@ export default function AdminModulesPage() {
 
             <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-7">
                 <label className="flex items-center gap-2 font-bold text-slate-300">
-                    <BsBook /> Kurs
-                </label>
+                    <BsBook />{t(" Kurs")}</label>
                 <select
                     value={courseId}
                     onChange={(event) => {
@@ -180,7 +181,7 @@ export default function AdminModulesPage() {
                     }}
                     className="mt-3 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-emerald-400"
                 >
-                    {courses.length === 0 && <option value="">Brak kursów</option>}
+                    {courses.length === 0 && <option value="">{t("Brak kursów")}</option>}
                     {courses.map((course) => (
                         <option key={course.id} value={course.id}>
                             {course.title || course.name}
@@ -190,32 +191,28 @@ export default function AdminModulesPage() {
 
                 <form onSubmit={addModule} className="mt-5 space-y-3">
                     <div>
-                        <label className="text-xs font-black uppercase tracking-[0.16em] text-violet-300">
-                            Nowa część kursu — opcjonalnie
-                        </label>
+                        <label className="text-xs font-black uppercase tracking-[0.16em] text-violet-300">{t("Nowa część kursu — opcjonalnie")}</label>
                         <input
                             value={newSectionTitle}
                             onChange={(event) => setNewSectionTitle(event.target.value)}
                             maxLength={200}
-                            placeholder="Np. CZĘŚĆ XX — Rekrutacja Junior Java Developer"
+                            placeholder={t("Np. CZĘŚĆ XX — Rekrutacja Junior Java Developer")}
                             className="mt-2 w-full rounded-2xl border border-violet-400/20 bg-violet-500/[0.06] px-4 py-3 font-bold outline-none focus:border-violet-400"
                         />
-                        <p className="mt-2 text-xs text-slate-500">
-                            Uzupełnij tylko wtedy, gdy ten moduł rozpoczyna nową część. Nagłówek pojawi się nad nim jako separator.
-                        </p>
+                        <p className="mt-2 text-xs text-slate-500">{t("Uzupełnij tylko wtedy, gdy ten moduł rozpoczyna nową część. Nagłówek pojawi się nad nim jako separator.")}</p>
                     </div>
                     <div className="flex flex-col gap-3 sm:flex-row">
                         <input
                             value={newModuleName}
                             onChange={(event) => setNewModuleName(event.target.value)}
-                            placeholder={isLanguageCourse ? "Nazwa rozdziału, np. W restauracji" : "Nazwa nowego modułu"}
+                            placeholder={isLanguageCourse ? t("Nazwa rozdziału, np. W restauracji") : t("Nazwa nowego modułu")}
                             className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-emerald-400"
                         />
                         {isLanguageCourse && (
                             <select
                                 value={newModuleLevel}
                                 onChange={(event) => setNewModuleLevel(event.target.value)}
-                                aria-label="Poziom CEFR nowego rozdziału"
+                                aria-label={t("Poziom CEFR nowego rozdziału")}
                                 className="rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 font-black outline-none focus:border-emerald-400"
                             >
                                 {availableLevels.map((level) => (
@@ -228,7 +225,7 @@ export default function AdminModulesPage() {
                             disabled={!courseId || !newModuleName.trim()}
                             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 font-black disabled:opacity-40"
                         >
-                            <BsPlusCircle /> {isLanguageCourse ? "Dodaj rozdział" : "Dodaj moduł"}
+                            <BsPlusCircle /> {isLanguageCourse ? t("Dodaj rozdział") : t("Dodaj moduł")}
                         </button>
                     </div>
                 </form>
@@ -249,9 +246,7 @@ export default function AdminModulesPage() {
                     <span className="h-12 w-12 animate-spin rounded-full border-4 border-emerald-400 border-t-transparent" />
                 </div>
             ) : modules.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-slate-500">
-                    Ten kurs nie ma jeszcze modułów.
-                </div>
+                <div className="rounded-3xl border border-dashed border-white/15 p-10 text-center text-slate-500">{t("Ten kurs nie ma jeszcze modułów.")}</div>
             ) : (
                 <section className="grid gap-4">
                     {modules.map((module, index) => (
@@ -264,14 +259,12 @@ export default function AdminModulesPage() {
                                     {index + 1}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <label className="text-xs font-black uppercase tracking-[0.14em] text-violet-300">
-                                        Nagłówek części nad tym modułem
-                                    </label>
+                                    <label className="text-xs font-black uppercase tracking-[0.14em] text-violet-300">{t("Nagłówek części nad tym modułem")}</label>
                                     <input
                                         value={module.sectionTitle || ""}
                                         onChange={(event) => updateLocal(module.id, { sectionTitle: event.target.value })}
                                         maxLength={200}
-                                        placeholder="Brak — ten moduł kontynuuje obecną część"
+                                        placeholder={t("Brak — ten moduł kontynuuje obecną część")}
                                         className="mb-3 mt-2 w-full rounded-xl border border-violet-400/15 bg-violet-500/[0.05] px-4 py-3 text-sm font-bold text-violet-100 outline-none focus:border-violet-400"
                                     />
                                     <input
@@ -283,11 +276,11 @@ export default function AdminModulesPage() {
                                         <select
                                             value={module.cefrLevel || selectedCourse?.cefrLevel || "A1"}
                                             onChange={(event) => updateLocal(module.id, { cefrLevel: event.target.value })}
-                                            aria-label={`Poziom CEFR modułu ${module.name}`}
+                                            aria-label={t("Poziom CEFR modułu {value0}", { value0: module.name })}
                                             className="mt-3 rounded-xl border border-violet-400/20 bg-slate-950 px-3 py-2 text-sm font-black text-violet-200 outline-none focus:border-violet-400"
                                         >
                                             {availableLevels.map((level) => (
-                                                <option key={level} value={level}>Poziom {level}</option>
+                                                <option key={level} value={level}>{t("Poziom ")}{level}</option>
                                             ))}
                                         </select>
                                     )}
@@ -300,7 +293,7 @@ export default function AdminModulesPage() {
                                             })}
                                             className="accent-emerald-500"
                                         />
-                                        {isLanguageCourse ? "Prowadź ucznia krok po kroku" : "Odblokowuj lekcje kolejno"}
+                                        {isLanguageCourse ? t("Prowadź ucznia krok po kroku") : t("Odblokowuj lekcje kolejno")}
                                     </label>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
@@ -310,21 +303,19 @@ export default function AdminModulesPage() {
                                         disabled={savingId === module.id || !module.name.trim()}
                                         className="inline-flex items-center gap-2 rounded-xl bg-emerald-600/20 px-4 py-3 font-bold text-emerald-300 hover:bg-emerald-600 hover:text-white disabled:opacity-40"
                                     >
-                                        <BsCheck2 /> {savingId === module.id ? "Zapis..." : "Zapisz"}
+                                        <BsCheck2 /> {savingId === module.id ? t("Zapis...") : t("Zapisz")}
                                     </button>
                                     <Link
                                         to={`/admin/lessons/${module.id}`}
                                         className="inline-flex items-center gap-2 rounded-xl bg-blue-600/20 px-4 py-3 font-bold text-blue-300 hover:bg-blue-600 hover:text-white"
                                     >
-                                        <BsGear /> Lekcje
-                                    </Link>
+                                        <BsGear />{t(" Lekcje")}</Link>
                                     <button
                                         type="button"
                                         onClick={() => deleteModule(module)}
                                         className="inline-flex items-center gap-2 rounded-xl bg-red-600/15 px-4 py-3 font-bold text-red-300 hover:bg-red-600 hover:text-white"
                                     >
-                                        <BsTrash /> Usuń
-                                    </button>
+                                        <BsTrash />{t(" Usuń")}</button>
                                 </div>
                             </div>
                         </article>

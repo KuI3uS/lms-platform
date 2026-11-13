@@ -1,8 +1,10 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../api/api";
 import { useFeedback } from "../../context/FeedbackContext";
 
 export default function AdminUsers() {
+    const { t } = useLocale();
     const { confirm, showToast } = useFeedback();
     const [users, setUsers] = useState([]);
 
@@ -66,7 +68,7 @@ export default function AdminUsers() {
     return (
         <div className="text-white space-y-6">
 
-            <h1 className="text-3xl font-bold">Użytkownicy</h1>
+            <h1 className="text-3xl font-bold">{t("Użytkownicy")}</h1>
 
             <div className="space-y-3">
                 {users.map(u => {
@@ -80,19 +82,17 @@ export default function AdminUsers() {
                         >
                             <div>
                                 <p className="font-semibold text-lg">
-                                    {u.firstName || "Brak imienia"} {u.lastName || "Brak nazwiska"}
+                                    {u.firstName || t("Brak imienia")} {u.lastName || t("Brak nazwiska")}
                                 </p>
 
                                 <p className="text-sm text-gray-400">
                                     {u.email}
                                 </p>
 
-                                <p className="text-sm text-gray-500">
-                                    Rola: {u.role}
+                                <p className="text-sm text-gray-500">{t("Rola: ")}{u.role}
                                 </p>
 
-                                <p className="text-sm text-blue-400">
-                                    Klasa: {u.schoolClass?.name || "Brak klasy"}
+                                <p className="text-sm text-blue-400">{t("Klasa: ")}{u.schoolClass?.name || t("Brak klasy")}
                                 </p>
                             </div>
 
@@ -103,7 +103,7 @@ export default function AdminUsers() {
                                     onChange={(e) => changeClass(u.id, e.target.value + group)}
                                     className="bg-gray-900 p-2 rounded"
                                 >
-                                    <option value="">Klasa</option>
+                                    <option value="">{t("Klasa")}</option>
                                     {levels.map(l => (
                                         <option key={l} value={l}>
                                             {l}
@@ -116,7 +116,7 @@ export default function AdminUsers() {
                                     onChange={(e) => changeClass(u.id, level + e.target.value)}
                                     className="bg-gray-900 p-2 rounded"
                                 >
-                                    <option value="">Grupa</option>
+                                    <option value="">{t("Grupa")}</option>
                                     {groups.map(g => (
                                         <option key={g} value={g}>
                                             {g}
@@ -141,9 +141,7 @@ export default function AdminUsers() {
                                 <button
                                     onClick={() => deleteUser(u.id, u.email)}
                                     className="bg-red-600 px-3 py-2 rounded text-sm font-semibold"
-                                >
-                                    Usuń
-                                </button>
+                                >{t("Usuń")}</button>
 
                             </div>
                         </div>

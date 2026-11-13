@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import {
     BsBook,
     BsCheckCircleFill,
@@ -38,6 +39,7 @@ const CALLOUTS = {
 };
 
 export default function LessonText({ block }) {
+    const { t } = useLocale();
     if (block.type === "SUMMARY") {
         const points = (block.content || "")
             .split("\n")
@@ -47,11 +49,9 @@ export default function LessonText({ block }) {
         return (
             <section className="overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 via-gray-900 to-gray-950">
                 <header className="border-b border-emerald-300/15 p-6 sm:p-8">
-                    <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-300">
-                        Podsumowanie
-                    </p>
+                    <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-300">{t("Podsumowanie")}</p>
                     <h2 className="mt-2 text-3xl font-black text-white">
-                        {block.title || "Co warto zapamiętać?"}
+                        {block.title || t("Co warto zapamiętać?")}
                     </h2>
                 </header>
                 <ul className="grid gap-3 p-5 sm:p-8 md:grid-cols-2">
@@ -104,11 +104,9 @@ export default function LessonText({ block }) {
                     <BsBook />
                 </div>
                 <div>
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">
-                        Materiał
-                    </p>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">{t("Materiał")}</p>
                     <h2 className="mt-1 text-3xl font-black text-white">
-                        {block.title || "Teoria"}
+                        {block.title || t("Teoria")}
                     </h2>
                 </div>
             </header>

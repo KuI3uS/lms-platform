@@ -5,6 +5,7 @@ import {
     BsLightbulb,
     BsQuestionCircle
 } from "react-icons/bs";
+import { useLocale } from "../../context/LocaleContext";
 
 export default function LessonQuiz({
                                        block,
@@ -15,6 +16,7 @@ export default function LessonQuiz({
                                        onReset,
                                        onCheck
                                    }) {
+    const { t } = useLocale();
     const options = (block.content || "")
         .split("\n")
         .map(option => option.trim())
@@ -30,10 +32,10 @@ export default function LessonQuiz({
                     </div>
                     <div>
                         <p className="text-sm font-bold uppercase tracking-[0.18em] text-indigo-300">
-                            Quiz
+                            {t("Quiz")}
                         </p>
                         <h2 className="mt-1 text-2xl font-black text-white sm:text-3xl">
-                            {block.title || "Wybierz poprawną odpowiedź"}
+                            {block.title || t("Wybierz poprawną odpowiedź")}
                         </h2>
                         {block.description && (
                             <p className="mt-3 leading-7 text-gray-400">
@@ -74,7 +76,7 @@ export default function LessonQuiz({
 
                 {options.length < 2 && (
                     <p className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-amber-200">
-                        Administrator nie skonfigurował jeszcze odpowiedzi do tego quizu.
+                        {t("Administrator nie skonfigurował jeszcze odpowiedzi do tego quizu.")}
                     </p>
                 )}
 
@@ -85,7 +87,7 @@ export default function LessonQuiz({
                         onClick={() => onCheck(block.id)}
                         className="rounded-2xl bg-indigo-500 px-6 py-3 font-black transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                        {checking ? "Sprawdzam..." : "Sprawdź odpowiedź"}
+                        {t(checking ? "Sprawdzam..." : "Sprawdź odpowiedź")}
                     </button>
                     <button
                         type="button"
@@ -94,7 +96,7 @@ export default function LessonQuiz({
                         className="flex items-center gap-2 rounded-2xl bg-gray-800 px-5 py-3 font-bold transition hover:bg-gray-700"
                     >
                         <BsArrowRepeat />
-                        Reset
+                        {t("Reset")}
                     </button>
                 </div>
 
@@ -111,7 +113,7 @@ export default function LessonQuiz({
                             }
                             <div>
                                 <p className="font-black">
-                                    {result.correct ? "Poprawna odpowiedź" : "Spróbuj jeszcze raz"}
+                                    {t(result.correct ? "Poprawna odpowiedź" : "Spróbuj jeszcze raz")}
                                 </p>
                                 <p className="mt-1 text-sm opacity-80">{result.message}</p>
                             </div>

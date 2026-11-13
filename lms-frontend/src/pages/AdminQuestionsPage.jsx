@@ -1,3 +1,4 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useState } from "react";
 import {
     BsCheckCircle,
@@ -14,6 +15,7 @@ const emptyAnswers = () => [
 ];
 
 export default function AdminQuestionsPage() {
+    const { t } = useLocale();
     const { confirm } = useFeedback();
     const [courses, setCourses] = useState([]);
     const [courseId, setCourseId] = useState("");
@@ -147,11 +149,9 @@ export default function AdminQuestionsPage() {
     return (
         <div className="mx-auto max-w-6xl space-y-8 text-white">
             <header className="rounded-[34px] border border-orange-500/20 bg-gradient-to-br from-orange-950/70 to-slate-950 p-7 sm:p-10">
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-300">EduHub Quiz Builder</p>
-                <h1 className="mt-3 text-4xl font-black sm:text-5xl">Pytania egzaminacyjne</h1>
-                <p className="mt-4 text-slate-400">
-                    Pytania zapisane tutaj trafiają do losowania w symulatorze egzaminu.
-                </p>
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-300">{t("EduHub Quiz Builder")}</p>
+                <h1 className="mt-3 text-4xl font-black sm:text-5xl">{t("Pytania egzaminacyjne")}</h1>
+                <p className="mt-4 text-slate-400">{t("Pytania zapisane tutaj trafiają do losowania w symulatorze egzaminu.")}</p>
             </header>
 
             {error && (
@@ -161,9 +161,7 @@ export default function AdminQuestionsPage() {
             )}
 
             <section className="grid gap-4 rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:grid-cols-2 sm:p-7">
-                <label className="text-sm font-bold text-slate-300">
-                    Kurs
-                    <select
+                <label className="text-sm font-bold text-slate-300">{t("Kurs")}<select
                         value={courseId}
                         onChange={(event) => {
                             setLoading(true);
@@ -175,7 +173,7 @@ export default function AdminQuestionsPage() {
                         }}
                         className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3"
                     >
-                        {courses.length === 0 && <option value="">Brak kursów</option>}
+                        {courses.length === 0 && <option value="">{t("Brak kursów")}</option>}
                         {courses.map((course) => (
                             <option key={course.id} value={course.id}>
                                 {course.title || course.name}
@@ -183,9 +181,7 @@ export default function AdminQuestionsPage() {
                         ))}
                     </select>
                 </label>
-                <label className="text-sm font-bold text-slate-300">
-                    Moduł
-                    <select
+                <label className="text-sm font-bold text-slate-300">{t("Moduł")}<select
                         value={moduleId}
                         onChange={(event) => {
                             setLoading(true);
@@ -195,7 +191,7 @@ export default function AdminQuestionsPage() {
                         }}
                         className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3"
                     >
-                        {modules.length === 0 && <option value="">Brak modułów</option>}
+                        {modules.length === 0 && <option value="">{t("Brak modułów")}</option>}
                         {modules.map((module) => (
                             <option key={module.id} value={module.id}>
                                 {module.cefrLevel ? `[${module.cefrLevel}] ` : ""}{module.name}
@@ -207,12 +203,11 @@ export default function AdminQuestionsPage() {
 
             <form onSubmit={submit} className="space-y-5 rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-7">
                 <h2 className="flex items-center gap-3 text-2xl font-black">
-                    <BsPlusCircle className="text-orange-300" /> Dodaj pytanie
-                </h2>
+                    <BsPlusCircle className="text-orange-300" />{t(" Dodaj pytanie")}</h2>
                 <textarea
                     value={content}
                     onChange={(event) => setContent(event.target.value)}
-                    placeholder="Treść pytania..."
+                    placeholder={t("Treść pytania...")}
                     className="min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950 p-4 outline-none focus:border-orange-400"
                 />
                 <div className="grid gap-3">
@@ -221,7 +216,7 @@ export default function AdminQuestionsPage() {
                             <input
                                 value={answer.content}
                                 onChange={(event) => updateAnswer(index, { content: event.target.value })}
-                                placeholder={`Odpowiedź ${index + 1}`}
+                                placeholder={t("Odpowiedź {value0}", { value0: index + 1 })}
                                 className="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-900 px-4 py-3"
                             />
                             <label className="flex items-center gap-2 text-sm font-bold text-emerald-300">
@@ -231,12 +226,11 @@ export default function AdminQuestionsPage() {
                                     onChange={(event) => updateAnswer(index, { correct: event.target.checked })}
                                     className="accent-emerald-500"
                                 />
-                                <BsCheckCircle /> Poprawna
-                            </label>
+                                <BsCheckCircle />{t(" Poprawna")}</label>
                             {answers.length > 2 && (
                                 <button
                                     type="button"
-                                    aria-label="Usuń odpowiedź"
+                                    aria-label={t("Usuń odpowiedź")}
                                     onClick={() => setAnswers((current) => current.filter((_, answerIndex) => answerIndex !== index))}
                                     className="rounded-xl p-3 text-red-300 hover:bg-red-500/10"
                                 >
@@ -251,31 +245,26 @@ export default function AdminQuestionsPage() {
                         type="button"
                         onClick={() => setAnswers((current) => [...current, { content: "", correct: false }])}
                         className="rounded-xl border border-white/10 px-4 py-3 font-bold text-slate-300"
-                    >
-                        Dodaj odpowiedź
-                    </button>
+                    >{t("Dodaj odpowiedź")}</button>
                     <button
                         type="submit"
                         disabled={saving || !moduleId}
                         className="flex-1 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-5 py-3 font-black disabled:opacity-40"
                     >
-                        {saving ? "Zapisywanie..." : "Zapisz pytanie"}
+                        {saving ? t("Zapisywanie...") : t("Zapisz pytanie")}
                     </button>
                 </div>
             </form>
 
             <section>
                 <h2 className="flex items-center gap-3 text-2xl font-black">
-                    <BsPatchQuestion className="text-orange-300" /> Pytania w module
-                </h2>
+                    <BsPatchQuestion className="text-orange-300" />{t(" Pytania w module")}</h2>
                 {loading ? (
                     <div className="grid min-h-40 place-items-center">
                         <span className="h-10 w-10 animate-spin rounded-full border-4 border-orange-400 border-t-transparent" />
                     </div>
                 ) : questions.length === 0 ? (
-                    <p className="mt-5 rounded-3xl border border-dashed border-white/15 p-8 text-center text-slate-500">
-                        W tym module nie ma jeszcze pytań.
-                    </p>
+                    <p className="mt-5 rounded-3xl border border-dashed border-white/15 p-8 text-center text-slate-500">{t("W tym module nie ma jeszcze pytań.")}</p>
                 ) : (
                     <div className="mt-5 grid gap-3">
                         {questions.map((question, index) => (
@@ -284,12 +273,11 @@ export default function AdminQuestionsPage() {
                                 <div className="min-w-0 flex-1">
                                     <h3 className="font-black">{question.content}</h3>
                                     <p className="mt-2 text-sm text-slate-500">
-                                        {question.answers?.length || 0} odpowiedzi
-                                    </p>
+                                        {question.answers?.length || 0}{t(" odpowiedzi")}</p>
                                 </div>
                                 <button
                                     type="button"
-                                    aria-label="Usuń pytanie"
+                                    aria-label={t("Usuń pytanie")}
                                     onClick={() => removeQuestion(question)}
                                     className="h-fit rounded-xl bg-red-500/10 p-3 text-red-300 hover:bg-red-600 hover:text-white"
                                 >

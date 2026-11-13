@@ -1,3 +1,4 @@
+import { useLocale } from "../../context/LocaleContext.jsx";
 import {
     BsCodeSlash,
     BsClipboard,
@@ -6,6 +7,7 @@ import {
 import { useState } from "react";
 
 export default function LessonExample({ block }) {
+    const { t } = useLocale();
 
     const [copied, setCopied] = useState(false);
 
@@ -53,15 +55,11 @@ export default function LessonExample({ block }) {
 
                     <div>
 
-                        <p className="text-sm text-green-300 font-semibold">
-
-                            Przykład kodu
-
-                        </p>
+                        <p className="text-sm text-green-300 font-semibold">{t("Przykład kodu")}</p>
 
                         <h2 className="text-xl font-bold">
 
-                            {block.title || "Przykład"}
+                            {block.title || t("Przykład")}
 
                         </h2>
 
@@ -91,8 +89,8 @@ export default function LessonExample({ block }) {
                     }
 
                     {copied
-                        ? "Skopiowano"
-                        : "Kopiuj"
+                        ? t("Skopiowano")
+                        : t("Kopiuj")
                     }
 
                 </button>

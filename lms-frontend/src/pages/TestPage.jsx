@@ -1,9 +1,11 @@
+import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiFetch } from "../api/api";
 import { useFeedback } from "../context/FeedbackContext";
 
 export default function TestPage() {
+    const { t } = useLocale();
     const { showToast } = useFeedback();
 
     const { moduleId } = useParams();
@@ -42,7 +44,7 @@ export default function TestPage() {
 
     return (
         <div>
-            <h1>Test</h1>
+            <h1>{t("Test")}</h1>
 
             {questions.map(q => (
                 <div key={q.id}>
@@ -65,9 +67,7 @@ export default function TestPage() {
             <button
                 onClick={submitTest}
                 disabled={Object.keys(selectedAnswers).length === 0}
-            >
-                Zakończ test
-            </button>
+            >{t("Zakończ test")}</button>
         </div>
     );
 }

@@ -1,3 +1,4 @@
+import { useLocale } from "../../../../context/LocaleContext.jsx";
 import { getBlockType } from "../../blockTypes.jsx";
 
 const COPY = {
@@ -34,6 +35,7 @@ const COPY = {
 };
 
 export default function TextBlockForm({ block, setBlock }) {
+    const { t } = useLocale();
     const type = getBlockType(block.type);
     const copy = COPY[block.type] || COPY.TEXT;
     const content = block.content || "";
@@ -52,18 +54,18 @@ export default function TextBlockForm({ block, setBlock }) {
                     {type?.icon}
                 </div>
                 <div>
-                    <h3 className="font-black text-white">{type?.label || "Tekst"}</h3>
+                    <h3 className="font-black text-white">{t(type?.label || "Tekst")}</h3>
                     <p className="mt-1 text-sm leading-6 text-gray-400">
-                        {type?.description}
+                        {t(type?.description)}
                     </p>
                 </div>
             </div>
 
             <div className="max-w-4xl">
-                <label className="mb-2 block font-semibold">{copy.title}</label>
+                <label className="mb-2 block font-semibold">{t(copy.title)}</label>
                 <input
                     value={block.title || ""}
-                    placeholder={copy.titlePlaceholder}
+                    placeholder={t(copy.titlePlaceholder)}
                     onChange={event => update("title", event.target.value)}
                     className="w-full rounded-2xl border border-white/10 bg-gray-950/80 px-4 py-3.5 text-lg font-bold outline-none transition focus:border-blue-400/50 focus:ring-4 focus:ring-blue-500/10"
                 />
@@ -76,20 +78,17 @@ export default function TextBlockForm({ block, setBlock }) {
                             htmlFor="lesson-block-content"
                             className="block font-semibold text-white"
                         >
-                            {copy.content}
+                            {t(copy.content)}
                         </label>
-                        <p className="mt-0.5 text-xs text-gray-500">
-                            Pisz naturalnie — układ rozdziału utworzy się automatycznie.
-                        </p>
+                        <p className="mt-0.5 text-xs text-gray-500">{t("Pisz naturalnie — układ rozdziału utworzy się automatycznie.")}</p>
                     </div>
                     <p className="shrink-0 text-xs font-semibold text-gray-500">
-                        {wordCount} {wordCount === 1 ? "słowo" : "słów"} · {content.length} znaków
-                    </p>
+                        {wordCount} {wordCount === 1 ? t("słowo") : t("słów")} · {content.length}{t(" znaków")}</p>
                 </div>
                 <textarea
                     id="lesson-block-content"
                     value={content}
-                    placeholder={copy.contentPlaceholder}
+                    placeholder={t(copy.contentPlaceholder)}
                     onChange={event => update("content", event.target.value)}
                     spellCheck="true"
                     aria-describedby="lesson-content-format-help"
@@ -104,32 +103,16 @@ export default function TextBlockForm({ block, setBlock }) {
                     className="border-t border-white/10 px-4 py-3"
                 >
                     {block.type === "SUMMARY" ? (
-                        <p className="text-xs text-emerald-200/70">
-                            Każdy nowy wiersz zostanie pokazany jako osobny punkt podsumowania.
-                        </p>
+                        <p className="text-xs text-emerald-200/70">{t("Każdy nowy wiersz zostanie pokazany jako osobny punkt podsumowania.")}</p>
                     ) : (
                         <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-gray-400">
-                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
-                                Nowa linia — nowy akapit
-                            </span>
-                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
-                                „- element” — lista
-                            </span>
-                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
-                                „# Tytuł” — śródtytuł
-                            </span>
-                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
-                                „1. krok” — instrukcja krok po kroku
-                            </span>
-                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
-                                „**ważne**” — wyróżnienie
-                            </span>
-                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
-                                „`przycisk`” — nazwa przycisku lub polecenia
-                            </span>
-                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">
-                                „Pojęcie: opis” — definicja
-                            </span>
+                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{t("Nowa linia — nowy akapit")}</span>
+                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{t("„- element” — lista")}</span>
+                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{t("„# Tytuł” — śródtytuł")}</span>
+                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{t("„1. krok” — instrukcja krok po kroku")}</span>
+                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{t("„**ważne**” — wyróżnienie")}</span>
+                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{t("„`przycisk`” — nazwa przycisku lub polecenia")}</span>
+                            <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{t("„Pojęcie: opis” — definicja")}</span>
                         </div>
                     )}
                 </div>
