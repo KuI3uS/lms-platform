@@ -26,15 +26,21 @@ public class CodeExecutionService {
     private final boolean enabled;
     private final String dockerBinary;
     private final String javaImage;
+    private final String provider;
+    private final RenderJavaRunner renderRunner;
 
     public CodeExecutionService(
             @Value("${code.runner.enabled:true}") boolean enabled,
             @Value("${code.runner.docker-binary:docker}") String dockerBinary,
-            @Value("${code.runner.java-image:eclipse-temurin:21-jdk-alpine}") String javaImage
+            @Value("${code.runner.java-image:eclipse-temurin:21-jdk-alpine}") String javaImage,
+            @Value("${code.runner.provider:docker}") String provider,
+            RenderJavaRunner renderRunner
     ) {
         this.enabled = enabled;
         this.dockerBinary = dockerBinary;
         this.javaImage = javaImage;
+        this.provider = provider;
+        this.renderRunner = renderRunner;
     }
 
     public List<TaskDiagnosticDto> evaluateJava(
@@ -69,6 +75,11 @@ public class CodeExecutionService {
 
         List<HiddenTest> tests = parseTests(hiddenTests);
         if (tests.isEmpty()) return List.of(unavailableDiagnostic());
+
+        if ("render".equalsIgnoreCase(provider)) {
+            return renderRunner.evaluateJava(source, tests, javaImage);
+        }
+        if (!"docker".equalsIgnoreCase(provider)) return List.of(unavailableDiagnostic());
 
         List<TaskDiagnosticDto> diagnostics = new ArrayList<>();
         for (int index = 0; index < tests.size(); index++) {
@@ -110,34 +121,14 @@ public class CodeExecutionService {
     }
 
     private RunResult runJava(String source, String input) {
-        String encodedSource = Base64.getEncoder().encodeToString(
-                source.getBytes(StandardCharsets.UTF_8)
-        );
-        String command = "printf '%s' '" + encodedSource
-                + "' | base64 -d > /tmp/Main.java"
-                + " && javac -encoding UTF-8 /tmp/Main.java || exit 42;"
-                + " timeout 3 java -cp /tmp Main";
         Process process = null;
         ExecutorService reader = Executors.newSingleThreadExecutor();
 
         try {
-            process = new ProcessBuilder(
-                    dockerBinary,
-                    "run", "--rm", "-i",
-                    "--network", "none",
-                    "--memory", "128m",
-                    "--cpus", "0.50",
-                    "--pids-limit", "64",
-                    "--ulimit", "nofile=64:64",
-                    "--cap-drop", "ALL",
-                    "--user", "65534:65534",
-                    "--read-only",
-                    "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=32m,mode=1777",
-                    "--security-opt", "no-new-privileges",
-                    javaImage,
-                    "sh", "-lc", command
-            ).redirectErrorStream(true).start();
-
+            List<String> arguments = new ArrayList<>();
+            arguments.add(dockerBinary);
+            arguments.addAll(dockerArguments(source, javaImage));
+            process = new ProcessBuilder(arguments).redirectErrorStream(true).start();
             Process runningProcess = process;
             Future<byte[]> outputFuture = reader.submit(() ->
                     runningProcess.getInputStream().readNBytes(MAX_OUTPUT_BYTES + 1)
@@ -155,12 +146,7 @@ public class CodeExecutionService {
                 return new RunResult(RunStatus.OUTPUT_LIMIT, "");
             }
             String output = new String(bytes, StandardCharsets.UTF_8);
-            return switch (process.exitValue()) {
-                case 0 -> new RunResult(RunStatus.SUCCESS, output);
-                case 42 -> new RunResult(RunStatus.COMPILATION_ERROR, output);
-                case 124, 137 -> new RunResult(RunStatus.TIMEOUT, output);
-                default -> new RunResult(RunStatus.RUNTIME_ERROR, output);
-            };
+            return resultForExitCode(process.exitValue(), output);
         } catch (IOException exception) {
             return new RunResult(RunStatus.UNAVAILABLE, "");
         } catch (Exception exception) {
@@ -171,7 +157,33 @@ public class CodeExecutionService {
         }
     }
 
-    private TaskDiagnosticDto runtimeDiagnostic(RunResult result) {
+    static List<String> dockerArguments(String source, String javaImage) {
+        String encodedSource = Base64.getEncoder().encodeToString(source.getBytes(StandardCharsets.UTF_8));
+        String command = "printf '%s' '" + encodedSource
+                + "' | base64 -d > /tmp/Main.java"
+                + " && javac -proc:none -encoding UTF-8 /tmp/Main.java || exit 42;"
+                + " timeout 3 java -Xmx64m -cp /tmp Main";
+        return List.of(
+                "run", "--rm", "-i", "--pull=never",
+                "--network", "none", "--memory", "128m", "--cpus", "0.50",
+                "--pids-limit", "64", "--ulimit", "nofile=64:64",
+                "--cap-drop", "ALL", "--user", "65534:65534", "--read-only",
+                "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=32m,mode=1777",
+                "--security-opt", "no-new-privileges", javaImage, "sh", "-lc", command
+        );
+    }
+
+    static RunResult resultForExitCode(int exitCode, String output) {
+        return switch (exitCode) {
+            case 0 -> new RunResult(RunStatus.SUCCESS, output);
+            case 42 -> new RunResult(RunStatus.COMPILATION_ERROR, output);
+            case 124, 137 -> new RunResult(RunStatus.TIMEOUT, output);
+            case 125, 126, 127 -> new RunResult(RunStatus.UNAVAILABLE, "");
+            default -> new RunResult(RunStatus.RUNTIME_ERROR, output);
+        };
+    }
+
+    static TaskDiagnosticDto runtimeDiagnostic(RunResult result) {
         return switch (result.status()) {
             case COMPILATION_ERROR -> new TaskDiagnosticDto(
                     "COMPILATION_ERROR", null,
@@ -197,21 +209,21 @@ public class CodeExecutionService {
         };
     }
 
-    private TaskDiagnosticDto unavailableDiagnostic() {
+    static TaskDiagnosticDto unavailableDiagnostic() {
         return new TaskDiagnosticDto(
                 "RUNNER_UNAVAILABLE", null,
                 "Bezpieczne środowisko uruchomieniowe jest chwilowo niedostępne.",
-                "Spróbuj ponownie za chwilę. Administrator powinien sprawdzić usługę Docker runner."
+                "Spróbuj ponownie za chwilę. Administrator powinien sprawdzić konfigurację środowiska testów. Nie musisz zmieniać kodu z powodu tej awarii."
         );
     }
 
-    private String summarizeCompilerOutput(String output) {
+    private static String summarizeCompilerOutput(String output) {
         String normalized = output == null ? "" : output.replace("/tmp/Main.java", "Main.java").trim();
         if (normalized.isBlank()) return "Sprawdź składnię programu i nazwy użytych symboli.";
         return normalized.length() > 900 ? normalized.substring(0, 900) + "…" : normalized;
     }
 
-    private String normalizeOutput(String value) {
+    static String normalizeOutput(String value) {
         return value.replace("\r\n", "\n")
                 .lines()
                 .map(String::stripTrailing)
@@ -227,10 +239,10 @@ public class CodeExecutionService {
     record HiddenTest(String input, String expectedOutput) {
     }
 
-    private record RunResult(RunStatus status, String output) {
+    record RunResult(RunStatus status, String output) {
     }
 
-    private enum RunStatus {
+    enum RunStatus {
         SUCCESS, COMPILATION_ERROR, RUNTIME_ERROR, TIMEOUT, OUTPUT_LIMIT, UNAVAILABLE
     }
 }

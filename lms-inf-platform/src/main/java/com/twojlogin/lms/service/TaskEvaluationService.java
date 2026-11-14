@@ -147,6 +147,22 @@ public class TaskEvaluationService {
                             block.getLanguage()
                         );
         };
+        if (diagnostics.stream().anyMatch(diagnostic -> diagnostic.type().startsWith("RUNNER_"))) {
+            // Do not mutate attempts, streaks, XP, mastery or reveal a solution when
+            // the platform could not assess the answer. Preserve any previous pass.
+            TaskAttempt existing = attemptRepository.findByUserAndBlock(user, block).orElse(null);
+            return new TaskCheckResponse(
+                    false,
+                    "Nie udało się uruchomić testów. To nie jest błąd w Twoim kodzie. Próba nie została naliczona.",
+                    existing == null ? 0 : existing.getAttemptCount(),
+                    0,
+                    null,
+                    diagnostics,
+                    null,
+                    false,
+                    0, 1, 0, 1, false
+            );
+        }
         boolean correct = diagnostics.isEmpty();
 
         GamificationProfile profile = gamificationService.profileForUpdate(user);

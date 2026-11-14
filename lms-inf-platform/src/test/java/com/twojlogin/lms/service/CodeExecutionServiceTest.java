@@ -11,7 +11,7 @@ class CodeExecutionServiceTest {
     private final CodeExecutionService service = new CodeExecutionService(
             false,
             "docker",
-            "test-image"
+            "test-image", "docker", null
     );
 
     @Test

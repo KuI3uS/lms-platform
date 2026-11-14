@@ -17,4 +17,9 @@ public record TaskCheckResponse(
         int level,
         boolean levelUp
 ) {
+    /** An infrastructure failure is not an assessed (incorrect) student answer. */
+    public boolean isEvaluationUnavailable() {
+        return diagnostics != null && diagnostics.stream().anyMatch(diagnostic ->
+                diagnostic.type().startsWith("RUNNER_"));
+    }
 }

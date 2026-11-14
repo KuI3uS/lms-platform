@@ -8,6 +8,7 @@ import {
 import { lazy, Suspense } from "react";
 import { normalizeCodeLanguage } from "../../utils/codeLanguages.js";
 import { useLocale } from "../../context/LocaleContext";
+import { isAssessmentUnavailable } from "../../utils/taskAssessment.js";
 
 const MonacoEditorBox = lazy(() => import("./MonacoEditor"));
 
@@ -39,6 +40,8 @@ const DIAGNOSTIC_LABELS = {
     OUTPUT_LIMIT: "Zbyt dużo danych",
     RUNTIME_ERROR: "Błąd działania programu",
     RUNNER_UNAVAILABLE: "Środowisko chwilowo niedostępne",
+    RUNNER_BUSY: "Środowisko jest zajęte",
+    RUNNER_BUDGET_LIMIT: "Miesięczny limit testów",
     HIDDEN_TEST_FAILED: "Ukryty test nie przeszedł",
     MAIN_CLASS_REQUIRED: "Brak klasy Main",
     SOURCE_TOO_LARGE: "Kod jest zbyt długi",
@@ -93,6 +96,7 @@ export default function LessonTask({
                                        onCheck
                                    }) {
     const { t, formatNumber } = useLocale();
+    const unavailable = isAssessmentUnavailable(result);
     const presentation = TASK_PRESENTATION[block.type] || TASK_PRESENTATION.TASK;
     const isPrediction = block.type === "PREDICT_OUTPUT";
     const isReflection = block.type === "CODE_REVIEW" || block.type === "OPEN_RESPONSE";
@@ -196,7 +200,7 @@ export default function LessonTask({
                 {result && (
                     <div
                         className={`overflow-hidden rounded-3xl border ${
-                            result.correct
+                            unavailable ? "border-sky-400/30 bg-sky-950/30" : result.correct
                                 ? "border-emerald-400/30 bg-emerald-500/[0.08]"
                                 : "border-orange-400/30 bg-slate-950/70"
                         }`}
@@ -218,7 +222,7 @@ export default function LessonTask({
                                     <p className={`text-lg font-black ${
                                         result.correct ? "text-emerald-200" : "text-white"
                                     }`}>
-                                        {t(result.correct
+                                        {t(unavailable ? "Nie udało się uruchomić testów" : result.correct
                                             ? isEditableCodeTask
                                                 ? block.language?.toLowerCase() === "sql"
                                                     ? "Dobra robota — SQL spełnia wymagania"
@@ -232,7 +236,7 @@ export default function LessonTask({
                                                 ? "Sprawdź wskazane miejsca"
                                                 : "Spróbuj poprawić odpowiedź")}
                                     </p>
-                                    {result.attemptCount > 0 && (
+                                    {!unavailable && result.attemptCount > 0 && (
                                         <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-slate-400">
                                             {t("Próba {number}", { number: formatNumber(result.attemptCount) })}
                                         </span>
@@ -241,7 +245,7 @@ export default function LessonTask({
                                 <p className={`mt-1 text-sm sm:text-base ${
                                     result.correct ? "text-emerald-100/80" : "text-slate-400"
                                 }`}>
-                                    {result.message}
+                                    {t(result.message)}
                                 </p>
                                 {result.correct && result.xpEarned > 0 && (
                                     <div className="mt-3 flex flex-wrap gap-2">
@@ -282,11 +286,11 @@ export default function LessonTask({
                                             )}
                                         </div>
                                         <p className="mt-3 leading-6 text-slate-300">
-                                            {diagnostic.message}
+                                            {t(diagnostic.message)}
                                         </p>
                                         {diagnostic.suggestion && (
                                             <div className="mt-3 rounded-xl bg-cyan-500/10 px-4 py-3 text-sm leading-6 text-cyan-100">
-                                                <strong>{t("Jak poprawić:")}</strong> {diagnostic.suggestion}
+                                                <strong>{t(unavailable ? "Co dalej:" : "Jak poprawić:")}</strong> {t(diagnostic.suggestion)}
                                             </div>
                                         )}
                                     </li>
@@ -294,7 +298,7 @@ export default function LessonTask({
                             </ul>
                         )}
 
-                        {!result.correct && result.hint && (
+                        {!unavailable && !result.correct && result.hint && (
                             <div className="mx-4 mb-4 flex gap-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-yellow-100 sm:mx-5 sm:mb-5">
                                 <BsLightbulb className="mt-0.5 shrink-0 text-yellow-300" size={20}/>
                                 <div>
@@ -310,7 +314,7 @@ export default function LessonTask({
                             </div>
                         )}
 
-                        {result.solutionPreview && (
+                        {!unavailable && result.solutionPreview && (
                             <div className="mx-4 mb-4 sm:mx-5 sm:mb-5">
                                 <p className="mb-2 font-bold text-yellow-100">
                                     {t(isReflection ? "Model odpowiedzi i kryteria samooceny" : "Przykładowe poprawne rozwiązanie")}

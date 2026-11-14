@@ -9,6 +9,7 @@ import {
     getActiveLessonStepIndex
 } from "../../utils/lessonSteps";
 import { ASSESSMENT_BLOCK_TYPES } from "../../utils/lessonBlockRewards";
+import { isAssessmentUnavailable } from "../../utils/taskAssessment.js";
 
 import LessonHero from "./LessonHero";
 import LessonSidebar from "./LessonSidebar";
@@ -186,6 +187,7 @@ export default function LessonPage() {
                 : response;
 
             setResults(previous => ({ ...previous, [blockId]: normalizedResponse }));
+            if (isAssessmentUnavailable(normalizedResponse)) return normalizedResponse;
             setBlocks(previous => previous.map(block => (
                 Number(block.id) === Number(blockId)
                     ? {

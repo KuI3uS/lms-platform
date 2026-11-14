@@ -25,6 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.never;
 
 class TaskEvaluationServiceTest {
 
@@ -117,6 +118,52 @@ class TaskEvaluationServiceTest {
         )).thenReturn(0L);
         when(attemptRepository.save(any(TaskAttempt.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+    }
+
+    @Test
+    void runnerOutageDoesNotCountAsWrongAttemptOrRevealSolution() {
+        block.setType(BlockType.DEBUGGING);
+        block.setHiddenTests("<brak> => EDUHUB API");
+        TaskAttempt attempt = new TaskAttempt();
+        attempt.setAttemptCount(17);
+        attempt.setCorrect(true);
+        attempt.setLastAnswer("earlier passing answer");
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.of(attempt));
+        when(codeExecutionService.evaluateJava(EXPECTED, block.getHiddenTests()))
+                .thenReturn(java.util.List.of(CodeExecutionService.unavailableDiagnostic()));
+
+        TaskCheckResponse response = service.check(block, EXPECTED, user);
+
+        assertTrue(response.isEvaluationUnavailable());
+        assertFalse(response.correct());
+        assertEquals(17, response.attemptCount());
+        assertEquals(0, response.hintLevel());
+        assertEquals(null, response.hint());
+        assertEquals(null, response.solutionPreview());
+        assertTrue(attempt.isCorrect());
+        assertEquals("earlier passing answer", attempt.getLastAnswer());
+        assertEquals(17, attempt.getAttemptCount());
+        verify(attemptRepository, never()).save(any());
+        verifyNoInteractions(gamificationService, languageReviewService);
+        assertTrue(response.message().contains("Próba nie została naliczona"));
+    }
+
+    @Test
+    void firstInfrastructureFailureDoesNotCreateAnAttemptOrChargeXp() {
+        block.setHiddenTests("<brak> => secret");
+        when(attemptRepository.findByUserAndBlock(user, block)).thenReturn(Optional.empty());
+        when(codeExecutionService.evaluateJava(EXPECTED, block.getHiddenTests()))
+                .thenReturn(java.util.List.of(new com.twojlogin.lms.dto.TaskDiagnosticDto(
+                        "RUNNER_BUDGET_LIMIT", null, "Budget reached", "Ask admin")));
+        TaskCheckResponse response = service.check(block, EXPECTED, user);
+        assertTrue(response.isEvaluationUnavailable());
+        assertEquals(0, response.attemptCount());
+        assertEquals(0, response.xpEarned());
+        verify(attemptRepository, never()).save(any());
+        verifyNoInteractions(gamificationService, languageReviewService);
+        String json = tools.jackson.databind.json.JsonMapper.builder().build().writeValueAsString(response);
+        assertTrue(json.contains("\"evaluationUnavailable\":true"));
+        assertFalse(json.contains("secret"));
     }
 
     @Test
