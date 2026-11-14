@@ -9,8 +9,8 @@ export function musicTrackForLanguage(language) {
 }
 
 export function shouldPauseSiteMusic(pathname) {
-    return /^\/(?:lesson|test|exams)\/[^/]+/.test(pathname)
-        || /^\/language-reviews(?:\/|$)/.test(pathname);
+    // Background music belongs to the public homepage, never the application.
+    return pathname !== "/";
 }
 
 export function musicVolume(value) {

@@ -44,7 +44,15 @@ export function MusicProvider({ children }) {
         const audio = audioRef.current;
         const synchronize = () => {
             if (enabled && !suspended && !document.hidden) play();
-            else { generation.current += 1; audio?.pause(); }
+            else {
+                generation.current += 1;
+                audio?.pause();
+                if (suspended && audio?.hasAttribute("src")) {
+                    // Leaving the homepage stops playback AND cancels audio loading.
+                    audio.removeAttribute("src");
+                    audio.load();
+                }
+            }
         };
         synchronize();
         document.addEventListener("visibilitychange", synchronize);

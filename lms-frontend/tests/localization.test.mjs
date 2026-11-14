@@ -45,12 +45,17 @@ test("each language selects its own real audio asset and Mañana is mapped to En
     assert.equal(musicVolume("invalid"), 0.2);
 });
 
-test("music is suspended during lessons and exams without changing exercise language", () => {
-    for (const path of ["/lesson/2", "/test/12", "/exams/2", "/language-reviews"]) assert.equal(shouldPauseSiteMusic(path), true, path);
-    for (const path of ["/", "/courses", "/exams", "/admin/lessons/2"]) assert.equal(shouldPauseSiteMusic(path), false, path);
+test("music belongs ONLY to the public homepage, not login, offers, courses or any app page", () => {
+    for (const path of ["/lesson/2", "/test/12", "/exams/2", "/language-reviews", "/courses", "/exams", "/admin/lessons/2", "/login", "/register", "/dashboard", "/kurs/java-backend-developer", "/support"]) {
+        assert.equal(shouldPauseSiteMusic(path), true, path);
+    }
+    assert.equal(shouldPauseSiteMusic("/"), false);
     const music = readFileSync(new URL("../src/context/MusicContext.jsx", import.meta.url), "utf8");
     assert.match(music, /preload="none"/);
     assert.match(music, /NotAllowedError/);
     assert.match(music, /visibilitychange/);
+    assert.match(music, /audio\.removeAttribute\("src"\)/);
+    const controls = readFileSync(new URL("../src/components/LocaleControls.jsx", import.meta.url), "utf8");
+    assert.match(controls, /!music\.suspended && <>/);
     assert.doesNotMatch(music, /getUserMedia|SpeechRecognition|expectedAnswer/);
 });

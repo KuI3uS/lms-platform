@@ -31,8 +31,7 @@ export default function LocaleControls({ compact = false }) {
             window.removeEventListener("resize", onResize);
         };
     }, [open]);
-    const musicLabel = music.suspended ? t("Muzyka wstrzymana na czas lekcji lub egzaminu")
-        : ["blocked", "error"].includes(music.status) ? t("Odtwórz muzykę po kliknięciu")
+    const musicLabel = ["blocked", "error"].includes(music.status) ? t("Odtwórz muzykę po kliknięciu")
             : music.enabled ? t("Wyłącz muzykę") : t("Włącz muzykę");
     return <div ref={rootRef} className={`locale-controls ${compact ? "locale-controls--compact" : ""}`}>
         <label className="locale-language">
@@ -42,7 +41,8 @@ export default function LocaleControls({ compact = false }) {
                 {SUPPORTED_LANGUAGES.map(option => <option key={option.value} value={option.value} lang={option.value}>{compact ? option.short : option.label}</option>)}
             </select>
         </label>
-        <button type="button" className="locale-music-toggle" onClick={music.toggle} disabled={music.suspended}
+        {!music.suspended && <>
+        <button type="button" className="locale-music-toggle" onClick={music.toggle}
             aria-label={musicLabel} title={musicLabel} aria-pressed={music.enabled}>
             {music.status === "playing" ? <BsPauseFill aria-hidden="true" /> : <BsMusicNoteBeamed aria-hidden="true" />}
         </button>
@@ -56,10 +56,11 @@ export default function LocaleControls({ compact = false }) {
         {open && createPortal(<div ref={panelRef} className="locale-controls"><section id={panelId} className="locale-music-panel" style={{ position: "fixed", ...position }} aria-label={t("Ustawienia muzyki")}>
             <div className="locale-panel-heading"><strong>{t("Muzyka")}</strong><button type="button" onClick={() => { setOpen(false); triggerRef.current?.focus(); }} aria-label={t("Zamknij ustawienia muzyki")}><BsX aria-hidden="true" /></button></div>
             <p className="locale-track-title">{music.track.title} · {t(music.track.version)}</p>
-            <p>{music.suspended ? t("Muzyka wstrzymana na czas lekcji lub egzaminu") : t("Muzyka jest opcjonalna. Utwór dopasowujemy do języka strony.")}</p>
+            <p>{t("Muzyka jest opcjonalna. Utwór dopasowujemy do języka strony.")}</p>
             {music.status === "error" && <p role="status">{t("Nie udało się wczytać utworu. Spróbuj ponownie.")}</p>}
             <label className="locale-volume"><span>{t("Głośność muzyki")} · {Math.round(music.volume * 100)}%</span><input aria-label={t("Głośność muzyki")} type="range" min="0" max="1" step="0.05" value={music.volume} onChange={event => music.setVolume(event.target.value)} /></label>
             <button type="button" className="locale-play-button" onClick={music.toggle} disabled={music.suspended}>{music.status === "playing" ? <BsPauseFill aria-hidden="true" /> : <BsPlayFill aria-hidden="true" />}{musicLabel}</button>
         </section></div>, document.body)}
+        </>}
     </div>;
 }
