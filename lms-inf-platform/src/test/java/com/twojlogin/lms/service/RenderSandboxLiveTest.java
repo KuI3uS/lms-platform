@@ -17,6 +17,22 @@ class RenderSandboxLiveTest {
             System.getenv().getOrDefault("EDUHUB_RENDER_IMAGE_ID", ""));
 
     @Test
+    void deploymentPolicyWithTwoPublicClassesPasses() throws Exception {
+        var result = run(deploymentPolicySource(), "");
+        assertEquals(CodeExecutionService.RunStatus.SUCCESS, result.status());
+        assertEquals("FAILURES ACCEPTED:\ntrue\nSUCCESS RATE ACCEPTED:\ntrue\nDEPLOYMENT ALLOWED:\ntrue",
+                result.output().strip());
+    }
+
+    @Test
+    void deploymentPolicyPrivateApiStillFailsCompilation() throws Exception {
+        var result = run(deploymentPolicySource().replace("public static boolean isDeploymentAllowed(",
+                "private static boolean isDeploymentAllowed("), "");
+        assertEquals(CodeExecutionService.RunStatus.COMPILATION_ERROR, result.status());
+        assertTrue(result.output().contains("private access"));
+    }
+
+    @Test
     void originalPrivateMethodProducesCompilationError() throws Exception {
         var result = run("""
                 class ApplicationInfo {
@@ -118,6 +134,13 @@ class RenderSandboxLiveTest {
             return client.execute(id, RenderJavaRunner.command(source, input));
         } finally {
             client.terminate(id);
+        }
+    }
+
+    private String deploymentPolicySource() throws Exception {
+        try (var resource = getClass().getResourceAsStream("/java/lesson-1092.txt")) {
+            assertNotNull(resource);
+            return new String(resource.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
         }
     }
 }

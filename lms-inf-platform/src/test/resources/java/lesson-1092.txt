@@ -1,0 +1,33 @@
+// DeploymentPolicy.java
+public class DeploymentPolicy {
+    private static final int MAX_FAILED_CHECKS = 1;
+    private static final double MIN_SUCCESS_RATE = 85.0;
+
+    public static boolean isFailureCountAccepted(int failedChecks) {
+        return failedChecks <= MAX_FAILED_CHECKS;
+    }
+
+    public static boolean isSuccessRateAccepted(double successRate) {
+        return successRate >= MIN_SUCCESS_RATE;
+    }
+
+    public static boolean isDeploymentAllowed(int failedChecks, double successRate) {
+        return isFailureCountAccepted(failedChecks)
+                && isSuccessRateAccepted(successRate);
+    }
+}
+
+// Main.java
+public class Main {
+    public static void main(String[] args) {
+        int failedChecks = 1;
+        double successRate = 87.5;
+
+        System.out.println("FAILURES ACCEPTED:");
+        System.out.println(DeploymentPolicy.isFailureCountAccepted(failedChecks));
+        System.out.println("SUCCESS RATE ACCEPTED:");
+        System.out.println(DeploymentPolicy.isSuccessRateAccepted(successRate));
+        System.out.println("DEPLOYMENT ALLOWED:");
+        System.out.println(DeploymentPolicy.isDeploymentAllowed(failedChecks, successRate));
+    }
+}

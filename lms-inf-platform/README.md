@@ -85,10 +85,25 @@ bezpośrednio w procesie backendu ani przez porównanie ze wzorcem zamiast test�
 `RenderSandboxLiveTest` jest domyślnie pomijany. Wymaga jawnego
 `EDUHUB_RUN_RENDER_SMOKE_TEST=true`, `RENDER_API_KEY`, `RENDER_WORKSPACE_ID`,
 `EDUHUB_RENDER_GROUP_ID` i `EDUHUB_RENDER_IMAGE_ID`, przekazanych poza repozytorium.
-Uruchomienie tej klasy tworzy 8 krótkotrwałych, płatnych VM i nie korzysta z
+Uruchomienie całej tej klasy tworzy 10 krótkotrwałych, płatnych VM i nie korzysta z
 licznika aplikacji — używaj jej tylko przy świadomie zatwierdzonej weryfikacji.
 Testuje poprawkę `private/public`, stdin, timeout, limit wyniku, brak dostępu
-do publicznej sieci oraz świeży system plików dla każdego wejścia.
+do publicznej sieci oraz świeży system plików dla każdego wejścia. Obejmuje też
+regresję lekcji 1092: dwie publiczne klasy `DeploymentPolicy` i `Main` oraz
+rzeczywisty błąd dostępu do metody `private`.
+
+### Wiele klas w jednym polu edytora
+
+W izolowanym środowisku zaufany `JavaSubmissionCompiler` używa parsera JDK do
+wydzielenia deklaracji najwyższego poziomu do plików o właściwych nazwach, np.
+`DeploymentPolicy.java` i `Main.java`. Zachowuje kod i modyfikatory dostępu,
+wspólny nagłówek `package`/`import` i oryginalne numery linii. Nie rozdziela klas
+zagnieżdżonych, tekstu w komentarzach ani literałów. Kompiluje wszystkie pliki
+razem z `-proc:none`, a potem uruchamia `Main` we właściwym pakiecie.
+Niepoprawna składnia i powtórzone nazwy nie są automatycznie naprawiane.
+Zaufany bootstrap jest przesyłany jako pojedynczy plik `.class`; nie wykonuje
+się na backendzie. Limit kompilacji nadal wynosi 8 sekund. Lokalny dostawca
+Docker korzysta z tego samego przygotowania, z limitem 384 MiB dla kontenera.
 
 ### Ograniczenia kosztów i bezpieczeństwa
 

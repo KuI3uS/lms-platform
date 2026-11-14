@@ -105,8 +105,9 @@ class RenderJavaRunnerTest {
         for (String forbidden : List.of("docker", "mount ", "curl ", "API_KEY")) {
             assertFalse(command.contains(forbidden));
         }
-        assertTrue(command.contains("timeout -s KILL 8 /opt/java/openjdk/bin/javac"));
-        assertTrue(command.contains("-proc:none"));
+        assertTrue(command.contains("timeout -s KILL 8 /opt/java/openjdk/bin/java -Xmx192m"));
+        assertTrue(command.contains("com.twojlogin.lms.runner.JavaSubmissionCompiler"));
+        assertTrue(command.contains("/tmp/eduhub-java/bootstrap/com/twojlogin/lms/runner/JavaSubmissionCompiler.class"));
         assertTrue(command.contains("timeout -s KILL 3 /opt/java/openjdk/bin/java -Xmx64m"));
         assertTrue(command.contains("if [ \"$run_status\" -ne 0 ]; then exit 1; fi"));
         assertTrue(command.contains("printf '%s'"));

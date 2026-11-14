@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,7 +20,7 @@ public class CodeExecutionService {
     private static final int MAX_SOURCE_LENGTH = 50_000;
     private static final int MAX_OUTPUT_BYTES = 65_536;
     private static final int MAX_TESTS = 8;
-    private static final Duration CONTAINER_TIMEOUT = Duration.ofSeconds(7);
+    private static final Duration CONTAINER_TIMEOUT = Duration.ofSeconds(15);
 
     private final boolean enabled;
     private final String dockerBinary;
@@ -158,14 +157,10 @@ public class CodeExecutionService {
     }
 
     static List<String> dockerArguments(String source, String javaImage) {
-        String encodedSource = Base64.getEncoder().encodeToString(source.getBytes(StandardCharsets.UTF_8));
-        String command = "printf '%s' '" + encodedSource
-                + "' | base64 -d > /tmp/Main.java"
-                + " && javac -proc:none -encoding UTF-8 /tmp/Main.java || exit 42;"
-                + " timeout 3 java -Xmx64m -cp /tmp Main";
+        String command = JavaRunnerCommand.build(source, null);
         return List.of(
                 "run", "--rm", "-i", "--pull=never",
-                "--network", "none", "--memory", "128m", "--cpus", "0.50",
+                "--network", "none", "--memory", "384m", "--cpus", "0.50",
                 "--pids-limit", "64", "--ulimit", "nofile=64:64",
                 "--cap-drop", "ALL", "--user", "65534:65534", "--read-only",
                 "--tmpfs", "/tmp:rw,nosuid,nodev,noexec,size=32m,mode=1777",
@@ -224,7 +219,9 @@ public class CodeExecutionService {
     }
 
     private static String summarizeCompilerOutput(String output) {
-        String normalized = output == null ? "" : output.replace("/tmp/eduhub-java/Main.java", "Main.java")
+        String normalized = output == null ? "" : output.replace("/tmp/eduhub-java/sources/", "")
+                .replace("/tmp/eduhub-java/submission/", "")
+                .replace("/tmp/eduhub-java/Main.java", "Main.java")
                 .replace("/tmp/Main.java", "Main.java").trim();
         if (normalized.isBlank()) return "Sprawdź składnię programu i nazwy użytych symboli.";
         return normalized.length() > 900 ? normalized.substring(0, 900) + "…" : normalized;

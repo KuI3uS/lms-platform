@@ -6,9 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -84,24 +82,6 @@ public class RenderJavaRunner {
     }
 
     static String command(String source, String input) {
-        String encodedSource = Base64.getEncoder().encodeToString(source.getBytes(StandardCharsets.UTF_8));
-        String encodedInput = Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
-        // Only base64 crosses the shell boundary. The image is pinned by Render
-        // image ID. No package installs, mount operations, Docker or credentials.
-        return """
-                umask 077
-                test -x /opt/java/openjdk/bin/javac && test -x /opt/java/openjdk/bin/java || exit 125
-                mkdir -p /tmp/eduhub-java || exit 125
-                printf '%%s' '%s' | base64 -d > /tmp/eduhub-java/Main.java || exit 125
-                printf '%%s' '%s' | base64 -d > /tmp/eduhub-java/input.txt || exit 125
-                timeout -s KILL 8 /opt/java/openjdk/bin/javac -J-Xmx192m -proc:none -encoding UTF-8 -d /tmp/eduhub-java /tmp/eduhub-java/Main.java
-                compile_status=$?
-                if [ "$compile_status" -eq 124 ] || [ "$compile_status" -eq 137 ]; then exit 43; fi
-                if [ "$compile_status" -ne 0 ]; then exit 42; fi
-                timeout -s KILL 3 /opt/java/openjdk/bin/java -Xmx64m -XX:MaxMetaspaceSize=64m -XX:ReservedCodeCacheSize=32m -XX:ActiveProcessorCount=1 -cp /tmp/eduhub-java Main < /tmp/eduhub-java/input.txt
-                run_status=$?
-                if [ "$run_status" -eq 124 ] || [ "$run_status" -eq 137 ]; then exit 124; fi
-                if [ "$run_status" -ne 0 ]; then exit 1; fi
-                """.formatted(encodedSource, encodedInput);
+        return JavaRunnerCommand.build(source, input);
     }
 }
