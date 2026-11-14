@@ -36,6 +36,7 @@ const DIAGNOSTIC_LABELS = {
     UNBALANCED_DELIMITER: "Niedomknięty znak",
     UNCLOSED_STRING: "Niedomknięty tekst",
     COMPILATION_ERROR: "Błąd kompilacji",
+    COMPILATION_TIMEOUT: "Przekroczony czas kompilacji",
     EXECUTION_TIMEOUT: "Przekroczony czas",
     OUTPUT_LIMIT: "Zbyt dużo danych",
     RUNTIME_ERROR: "Błąd działania programu",

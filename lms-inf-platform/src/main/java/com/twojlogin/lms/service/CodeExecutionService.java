@@ -77,7 +77,7 @@ public class CodeExecutionService {
         if (tests.isEmpty()) return List.of(unavailableDiagnostic());
 
         if ("render".equalsIgnoreCase(provider)) {
-            return renderRunner.evaluateJava(source, tests, javaImage);
+            return renderRunner.evaluateJava(source, tests);
         }
         if (!"docker".equalsIgnoreCase(provider)) return List.of(unavailableDiagnostic());
 
@@ -177,6 +177,7 @@ public class CodeExecutionService {
         return switch (exitCode) {
             case 0 -> new RunResult(RunStatus.SUCCESS, output);
             case 42 -> new RunResult(RunStatus.COMPILATION_ERROR, output);
+            case 43 -> new RunResult(RunStatus.COMPILATION_TIMEOUT, output);
             case 124, 137 -> new RunResult(RunStatus.TIMEOUT, output);
             case 125, 126, 127 -> new RunResult(RunStatus.UNAVAILABLE, "");
             default -> new RunResult(RunStatus.RUNTIME_ERROR, output);
@@ -185,6 +186,11 @@ public class CodeExecutionService {
 
     static TaskDiagnosticDto runtimeDiagnostic(RunResult result) {
         return switch (result.status()) {
+            case COMPILATION_TIMEOUT -> new TaskDiagnosticDto(
+                    "COMPILATION_TIMEOUT", null,
+                    "Kompilacja przekroczyła limit 8 sekund.",
+                    "Uprość program i usuń nadmiarowy kod lub zależności."
+            );
             case COMPILATION_ERROR -> new TaskDiagnosticDto(
                     "COMPILATION_ERROR", null,
                     "Kod nie został skompilowany.",
@@ -218,7 +224,8 @@ public class CodeExecutionService {
     }
 
     private static String summarizeCompilerOutput(String output) {
-        String normalized = output == null ? "" : output.replace("/tmp/Main.java", "Main.java").trim();
+        String normalized = output == null ? "" : output.replace("/tmp/eduhub-java/Main.java", "Main.java")
+                .replace("/tmp/Main.java", "Main.java").trim();
         if (normalized.isBlank()) return "Sprawdź składnię programu i nazwy użytych symboli.";
         return normalized.length() > 900 ? normalized.substring(0, 900) + "…" : normalized;
     }
@@ -243,6 +250,6 @@ public class CodeExecutionService {
     }
 
     enum RunStatus {
-        SUCCESS, COMPILATION_ERROR, RUNTIME_ERROR, TIMEOUT, OUTPUT_LIMIT, UNAVAILABLE
+        SUCCESS, COMPILATION_ERROR, COMPILATION_TIMEOUT, RUNTIME_ERROR, TIMEOUT, OUTPUT_LIMIT, UNAVAILABLE
     }
 }

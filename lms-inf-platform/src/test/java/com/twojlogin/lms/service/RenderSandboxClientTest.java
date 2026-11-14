@@ -33,7 +33,8 @@ class RenderSandboxClientTest {
                 assertEquals(60, json.path("timeoutSeconds").asInt());
                 assertEquals(0, json.path("idleTimeoutSeconds").asInt());
                 assertEquals("deny-all", json.path("networkPolicy").path("type").asText());
-                assertEquals("snp-clean", json.path("snapshotId").asText());
+                assertEquals("sbb-clean", json.path("buildId").asText());
+                assertFalse(json.has("snapshotId"));
                 assertFalse(json.has("env"));
                 response = "{\"id\":\"sbx-test\",\"status\":\"creating\"}";
             } else if (path.endsWith("/token")) {
@@ -56,7 +57,7 @@ class RenderSandboxClientTest {
         });
         server.start();
         try {
-            var client = new RenderSandboxClient("account-secret", "tea-test", "sbg-test", "snp-clean",
+            var client = new RenderSandboxClient("account-secret", "tea-test", "sbg-test", "sbb-clean",
                     URI.create(base + "/v1"), HttpClient.newHttpClient());
             assertTrue(client.configured());
             String id = client.create();
@@ -83,6 +84,8 @@ class RenderSandboxClientTest {
                 RenderSandboxClient.parseEvents("event: output\ndata: " + data + "\n\n").status());
         assertEquals(CodeExecutionService.RunStatus.COMPILATION_ERROR,
                 RenderSandboxClient.parseEvents("event: exit\ndata: {\"exit_code\":42}\n\n").status());
+        assertEquals(CodeExecutionService.RunStatus.COMPILATION_TIMEOUT,
+                RenderSandboxClient.parseEvents("event: exit\ndata: {\"exit_code\":43}\n\n").status());
         assertEquals(CodeExecutionService.RunStatus.UNAVAILABLE,
                 RenderSandboxClient.parseEvents("event: exit\ndata: {\"exit_code\":125}\n\n").status());
     }

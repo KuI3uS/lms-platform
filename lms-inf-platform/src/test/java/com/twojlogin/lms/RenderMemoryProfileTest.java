@@ -1,6 +1,7 @@
 package com.twojlogin.lms;
 
 import com.twojlogin.lms.controller.LessonBlockController;
+import com.twojlogin.lms.controller.HealthController;
 import com.twojlogin.lms.dto.LessonBlockRequest;
 import com.twojlogin.lms.entity.Course;
 import com.twojlogin.lms.entity.CourseModule;
@@ -64,7 +65,7 @@ class RenderMemoryProfileTest {
             try (var response = connection.getInputStream()) {
                 var body = mapper.readTree(response);
                 assertEquals("ok", body.path("status").asText());
-                assertEquals("2026.11.14-languages-music-stable-csrf", body.path("version").asText());
+                assertEquals(new HealthController().health().get("version"), body.path("version").asText());
             }
         } finally {
             connection.disconnect();

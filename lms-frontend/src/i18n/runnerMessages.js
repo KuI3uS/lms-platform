@@ -1,4 +1,7 @@
 export default {
+    "Przekroczony czas kompilacji": { en: "Compilation timed out", es: "Tiempo de compilación agotado" },
+    "Kompilacja przekroczyła limit 8 sekund.": { en: "Compilation exceeded the 8-second limit.", es: "La compilación superó el límite de 8 segundos." },
+    "Uprość program i usuń nadmiarowy kod lub zależności.": { en: "Simplify the program and remove unnecessary code or dependencies.", es: "Simplifica el programa y elimina el código o las dependencias innecesarias." },
     "Nie udało się uruchomić testów": { en: "Tests could not be started", es: "No se pudieron iniciar las pruebas" },
     "Środowisko jest zajęte": { en: "The testing environment is busy", es: "El entorno de pruebas está ocupado" },
     "Miesięczny limit testów": { en: "Monthly testing limit", es: "Límite mensual de pruebas" },

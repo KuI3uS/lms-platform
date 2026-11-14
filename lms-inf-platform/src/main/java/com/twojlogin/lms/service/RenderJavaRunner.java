@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.Semaphore;
-import java.util.stream.Collectors;
 
 @Component
 public class RenderJavaRunner {
@@ -28,27 +27,21 @@ public class RenderJavaRunner {
         this.approved = approved;
     }
 
-    public List<TaskDiagnosticDto> evaluateJava(String source, List<CodeExecutionService.HiddenTest> tests,
-                                               String javaImage) {
+    public List<TaskDiagnosticDto> evaluateJava(String source, List<CodeExecutionService.HiddenTest> tests) {
         if (!approved || !client.configured()) return List.of(CodeExecutionService.unavailableDiagnostic());
         if (!slot.tryAcquire()) return List.of(new TaskDiagnosticDto("RUNNER_BUSY", null,
                 "Środowisko sprawdza teraz inne zadanie.", "Poczekaj chwilę i spróbuj ponownie. Próba nie jest naliczana."));
-        String sandboxId = null;
         try {
-            if (!budget.reserveLaunch()) return List.of(new TaskDiagnosticDto("RUNNER_BUDGET_LIMIT", null,
-                    "Osiągnięto miesięczny limit uruchomień testów.",
-                    "Administrator musi sprawdzić budżet testów. Twoja odpowiedź nie została oceniona jako błędna."));
-            sandboxId = client.create();
-            client.waitUntilRunning(sandboxId);
-            long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(40);
             List<TaskDiagnosticDto> diagnostics = new ArrayList<>();
             for (int index = 0; index < tests.size(); index++) {
-                if (System.nanoTime() > deadline) return List.of(CodeExecutionService.unavailableDiagnostic());
+                if (!budget.reserveLaunch()) return List.of(new TaskDiagnosticDto("RUNNER_BUDGET_LIMIT", null,
+                        "Osiągnięto miesięczny limit uruchomień testów.",
+                        "Administrator musi sprawdzić budżet testów. Twoja odpowiedź nie została oceniona jako błędna."));
                 CodeExecutionService.HiddenTest test = tests.get(index);
-                // A fresh, networkless, read-only inner container for EACH hidden test.
-                // Expected results never leave the backend. Student code never runs here.
-                CodeExecutionService.RunResult result = client.execute(sandboxId,
-                        command(source, test.input(), javaImage));
+                // Render's Firecracker VM is the security boundary. A fresh VM for
+                // EVERY test prevents a student's filesystem/process state carrying
+                // over to another input or student. Never execute this command locally.
+                CodeExecutionService.RunResult result = executeIsolated(source, test.input());
                 if (result.status() == CodeExecutionService.RunStatus.UNAVAILABLE) {
                     return List.of(CodeExecutionService.unavailableDiagnostic());
                 }
@@ -70,22 +63,45 @@ public class RenderJavaRunner {
             log.warn("Render Java assessment unavailable ({})", failure.getClass().getSimpleName());
             return List.of(CodeExecutionService.unavailableDiagnostic());
         } finally {
+            slot.release();
+        }
+    }
+
+    private CodeExecutionService.RunResult executeIsolated(String source, String input) throws Exception {
+        String sandboxId = null;
+        try {
+            sandboxId = client.create();
+            client.waitUntilRunning(sandboxId);
+            return client.execute(sandboxId, command(source, input));
+        } finally {
             if (sandboxId != null) {
                 try { client.terminate(sandboxId); }
                 catch (Exception failure) {
                     log.warn("Could not terminate Render sandbox {}; its 60-second lifetime still applies", sandboxId);
                 }
             }
-            slot.release();
         }
     }
 
-    static String command(String source, String input, String javaImage) {
+    static String command(String source, String input) {
+        String encodedSource = Base64.getEncoder().encodeToString(source.getBytes(StandardCharsets.UTF_8));
         String encodedInput = Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
-        String docker = CodeExecutionService.dockerArguments(source, javaImage).stream()
-                .map(RenderJavaRunner::quote).collect(Collectors.joining(" "));
-        return "printf '%s' '" + encodedInput + "' | base64 -d | timeout -s KILL 12 docker " + docker;
+        // Only base64 crosses the shell boundary. The image is pinned by Render
+        // image ID. No package installs, mount operations, Docker or credentials.
+        return """
+                umask 077
+                test -x /opt/java/openjdk/bin/javac && test -x /opt/java/openjdk/bin/java || exit 125
+                mkdir -p /tmp/eduhub-java || exit 125
+                printf '%%s' '%s' | base64 -d > /tmp/eduhub-java/Main.java || exit 125
+                printf '%%s' '%s' | base64 -d > /tmp/eduhub-java/input.txt || exit 125
+                timeout -s KILL 8 /opt/java/openjdk/bin/javac -J-Xmx192m -proc:none -encoding UTF-8 -d /tmp/eduhub-java /tmp/eduhub-java/Main.java
+                compile_status=$?
+                if [ "$compile_status" -eq 124 ] || [ "$compile_status" -eq 137 ]; then exit 43; fi
+                if [ "$compile_status" -ne 0 ]; then exit 42; fi
+                timeout -s KILL 3 /opt/java/openjdk/bin/java -Xmx64m -XX:MaxMetaspaceSize=64m -XX:ReservedCodeCacheSize=32m -XX:ActiveProcessorCount=1 -cp /tmp/eduhub-java Main < /tmp/eduhub-java/input.txt
+                run_status=$?
+                if [ "$run_status" -eq 124 ] || [ "$run_status" -eq 137 ]; then exit 124; fi
+                if [ "$run_status" -ne 0 ]; then exit 1; fi
+                """.formatted(encodedSource, encodedInput);
     }
-
-    private static String quote(String argument) { return "'" + argument.replace("'", "'\"'\"'") + "'"; }
 }

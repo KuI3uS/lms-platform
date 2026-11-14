@@ -31,7 +31,7 @@ public class RenderSandboxClient {
     private final String apiKey;
     private final String workspaceId;
     private final String groupId;
-    private final String snapshotId;
+    private final String imageId;
     private final HttpClient http;
     private final URI base;
 
@@ -39,30 +39,30 @@ public class RenderSandboxClient {
     public RenderSandboxClient(@Value("${code.runner.render.api-key:}") String apiKey,
                                @Value("${code.runner.render.workspace-id:}") String workspaceId,
                                @Value("${code.runner.render.group-id:}") String groupId,
-                               @Value("${code.runner.render.snapshot-id:}") String snapshotId) {
-        this(apiKey, workspaceId, groupId, snapshotId, URI.create("https://api.render.com/v1"),
+                               @Value("${code.runner.render.image-id:}") String imageId) {
+        this(apiKey, workspaceId, groupId, imageId, URI.create("https://api.render.com/v1"),
                 HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3))
                         .followRedirects(HttpClient.Redirect.NEVER).build());
     }
 
-    RenderSandboxClient(String apiKey, String workspaceId, String groupId, String snapshotId,
+    RenderSandboxClient(String apiKey, String workspaceId, String groupId, String imageId,
                         URI base, HttpClient http) {
         this.apiKey = apiKey;
         this.workspaceId = workspaceId;
         this.groupId = groupId;
-        this.snapshotId = snapshotId;
+        this.imageId = imageId;
         this.base = base;
         this.http = http;
     }
 
     public boolean configured() {
         return !apiKey.isBlank() && workspaceId.matches("tea-[A-Za-z0-9]+")
-                && groupId.matches("sbg-[A-Za-z0-9]+") && snapshotId.matches("snp-[A-Za-z0-9]+");
+                && groupId.matches("sbg-[A-Za-z0-9]+") && imageId.matches("sbb-[A-Za-z0-9]+");
     }
 
     public String create() throws IOException {
         JsonNode response = api("POST", "/sandboxes", Map.of(
-                "ownerId", workspaceId, "sandboxGroupId", groupId, "snapshotId", snapshotId,
+                "ownerId", workspaceId, "sandboxGroupId", groupId, "buildId", imageId,
                 "plan", "1c-2g", "timeoutSeconds", 60, "idleTimeoutSeconds", 0,
                 "networkPolicy", Map.of("type", "deny-all")
         ));
