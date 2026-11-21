@@ -57,11 +57,11 @@ function CourseLink({
   secondary = false,
   className = "",
 }) {
-  const { t } = useLocale();
+  const { t, language } = useLocale();
   return (
     <Link
       reloadDocument
-      to={JAVA_COURSE_PATH}
+      to={`${JAVA_COURSE_PATH}?lang=${language}`}
       className={
         (secondary
           ? "eh-button eh-button-secondary "
@@ -222,9 +222,14 @@ function PracticeStudio() {
   );
 }
 function JavaOffer() {
-    const { t, dateLocale } = useLocale();
-  const { offer, loading, error } = usePublicJavaOffer();
+    const { t, dateLocale, language } = useLocale();
+  const { offer, loading, error, unavailable } = usePublicJavaOffer();
   const plans = getPublicOfferPlans(offer);
+  if (language !== "pl" && !offer) return <aside className="eh-course-access">
+    <h3>{t(loading ? "Pobieranie aktualnej oferty…" : unavailable ? "Ten kurs nie ma jeszcze wersji w wybranym języku." : "Aktualna oferta jest chwilowo niedostępna.")}</h3>
+    {!loading && <p>{t(unavailable ? "Kursy w tej wersji pojawią się po przygotowaniu i opublikowaniu materiałów w wybranym języku. Nie pokazujemy tu kursów w innych językach." : error)}</p>}
+    <Link reloadDocument to="/courses" className="eh-button eh-button-primary">{t("Przejdź do katalogu")}</Link>
+  </aside>;
   return (
     <aside
       className="eh-course-access"

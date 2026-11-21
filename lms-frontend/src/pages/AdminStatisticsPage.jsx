@@ -32,7 +32,7 @@ export default function AdminStatisticsPage() {
         let active = true;
         Promise.all([
             apiFetch("/users"),
-            apiFetch("/courses"),
+            apiFetch("/courses?allLanguages=true"),
             apiFetch("/course-orders/admin"),
             apiFetch("/tutoring/all")
         ])

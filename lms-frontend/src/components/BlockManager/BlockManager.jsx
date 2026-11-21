@@ -11,7 +11,8 @@ export default function BlockManager({
                                          lessonId,
 
                                          lessonBlocks,
-                                         variant = "PROGRAMMING"
+                                         variant = "PROGRAMMING",
+                                         contentLanguage = "pl"
 
                                      }) {
     const { t } = useLocale();
@@ -91,6 +92,7 @@ export default function BlockManager({
                 lessonBlocks={lessonBlocks}
                 maxBlocks={maxBlocks}
                 variant={variant}
+                contentLanguage={contentLanguage}
             />
 
             {blockLimitReached ? (

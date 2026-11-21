@@ -138,7 +138,7 @@ export default function LessonVocabulary({ block, onComplete }) {
                         <div className="mb-4 flex items-center justify-between text-sm font-bold text-slate-400"><span>{t("Słówko ")}{index + 1}{t(" z ")}{config.items.length}</span><span>{Math.round(((index + (result?.accepted ? 1 : 0)) / config.items.length) * 100)}%</span></div>
                         <div className="h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all" style={{ width: `${((index + (result?.accepted ? 1 : 0)) / config.items.length) * 100}%` }} /></div>
                         <div className="mt-7 rounded-3xl border border-white/10 bg-black/20 p-6 text-center sm:p-8">
-                            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{t("Wpisz polskie znaczenie")}</p>
+                            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">{t("Wpisz znaczenie")}</p>
                             <div className="mt-4 flex items-center justify-center gap-3"><h3 className="text-3xl font-black text-white sm:text-4xl">{item.term}</h3><button type="button" onClick={() => speakWord(index)} className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-400/10 text-emerald-300"><BsPlayFill /></button></div>
                             {item.example && <p className="mt-3 text-sm italic text-slate-500">{item.example}</p>}
 

@@ -7,8 +7,9 @@ import { getCourseCover, getGeneratedCourseCover } from "../utils/courseCover";
 import { courseProgress, sortCoursesForLearning } from "../utils/courseCatalog";
 import { BsArrowRight, BsArrowClockwise, BsBook, BsCheck2, BsKey, BsClipboardCheck, BsTranslate } from "react-icons/bs";
 import { useAuth } from "../context/AuthContext";
+import { courseCatalogPath, courseLocaleCacheOwner, courseMatchesLanguage } from "../utils/courseContentLanguage";
 
-const CACHE_PREFIX = "eduhub-dashboard-v4";
+const CACHE_PREFIX = "eduhub-dashboard-v5";
 
 function readCache(owner) {
     try {
@@ -43,12 +44,13 @@ function formatDate(value, dateLocale) {
 
 export default function DashboardPage() {
     const { user } = useAuth();
-    const owner = `${user?.id ?? user?.email ?? "guest"}:${user?.role ?? "unknown"}`;
+    const { language } = useLocale();
+    const owner = courseLocaleCacheOwner(`${user?.id ?? user?.email ?? "guest"}:${user?.role ?? "unknown"}`, language);
     return <DashboardContent key={owner} user={user} owner={owner} />;
 }
 
 function DashboardContent({ user, owner }) {
-    const { t, dateLocale } = useLocale();
+    const { t, dateLocale, language } = useLocale();
     const navigate = useNavigate();
     const [cached] = useState(() => readCache(owner));
     const [courses, setCourses] = useState(cached.courses || []);
@@ -59,11 +61,12 @@ function DashboardContent({ user, owner }) {
 
     useEffect(() => {
         let active = true;
-        Promise.allSettled([apiFetch("/courses/my"), fetchLearningStats({ force: true })])
+        Promise.allSettled([apiFetch(courseCatalogPath("/courses/my", language)), fetchLearningStats({ force: true })])
             .then(([courseResult, statsResult]) => {
                 if (!active) return;
                 const saved = readCache(owner);
-                const nextCourses = courseResult.status === "fulfilled" ? courseResult.value || [] : saved.courses || cached.courses || [];
+                const nextCourses = (courseResult.status === "fulfilled" ? courseResult.value || [] : saved.courses || cached.courses || [])
+                    .filter(course => courseMatchesLanguage(course, language));
                 const nextStats = statsResult.status === "fulfilled" ? statsResult.value || null : saved.stats || cached.stats || null;
                 setCourses(nextCourses);
                 setStats(nextStats);
@@ -74,7 +77,7 @@ function DashboardContent({ user, owner }) {
                 setLoading(false);
             });
         return () => { active = false; };
-    }, [cached, owner, reload]);
+    }, [cached, owner, reload, language]);
 
     const availableCourses = useMemo(() => sortCoursesForLearning(courses.filter(course => (
         course.canAccess && Number(course.lessonCount || 0) > 0

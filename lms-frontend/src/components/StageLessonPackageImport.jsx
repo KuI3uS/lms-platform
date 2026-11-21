@@ -24,6 +24,7 @@ export default function StageLessonPackageImport({
     currentLessons,
     maxBlocks,
     variant,
+    contentLanguage = "pl",
     lessonsState
 }) {
     const { t } = useLocale();
@@ -53,6 +54,7 @@ export default function StageLessonPackageImport({
             await navigator.clipboard.writeText(getStageLessonPrompt({
                 maxBlocks,
                 variant,
+                contentLanguage,
                 stageTitle: moduleTitle,
                 lessonTitles: promptLessons.map(lesson => lesson.title)
             }));
@@ -72,7 +74,7 @@ export default function StageLessonPackageImport({
             await navigator.clipboard.writeText(getImportRepairPrompt({
                 source,
                 errors: [...errors, ...(importError ? [importError] : [])],
-                contract: getStageLessonPrompt({ maxBlocks, variant, stageTitle: moduleTitle, lessonTitles: currentLessons.map(lesson => lesson.title) }),
+                contract: getStageLessonPrompt({ maxBlocks, variant, contentLanguage, stageTitle: moduleTitle, lessonTitles: currentLessons.map(lesson => lesson.title) }),
                 scope: "paczkę lekcji"
             }));
             showToast("Skopiowano pakiet i konkretne błędy. Wklej do ChatGPT, a jego poprawioną odpowiedź ponownie tutaj.", "success");

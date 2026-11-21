@@ -14,7 +14,8 @@ public record PublicCourseOfferDto(
         long stageCount,
         long plannedLessonCount,
         long availableLessonCount,
-        List<OutlineItem> outline
+        List<OutlineItem> outline,
+        String contentLanguage
 ) {
     public record OutlineItem(int stageNumber, String title) {}
 }

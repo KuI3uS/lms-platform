@@ -1,4 +1,5 @@
 import { useLocale } from "../context/LocaleContext";
+import CourseLanguageNotice from "../components/CourseLanguageNotice";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
@@ -171,6 +172,7 @@ export default function CourseCheckoutPage() {
 
     return (
         <div className="mx-auto max-w-6xl space-y-7 text-white">
+            <CourseLanguageNotice course={course} />
             <button
                 type="button"
                 onClick={() => navigate("/courses")}

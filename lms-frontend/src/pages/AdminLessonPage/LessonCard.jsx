@@ -25,7 +25,8 @@ export default function LessonCard({
                                        onDelete,
 
                                        lessonBlocks,
-                                       variant = "PROGRAMMING"
+                                       variant = "PROGRAMMING",
+                                       contentLanguage = "pl"
 
                                    }) {
     const { t } = useLocale();
@@ -300,6 +301,7 @@ export default function LessonCard({
 
                             lessonBlocks={lessonBlocks}
                             variant={variant}
+                            contentLanguage={contentLanguage}
 
                         />
 

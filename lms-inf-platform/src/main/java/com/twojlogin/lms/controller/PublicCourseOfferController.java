@@ -6,6 +6,7 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.concurrent.TimeUnit;
 
@@ -18,9 +19,9 @@ public class PublicCourseOfferController {
     }
 
     @GetMapping("/api/public/courses/java-backend-developer")
-    public ResponseEntity<PublicCourseOfferDto> javaBackendOffer() {
+    public ResponseEntity<PublicCourseOfferDto> javaBackendOffer(@RequestParam(defaultValue = "pl") String lang) {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(60, TimeUnit.SECONDS).cachePublic())
-                .body(service.javaBackendOffer());
+                .body(service.javaBackendOffer(lang));
     }
 }

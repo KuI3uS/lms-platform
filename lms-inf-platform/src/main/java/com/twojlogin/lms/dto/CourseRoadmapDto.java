@@ -11,7 +11,8 @@ public record CourseRoadmapDto(
         String cefrLevel,
         String cefrEndLevel,
         String unlockedCefrLevel,
-        List<ModuleItem> modules
+        List<ModuleItem> modules,
+        String contentLanguage
 ) {
     public record ModuleItem(
             Long id,

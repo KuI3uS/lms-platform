@@ -77,7 +77,9 @@ export async function apiFetch(url, options = {}) {
             redirectAfterUnauthorized();
         }
 
-        throw new Error(message);
+        const error = new Error(message);
+        error.status = res.status;
+        throw error;
     }
 
     if (!text) return null;

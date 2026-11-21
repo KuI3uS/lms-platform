@@ -23,7 +23,7 @@ export default function AdminAccessCodesPage() {
 
     useEffect(() => {
         let active = true;
-        Promise.all([apiFetch("/courses"), apiFetch("/access-codes")])
+        Promise.all([apiFetch("/courses?allLanguages=true"), apiFetch("/access-codes")])
             .then(([courseData, codeData]) => {
                 if (!active) return;
                 setCourses(courseData || []);
@@ -87,7 +87,7 @@ export default function AdminAccessCodesPage() {
                     <label className="block space-y-2">
                         <span className="text-sm font-black text-slate-300">{t("Kurs")}</span>
                         <select value={courseId} onChange={(e) => setCourseId(e.target.value)} required className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3">
-                            {courses.map((course) => <option key={course.id} value={course.id}>{course.title || course.name}</option>)}
+                            {courses.map((course) => <option key={course.id} value={course.id}>{course.title || course.name} · {(course.contentLanguage || "pl").toUpperCase()}</option>)}
                         </select>
                     </label>
                     <div>

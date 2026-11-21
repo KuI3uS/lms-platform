@@ -40,15 +40,28 @@ function PracticePreview() {
 }
 
 export default function JavaCourseOfferPage() {
-    const { t, dateLocale, formatNumber } = useLocale();
+    const { t, dateLocale, formatNumber, language } = useLocale();
     const { user } = useAuth();
-    const { offer, loading, error } = usePublicJavaOffer();
+    const { offer, loading, error, unavailable } = usePublicJavaOffer();
     const plans = getPublicOfferPlans(offer);
     const courseDescription = getCourseDescription(offer || { title: "Java Backend Developer" });
     const destination = offer ? user ? `/checkout/${offer.id}` : `/register?course=${offer.id}` : "/register";
     const checkoutLink = (label, className = "java-primary-link") => (
         <Link reloadDocument className={className} to={destination} onClick={() => offer && rememberCoursePurchase(offer.id)}>{label}<BsArrowRight aria-hidden="true" /></Link>
     );
+    if (language !== "pl" && !offer) return <div className="java-offer">
+        <nav className="java-nav" aria-label={t("Nawigacja kursu Java")}>
+            <Link reloadDocument to="/" className="java-brand"><BsMortarboard aria-hidden="true" /> EduHub</Link>
+            <LocaleControls compact />
+        </nav>
+        <main className="java-container java-section">
+            {loading ? <p role="status">{t("Pobieranie aktualnego programu i ceny…")}</p> : <>
+                <h1>{t(unavailable ? "Ten kurs nie ma jeszcze wersji w wybranym języku." : "Aktualna oferta jest chwilowo niedostępna.")}</h1>
+                <p className="java-lead">{t(unavailable ? "Wybierz inny kurs w katalogu lub zmień język strony. Nie udostępniamy polskich materiałów jako angielskiego lub hiszpańskiego kursu." : error)}</p>
+                <Link reloadDocument className="java-primary-link" to="/courses">{t("Przejdź do katalogu")} <BsArrowRight aria-hidden="true" /></Link>
+            </>}
+        </main>
+    </div>;
     return (
         <div className="java-offer">
             <a className="java-skip" href="#java-content">{t("Przejdź do oferty")}</a>

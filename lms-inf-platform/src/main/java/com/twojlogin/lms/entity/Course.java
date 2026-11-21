@@ -29,6 +29,9 @@ public class Course {
     private String thumbnailUrl;
     private String level;
     private String category = "PROGRAMMING";
+    // The SQL default assigns existing, previously unlabelled courses to Polish.
+    @Column(nullable = false, length = 2, columnDefinition = "varchar(2) default 'pl'")
+    private String contentLanguage = "pl";
     private String courseLanguage;
     private String cefrLevel;
     private String cefrEndLevel;
@@ -44,6 +47,14 @@ public class Course {
 
     public Long getId() {
         return id;
+    }
+
+    public String getContentLanguage() {
+        return contentLanguage == null || contentLanguage.isBlank() ? "pl" : contentLanguage;
+    }
+
+    public void setContentLanguage(String contentLanguage) {
+        this.contentLanguage = contentLanguage;
     }
 
     public void setId(Long id) {

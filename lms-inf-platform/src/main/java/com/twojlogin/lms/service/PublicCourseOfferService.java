@@ -5,6 +5,7 @@ import com.twojlogin.lms.entity.Course;
 import com.twojlogin.lms.repository.CourseModuleRepository;
 import com.twojlogin.lms.repository.CourseRepository;
 import com.twojlogin.lms.repository.LessonRepository;
+import com.twojlogin.lms.util.CourseContentLanguage;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,8 +27,15 @@ public class PublicCourseOfferService {
 
     @Transactional(readOnly = true)
     public PublicCourseOfferDto javaBackendOffer() {
+        return javaBackendOffer("pl");
+    }
+
+    @Transactional(readOnly = true)
+    public PublicCourseOfferDto javaBackendOffer(String language) {
+        String contentLanguage = CourseContentLanguage.requireSupported(language);
         Course course = courses.findPublishedJavaBackendCourses().stream()
                 .filter(Course::isPublished)
+                .filter(candidate -> contentLanguage.equals(candidate.getContentLanguage()))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Oferta kursu nie jest obecnie dostępna."));
         var stages = modules.findByCourseIdOrderByIdAsc(course.getId());
@@ -44,7 +52,8 @@ public class PublicCourseOfferService {
                 stages.size(),
                 lessons.countByModuleCourseId(course.getId()),
                 lessons.countPublishedWithMaterialsByCourseId(course.getId()),
-                outline
+                outline,
+                course.getContentLanguage()
         );
     }
 }

@@ -118,7 +118,8 @@ public class CourseRoadmapService {
                 course.getCefrLevel(),
                 course.getCefrEndLevel(),
                 unlockedCefrLevel,
-                moduleItems
+                moduleItems,
+                course.getContentLanguage()
         );
     }
 

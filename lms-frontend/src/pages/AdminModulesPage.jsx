@@ -36,7 +36,7 @@ export default function AdminModulesPage() {
 
     useEffect(() => {
         let active = true;
-        apiFetch("/courses")
+        apiFetch("/courses?allLanguages=true")
             .then((data) => {
                 if (!active) return;
                 const list = data || [];
@@ -184,7 +184,7 @@ export default function AdminModulesPage() {
                     {courses.length === 0 && <option value="">{t("Brak kursów")}</option>}
                     {courses.map((course) => (
                         <option key={course.id} value={course.id}>
-                            {course.title || course.name}
+                            {course.title || course.name} · {(course.contentLanguage || "pl").toUpperCase()}
                         </option>
                     ))}
                 </select>

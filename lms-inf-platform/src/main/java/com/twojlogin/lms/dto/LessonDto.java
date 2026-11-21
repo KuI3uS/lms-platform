@@ -12,6 +12,7 @@ public class LessonDto {
     public Integer orderIndex;
     public Long moduleId;
     public Long courseId;
+    public String contentLanguage;
     public boolean completed;
     public boolean canAccess;
     public long blockCount;
@@ -31,6 +32,9 @@ public class LessonDto {
         this.courseId = lesson.getModule() != null && lesson.getModule().getCourse() != null
                 ? lesson.getModule().getCourse().getId()
                 : null;
+        this.contentLanguage = lesson.getModule() != null && lesson.getModule().getCourse() != null
+                ? lesson.getModule().getCourse().getContentLanguage()
+                : "pl";
     }
 
     public LessonDto(com.twojlogin.lms.entity.Lesson lesson, boolean completed) {

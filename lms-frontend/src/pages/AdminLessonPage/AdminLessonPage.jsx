@@ -5,6 +5,7 @@ import LessonForm from "./LessonForm";
 import LessonCard from "./LessonCard";
 import StageLessonPackageImport from "../../components/StageLessonPackageImport";
 import { getLessonBlockLimit } from "../../utils/lessonBlockLimits";
+import { contentLanguageOf, contentLanguageLabel } from "../../utils/courseContentLanguage";
 
 import useLessons from "./hooks/useLessons";
 import useLessonBlocks from "./hooks/useLessonBlocks";
@@ -30,6 +31,7 @@ export default function AdminLessonPage() {
 
             <section className="rounded-3xl border border-cyan-400/20 bg-cyan-400/[0.07] p-5 text-cyan-50 sm:p-6">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-300">
+                    {t("Język treści kursu")}: {t(contentLanguageLabel(contentLanguageOf(moduleData.course)))} ·{" "}
                     {moduleData.isLanguageCourse
                         ? t("Kreator językowy · CEFR {value0}", { value0: moduleData.moduleSettings.cefrLevel || "A1" })
                         : t("Jak zbudować ścieżkę")}
@@ -58,6 +60,7 @@ export default function AdminLessonPage() {
                 maxBlocks={maxBlocks}
                 variant={lessonVariant}
                 lessonsState={lessons}
+                contentLanguage={contentLanguageOf(moduleData.course)}
             />
 
             <LessonForm
@@ -129,6 +132,7 @@ export default function AdminLessonPage() {
 
                             lessonBlocks={lessonBlocks}
                             variant={lessonVariant}
+                            contentLanguage={contentLanguageOf(moduleData.course)}
 
                         />
 

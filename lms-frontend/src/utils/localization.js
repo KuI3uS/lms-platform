@@ -7,13 +7,14 @@ import extraMessages2 from "../i18n/extraMessages2.js";
 import extraMessages3 from "../i18n/extraMessages3.js";
 import extraMessages4 from "../i18n/extraMessages4.js";
 import runnerMessages from "../i18n/runnerMessages.js";
+import courseLocaleMessages from "../i18n/courseLocaleMessages.js";
 
 export const SUPPORTED_LANGUAGES = Object.freeze([
     { value: "pl", label: "Polski", short: "PL", locale: "pl-PL" },
     { value: "en", label: "English", short: "EN", locale: "en-GB" },
     { value: "es", label: "Español", short: "ES", locale: "es-ES" }
 ]);
-export const UI_MESSAGES = { ...extraMessages1, ...extraMessages2, ...extraMessages3, ...extraMessages4, ...publicMessages, ...studentMessages, ...workspaceMessages, ...coreMessages, ...runnerMessages };
+export const UI_MESSAGES = { ...extraMessages1, ...extraMessages2, ...extraMessages3, ...extraMessages4, ...publicMessages, ...studentMessages, ...workspaceMessages, ...coreMessages, ...runnerMessages, ...courseLocaleMessages };
 
 export function normalizeUiLanguage(value) {
     const code = String(value || "").toLowerCase().split(/[-_]/)[0];

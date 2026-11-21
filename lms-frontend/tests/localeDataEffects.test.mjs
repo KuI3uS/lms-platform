@@ -39,7 +39,7 @@ function dataHooks(file) {
     ));
 }
 
-test("changing the UI language cannot refetch or reset data in student-page hooks", () => {
+test("translated labels cannot trigger data reloads; catalog locale is an explicit dependency", () => {
     let checked = 0;
     for (const page of pages) {
         for (const hook of dataHooks(`pages/${page}`)) {

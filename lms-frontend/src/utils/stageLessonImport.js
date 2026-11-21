@@ -161,7 +161,8 @@ export function getStageLessonPrompt({
     maxBlocks = MAX_LESSON_BLOCKS,
     variant = "PROGRAMMING",
     stageTitle = "",
-    lessonTitles = []
+    lessonTitles = [],
+    contentLanguage = "pl"
 } = {}) {
     const normalizedTitles = lessonTitles
         .map(normalizeTitle)
@@ -169,7 +170,7 @@ export function getStageLessonPrompt({
     const lessonList = normalizedTitles.length > 0
         ? normalizedTitles.map((title, index) => `${index + 1}. ${title}`).join("\n")
         : "1. [wpisz tytuł pierwszej lekcji]\n2. [wpisz tytuł drugiej lekcji]";
-    const singleLessonRules = getChatGptLessonPrompt(maxBlocks, variant, { includeContext: false });
+    const singleLessonRules = getChatGptLessonPrompt(maxBlocks, variant, { includeContext: false, contentLanguage });
 
     return `Przygotuj kompletny pakiet lekcji do jednorazowego importu w EduHub.
 

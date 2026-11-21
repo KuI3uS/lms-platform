@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,13 +30,16 @@ public class CourseController {
     }
 
     @GetMapping
-    public List<CourseSummaryDto> getAll(Authentication authentication) {
-        return courseService.getAll(authentication);
+    public List<CourseSummaryDto> getAll(Authentication authentication,
+            @RequestParam(defaultValue = "pl") String lang,
+            @RequestParam(defaultValue = "false") boolean allLanguages) {
+        return courseService.getAll(authentication, lang, allLanguages);
     }
 
     @GetMapping("/my")
-    public List<CourseSummaryDto> myCourses(Authentication authentication) {
-        return courseService.getMy(authentication);
+    public List<CourseSummaryDto> myCourses(Authentication authentication,
+            @RequestParam(defaultValue = "pl") String lang) {
+        return courseService.getMy(authentication, lang);
     }
 
     @GetMapping("/{id}")

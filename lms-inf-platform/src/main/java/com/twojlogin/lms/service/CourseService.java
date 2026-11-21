@@ -30,6 +30,7 @@ import java.util.Set;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import com.twojlogin.lms.util.CefrLevels;
+import com.twojlogin.lms.util.CourseContentLanguage;
 
 @Service
 public class CourseService {
@@ -99,27 +100,47 @@ public class CourseService {
 
     @Transactional(readOnly = true)
     public List<CourseSummaryDto> getAll(Authentication authentication) {
+        return getAll(authentication, "pl", authentication != null && isAdmin(authentication));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseSummaryDto> getAll(Authentication authentication, String language, boolean allLanguages) {
         User user = getCurrentUser(authentication);
         boolean admin = isAdmin(authentication);
+        String contentLanguage = CourseContentLanguage.requireSupported(language);
+        if (allLanguages && !admin) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Wszystkie wersje językowe są dostępne tylko w zarządzaniu kursami.");
+        }
         List<Course> courses = admin
                 ? courseRepository.findAllByOrderByIdAsc()
                 : courseRepository.findByPublishedTrueOrderByIdAsc();
 
-        return summarize(courses, user, admin);
+        return summarize(allLanguages ? courses : inLanguage(courses, contentLanguage), user, admin);
     }
 
     @Transactional(readOnly = true)
     public List<CourseSummaryDto> getMy(Authentication authentication) {
+        return getMy(authentication, "pl");
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseSummaryDto> getMy(Authentication authentication, String language) {
         User user = getCurrentUser(authentication);
         boolean admin = isAdmin(authentication);
+        String contentLanguage = CourseContentLanguage.requireSupported(language);
         List<Course> courses = admin
                 ? courseRepository.findAllByOrderByIdAsc()
                 : courseRepository.findByPublishedTrueOrderByIdAsc();
-        List<CourseSummaryDto> summaries = summarize(courses, user, admin);
+        List<CourseSummaryDto> summaries = summarize(inLanguage(courses, contentLanguage), user, admin);
 
         return admin
                 ? summaries
                 : summaries.stream().filter(CourseSummaryDto::canAccess).toList();
+    }
+
+    private List<Course> inLanguage(List<Course> courses, String language) {
+        return courses.stream().filter(course -> language.equals(course.getContentLanguage())).toList();
     }
 
     @Transactional(readOnly = true)
@@ -291,7 +312,8 @@ public class CourseService {
                 course.getCategory(),
                 course.getCourseLanguage(),
                 course.getCefrLevel(),
-                course.getCefrEndLevel()
+                course.getCefrEndLevel(),
+                course.getContentLanguage()
         );
     }
 
@@ -315,6 +337,10 @@ public class CourseService {
     }
 
     private void applyRequest(Course course, CourseRequest request) {
+        // Old clients may omit this field. An edit must never reset an EN/ES course to PL.
+        if (request.contentLanguage() != null) {
+            course.setContentLanguage(CourseContentLanguage.requireSupported(request.contentLanguage()));
+        }
         String name = clean(request.name());
 
         if (name == null) {

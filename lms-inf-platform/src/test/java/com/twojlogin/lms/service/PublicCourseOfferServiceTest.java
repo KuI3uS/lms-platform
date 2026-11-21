@@ -65,6 +65,22 @@ class PublicCourseOfferServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
     }
 
+    @Test
+    void publicOfferNeverFallsBackToAnUntranslatedPolishCourse() {
+        Course polish = course("Java Backend Developer", true);
+        Course english = course("Java Backend Developer", true);
+        english.setContentLanguage("en");
+        courses.saveAndFlush(english);
+        assertEquals(polish.getId(), service.javaBackendOffer().id());
+        assertEquals("pl", service.javaBackendOffer().contentLanguage());
+        assertEquals(english.getId(), service.javaBackendOffer("en").id());
+        assertEquals("en", service.javaBackendOffer("en").contentLanguage());
+        assertEquals(HttpStatus.NOT_FOUND, assertThrows(ResponseStatusException.class,
+                () -> service.javaBackendOffer("es")).getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, assertThrows(ResponseStatusException.class,
+                () -> service.javaBackendOffer("de")).getStatusCode());
+    }
+
     private Course course(String name, boolean published) {
         Course course = new Course();
         course.setName(name);

@@ -1,4 +1,5 @@
 import { useLocale } from "../context/LocaleContext";
+import CourseLanguageNotice from "../components/CourseLanguageNotice";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/api";
@@ -122,6 +123,7 @@ export default function ModulePage() {
                 name: roadmap.name,
                 title: roadmap.title,
                 category: roadmap.category,
+                contentLanguage: roadmap.contentLanguage,
                 courseLanguage: roadmap.courseLanguage,
                 cefrLevel: roadmap.cefrLevel,
                 cefrEndLevel: roadmap.cefrEndLevel,
@@ -380,6 +382,7 @@ export default function ModulePage() {
 
     return (
         <div className="course-roadmap mx-auto max-w-6xl space-y-6 text-slate-900">
+            <CourseLanguageNotice course={course} />
             <header className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7">
                 <button
                     type="button"

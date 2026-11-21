@@ -37,7 +37,7 @@ export default function SentenceBuilderBlockForm({ block, setBlock }) {
             </label>
 
             <label className="block space-y-2">
-                <span className="flex items-center gap-2 font-semibold"><BsTranslate />{t(" Zdanie po polsku")}</span>
+                <span className="flex items-center gap-2 font-semibold"><BsTranslate />{t("Zdanie do przetłumaczenia")}</span>
                 <input className={FIELD} value={config.polishSentence} onChange={(event) => update({ polishSentence: event.target.value })} placeholder={t("np. Mam się dobrze, dziękuję.")} />
             </label>
 

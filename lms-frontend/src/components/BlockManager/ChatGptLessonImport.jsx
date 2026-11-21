@@ -19,7 +19,7 @@ import { DEFAULT_EXERCISE_XP, getBlockBaseXp } from "../../utils/lessonBlockRewa
 import { cleanChatGptText } from "../../utils/chatGptReferences";
 import { getImportRepairPrompt } from "../../utils/lessonImportPrompt";
 
-export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks, variant = "PROGRAMMING" }) {
+export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks, variant = "PROGRAMMING", contentLanguage = "pl" }) {
     const { t } = useLocale();
     const { showToast } = useFeedback();
     const [open, setOpen] = useState(false);
@@ -42,7 +42,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
 
     const copyPrompt = async () => {
         try {
-            await navigator.clipboard.writeText(getChatGptLessonPrompt(maxBlocks, variant));
+            await navigator.clipboard.writeText(getChatGptLessonPrompt(maxBlocks, variant, { contentLanguage }));
             showToast("Wzór promptu został skopiowany.", "success");
         } catch {
             showToast("Nie udało się skopiować promptu.", "error");
@@ -54,7 +54,7 @@ export default function ChatGptLessonImport({ lessonId, lessonBlocks, maxBlocks,
             await navigator.clipboard.writeText(getImportRepairPrompt({
                 source,
                 errors: [...result.errors, ...(importError ? [importError] : [])],
-                contract: getChatGptLessonPrompt(maxBlocks, variant, { includeContext: false })
+                contract: getChatGptLessonPrompt(maxBlocks, variant, { includeContext: false, contentLanguage })
             }));
             showToast("Skopiowano materiał i listę błędów. Wklej je do ChatGPT, a poprawioną odpowiedź ponownie tutaj.", "success");
         } catch {

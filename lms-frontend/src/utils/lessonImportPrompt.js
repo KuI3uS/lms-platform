@@ -111,12 +111,16 @@ en-GB`, true),
     template("Ćwiczenie językowe", "Polecenie\n[jednoznaczne polecenie]\nPoprawna odpowiedź\n[jedna dokładna odpowiedź; przy wielu naturalnych wariantach wybierz dialog]", true)
 ];
 
-export function getChatGptLessonPrompt(maxBlocks = MAX_LESSON_BLOCKS, variant = "PROGRAMMING", { includeContext = true } = {}) {
+export function getChatGptLessonPrompt(maxBlocks = MAX_LESSON_BLOCKS, variant = "PROGRAMMING", { includeContext = true, contentLanguage = "pl" } = {}) {
     const language = variant === "LANGUAGE";
+    const instructionLanguage = { pl: "polski (pl)", en: "angielski (en)", es: "hiszpański (es)" }[contentLanguage] || "polski (pl)";
     const templates = [...commonTemplates(), ...(language ? languageTemplates() : programmingTemplates())];
     return `Przygotuj gotową lekcję do importu w EduHub. Jesteś nauczycielem i metodykiem; decyzje dydaktyczne dobierasz do tematu i poziomu, bez pytań uzupełniających.
 
-KONTRAKT IMPORTU — WERSJA 2026-10
+JĘZYK TREŚCI KURSU: ${instructionLanguage}
+Wszystkie tytuły, materiały, polecenia, podpowiedzi i objaśnienia dla ucznia pisz w tym języku. W kursie językowym przykłady i odpowiedzi w języku nauczanym pozostają w języku nauczanym. NIE tłumacz technicznych etykiet importera (KROK, Typ bloku, Tytuł, Polecenie itd.) ani tokenów typów bloków i języków kodu — to stały polski format zapisu, niezależny od języka treści. Polskie przykłady i placeholdery poniżej ilustrują format, nie narzucają języka materiałów. Zastąp je poprawną treścią w języku kursu. Zachowaj dostarczone tytuły istniejących lekcji i wymagane literały kodu.
+
+KONTRAKT IMPORTU — WERSJA 2026-11
 1. Jedna lekcja uczy jednej obserwowalnej umiejętności. Zawiera maksymalnie ${maxBlocks} bloków. Nie twórz KROK ${maxBlocks + 1}.
 2. Każdy blok zaczyna się od KROK N, następnie Typ bloku i wartości wybranej z poniższych wzorów. Numery są kolejne od 1, bez luk i powtórzeń.
 3. Etykietę pola i jego wartość zapisuj w osobnych wierszach. Nie dodawaj nowych etykiet. Pola podane jako obowiązkowe nie mogą pozostać puste.
@@ -133,12 +137,12 @@ JAK UCZYĆ
 - Nie zmuszaj początkującego do zgadywania niezdefiniowanych pojęć. Wsparcie zmniejszaj stopniowo; nie pokazuj analizy metodycznej w odpowiedzi.
 
 WYBÓR ĆWICZENIA
-${language ? `- Język interfejsu poleceń: polski. Dobierz CEFR z tematu; konsekwentnie stosuj en-GB lub en-US.
-- Dialog interaktywny to jeden blok całej scenki. Każda kwestia ucznia ma czwarte pole po || z konkretnym polskim zdaniem do przetłumaczenia, nie instrukcję „odpowiedz po angielsku”.
+${language ? `- Język poleceń i objaśnień: ${instructionLanguage}. Dobierz CEFR z tematu; konsekwentnie stosuj en-GB lub en-US.
+- Dialog interaktywny to jeden blok całej scenki. Każda kwestia ucznia ma czwarte pole po || z konkretnym zdaniem w języku treści do przetłumaczenia, nie instrukcję „odpowiedz po angielsku”.
 - Wymowa: jedna litera, jedno słowo lub naturalny zwrot, maksymalnie 5 słów. Nigdy całe zakresy alfabetu w jednej próbie.
 - Rozpoznawanie ze słuchu służy m.in. do alfabetu i ukrywa odpowiedź. Alfabet: pojedyncze litery → słuch → trudne pary → krótkie literowanie; nigdy „N | litera N”.
-- Trening słówek mieści 1–20 pozycji. Laboratorium słów wybierz dla 3–8 prawdziwych słów z polskim znaczeniem, nie do liter alfabetu.
-- Układanie zdania: polskie polecenie i poprawne angielskie zdanie z 2–6 kafelków. Nowe słownictwo utrwalaj w różnych czynnościach, nie identycznych pytaniach.` : `- Zadanie i Debugowanie: uczeń oddaje kod; muszą mieć Polecenie/Zadanie naprawcze oraz pełne rozwiązanie w Poprawnej odpowiedzi/Poprawionym kodzie. Nigdy nie twórz zwykłego Zadania dla swobodnej opinii, screenshotu ani czynności w innym programie.
+- Trening słówek mieści 1–20 pozycji. Laboratorium słów wybierz dla 3–8 prawdziwych słów ze znaczeniem objaśnionym w języku treści, nie do liter alfabetu.
+- Układanie zdania: polecenie w języku treści i poprawne angielskie zdanie z 2–6 kafelków. Zachowaj techniczną etykietę „Zdanie po polsku”, lecz jej wartość wpisz w języku treści. Nowe słownictwo utrwalaj w różnych czynnościach, nie identycznych pytaniach.` : `- Zadanie i Debugowanie: uczeń oddaje kod; muszą mieć Polecenie/Zadanie naprawcze oraz pełne rozwiązanie w Poprawnej odpowiedzi/Poprawionym kodzie. Nigdy nie twórz zwykłego Zadania dla swobodnej opinii, screenshotu ani czynności w innym programie.
 - Laboratorium praktyczne: praca w XAMPP, phpMyAdmin, IntelliJ, terminalu, GitHubie, Dockerze itd.; wpisz cel, wymagania i weryfikację. To samoocena, nie automatyczna kontrola zewnętrznego programu.
 - Odpowiedź otwarta i Analiza kodu / Code Review: własna wypowiedź + model i kryteria samooceny. Nie wymagaj jednej dokładnej frazy.
 - Przewidź wynik: krótki kod do przeanalizowania i dokładny wynik; zachowaj istotną wielkość liter i kolejność linii.

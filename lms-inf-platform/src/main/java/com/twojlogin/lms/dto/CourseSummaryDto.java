@@ -29,6 +29,7 @@ public record CourseSummaryDto(
         String category,
         String courseLanguage,
         String cefrLevel,
-        String cefrEndLevel
+        String cefrEndLevel,
+        String contentLanguage
 ) {
 }

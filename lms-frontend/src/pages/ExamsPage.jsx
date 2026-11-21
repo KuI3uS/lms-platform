@@ -13,6 +13,7 @@ import {
 } from "react-icons/bs";
 import { apiFetch } from "../api/api";
 import { getCourseCover } from "../utils/courseCover";
+import { courseCatalogPath, courseMatchesLanguage } from "../utils/courseContentLanguage";
 
 function errorMessage(error) {
     try {
@@ -30,7 +31,12 @@ function examLabel(attempt, t) {
 }
 
 export default function ExamsPage() {
-    const { t } = useLocale();
+    const { language } = useLocale();
+    return <ExamsContent key={language} />;
+}
+
+function ExamsContent() {
+    const { t, language } = useLocale();
     const navigate = useNavigate();
     const [courses, setCourses] = useState([]);
     const [history, setHistory] = useState([]);
@@ -46,12 +52,12 @@ export default function ExamsPage() {
         async function load() {
             try {
                 const [courseData, historyData] = await Promise.all([
-                    apiFetch("/courses/my"),
+                    apiFetch(courseCatalogPath("/courses/my", language)),
                     apiFetch("/exams/history/my")
                 ]);
                 if (!active) return;
 
-                const list = courseData || [];
+                const list = (courseData || []).filter(course => courseMatchesLanguage(course, language));
                 const languageCourses = list.filter((course) => course.category === "LANGUAGE");
                 const paths = await Promise.all(languageCourses.map(async (course) => [
                     course.id,
@@ -73,7 +79,7 @@ export default function ExamsPage() {
         return () => {
             active = false;
         };
-    }, []);
+    }, [language]);
 
     const changeSetting = (courseId, field, value) => {
         setSettings((current) => ({

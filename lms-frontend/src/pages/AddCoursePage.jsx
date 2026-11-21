@@ -19,6 +19,7 @@ import {
     getGeneratedCourseCover
 } from "../utils/courseCover";
 import { getDefaultCoursePaymentUrl } from "../utils/paymentLinks";
+import { CONTENT_LANGUAGES, contentLanguageOf } from "../utils/courseContentLanguage";
 import {
     CEFR_LEVELS,
     COURSE_CATEGORIES,
@@ -58,12 +59,12 @@ function getErrorMessage(error) {
 }
 
 export default function AddCoursePage() {
-    const { t } = useLocale();
+    const { t, language } = useLocale();
     const { courseId } = useParams();
     const navigate = useNavigate();
     const isEditing = Boolean(courseId);
 
-    const [course, setCourse] = useState(EMPTY_COURSE);
+    const [course, setCourse] = useState(() => ({ ...EMPTY_COURSE, contentLanguage: language }));
     const [loadingCourse, setLoadingCourse] = useState(isEditing);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -85,6 +86,7 @@ export default function AddCoursePage() {
                         title: data.title || "",
                         description: data.description || "",
                         category: data.category || "PROGRAMMING",
+                        contentLanguage: contentLanguageOf(data),
                         courseLanguage: data.courseLanguage || "ENGLISH",
                         cefrLevel: data.cefrLevel || "A1",
                         cefrEndLevel: data.cefrEndLevel || data.cefrLevel || "A1",
@@ -223,9 +225,20 @@ export default function AddCoursePage() {
                     <div className="space-y-6">
                         {error && (
                             <div role="alert" className="rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-200">
-                                {error}
+                                {t(error)}
                             </div>
                         )}
+
+                        <fieldset className="rounded-2xl border border-cyan-400/30 bg-cyan-400/5 p-5">
+                            <legend className="px-2 text-sm font-bold text-cyan-200">{t("Język treści kursu")}</legend>
+                            <p className="text-sm leading-6 text-slate-300">{t("Wybierz język, w którym napiszesz tytuł, opis, etapy, lekcje i zadania. Cały kurs trafi do tego katalogu — niezależnie od języka interfejsu administratora.")}</p>
+                            <label htmlFor="course-content-language" className="sr-only">{t("Język treści kursu")}</label>
+                            <select id="course-content-language" name="contentLanguage" value={course.contentLanguage} onChange={updateField} className={`${fieldClass} mt-4`}>
+                                {CONTENT_LANGUAGES.map(item => <option key={item.value} value={item.value}>{t(item.label)} ({item.value.toUpperCase()})</option>)}
+                            </select>
+                            <p className="mt-3 text-xs leading-5 text-slate-400">{t("To nie jest język nauczany na kursie. Kurs angielskiego z polskimi instrukcjami należy do katalogu polskiego.")}</p>
+                            {isEditing && <p className="mt-3 text-xs leading-5 text-amber-200">{t("Zmiana tego pola przenosi kurs do innego katalogu, ale nie tłumaczy jego materiałów. Wersję w innym języku dodaj jako osobny kurs.")}</p>}
+                        </fieldset>
 
                         <fieldset>
                             <legend className="text-sm font-bold text-slate-300">{t("Rodzaj ścieżki nauki")}</legend>
@@ -310,8 +323,8 @@ export default function AddCoursePage() {
                                 ].map(([value, label, description]) => (
                                     <label key={value} className={`cursor-pointer rounded-xl border p-3 transition ${course.billingMode === value ? "border-cyan-300 bg-cyan-300/10" : "border-white/10 bg-black/20 hover:border-white/20"}`}>
                                         <input className="sr-only" type="radio" name="billingMode" value={value} checked={course.billingMode === value} onChange={updateField} />
-                                        <span className="block text-sm font-black">{label}</span>
-                                        <span className="mt-1 block text-[11px] leading-4 text-slate-500">{description}</span>
+                                        <span className="block text-sm font-black">{t(label)}</span>
+                                        <span className="mt-1 block text-[11px] leading-4 text-slate-500">{t(description)}</span>
                                     </label>
                                 ))}
                             </div>
@@ -500,12 +513,12 @@ export default function AddCoursePage() {
                                             ? t("Technikum · {value0}", { value0: course.level })
                                             : course.category === "UNIVERSITY"
                                                 ? t("Uczelnia · {value0}", { value0: course.level })
-                                                : course.level}
+                                                : t(course.level)}
                                 </p>
                                 {course.category === "LANGUAGE" && (
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         <span className="rounded-full bg-violet-500/15 px-3 py-1 text-xs font-black text-violet-200">
-                                            {getCourseLanguageLabel(course.courseLanguage)}
+                                            {t(getCourseLanguageLabel(course.courseLanguage))}
                                         </span>
                                         <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs font-black text-cyan-200">
                                             CEFR {course.cefrLevel}{course.cefrEndLevel !== course.cefrLevel ? `–${course.cefrEndLevel}` : ""}

@@ -1,6 +1,8 @@
 package com.twojlogin.lms.service;
 
 import com.twojlogin.lms.dto.CourseSummaryDto;
+import com.twojlogin.lms.dto.CourseRequest;
+import com.twojlogin.lms.entity.CourseBillingMode;
 import com.twojlogin.lms.entity.Course;
 import com.twojlogin.lms.entity.CourseModule;
 import com.twojlogin.lms.entity.Role;
@@ -22,6 +24,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,6 +35,7 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -153,6 +158,109 @@ class CourseServiceTest {
         verify(moduleDeletionService).delete(11L);
         verify(moduleDeletionService).delete(12L);
         verify(courseRepository).deleteById(3L);
+    }
+
+    @Test
+    void catalogsSeparateAuthoredLanguageFromTheLanguageBeingTaught() {
+        var auth = authenticated("STUDENT");
+        Course polish = paidCourse(1L, "Angielski dla początkujących");
+        polish.setCategory("LANGUAGE");
+        polish.setCourseLanguage("ENGLISH");
+        Course english = paidCourse(2L, "Java in English");
+        english.setContentLanguage("en");
+        Course spanish = paidCourse(3L, "Java en español");
+        spanish.setContentLanguage("es");
+        when(courseRepository.findByPublishedTrueOrderByIdAsc()).thenReturn(List.of(polish, english, spanish));
+
+        assertEquals(List.of(1L), courseService.getAll(auth).stream().map(CourseSummaryDto::id).toList());
+        assertEquals(List.of(2L), courseService.getAll(auth, "en", false).stream().map(CourseSummaryDto::id).toList());
+        assertEquals(List.of(3L), courseService.getAll(auth, "es", false).stream().map(CourseSummaryDto::id).toList());
+        verify(lessonRepository).countByCourseIds(List.of(2L));
+        assertEquals("pl", polish.getContentLanguage());
+        assertEquals("ENGLISH", polish.getCourseLanguage());
+    }
+
+    @Test
+    void switchingCatalogDoesNotRevokeAnExistingPurchaseOrItsExpiry() {
+        var auth = authenticated("STUDENT");
+        Course polish = paidCourse(1L, "Polski kurs");
+        Course english = paidCourse(2L, "English course");
+        english.setContentLanguage("en");
+        var expiry = LocalDateTime.of(2027, 1, 1, 12, 0);
+        when(courseRepository.findByPublishedTrueOrderByIdAsc()).thenReturn(List.of(polish, english));
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(polish));
+        when(enrollmentRepository.findAccessibleCoursesByUserId(
+                org.mockito.ArgumentMatchers.eq(7L), any(LocalDateTime.class)))
+                .thenReturn(List.<Object[]>of(new Object[]{1L, expiry}));
+
+        assertTrue(courseService.getMy(auth, "en").isEmpty());
+        assertEquals(List.of(1L), courseService.getMy(auth, "pl").stream().map(CourseSummaryDto::id).toList());
+        var purchased = courseService.getById(1L, auth);
+        assertTrue(purchased.canAccess());
+        assertEquals(expiry, purchased.accessExpiresAt());
+        verify(enrollmentRepository, never()).deleteByCourseId(any());
+    }
+
+    @Test
+    void onlyAdministratorMayRequestAllLanguageVersionsIncludingDrafts() {
+        var auth = authenticated("ADMIN");
+        Course polish = paidCourse(1L, "PL");
+        Course english = paidCourse(2L, "EN draft");
+        english.setContentLanguage("en");
+        english.setPublished(false);
+        when(courseRepository.findAllByOrderByIdAsc()).thenReturn(List.of(polish, english));
+        assertEquals(2, courseService.getAll(auth, "es", true).size());
+        assertEquals(List.of(2L), courseService.getAll(auth, "en", false).stream().map(CourseSummaryDto::id).toList());
+    }
+
+    @Test
+    void studentCannotBypassCatalogFilterAndUnknownLanguagesAreRejected() {
+        var auth = authenticated("STUDENT");
+        assertEquals(HttpStatus.FORBIDDEN, assertThrows(ResponseStatusException.class,
+                () -> courseService.getAll(auth, "en", true)).getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, assertThrows(ResponseStatusException.class,
+                () -> courseService.getAll(auth, "fr", false)).getStatusCode());
+        verify(courseRepository, never()).findByPublishedTrueOrderByIdAsc();
+    }
+
+    @Test
+    void oldClientEditingEnglishCourseDoesNotReassignItToPolish() {
+        var auth = authenticated("ADMIN");
+        Course english = paidCourse(2L, "English course");
+        english.setContentLanguage("en");
+        when(courseRepository.findById(2L)).thenReturn(Optional.of(english));
+        when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        assertEquals("en", courseService.update(2L, request(null), auth).contentLanguage());
+    }
+
+    @Test
+    void newCourseAcceptsSpanishWhileLegacyCreateDefaultsToPolish() {
+        var auth = authenticated("ADMIN");
+        when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
+            Course course = invocation.getArgument(0);
+            course.setId(9L);
+            return course;
+        });
+        assertEquals("es", courseService.create(request("ES"), auth).contentLanguage());
+        assertEquals("pl", courseService.create(request(null), auth).contentLanguage());
+        assertEquals(HttpStatus.BAD_REQUEST, assertThrows(ResponseStatusException.class,
+                () -> courseService.create(request("de"), auth)).getStatusCode());
+    }
+
+    private UsernamePasswordAuthenticationToken authenticated(String role) {
+        User user = new User();
+        user.setId(7L);
+        user.setEmail("locale@example.com");
+        user.setRole(Role.valueOf(role));
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        return new UsernamePasswordAuthenticationToken(user.getEmail(), null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+    }
+
+    private CourseRequest request(String contentLanguage) {
+        return new CourseRequest("Course", "Course", "Description", BigDecimal.ZERO, true,
+                null, "Podstawy", null, CourseBillingMode.FREE, BigDecimal.ZERO,
+                null, "PROGRAMMING", null, null, null, contentLanguage);
     }
 
     private Course paidCourse(Long id, String name) {

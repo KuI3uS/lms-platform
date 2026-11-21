@@ -1,4 +1,5 @@
 import { useLocale } from "../../context/LocaleContext.jsx";
+import CourseLanguageNotice from "../../components/CourseLanguageNotice";
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../../api/api";
@@ -395,6 +396,7 @@ export default function LessonPage() {
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(147,51,234,0.15),transparent_35%),#030712] text-white">
             <div className="mx-auto max-w-7xl space-y-6 p-3 sm:p-6">
+                <CourseLanguageNotice course={lesson} />
                 <LessonSidebar
                     blocks={blocks}
                     selectedBlock={selectedBlock}
