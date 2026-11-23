@@ -1,6 +1,6 @@
 export function getWorkspaceTheme(pathname = "") {
     const path = String(pathname).replace(/\/+$/, "");
-    return ["/dashboard", "/courses", "/admin/courses"].includes(path)
+    return ["/dashboard", "/courses", "/admin", "/admin/courses", "/results", "/exams", "/learning-center", "/access-code", "/language-reviews"].includes(path)
         || /^\/modules\/[^/]+$/.test(path) ? "light" : "dark";
 }
 

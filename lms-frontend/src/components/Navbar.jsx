@@ -15,15 +15,16 @@ import {
     BsGem,
     BsList,
     BsPerson,
+    BsSearch,
     BsX
 } from "react-icons/bs";
 
 const PAGE_TITLES = [
-    ["/dashboard", "Start"],
+    ["/dashboard", "Moja nauka"],
     ["/courses", "Kursy"],
-    ["/results", "Wyniki zadań"],
+    ["/results", "Wyniki testów"],
     ["/exams", "Egzaminy INF"],
-    ["/learning-center", "Postęp"],
+    ["/learning-center", "Postęp i nagrody"],
     ["/language-reviews", "Powtórki językowe"],
     ["/access-code", "Kod dostępu"],
     ["/modules", "Twój kurs"],
@@ -76,6 +77,25 @@ export default function Navbar({ onMenuClick }) {
     const initials = identity.email.slice(0, 2).toUpperCase();
     const displayName = user?.firstName || identity.email.split("@")[0];
 
+    const openCourseSearch = () => {
+        setNotificationsOpen(false);
+        setProfileOpen(false);
+        navigate("/courses", { state: { focusCourseSearch: true } });
+    };
+
+    useEffect(() => {
+        const searchShortcut = event => {
+            if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "k") return;
+            if (event.target instanceof Element && event.target.closest("input, textarea, [contenteditable='true'], .monaco-editor")) return;
+            event.preventDefault();
+            setNotificationsOpen(false);
+            setProfileOpen(false);
+            navigate("/courses", { state: { focusCourseSearch: true } });
+        };
+        document.addEventListener("keydown", searchShortcut);
+        return () => document.removeEventListener("keydown", searchShortcut);
+    }, [navigate]);
+
     useEffect(() => {
         if (!notificationsOpen && !profileOpen) return undefined;
         const panel = notificationsOpen ? notificationPanelRef.current : profilePanelRef.current;
@@ -116,7 +136,7 @@ export default function Navbar({ onMenuClick }) {
                 .then((data) => active && data && setLearningStats(data))
                 .catch(() => {});
             apiFetch("/notifications")
-                .then((data) => active && data && setNotifications(data))
+                .then((data) => active && data && setNotifications({ unreadCount: Math.max(0, Number(data.unreadCount) || 0), notifications: Array.isArray(data.notifications) ? data.notifications : [] }))
                 .catch(() => {});
         };
         const refreshVisible = () => document.visibilityState === "visible" && refresh();
@@ -216,18 +236,19 @@ export default function Navbar({ onMenuClick }) {
 
     return (
         <>
-            <header className="workspace-navbar relative z-40 flex h-[4.5rem] shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 text-slate-900 sm:px-6 lg:px-8">
+            <header className="workspace-navbar product-topbar relative z-40 flex h-[4.5rem] shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 text-slate-900 sm:px-6 lg:px-8">
                 <div className="flex min-w-0 items-center gap-3">
                     <button type="button" aria-label={t("Otwórz menu")} onClick={onMenuClick} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 lg:hidden">
                         <BsList size={22} />
                     </button>
-                    <div className="hidden min-w-0 min-[400px]:block">
-                        <p className="text-[11px] font-medium text-slate-500">{t("Twoja przestrzeń")}</p>
-                        <h2 className="truncate text-base font-bold sm:text-lg">{t(pageTitle)}</h2>
+                    <div className="product-topbar-context">
+                        <p>{t(identity.role === "ADMIN" ? "Panel twórcy" : "Konto ucznia")}</p>
+                        <h2>{t(pageTitle)}</h2>
                     </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                    <button type="button" onClick={openCourseSearch} className="product-global-search" aria-label={t("Znajdź kurs")} aria-keyshortcuts="Control+k Meta+k"><BsSearch aria-hidden="true" /><span>{t("Znajdź kurs")}</span><kbd>Ctrl K</kbd></button>
                     <LocaleControls compact />
                     <button
                         ref={notificationTriggerRef}

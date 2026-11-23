@@ -2,7 +2,7 @@ import { useLocale } from "../context/LocaleContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getCourseDescription, isJavaBackendCourse, JAVA_COURSE_PATH } from "../utils/javaCourseOffer";
-import { BsArrowClockwise, BsArrowRight, BsCheckCircle, BsCollection, BsExclamationTriangle, BsHourglassSplit, BsLockFill, BsPencil, BsPlusCircle, BsSearch, BsTrash, BsX } from "react-icons/bs";
+import { BsArrowClockwise, BsCheckCircle, BsCollection, BsExclamationTriangle, BsHourglassSplit, BsLockFill, BsPencil, BsPlusCircle, BsSearch, BsTrash, BsX } from "react-icons/bs";
 import { apiFetch } from "../api/api";
 import { getCourseCover, getGeneratedCourseCover } from "../utils/courseCover";
 import { getCategoryDefinition, getCourseCategory, getCourseLanguageLabel, getCourseLevelLabel } from "../utils/courseTaxonomy";
@@ -11,13 +11,7 @@ import { useAuth } from "../context/AuthContext";
 import { useFeedback } from "../context/FeedbackContext";
 import { CONTENT_LANGUAGES, contentLanguageLabel, contentLanguageOf, courseCatalogPath, courseMatchesLanguage } from "../utils/courseContentLanguage";
 
-const CATEGORY_STYLES = {
-    SCHOOL: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    UNIVERSITY: "border-amber-200 bg-amber-50 text-amber-900",
-    PROGRAMMING: "border-teal-200 bg-teal-50 text-teal-800",
-    DIGITAL_SKILLS: "border-blue-200 bg-blue-50 text-blue-800",
-    LANGUAGE: "border-violet-200 bg-violet-50 text-violet-800"
-};
+import WorkspacePageHeader from "../components/WorkspacePageHeader";
 
 function getErrorMessage(error) {
     try {
@@ -54,36 +48,24 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
                 : price(course.price);
 
     return (
-        <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-slate-300">
-            <img src={getCourseCover(course)} alt={t("Okładka kursu {value1}", { value1: course.title || course.name })} loading="lazy" decoding="async" className="aspect-[16/7] w-full bg-slate-100 object-cover" onError={({ currentTarget }) => { currentTarget.onerror = null; currentTarget.src = getGeneratedCourseCover(course); }} />
-            <div className="flex flex-1 flex-col p-5 sm:p-6">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <span className={`rounded-md border px-2 py-1 text-[11px] font-semibold ${CATEGORY_STYLES[category] || CATEGORY_STYLES.PROGRAMMING}`}>{t(definition.label)}</span>
-                    {isAdmin && <span className={`rounded-md border px-2 py-1 text-[11px] font-semibold ${course.published === false ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{course.published === false ? t("Szkic kursu") : t("Opublikowany")}</span>}
-                    {pending && <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-900"><BsHourglassSplit aria-hidden="true" />{" "}{t("Płatność oczekuje")}</span>}
+        <article className="product-catalog-card">
+            <img src={getCourseCover(course)} alt="" loading="lazy" decoding="async" className="product-catalog-cover" onError={({ currentTarget }) => { currentTarget.onerror = null; currentTarget.src = getGeneratedCourseCover(course); }} />
+            <div className="product-catalog-card-body">
+                <div className="product-card-meta">
+                    <span className="product-card-category">{t(definition.label)}</span>
+                    {isAdmin && <span className={`product-status ${course.published === false ? "product-status-warning" : "product-status-neutral"}`}>{course.published === false ? t("Szkic kursu") : t("Opublikowany")}</span>}
+                    <span className="product-card-language" title={t(contentLanguageLabel(contentLanguageOf(course)))}>{contentLanguageOf(course).toUpperCase()}</span>
                 </div>
-                <p className="mb-2 text-xs font-semibold text-slate-600">{t(contentLanguageLabel(contentLanguageOf(course)))} · {contentLanguageOf(course).toUpperCase()}</p>
-                <h3 className="text-xl font-semibold leading-snug tracking-tight text-slate-900">{course.title || course.name}</h3>
-                <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{displayDescription}</p>
-                {isJavaBackendCourse(course) && <Link reloadDocument to={`${JAVA_COURSE_PATH}?lang=${contentLanguageOf(course)}`} className="mt-3 text-sm font-semibold text-teal-800 underline decoration-teal-800/30 underline-offset-4 hover:decoration-teal-800">{t("Zobacz szczegółowy program →")}</Link>}
-                <div className="mt-5 flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-100 pt-4 text-xs text-slate-500">
-                    <span>{course.lessonCount ?? 0}{" "}{t("lekcji")}</span><span>{course.moduleCount ?? 0}{" "}{t("etapów")}</span><span>{category === "LANGUAGE" ? `${t(getCourseLanguageLabel(course.courseLanguage))} · ` : ""}{t(getCourseLevelLabel(course))}</span>
-                </div>
-
-                {!locked && <div className="mt-4">
-                    <div className="mb-2 flex justify-between gap-2 text-xs text-slate-500"><span>{t("Ukończono")}{" "}{course.completedLessonCount ?? 0}{" "}{t("z")}{" "}{course.lessonCount ?? 0}{" "}{t("lekcji")}</span><span className="font-semibold text-teal-800">{progress}%</span></div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-teal-700" style={{ width: `${progress}%` }} /></div>
-                </div>}
-
-                <div className="mt-auto pt-5">
-                    <div className="mb-4 flex flex-wrap items-end justify-between gap-2"><span className="text-lg font-semibold tracking-tight text-slate-900">{displayPrice}</span><span className="text-xs text-slate-500">{t(courseBillingLabel(course))}</span></div>
-                    <button type="button" onClick={onOpen} className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${pending ? "border border-amber-300 bg-amber-50 text-amber-950 hover:bg-amber-100" : "bg-teal-800 text-white hover:bg-teal-900"}`}>
-                        {pending ? <BsHourglassSplit aria-hidden="true" /> : locked ? <BsLockFill aria-hidden="true" /> : null}{actionLabel}<BsArrowRight aria-hidden="true" />
-                    </button>
-                    {isAdmin && <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-200 pt-4">
-                        <button type="button" onClick={onEdit} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-teal-700 hover:text-teal-800"><BsPencil aria-hidden="true" />{" "}{t("Edytuj")}</button>
-                        <button type="button" onClick={onDelete} disabled={deleting} className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-wait disabled:opacity-50"><BsTrash aria-hidden="true" /> {deleting ? t("Usuwanie…") : t("Usuń")}</button>
-                    </div>}
+                <h3>{course.title || course.name}</h3>
+                <p className="product-card-description">{displayDescription}</p>
+                {isJavaBackendCourse(course) && <Link reloadDocument to={`${JAVA_COURSE_PATH}?lang=${contentLanguageOf(course)}`} className="mt-3 text-sm font-medium text-teal-800 underline underline-offset-4">{t("Szczegółowy program")}</Link>}
+                <div className="product-card-info"><span>{course.lessonCount ?? 0} {t("lekcji")}</span><span>{course.moduleCount ?? 0} {t("etapów")}</span><span>{category === "LANGUAGE" ? `${t(getCourseLanguageLabel(course.courseLanguage))} · ` : ""}{t(getCourseLevelLabel(course))}</span></div>
+                {!locked && <div className="product-card-progress"><div><span>{t("Ukończono")} {course.completedLessonCount ?? 0} {t("z")} {course.lessonCount ?? 0} {t("lekcji")}</span><span>{progress}%</span></div><div className="product-progress-track" role="progressbar" aria-label={t("Postęp kursu")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><span style={{ width: `${progress}%` }} /></div></div>}
+                <div className="product-card-bottom">
+                    <div className="product-card-price"><strong>{displayPrice}</strong><span>{t(courseBillingLabel(course))}</span></div>
+                    {pending && <p className="product-status product-status-warning mb-3">{t("Płatność oczekuje")}</p>}
+                    <button type="button" className={`product-button ${pending ? "" : "product-button-primary"}`} onClick={onOpen}>{pending ? <BsHourglassSplit aria-hidden="true" /> : locked ? <BsLockFill aria-hidden="true" /> : null}{actionLabel}</button>
+                    {isAdmin && <div className="product-card-admin"><button type="button" onClick={onEdit}><BsPencil aria-hidden="true" />{t("Edytuj")}</button><button type="button" onClick={onDelete} disabled={deleting}><BsTrash aria-hidden="true" />{deleting ? t("Usuwanie…") : t("Usuń")}</button></div>}
                 </div>
             </div>
         </article>
@@ -124,6 +106,12 @@ function CourseCatalog({ user }) {
         return () => { active = false; };
     }, [view, reload, catalogLanguage, allLanguages]);
 
+    useEffect(() => {
+        if (!location.state?.focusCourseSearch) return undefined;
+        const frame = window.requestAnimationFrame(() => searchInput.current?.focus());
+        return () => window.cancelAnimationFrame(frame);
+    }, [location.key, location.state?.focusCourseSearch]);
+
     const changeView = nextView => {
         if (view === nextView) return;
         setLoading(true);
@@ -162,45 +150,36 @@ function CourseCatalog({ user }) {
     const averageProgress = courses.length ? Math.round(courses.reduce((sum, course) => sum + courseProgress(course), 0) / courses.length) : 0;
 
     return (
-        <div className="app-enter mx-auto max-w-7xl space-y-6 pb-8 text-slate-900">
-            {location.state?.message && <div role="status" className="flex items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-900"><BsCheckCircle aria-hidden="true" className="shrink-0" />{t(location.state.message)}</div>}
-            <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-6">
-                <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-800">{t("Biblioteka nauki")}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{view === "mine" ? t("Moje kursy") : isAdmin ? t("Kursy w EduHub") : t("Czego chcesz się nauczyć?")}</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{isAdmin ? t("Zarządzaj programami, sprawdzaj publikację i otwieraj plany kursów.") : t("Praktyczne kursy, jasny program i nauka we własnym tempie. Wybierz swój następny krok.")}</p></div>
-                {isAdmin && <button type="button" onClick={() => navigate("/admin/add-course")} className="inline-flex items-center gap-2 rounded-xl bg-teal-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"><BsPlusCircle aria-hidden="true" />{" "}{t("Dodaj kurs")}</button>}
-            </header>
-
-            <section aria-label={t("Wybierz kurs")} className="space-y-5">
-                <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-950">
-                    {isAdmin ? <label className="flex flex-wrap items-center gap-3 font-semibold">{t("Język treści kursu")}
-                        <select value={contentLanguageFilter} onChange={event => { setCourses([]); setError(""); setLoading(true); setContentLanguageFilter(event.target.value); }} className="rounded-lg border border-teal-300 bg-white px-3 py-2 text-slate-900">
-                            <option value="all">{t("Wszystkie języki")}</option>
-                            {CONTENT_LANGUAGES.map(item => <option key={item.value} value={item.value}>{t(item.label)} ({item.value.toUpperCase()})</option>)}
-                        </select>
-                    </label> : <p className="font-semibold">{t("Katalog w języku: {value1}", { value1: t(contentLanguageLabel(language)) })}</p>}
-                    <p className="mt-2 leading-6">{t("Każda wersja ma własne kursy, etapy i lekcje. Zmiana języka nie tłumaczy materiałów ani nie usuwa zakupów i postępu.")}</p>
+        <div className="product-page product-catalog">
+            {location.state?.message && <div role="status" className="product-panel mb-5 p-4 text-sm text-teal-800"><BsCheckCircle aria-hidden="true" className="inline mr-2" />{t(location.state.message)}</div>}
+            <WorkspacePageHeader title={view === "mine" ? t("Moje kursy") : t("Kursy")}
+                description={isAdmin ? t("Zarządzaj programami, sprawdzaj publikację i otwieraj plany kursów.") : t("Wybierz temat i sposób dostępu. Ucz się w swoim tempie.")}
+                actions={isAdmin && <button type="button" onClick={() => navigate("/admin/add-course")} className="product-button product-button-primary"><BsPlusCircle aria-hidden="true" />{t("Dodaj kurs")}</button>}
+            />
+            <section aria-label={t("Wybierz kurs")}>
+                <div className="product-catalog-language">
+                    {isAdmin ? <label>{t("Język treści kursu")}<select value={contentLanguageFilter} onChange={event => { setCourses([]); setError(""); setLoading(true); setContentLanguageFilter(event.target.value); }}><option value="all">{t("Wszystkie języki")}</option>{CONTENT_LANGUAGES.map(item => <option key={item.value} value={item.value}>{t(item.label)} ({item.value.toUpperCase()})</option>)}</select></label> : <p>{t("Katalog w języku: {value1}", { value1: t(contentLanguageLabel(language)) })}</p>}
+                    <details className="product-language-help"><summary>{t("Jak działają wersje językowe?")}</summary><p>{t("Każda wersja ma własne kursy, etapy i lekcje. Zmiana języka nie tłumaczy materiałów ani nie usuwa zakupów i postępu.")}</p></details>
                 </div>
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    {!isAdmin && <div className="flex w-fit rounded-xl border border-slate-200 bg-white p-1" aria-label={t("Widok katalogu")}>{[{ value: "catalog", label: t("Katalog") }, { value: "mine", label: t("Moje kursy") }].map(item => <button key={item.value} type="button" aria-pressed={view === item.value} onClick={() => changeView(item.value)} className={`rounded-lg px-4 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-teal-700 ${view === item.value ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>{item.label}</button>)}</div>}
-                    <form role="search" aria-label={t("Wyszukiwanie kursów")} onSubmit={event => event.preventDefault()} className="w-full lg:max-w-md">
-                        <label htmlFor="course-name-search" className="sr-only">{t("Szukaj kursu po nazwie")}</label>
-                        <div className="flex items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 focus-within:border-teal-700 focus-within:ring-2 focus-within:ring-teal-700/10"><BsSearch aria-hidden="true" className="shrink-0 text-slate-400" /><input ref={searchInput} id="course-name-search" type="search" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); clearSearch(); } }} autoComplete="off" maxLength={120} placeholder={t("Szukaj po nazwie, np. Java lub angielski")} className="min-w-0 flex-1 bg-transparent py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 [&::-webkit-search-cancel-button]:appearance-none" />{query && <button type="button" onClick={clearSearch} aria-label={t("Wyczyść wyszukiwanie kursów")} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-teal-700"><BsX aria-hidden="true" className="text-xl" /></button>}</div>
+                <div className="product-catalog-toolbar">
+                    {!isAdmin && <div className="product-view-switch" aria-label={t("Widok katalogu")}>{[{ value: "catalog", label: t("Katalog") }, { value: "mine", label: t("Moje kursy") }].map(item => <button key={item.value} type="button" aria-pressed={view === item.value} onClick={() => changeView(item.value)}>{item.label}</button>)}</div>}
+                    <form role="search" aria-label={t("Wyszukiwanie kursów")} onSubmit={event => event.preventDefault()} className="product-catalog-search">
+                        <label htmlFor="course-name-search" className="sr-only">{t("Szukaj kursu po nazwie")}</label><BsSearch aria-hidden="true" className="shrink-0" /><input ref={searchInput} id="course-name-search" type="search" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); clearSearch(); } }} autoComplete="off" maxLength={120} placeholder={t("Szukaj po nazwie, np. Java lub angielski")} />{query && <button type="button" onClick={clearSearch} aria-label={t("Wyczyść wyszukiwanie kursów")}><BsX aria-hidden="true" /></button>}
                     </form>
                 </div>
-                <nav aria-label={t("Kategorie kursów")} className="flex flex-wrap gap-2">{Object.entries(sections).map(([key, section]) => <button key={key} type="button" aria-pressed={activeSection === key} onClick={() => setActiveSection(key)} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${activeSection === key ? "border-teal-800 bg-teal-800 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-teal-600 hover:text-teal-800"}`}>{section.label}<span className={`text-xs ${activeSection === key ? "text-teal-100" : "text-slate-400"}`}>{loading ? "—" : section.items.length}</span></button>)}</nav>
-                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><p className="max-w-2xl text-sm leading-6 text-slate-500">{selected.description}</p><p role="status" aria-live="polite" className="shrink-0 text-xs font-medium text-slate-600">{loading ? t("Ładowanie kursów…") : t("Wyniki: {value1}{value2}", { value1: selected.items.length, value2: query.trim() ? ` dla „${query.trim()}”` : "" })}</p></div>
+                <nav aria-label={t("Kategorie kursów")} className="product-catalog-filters">{Object.entries(sections).map(([key, section]) => <button key={key} type="button" aria-pressed={activeSection === key} onClick={() => setActiveSection(key)}>{section.label}<span>{loading ? "—" : section.items.length}</span></button>)}</nav>
+                <div className="product-catalog-description"><p>{selected.description}</p><p role="status" aria-live="polite">{loading ? t("Ładowanie kursów…") : t("Liczba wyników: {value1}", { value1: selected.items.length })}</p></div>
             </section>
 
-            {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><span className="inline-flex items-start gap-2"><BsExclamationTriangle aria-hidden="true" className="mt-0.5 shrink-0" />{t(error)}</span><button type="button" onClick={refresh} className="inline-flex items-center gap-2 font-semibold underline underline-offset-4"><BsArrowClockwise aria-hidden="true" />{" "}{t("Spróbuj ponownie")}</button></div>}
-
-            {loading ? <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{[0, 1, 2].map(item => <CourseSkeleton key={item} />)}</div> : error && courses.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center"><h2 className="text-xl font-semibold">{t("Nie udało się pobrać katalogu")}</h2><p className="mt-2 text-sm text-slate-600">{t("Spróbuj ponownie, korzystając z przycisku powyżej.")}</p></div> : selected.items.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-                <BsCollection aria-hidden="true" className="mx-auto text-3xl text-slate-400" />
-                <h2 className="mt-4 text-xl font-semibold">{query.trim() ? t("Nie znaleźliśmy takiego kursu") : courses.length === 0 ? view === "mine" ? t("Twoje kursy pojawią się tutaj") : t("Nie ma jeszcze kursów w tym języku") : t("W sekcji „{value1}” nie ma jeszcze kursów", { value1: selected.label })}</h2>
-                {!isAdmin && !query.trim() && courses.length === 0 && <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600">{t(view === "mine" ? "Zakupione kursy i postęp pozostają zapisane. Aby do nich wrócić, wybierz język, w którym kupiono kurs." : "Kursy w tej wersji pojawią się po przygotowaniu i opublikowaniu materiałów w wybranym języku. Nie pokazujemy tu kursów w innych językach.")}</p>}
-                <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">{query.trim() ? t("Spróbuj krótszej nazwy albo wybierz inną kategorię. Możesz pisać bez polskich znaków.") : isAdmin ? t("Dodaj kurs, a potem uzupełnij jego etapy i lekcje.") : view === "mine" ? t("Wybierz kurs w katalogu lub aktywuj otrzymany kod dostępu.") : t("Wybierz inną sekcję lub wróć później — nowe programy pojawią się po opublikowaniu.")}</p>
-                <div className="mt-5 flex flex-wrap justify-center gap-3">{query.trim() && <button type="button" onClick={clearSearch} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50">{t("Wyczyść wyszukiwanie")}</button>}{isAdmin && courses.length === 0 ? <button type="button" onClick={() => navigate("/admin/add-course")} className="rounded-xl bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900">{t("Dodaj pierwszy kurs")}</button> : !isAdmin && view === "mine" ? <><button type="button" onClick={() => changeView("catalog")} className="rounded-xl bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900">{t("Przejdź do katalogu")}</button><button type="button" onClick={() => navigate("/access-code")} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50">{t("Mam kod dostępu")}</button></> : activeSection !== "all" && <button type="button" onClick={() => setActiveSection("all")} className="rounded-xl bg-teal-800 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-900">{t("Pokaż wszystkie kursy")}</button>}</div>
-            </div> : <section aria-label={t("Kursy: {value1}", { value1: selected.label })} className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{selected.items.map(course => <CourseCard key={course.id} course={course} isAdmin={isAdmin} deleting={deletingCourseId === course.id} onOpen={() => navigate(course.canAccess || isAdmin ? `/modules/${course.id}` : `/checkout/${course.id}`)} onEdit={() => navigate(`/admin/courses/${course.id}/edit`)} onDelete={() => deleteCourse(course)} />)}</section>}
-
-            {!loading && courses.length > 0 && <footer className="flex flex-wrap gap-x-5 gap-y-2 border-t border-slate-200 pt-5 text-xs text-slate-500"><span>{courses.length}{" "}{t("kursów w")}{" "}{view === "mine" ? t("Twoim widoku") : t("katalogu")}</span><span>{totalLessons}{" "}{t("lekcji łącznie")}</span><span>{t("Średni postęp:")}{" "}{averageProgress}%</span></footer>}
+            {error && <div role="alert" className="product-error"><span><BsExclamationTriangle aria-hidden="true" className="inline mr-2" />{t(error)}</span><button type="button" onClick={refresh}><BsArrowClockwise aria-hidden="true" className="inline mr-2" />{t("Spróbuj ponownie")}</button></div>}
+            {loading ? <div className="product-catalog-grid">{[0,1,2].map(item => <CourseSkeleton key={item} />)}</div> : error && courses.length === 0 ? <div className="product-empty"><h2>{t("Nie udało się pobrać katalogu")}</h2><p>{t("Spróbuj ponownie, korzystając z przycisku powyżej.")}</p></div> : selected.items.length === 0 ? <div className="product-empty">
+                <BsCollection aria-hidden="true" className="mx-auto mb-4 text-2xl text-slate-400" />
+                <h2>{query.trim() ? t("Nie znaleźliśmy takiego kursu") : courses.length === 0 ? view === "mine" ? t("Twoje kursy pojawią się tutaj") : t("Nie ma jeszcze kursów w tym języku") : t("W sekcji „{value1}” nie ma jeszcze kursów", { value1: selected.label })}</h2>
+                {!isAdmin && !query.trim() && courses.length === 0 && <p>{t(view === "mine" ? "Zakupione kursy i postęp pozostają zapisane. Aby do nich wrócić, wybierz język, w którym kupiono kurs." : "Kursy w tej wersji pojawią się po przygotowaniu i opublikowaniu materiałów w wybranym języku. Nie pokazujemy tu kursów w innych językach.")}</p>}
+                <p>{query.trim() ? t("Spróbuj krótszej nazwy albo wybierz inną kategorię. Możesz pisać bez polskich znaków.") : isAdmin ? t("Dodaj kurs, a potem uzupełnij jego etapy i lekcje.") : view === "mine" ? t("Wybierz kurs w katalogu lub aktywuj otrzymany kod dostępu.") : t("Wybierz inną sekcję lub wróć później — nowe programy pojawią się po opublikowaniu.")}</p>
+                <div className="flex flex-wrap justify-center gap-3">{query.trim() && <button type="button" onClick={clearSearch} className="product-button">{t("Wyczyść wyszukiwanie")}</button>}{isAdmin && courses.length === 0 ? <button type="button" onClick={() => navigate("/admin/add-course")} className="product-button product-button-primary">{t("Dodaj pierwszy kurs")}</button> : !isAdmin && view === "mine" ? <><button type="button" onClick={() => changeView("catalog")} className="product-button product-button-primary">{t("Przejdź do katalogu")}</button><button type="button" onClick={() => navigate("/access-code")} className="product-button">{t("Mam kod dostępu")}</button></> : activeSection !== "all" && <button type="button" onClick={() => setActiveSection("all")} className="product-button">{t("Pokaż wszystkie kursy")}</button>}</div>
+            </div> : <section aria-label={t("Kursy: {value1}", { value1: selected.label })} className="product-catalog-grid">{selected.items.map(course => <CourseCard key={course.id} course={course} isAdmin={isAdmin} deleting={deletingCourseId === course.id} onOpen={() => navigate(course.canAccess || isAdmin ? `/modules/${course.id}` : `/checkout/${course.id}`)} onEdit={() => navigate(`/admin/courses/${course.id}/edit`)} onDelete={() => deleteCourse(course)} />)}</section>}
+            {!loading && courses.length > 0 && <footer className="product-catalog-footer"><span>{t("Kursy")}: {courses.length}</span><span>{t("Lekcje")}: {totalLessons}</span><span>{t("Średni postęp:")} {averageProgress}%</span></footer>}
         </div>
     );
 }

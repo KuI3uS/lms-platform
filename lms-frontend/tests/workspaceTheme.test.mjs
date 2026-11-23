@@ -4,13 +4,13 @@ import { readFile } from "node:fs/promises";
 import { getWorkspaceTheme, WORKSPACE_BACKGROUNDS } from "../src/utils/workspaceTheme.js";
 
 test("catalog, dashboard and complete course roadmaps use the light theme", () => {
-    for (const path of ["/dashboard", "/courses", "/admin/courses", "/modules/42", "/modules/42/"]) {
+    for (const path of ["/dashboard", "/courses", "/admin", "/admin/courses", "/results", "/exams", "/learning-center", "/access-code", "/language-reviews", "/modules/42", "/modules/42/"]) {
         assert.equal(getWorkspaceTheme(path), "light", path);
     }
 });
 
-test("existing dark forms, lesson screens and results keep an explicit dark background", () => {
-    for (const path of ["/results", "/exams", "/admin", "/admin/courses/42/edit", "/admin/lessons/5", "/lesson/9", "/lessons/42", "/checkout/42", "", "/modules"]) {
+test("existing dark forms, lesson screens and exam attempts keep an explicit dark background", () => {
+    for (const path of ["/exams/42", "/admin/users", "/admin/courses/42/edit", "/admin/lessons/5", "/lesson/9", "/lessons/42", "/checkout/42", "", "/modules"]) {
         assert.equal(getWorkspaceTheme(path), "dark", path);
     }
     for (const theme of Object.values(WORKSPACE_BACKGROUNDS)) assert.match(theme, /^#[0-9a-f]{6}$/i);

@@ -1,7 +1,8 @@
 import { useLocale } from "../context/LocaleContext.jsx";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BsArrowRepeat, BsCheckCircle, BsClockHistory } from "react-icons/bs";
+import { BsCheckCircle, BsClockHistory } from "react-icons/bs";
+import WorkspacePageHeader from "../components/WorkspacePageHeader";
 import { apiFetch } from "../api/api";
 import PronunciationTrainer from "../components/PronunciationTrainer";
 
@@ -25,30 +26,26 @@ export default function LanguageReviewPage() {
         }
     };
 
-    if (loading) return <div className="grid min-h-[50vh] place-items-center text-cyan-300">{t("Układam dzisiejsze powtórki…")}</div>;
+    if (loading) return <div className="grid min-h-[50vh] place-items-center text-slate-600">{t("Układam dzisiejsze powtórki…")}</div>;
 
     return (
-        <div className="mx-auto max-w-5xl space-y-7">
-            <header className="rounded-[36px] border border-violet-400/20 bg-gradient-to-br from-violet-500/15 via-slate-900 to-cyan-500/10 p-7 sm:p-10">
-                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-violet-300"><BsArrowRepeat />{t(" Inteligentne powtórki")}</p>
-                <h1 className="mt-3 text-4xl font-black sm:text-5xl">{t("Wróć do zwrotów, zanim je zapomnisz")}</h1>
-                <p className="mt-4 max-w-2xl leading-7 text-slate-400">{t("Dobrze opanowane zwroty pojawiają się coraz rzadziej. Te trudne wracają szybciej, aż wynik się poprawi.")}</p>
-            </header>
+        <div className="product-page space-y-7">
+            <WorkspacePageHeader title={t("Powtórki językowe")} description={t("Dobrze opanowane zwroty pojawiają się coraz rzadziej. Te trudne wracają szybciej, aż wynik się poprawi.")} />
 
-            {error && <div role="alert" className="rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-red-200">{error}</div>}
+            {error && <div role="alert" className="rounded-lg border border-red-400/20 bg-red-500/10 p-4 text-red-800">{error}</div>}
             {!error && reviews.length === 0 && (
-                <section className="rounded-3xl border border-emerald-400/20 bg-emerald-500/[0.07] p-10 text-center"><BsCheckCircle className="mx-auto text-5xl text-emerald-300" /><h2 className="mt-4 text-2xl font-black">{t("Wszystko powtórzone")}</h2><p className="mt-2 text-slate-500">{t("Następne zwroty pojawią się tu w odpowiednim momencie.")}</p></section>
+                <section className="rounded-xl border border-emerald-400/20 bg-emerald-500/[0.07] p-10 text-center"><BsCheckCircle className="mx-auto text-3xl text-emerald-700" /><h2 className="mt-4 text-2xl font-semibold">{t("Wszystko powtórzone")}</h2><p className="mt-2 text-slate-500">{t("Następne zwroty pojawią się tu w odpowiednim momencie.")}</p></section>
             )}
             <div className="space-y-5">
                 {reviews.map((review) => (
-                    <article key={review.blockId} className="rounded-3xl border border-white/10 bg-white/[0.035] p-5 sm:p-7">
-                        <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500"><BsClockHistory /> {review.lessonTitle}</p>
-                        <h2 className="mt-2 text-2xl font-black">{review.title}</h2>
-                        <p className="my-5 rounded-2xl bg-black/20 p-5 text-xl font-black">{review.phrase}</p>
+                    <article key={review.blockId} className="rounded-xl border border-slate-200 bg-white p-5 sm:p-7">
+                        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500"><BsClockHistory /> {review.lessonTitle}</p>
+                        <h2 className="mt-2 text-2xl font-semibold">{review.title}</h2>
+                        <p className="my-5 rounded-lg bg-slate-100 p-5 text-xl font-semibold">{review.phrase}</p>
                         {review.blockType === "AUDIO" ? (
-                            <PronunciationTrainer compact blockId={review.blockId} phrase={review.phrase} language={review.language} audioUrl={review.audioUrl} onReviewed={(result) => complete(review.blockId, result)} />
+                            <div className="rounded-xl bg-slate-950 p-4 text-white"><PronunciationTrainer compact blockId={review.blockId} phrase={review.phrase} language={review.language} audioUrl={review.audioUrl} onReviewed={(result) => complete(review.blockId, result)} /></div>
                         ) : (
-                            <button type="button" onClick={() => navigate(`/lesson/${review.lessonId}`)} className="rounded-xl bg-violet-600 px-5 py-3 font-black text-white hover:bg-violet-500">{t("Wróć do ćwiczenia")}</button>
+                            <button type="button" onClick={() => navigate(`/lesson/${review.lessonId}`)} className="product-button product-button-primary">{t("Wróć do ćwiczenia")}</button>
                         )}
                     </article>
                 ))}

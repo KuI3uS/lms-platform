@@ -5,9 +5,11 @@ import { apiFetch } from "../api/api";
 import { fetchLearningStats } from "../api/learningStats";
 import { getCourseCover, getGeneratedCourseCover } from "../utils/courseCover";
 import { courseProgress, sortCoursesForLearning } from "../utils/courseCatalog";
-import { BsArrowRight, BsArrowClockwise, BsBook, BsCheck2, BsKey, BsClipboardCheck, BsTranslate } from "react-icons/bs";
+import { BsArrowClockwise, BsCheck2, BsKey, BsClipboardCheck, BsTranslate } from "react-icons/bs";
 import { useAuth } from "../context/AuthContext";
 import { courseCatalogPath, courseLocaleCacheOwner, courseMatchesLanguage } from "../utils/courseContentLanguage";
+
+import WorkspacePageHeader from "../components/WorkspacePageHeader";
 
 const CACHE_PREFIX = "eduhub-dashboard-v5";
 
@@ -90,76 +92,62 @@ function DashboardContent({ user, owner }) {
     const retry = () => { setLoading(true); setReload(value => value + 1); };
 
     return (
-        <div className="app-enter mx-auto max-w-6xl space-y-7 pb-8 text-slate-900 sm:space-y-9">
-            <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-6">
-                <div>
-                    <p className="text-sm font-medium text-slate-500">{t(greeting())}{firstName ? `, ${firstName}` : ""}</p>
-                    <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{t("Czas na kolejny krok.")}</h1>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{t("Twoje kursy i najważniejsze rzeczy do nauki — w jednym miejscu.")}</p>
-                </div>
-                <button type="button" onClick={() => navigate("/courses")} className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold transition hover:border-teal-700 hover:text-teal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700">{t("Przeglądaj kursy")}{" "}<BsArrowRight aria-hidden="true" />
-                </button>
-            </header>
+        <div className="product-page product-dashboard">
+            <WorkspacePageHeader
+                eyebrow={<>{t(greeting())}{firstName ? `, ${firstName}` : ""}</>}
+                title={t("Moja nauka")}
+                description={t("Wróć do rozpoczętego kursu lub wybierz coś nowego. Każdy krok zostaje zapisany.")}
+                actions={<button type="button" onClick={() => navigate("/courses")} className="product-button">{t("Przeglądaj kursy")}</button>}
+            />
 
-            {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                <span>{t(error)}</span>
-                <button type="button" onClick={retry} className="inline-flex items-center gap-2 font-semibold underline underline-offset-4"><BsArrowClockwise aria-hidden="true" />{" "}{t("Odśwież dane")}</button>
-            </div>}
+            {error && <div role="alert" className="product-error"><span>{t(error)}</span><button type="button" onClick={retry}><BsArrowClockwise aria-hidden="true" className="inline mr-2" />{t("Odśwież dane")}</button></div>}
+            <dl className="product-summary" aria-label={t("Podsumowanie nauki")}>
+                <div><dt>{t("Dostępne kursy")}</dt><dd>{loading ? "—" : availableCourses.length}</dd></div>
+                <div><dt>{t("Ukończone lekcje")}</dt><dd>{loading ? "—" : completedLessons}</dd></div>
+                <div><dt>{t("Ukończone kursy")}</dt><dd>{loading ? "—" : completed}</dd></div>
+            </dl>
 
-            {loading ? <div role="status" className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-600">{t("Ładowanie Twoich kursów…")}</div> : (
-                <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                    <div className="grid md:grid-cols-[minmax(0,1fr)_230px]">
-                        <div className="p-6 sm:p-8">
-                            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-teal-800">{currentCourse ? progress > 0 && progress < 100 ? t("Kurs w trakcie") : progress === 100 ? t("Możesz wrócić do materiałów") : t("Gotowy do rozpoczęcia") : t("Zacznij od tego, co Cię interesuje")}</p>
-                            <h2 className="mt-3 max-w-2xl text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{currentCourse ? currentCourse.title || currentCourse.name : t("Znajdź swój pierwszy kurs.")}</h2>
-                            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">{currentCourse
-                                ? t("Otwórz plan kursu, wybierz etap i przejdź do lekcji. Twój dotychczasowy postęp jest zapisany.")
-                                : t("Zajrzyj do katalogu: wybierz kurs bezpłatny, płatny lub materiał do nauki szkolnej.")}</p>
-                            {currentCourse && <div className="mt-5 max-w-md">
-                                <div className="mb-2 flex justify-between text-xs font-medium text-slate-600"><span>{currentCourse.completedLessonCount || 0}{" "}{t("z")}{" "}{currentCourse.lessonCount || 0}{" "}{t("lekcji")}</span><span>{progress}%</span></div>
-                                <div className="h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-teal-700" style={{ width: `${progress}%` }} /></div>
-                            </div>}
-                            <button type="button" onClick={() => navigate(currentCourse ? `/modules/${currentCourse.id}` : "/courses")} className="mt-6 inline-flex items-center gap-3 rounded-xl bg-teal-800 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700">
-                                {currentCourse ? t("Otwórz plan kursu") : t("Wybierz kurs")} <BsArrowRight aria-hidden="true" />
-                            </button>
+            <div className="product-dashboard-grid">
+                <div className="min-w-0">
+                    {loading ? <div role="status" className="product-panel p-7 mb-7 text-slate-500">{t("Ładowanie Twoich kursów…")}</div> : <section className="product-panel product-continue" aria-labelledby="continue-course-title">
+                        <div>
+                            <span className="product-status product-status-positive">{currentCourse ? progress > 0 && progress < 100 ? t("Kurs w trakcie") : progress === 100 ? t("Kurs ukończony") : t("Gotowy do rozpoczęcia") : t("Zacznij swoją naukę")}</span>
+                            <h2 id="continue-course-title">{currentCourse ? currentCourse.title || currentCourse.name : t("Znajdź swój pierwszy kurs.")}</h2>
+                            <p>{currentCourse ? t("Wybierz etap na ścieżce kursu i ucz się we własnym tempie.") : t("Zajrzyj do katalogu: wybierz kurs bezpłatny, płatny lub materiał do nauki szkolnej.")}</p>
+                            {currentCourse && <><div className="product-progress-label"><span>{currentCourse.completedLessonCount || 0} {t("z")} {currentCourse.lessonCount || 0} {t("lekcji")}</span><span>{progress}%</span></div><div className="product-progress-track" role="progressbar" aria-label={t("Postęp kursu")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><span style={{ width: `${progress}%` }} /></div></>}
+                            <button type="button" className="product-button product-button-primary" onClick={() => navigate(currentCourse ? `/modules/${currentCourse.id}` : "/courses")}>{currentCourse ? t("Otwórz plan kursu") : t("Wybierz kurs")}</button>
                         </div>
-                        <div className="hidden border-l border-slate-200 bg-[#eef2ed] p-6 md:flex md:items-center md:justify-center">
-                            {currentCourse ? <img src={getCourseCover(currentCourse)} alt="" className="aspect-square w-full rounded-xl bg-[#080f17] object-contain" onError={({ currentTarget }) => { currentTarget.onerror = null; currentTarget.src = getGeneratedCourseCover(currentCourse); }} /> : <BsBook className="text-6xl text-teal-800/60" aria-hidden="true" />}
+                        {currentCourse && <img src={getCourseCover(currentCourse)} alt="" onError={({ currentTarget }) => { currentTarget.onerror = null; currentTarget.src = getGeneratedCourseCover(currentCourse); }} />}
+                    </section>}
+
+                    <section aria-labelledby="dashboard-courses-title">
+                        <div className="product-section-heading"><h2 id="dashboard-courses-title">{t("Twoje kursy")}</h2><span>{loading ? "—" : availableCourses.length} {t("z lekcjami")}</span></div>
+                        <div className="product-panel overflow-hidden">
+                            {loading ? <p className="p-6 text-sm text-slate-500">{t("Pobieranie kursów…")}</p> : availableCourses.length === 0 ? <div className="p-6">
+                                <p className="font-medium">{error ? t("Nie mamy jeszcze danych do wyświetlenia.") : t("Nie masz jeszcze dostępnego kursu z lekcjami.")}</p>
+                                <p className="mt-2 text-sm text-slate-500">{error ? t("Spróbuj odświeżyć dane przyciskiem powyżej.") : t("Sprawdź katalog lub użyj otrzymanego kodu dostępu.")}</p>
+                            </div> : availableCourses.slice(0,5).map(course => <button key={course.id} type="button" className="product-course-row" onClick={() => navigate(`/modules/${course.id}`)}>
+                                <img src={getCourseCover(course)} alt="" loading="lazy" onError={({ currentTarget }) => { currentTarget.onerror = null; currentTarget.src = getGeneratedCourseCover(course); }} />
+                                <span className="min-w-0 flex-1"><span className="product-course-row-title">{course.title || course.name}</span><span className="product-course-row-detail">{course.completedLessonCount || 0} {t("z")} {course.lessonCount || 0} {t("lekcji")}{user?.role === "ADMIN" && !course.published ? t(" · Szkic kursu") : ""}</span></span>
+                                <span className="product-course-row-progress">{courseProgress(course) === 100 ? <BsCheck2 aria-label={t("Kurs ukończony")} className="inline mr-1" /> : null}{courseProgress(course)}%<span className="product-progress-track"><span style={{ width: `${courseProgress(course)}%` }} /></span></span>
+                            </button>)}
                         </div>
-                    </div>
-                </section>
-            )}
-
-            <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_300px]">
-                <section aria-labelledby="dashboard-courses-title">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                        <h2 id="dashboard-courses-title" className="text-xl font-semibold tracking-tight">{t("Twoje kursy")}</h2>
-                        <span className="text-sm text-slate-500">{availableCourses.length}{" "}{t("z lekcjami")}</span>
-                    </div>
-                    <div className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                        {loading ? <p className="p-5 text-sm text-slate-500">{t("Pobieranie kursów…")}</p> : availableCourses.length === 0 ? <div className="p-6">
-                            <p className="font-medium">{error ? t("Nie mamy jeszcze danych do wyświetlenia.") : t("Nie masz jeszcze dostępnego kursu z lekcjami.")}</p>
-                            <p className="mt-2 text-sm leading-6 text-slate-600">{error ? t("Spróbuj odświeżyć dane przyciskiem powyżej.") : t("Sprawdź katalog lub użyj otrzymanego kodu dostępu.")}</p>
-                        </div> : availableCourses.slice(0, 5).map(course => <button key={course.id} type="button" onClick={() => navigate(`/modules/${course.id}`)} className="group flex w-full items-center gap-4 p-4 text-left transition hover:bg-teal-50/50 focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-teal-700 sm:p-5">
-                            <img src={getCourseCover(course)} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-lg object-cover" onError={({ currentTarget }) => { currentTarget.onerror = null; currentTarget.src = getGeneratedCourseCover(course); }} />
-                            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold leading-5 sm:text-base">{course.title || course.name}</span><span className="mt-1 block text-xs text-slate-500">{course.completedLessonCount || 0}{" "}{t("z")}{" "}{course.lessonCount || 0}{" "}{t("lekcji ·")}{" "}{courseProgress(course)}%{user?.role === "ADMIN" && !course.published ? t(" · Szkic kursu") : ""}</span></span>
-                            {courseProgress(course) === 100 ? <BsCheck2 aria-label={t("Kurs ukończony")} className="shrink-0 text-xl text-teal-700" /> : <BsArrowRight aria-hidden="true" className="shrink-0 text-slate-400 group-hover:text-teal-800" />}
-                        </button>)}
-                    </div>
-                    {availableCourses.length > 5 && <button type="button" onClick={() => navigate("/courses")} className="mt-3 text-sm font-semibold text-teal-800 underline underline-offset-4">{t("Zobacz pozostałe kursy w katalogu")}</button>}
-                </section>
-
-                <aside className="space-y-6">
-                    <section aria-labelledby="dashboard-summary-title" className="rounded-2xl border border-slate-200 bg-[#f1f3ed] p-5">
-                        <h2 id="dashboard-summary-title" className="text-sm font-semibold">{t("W skrócie")}</h2>
-                        <dl className="mt-4 grid grid-cols-2 gap-4"><div><dt className="text-xs text-slate-600">{t("Ukończone lekcje")}</dt><dd className="mt-1 text-2xl font-semibold">{loading ? "—" : completedLessons}</dd></div><div><dt className="text-xs text-slate-600">{t("Ukończone kursy")}</dt><dd className="mt-1 text-2xl font-semibold">{loading ? "—" : completed}</dd></div></dl>
-                        {stats && <div className="mt-5 border-t border-slate-300/70 pt-4 text-xs leading-6 text-slate-600"><p><strong className="font-semibold text-slate-900">{t("Poziom")}{" "}{stats.level || 1}</strong> · {stats.xp || 0}{" "}{t("XP")}</p><p>{t("Seria zadań:")}{" "}{stats.taskStreak || 0}{" "}{t("· mnożnik ×")}{stats.xpMultiplier || 1}</p>{stats.taskStreak > 0 && formatDate(stats.taskStreakExpiresAt, dateLocale) && <p>{t("Aktywna do")}{" "}{formatDate(stats.taskStreakExpiresAt, dateLocale)}.</p>}</div>}
+                        {availableCourses.length > 5 && <button type="button" onClick={() => navigate("/courses")} className="mt-4 text-sm font-semibold text-teal-800 underline underline-offset-4">{t("Zobacz pozostałe kursy w katalogu")}</button>}
                     </section>
-                    <section aria-labelledby="dashboard-shortcuts-title"><h2 id="dashboard-shortcuts-title" className="mb-3 text-sm font-semibold">{t("Przydatne skróty")}</h2><div className="space-y-2">{[
-                        { to: "/access-code", icon: BsKey, title: t("Mam kod dostępu"), description: t("Aktywuj dostęp do kursu") },
-                        { to: "/results", icon: BsClipboardCheck, title: t("Moje wyniki"), description: t("Sprawdź rozwiązane zadania") },
-                        { to: "/language-reviews", icon: BsTranslate, title: t("Powtórki językowe"), description: t("Wróć do poznanych słów") }
-                    ].map(({ to, icon: Icon, title, description }) => <button key={to} type="button" onClick={() => navigate(to)} className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-teal-700 focus-visible:outline-2 focus-visible:outline-teal-700"><Icon aria-hidden="true" className="shrink-0 text-lg text-teal-800" /><span><span className="block text-sm font-medium">{title}</span><span className="mt-0.5 block text-xs text-slate-500">{description}</span></span></button>)}</div></section>
+                </div>
+                <aside className="product-dashboard-aside">
+                    <section className="product-panel product-small-panel" aria-labelledby="dashboard-activity-title">
+                        <h2 id="dashboard-activity-title">{t("Twoja aktywność")}</h2>
+                        {stats ? <><div className="product-account-level">{t("Poziom")} {stats.level || 1}<span>· {stats.xp || 0} XP</span></div><p>{t("Seria zadań:")} <strong className="text-slate-700">{stats.taskStreak || 0}</strong> {t("· mnożnik ×")}{stats.xpMultiplier || 1}</p>{stats.taskStreak > 0 && formatDate(stats.taskStreakExpiresAt, dateLocale) && <p>{t("Aktywna do")} {formatDate(stats.taskStreakExpiresAt, dateLocale)}.</p>}<button type="button" className="product-button mt-5 w-full" onClick={() => navigate("/learning-center")}>{t("Postęp i nagrody")}</button></> : <p>{loading ? t("Ładowanie statystyk…") : t("Twoja aktywność pojawi się po odświeżeniu danych.")}</p>}
+                    </section>
+                    <section className="product-panel product-small-panel" aria-labelledby="dashboard-shortcuts-title">
+                        <h2 id="dashboard-shortcuts-title">{t("Przydatne skróty")}</h2>
+                        <div className="product-shortcuts mt-2">{[
+                            { to: "/access-code", icon: BsKey, title: t("Mam kod dostępu"), description: t("Aktywuj dostęp do kursu") },
+                            { to: "/results", icon: BsClipboardCheck, title: t("Moje wyniki"), description: t("Sprawdź rozwiązane zadania") },
+                            { to: "/language-reviews", icon: BsTranslate, title: t("Powtórki językowe"), description: t("Wróć do poznanych słów") }
+                        ].map(({ to, icon: Icon, title, description }) => <button key={to} type="button" onClick={() => navigate(to)}><Icon aria-hidden="true" /><span><strong>{title}</strong><small>{description}</small></span></button>)}</div>
+                    </section>
                 </aside>
             </div>
         </div>
