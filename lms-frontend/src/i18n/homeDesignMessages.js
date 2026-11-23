@@ -1,0 +1,53 @@
+export default {
+    "Próbka lekcji": { en: "A sample lesson", es: "Una lección de muestra" },
+    "Bez logowania": { en: "No account needed", es: "Sin iniciar sesión" },
+    "Przeczytaj kod": { en: "Read the code", es: "Lee el código" },
+    "Cena i dostęp": { en: "Price and access", es: "Precio y acceso" },
+    "Programowanie od podstaw": { en: "Programming from scratch", es: "Programación desde cero" },
+    "Zrozum kod.": { en: "Understand code.", es: "Entiende el código." },
+    "Napisz własny.": { en: "Write your own.", es: "Escribe el tuyo." },
+    "Java, SQL i zadania, przy których trzeba pomyśleć. Krótkie wyjaśnienie, własne rozwiązanie i wskazówki do poprawy. Uczysz się, robiąc — we własnym tempie.": {
+        en: "Java, SQL and exercises that make you think. A short explanation, your own solution and guidance to improve it. Learn by doing, at your own pace.",
+        es: "Java, SQL y ejercicios que te hacen pensar. Una explicación breve, tu propia solución y pistas para mejorarla. Aprende haciendo, a tu ritmo."
+    },
+    "Zobacz kursy": { en: "Explore courses", es: "Ver los cursos" },
+    "Spróbuj bez konta": { en: "Try it without an account", es: "Pruébalo sin cuenta" },
+    "Autorska platforma Jakuba Marcinkowskiego.": { en: "An independent platform by Jakub Marcinkowski.", es: "Una plataforma independiente de Jakub Marcinkowski." },
+    "Tak wygląda lekcja": { en: "Inside a lesson", es: "Así es una lección" },
+    "Teoria to dopiero początek.": { en: "Theory is just the start.", es: "La teoría es solo el principio." },
+    "Poznaj temat": { en: "Understand the idea", es: "Entiende el concepto" },
+    "Przeczytaj krótkie wyjaśnienie. Zobacz na przykładzie, jak działa kod.": { en: "Read a short explanation. See how the code works in an example.", es: "Lee una explicación breve y observa cómo funciona el código en un ejemplo." },
+    "Rozwiąż zadanie samodzielnie. Nie musisz od razu znać dobrej odpowiedzi.": { en: "Work on the exercise yourself. You do not need to get it right the first time.", es: "Resuelve el ejercicio por tu cuenta. No tienes que acertar a la primera." },
+    "W zadaniach sprawdzanych automatycznie dostajesz wynik i wskazówki. Popraw kod i spróbuj ponownie.": { en: "Automatically checked exercises give you a result and guidance. Improve your code and try again.", es: "Los ejercicios con corrección automática te dan un resultado y pistas. Mejora el código e inténtalo de nuevo." },
+    "Kursy i ścieżki nauki": { en: "Courses and learning paths", es: "Cursos y rutas de aprendizaje" },
+    "Kursy w Twoim języku": { en: "Courses in your language", es: "Cursos en tu idioma" },
+    "Dostępne kursy w wybranym języku sprawdzisz w katalogu na platformie. Każda wersja językowa ma osobno przygotowane materiały.": { en: "Check the platform catalogue for courses available in your chosen language. Each language version has its own learning materials.", es: "Consulta el catálogo de la plataforma para ver los cursos disponibles en el idioma elegido. Cada versión tiene sus propios materiales de aprendizaje." },
+    "Sprawdź program przed założeniem konta. Dostępne lekcje i swój postęp znajdziesz później na platformie.": { en: "Explore the programme before creating an account. Available lessons and your progress are kept on the platform.", es: "Consulta el programa antes de crear una cuenta. Después encontrarás las lecciones disponibles y tu progreso en la plataforma." },
+    "Od przygotowania środowiska i pierwszego programu po kolejne zagadnienia Javy. Uporządkowany plan dla tych, którzy chcą rozumieć swój kod, a nie tylko go przepisywać.": {
+        en: "Start with your development environment and first program, then work through Java step by step. A structured programme for people who want to understand their code, not just copy it.",
+        es: "Empieza por preparar el entorno y crear tu primer programa. Después avanza paso a paso por Java, con un plan para comprender tu código, no solo copiarlo."
+    },
+    "JDK i IntelliJ IDEA": { en: "JDK and IntelliJ IDEA", es: "JDK e IntelliJ IDEA" },
+    "Zmienne i typy danych": { en: "Variables and data types", es: "Variables y tipos de datos" },
+    "Egzamin zawodowy": { en: "Vocational exam", es: "Examen de formación profesional" },
+    "Warunki dostępu do konkretnego kursu sprawdzisz przed zakupem. Samo założenie konta nie uruchamia płatności.": { en: "You can review a course's access terms before purchasing. Creating an account does not start a payment.", es: "Puedes consultar las condiciones de acceso de cada curso antes de comprarlo. Crear una cuenta no inicia ningún pago." },
+    "Indywidualne spotkania online": { en: "One-to-one online sessions", es: "Clases individuales en línea" },
+    "Utknąłeś przy zadaniu?": { en: "Stuck on an exercise?", es: "¿Te has atascado en un ejercicio?" },
+    "Przyjdź ze swoim kodem, komunikatem błędu albo pytaniem z lekcji. Na korepetycjach możemy skupić się na tym, czego akurat nie rozumiesz.": { en: "Bring your code, an error message or a question from a lesson. In a tutoring session, we can focus on the part you are struggling with.", es: "Trae tu código, un mensaje de error o una pregunta de la lección. En una clase individual podemos centrarnos en lo que no entiendes." },
+    "Jedno spotkanie. Twój temat.": { en: "One session. Your topic.", es: "Una clase. Tu tema." },
+    "Java, SQL, zadania szkolne i przygotowanie do egzaminów INF.": { en: "Java, SQL, school assignments and preparation for INF exams.", es: "Java, SQL, tareas escolares y preparación de exámenes INF." },
+    "Wybierz termin w kalendarzu.": { en: "Choose a time in the calendar.", es: "Elige una fecha en el calendario." },
+    "Napisz, nad czym pracujesz.": { en: "Tell us what you are working on.", es: "Cuéntanos en qué estás trabajando." },
+    "Przygotuj kod lub treść zadania.": { en: "Have your code or assignment ready.", es: "Prepara tu código o el enunciado del ejercicio." },
+    "Dobrze wiedzieć.": { en: "Good to know.", es: "Conviene saberlo." },
+    "O koncie, kursach i sposobie nauki. Bez drobnego druku.": { en: "About your account, the courses and how learning works. In plain language.", es: "Sobre tu cuenta, los cursos y la forma de aprender. Sin letra pequeña." },
+    "Za EduHub stoi człowiek.": { en: "The person behind EduHub.", es: "La persona detrás de EduHub." },
+    "EduHub to autorski projekt Jakuba Marcinkowskiego: platforma, materiały i miejsce do ćwiczenia programowania. Wyjaśnienia łączą się tu z zadaniami, żeby nauka nie kończyła się na przeczytaniu tekstu.": {
+        en: "EduHub is an independent project by Jakub Marcinkowski: a platform, learning materials and a place to practise programming. Explanations lead into exercises so learning goes beyond reading.",
+        es: "EduHub es un proyecto independiente de Jakub Marcinkowski: una plataforma, materiales y un lugar para practicar programación. Las explicaciones se combinan con ejercicios para aprender más allá de la lectura."
+    },
+    "Miejsce na Twój następny pomysł.": { en: "A place for your next idea.", es: "Un lugar para tu próxima idea." },
+    "Sprawdź zawartość zmiennej message. Operator + łączy dwa teksty.": { en: "Look at the value of message. The + operator joins two strings.", es: "Mira el valor de message. El operador + une dos cadenas de texto." },
+    "Dokładnie! Operator + połączył powitanie i nazwę języka.": { en: "Exactly! The + operator joined the greeting and the language name.", es: "¡Exacto! El operador + ha unido el saludo y el nombre del lenguaje." },
+    "Dobrze! SELECT wskazuje kolumnę, a WHERE ogranicza wynik do aktywnych uczniów.": { en: "Correct! SELECT chooses the column and WHERE limits the result to active students.", es: "¡Correcto! SELECT elige la columna y WHERE limita el resultado a los estudiantes activos." }
+};

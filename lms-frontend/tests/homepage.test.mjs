@@ -5,7 +5,10 @@ import {
   HOME_FAQ,
   LEARNING_PATHS,
   checkPracticeAnswer,
+  getPracticeExample,
+  getHomeLearningPaths,
 } from "../src/utils/homeContent.js";
+import { UI_MESSAGES } from "../src/utils/localization.js";
 import { HOME_TITLE, HOME_DESCRIPTION } from "../src/utils/homeSeo.js";
 
 const home = await readFile(
@@ -20,7 +23,7 @@ const app = await readFile(
 test("homepage serves readable course information, exam paths and FAQ without executing JavaScript", () => {
   assert.equal((home.match(/<h1(?:\s|>)/g) || []).length, 1);
   for (const text of [
-    "Naucz się Javy.",
+    "Zrozum kod.",
     "Java Backend",
     ...HOME_FAQ.map((item) => item.question),
     ...LEARNING_PATHS.map((item) => item.title),
@@ -31,7 +34,7 @@ test("homepage serves readable course information, exam paths and FAQ without ex
     !app.includes('id="eh-hero-title"'),
     "Application fallback must not display the homepage on login or private routes.",
   );
-  assert.ok(home.includes('href="/kurs/java-backend-developer"'));
+  assert.ok(home.includes('href="/kurs/java-backend-developer?lang=pl"'));
   assert.ok(home.includes('href="/tutoring-booking"'));
 });
 
@@ -92,4 +95,36 @@ test("demo checks an answer without running input as Java or SQL", () => {
     "retry",
   );
   assert.equal(checkPracticeAnswer("unknown", "anything"), "retry");
+});
+
+test("public demos are explicitly authored for PL EN ES without changing course content", () => {
+  for (const [language, answer] of [["pl", "Cześć, Java"], ["en", "Hello, Java"], ["es", "Hola, Java"]]) {
+    const example = getPracticeExample("java", language);
+    assert.ok(example.code.includes(answer.split(",")[0]));
+    assert.equal(checkPracticeAnswer("java", answer, language), "correct");
+    assert.equal(checkPracticeAnswer("java", answer.toLowerCase(), language), "retry");
+    assert.equal(checkPracticeAnswer("sql", language === "pl" ? "IMIE" : "FIRST_NAME", language), "correct");
+    assert.equal(checkPracticeAnswer("sql", "DROP TABLE students", language), "retry");
+  }
+});
+
+test("homepage keeps Polish exam paths out of English and Spanish course offers", () => {
+  assert.equal(getHomeLearningPaths("pl").length, 4);
+  assert.equal(getHomeLearningPaths("pl", null, "exams").length, 3);
+  assert.equal(getHomeLearningPaths("pl", null, "programming").length, 1);
+  for (const language of ["en", "es"]) {
+    assert.deepEqual(getHomeLearningPaths(language), []);
+    assert.deepEqual(getHomeLearningPaths(language, { contentLanguage: "pl" }), []);
+    assert.deepEqual(getHomeLearningPaths(language, { contentLanguage: language }).map(path => path.id), ["java"]);
+  }
+});
+
+test("new homepage copy is available in both interface translations", async () => {
+  const source = await readFile(new URL("../src/components/LandingPage.jsx", import.meta.url), "utf8");
+  const keys = [...source.matchAll(/\bt\("([^"]+)"/g)].map(match => match[1]);
+  for (const key of keys) {
+    assert.ok(UI_MESSAGES[key]?.en, "English: " + key);
+    assert.ok(UI_MESSAGES[key]?.es, "Spanish: " + key);
+  }
+  assert.ok(!source.includes("BsArrow"), "Actions use descriptive labels, not decorative arrows");
 });

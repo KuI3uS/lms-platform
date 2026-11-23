@@ -1,4 +1,5 @@
 import { JAVA_COURSE_PATH } from "./javaCourseOffer.js";
+import { courseMatchesLanguage } from "./courseContentLanguage.js";
 
 export const PRACTICE_EXAMPLES = [
   {
@@ -34,6 +35,23 @@ export const PRACTICE_EXAMPLES = [
   },
 ];
 
+// Explicitly authored public demos, not a translation of students' course code.
+export function getPracticeExample(id, language = "pl") {
+  const example = PRACTICE_EXAMPLES.find(item => item.id === id);
+  if (!example || language === "pl") return example;
+  if (id === "java") {
+    const greeting = language === "es" ? "Hola, " : "Hello, ";
+    return { ...example,
+      code: ['String language = "Java";', `String message = "${greeting}" + language;`, "", "System.out.println(message);"].join("\n"),
+      answers: [greeting + "Java"],
+      hint: "Sprawdź zawartość zmiennej message. Operator + łączy dwa teksty.",
+      explanation: "Dokładnie! Operator + połączył powitanie i nazwę języka."
+    };
+  }
+  return { ...example, file: "query.sql", code: "SELECT first_name\nFROM students\nWHERE active = 1;", answers: ["first_name"],
+    explanation: "Dobrze! SELECT wskazuje kolumnę, a WHERE ogranicza wynik do aktywnych uczniów." };
+}
+
 function normalizeAnswer(answer) {
   let text = String(answer ?? "")
     .normalize("NFC")
@@ -54,10 +72,10 @@ function normalizeAnswer(answer) {
   return text;
 }
 
-export function checkPracticeAnswer(id, answer) {
+export function checkPracticeAnswer(id, answer, language = "pl") {
   const normalized = normalizeAnswer(answer);
   if (!normalized) return "empty";
-  const example = PRACTICE_EXAMPLES.find((item) => item.id === id);
+  const example = getPracticeExample(id, language);
   if (!example) return "retry";
   const compare = (value) =>
     example.caseSensitive ? value : value.toLocaleLowerCase("pl-PL");
@@ -120,6 +138,12 @@ export const LEARNING_PATHS = [
     cta: "Zobacz na platformie",
   },
 ];
+
+export function getHomeLearningPaths(language = "pl", javaOffer = null, filter = "all") {
+  const available = language === "pl" ? LEARNING_PATHS
+    : javaOffer && courseMatchesLanguage(javaOffer, language) ? LEARNING_PATHS.filter(path => path.id === "java") : [];
+  return available.filter(path => filter === "all" || path.category === filter);
+}
 
 export const HOME_FAQ = [
   {
