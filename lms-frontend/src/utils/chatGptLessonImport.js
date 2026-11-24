@@ -12,6 +12,7 @@ import { cleanChatGptText } from "./chatGptReferences.js";
 import { getChatGptLessonPrompt } from "./lessonImportPrompt.js";
 import { getLessonBlockValidationError } from "./lessonBlockValidation.js";
 import { normalizeCodeLanguage } from "./codeLanguages.js";
+import { EXPORTED_FIELD_LABELS, parseExportedBlock } from "./stageLessonExport.js";
 
 const TYPE_MAP = {
     tekst: "TEXT",
@@ -53,11 +54,16 @@ const TYPE_MAP = {
     "kafelki ze slowami": "SENTENCE_BUILDER",
     "rozsypanka wyrazowa": "SENTENCE_BUILDER",
     plik: "PDF",
+    "plik do pobrania": "DOWNLOAD",
     cytat: "QUOTE",
     separator: "DIVIDER"
 };
 
 const FIELD_ALIASES = [
+    ["format bloku", "exportFormat"],
+    ["opublikowany", "published"],
+    ["typ multimediow / styl separatora", "exportMediaType"],
+    ["kontrola pol technicznych", "protectedChecksum"],
     ["typ bloku", "type"],
     ["tytul rozdzialu", "title"],
     ["tytul wskazowki", "title"],
@@ -263,7 +269,8 @@ function fieldsFromLines(lines, heading) {
             activeKey = null;
             return;
         }
-        const candidate = readField(line);
+        const exportedLabel = EXPORTED_FIELD_LABELS.some(label => normalize(label) === normalize(line));
+        const candidate = fields.exportFormat && !exportedLabel ? null : readField(line);
         // "Styl" is a separator setting, but is also a normal heading in CSS lessons.
         const field = candidate?.key === "mediaType"
             && resolveType(fields.type, heading).type !== "DIVIDER" ? null : candidate;
@@ -289,7 +296,7 @@ function fieldsFromLines(lines, heading) {
     });
 
     return Object.fromEntries(
-        Object.entries(fields).map(([key, value]) => [key, ["starterCode", "correctAnswer", "hiddenTests"].includes(key) ? unwrapFencedValue(value) : value.trim()])
+        Object.entries(fields).map(([key, value]) => [key, fields.exportFormat || ["starterCode", "correctAnswer", "hiddenTests"].includes(key) ? unwrapFencedValue(value) : value.trim()])
     );
 }
 
@@ -316,7 +323,7 @@ function normalizeLanguage(value, fallback = "") {
 function resolveType(rawType, heading) {
     const normalizedType = normalize(rawType || heading);
 
-    const typeKey = Object.keys(TYPE_MAP).find(
+    const typeKey = Object.hasOwn(TYPE_MAP, normalizedType) ? normalizedType : Object.keys(TYPE_MAP).find(
         (key) => normalizedType === key || normalizedType.startsWith(`${key} `)
     );
     return {
@@ -361,6 +368,8 @@ function parseStep(step, warnings, errors, variant) {
         errors.push(`Krok ${step.number}: nie rozpoznano typu bloku „${fields.type || step.heading || "brak"}”.`);
         return null;
     }
+
+    if (fields.exportFormat) return parseExportedBlock(fields, resolved.type, step.number, errors);
 
     const block = {
         title: fields.title || (resolved.type === "DIVIDER" ? "" : `Krok ${step.number}`),

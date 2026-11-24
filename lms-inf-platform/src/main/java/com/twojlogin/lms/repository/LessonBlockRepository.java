@@ -22,6 +22,13 @@ public interface LessonBlockRepository extends JpaRepository<LessonBlock, Long> 
 
     List<LessonBlock> findByLessonIdOrderByOrderIndexAsc(Long lessonId);
 
+    @Query("""
+            select block from LessonBlock block join fetch block.lesson lesson
+            where lesson.module.id = :moduleId
+            order by lesson.orderIndex, lesson.id, block.orderIndex, block.id
+            """)
+    List<LessonBlock> findForStageExport(@Param("moduleId") Long moduleId);
+
     // A projection avoids retaining all block entities in the persistence context.
     @Query("""
             select b.lesson.id, b.title, b.type, b.content, b.description,

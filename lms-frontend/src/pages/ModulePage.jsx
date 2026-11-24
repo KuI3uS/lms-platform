@@ -16,6 +16,7 @@ import {
     BsCodeSlash,
     BsTranslate,
     BsFileText,
+    BsDownload,
     BsLightbulb,
     BsInfoCircle,
     BsImage,
@@ -41,6 +42,7 @@ import CourseSectionHeading from "../components/CourseSectionHeading";
 import LessonPlanImport from "../components/LessonPlanImport";
 import CourseDuplicateCleanup from "../components/CourseDuplicateCleanup";
 import CourseRoadmapSearch from "../components/CourseRoadmapSearch";
+import StageExportDialog from "../components/StageExportDialog";
 import { filterCourseRoadmap } from "../utils/courseRoadmapSearch";
 import {
     buildCourseSections,
@@ -71,6 +73,7 @@ export default function ModulePage() {
     const [editingModuleId, setEditingModuleId] = useState(null);
     const [moduleDraft, setModuleDraft] = useState(null);
     const [savingModuleId, setSavingModuleId] = useState(null);
+    const [exportModule, setExportModule] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [moduleExpansion, setModuleExpansion] = useState({});
@@ -646,6 +649,7 @@ export default function ModulePage() {
 
                                                         {role === "ADMIN" && (
                                                             <div className="flex gap-2">
+                                                                <button type="button" aria-label={t("Eksportuj etap {title} do ChatGPT", { title: module.name })} title={t("Pobierz cały etap dla ChatGPT")} onClick={() => setExportModule(module)} className="grid h-10 w-10 place-items-center rounded-full border border-teal-200 bg-teal-50 text-teal-800 transition hover:bg-teal-100"><BsDownload aria-hidden="true" /></button>
                                                                 <button
                                                                     type="button"
                                                                     aria-label={t("Zarządzaj lekcjami etapu {value1}", { value1: module.name })}
@@ -838,6 +842,7 @@ export default function ModulePage() {
                     })
                 )}
             </section>
+            {role === "ADMIN" && exportModule && <StageExportDialog key={exportModule.id} moduleId={exportModule.id} moduleTitle={exportModule.name} onClose={() => setExportModule(null)} />}
         </div>
     );
 }

@@ -108,6 +108,8 @@ public class SecurityConfig {
 
                         // ADMIN ONLY
 
+                        .requestMatchers(HttpMethod.GET, "/api/admin/modules/*/export").hasRole("ADMIN")
+
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/class/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/submissions/**").hasRole("ADMIN")

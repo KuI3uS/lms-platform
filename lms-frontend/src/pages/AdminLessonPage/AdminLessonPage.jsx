@@ -1,5 +1,8 @@
 import { useLocale } from "../../context/LocaleContext.jsx";
 import { useParams } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import StageExportDialog from "../../components/StageExportDialog";
 
 import LessonForm from "./LessonForm";
 import LessonCard from "./LessonCard";
@@ -14,6 +17,8 @@ import useModule from "./hooks/useModule";
 
 export default function AdminLessonPage() {
     const { t } = useLocale();
+    const { user } = useAuth();
+    const [exportOpen, setExportOpen] = useState(false);
 
     const { moduleId } = useParams();
 
@@ -53,6 +58,11 @@ export default function AdminLessonPage() {
                 <p className="mt-2 text-sm leading-6">{t("Możesz udostępnić te lekcje uczniom bez ponownego importu. Puste karty i ukryte bloki pozostaną bez zmian.")}</p>
                 <button type="button" disabled={lessons.publishingReady || lessons.packageImporting} onClick={lessons.publishReadyLessons} className="mt-4 rounded-xl bg-amber-300 px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-40">{lessons.publishingReady ? t("Publikowanie…") : t("Udostępnij lekcje z materiałami")}</button>
             </section>}
+
+            {user?.role === "ADMIN" && <div>
+                <button type="button" onClick={() => setExportOpen(true)} className="rounded-xl border border-teal-400/30 bg-teal-500/10 px-5 py-3 text-base font-semibold text-teal-100 hover:bg-teal-500/20">{t("Pobierz cały etap dla ChatGPT")}</button>
+                {exportOpen && <StageExportDialog moduleId={moduleId} moduleTitle={moduleData.moduleSettings.name} onClose={() => setExportOpen(false)} />}
+            </div>}
 
             <StageLessonPackageImport
                 moduleTitle={moduleData.moduleSettings.name}

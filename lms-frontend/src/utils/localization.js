@@ -10,13 +10,14 @@ import runnerMessages from "../i18n/runnerMessages.js";
 import courseLocaleMessages from "../i18n/courseLocaleMessages.js";
 import homeDesignMessages from "../i18n/homeDesignMessages.js";
 import workspaceDesignMessages from "../i18n/workspaceDesignMessages.js";
+import stageExportMessages from "../i18n/stageExportMessages.js";
 
 export const SUPPORTED_LANGUAGES = Object.freeze([
     { value: "pl", label: "Polski", short: "PL", locale: "pl-PL" },
     { value: "en", label: "English", short: "EN", locale: "en-GB" },
     { value: "es", label: "Español", short: "ES", locale: "es-ES" }
 ]);
-export const UI_MESSAGES = { ...extraMessages1, ...extraMessages2, ...extraMessages3, ...extraMessages4, ...publicMessages, ...studentMessages, ...workspaceMessages, ...coreMessages, ...runnerMessages, ...courseLocaleMessages, ...homeDesignMessages, ...workspaceDesignMessages };
+export const UI_MESSAGES = { ...extraMessages1, ...extraMessages2, ...extraMessages3, ...extraMessages4, ...publicMessages, ...studentMessages, ...workspaceMessages, ...coreMessages, ...runnerMessages, ...courseLocaleMessages, ...homeDesignMessages, ...workspaceDesignMessages, ...stageExportMessages };
 
 export function normalizeUiLanguage(value) {
     const code = String(value || "").toLowerCase().split(/[-_]/)[0];

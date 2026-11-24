@@ -8,7 +8,7 @@ import { MAX_LESSON_BLOCKS } from "./lessonBlockLimits.js";
 export const MAX_LESSONS_PER_STAGE_IMPORT = 50;
 
 const LESSON_HEADER = /^\s*(?:#{1,6}\s*)?(?:={2,}\s*)?LEKCJA\s+(\d+)(?:\s*(?:—|-|:)\s*(.*?))?(?:\s*=+)?\s*$/gim;
-const END_MARKER = /^\s*(?:={2,}\s*)?KONIEC\s+LEKCJI(?:\s*=+)?\s*$/gim;
+const END_MARKER = /^\s*(?:={2,}\s*)?KONIEC\s+LEKCJI(?:\s*=+)?\s*$/i;
 const TITLE_LABEL = /^\s*(?:\*{1,2})?TYTUŁ\s+LEKCJI(?:\*{1,2})?\s*(?::\s*(.*))?$/im;
 
 function normalizeTitle(value) {
@@ -16,6 +16,59 @@ function normalizeTitle(value) {
         .replace(/^\s*[-–—:]\s*/, "")
         .replace(/\s+/g, " ")
         .trim();
+}
+
+/** ChatGPT can return each lesson in a separate text fence. Value/code fences
+ * inside it are content, never additional lessons or end markers. */
+function prepareStageSource(value) {
+    const lines = cleanChatGptText(value).replace(/\r\n?/g, "\n").split("\n");
+    const output = [];
+    const headerLine = new RegExp(LESSON_HEADER.source, "i");
+    let wrapper = null;
+    let fence = null;
+    let seenLesson = false;
+    let boundary = true;
+    for (let index = 0; index < lines.length; index++) {
+        const line = lines[index];
+        const marker = line.trim().match(/^(`{3,}|~{3,})(.*)$/);
+        const closes = token => marker && marker[1][0] === token[0] && marker[1].length >= token.length && !marker[2].trim();
+        if (fence) {
+            output.push(line);
+            if (closes(fence)) fence = null;
+            continue;
+        }
+        if (wrapper && closes(wrapper)) { wrapper = null; boundary = true; continue; }
+        if (marker) {
+            const next = lines.slice(index + 1).find(candidate => candidate.trim()) || "";
+            const firstPackageWrapper = !seenLesson && output.every(candidate => !candidate.trim());
+            if (!wrapper && marker[1][0] === "`" && (firstPackageWrapper || (!seenLesson || boundary) && headerLine.test(next))) {
+                wrapper = marker[1];
+                continue;
+            }
+            fence = marker[1];
+        }
+        if (END_MARKER.test(line)) { boundary = true; continue; }
+        if (headerLine.test(line)) seenLesson = true;
+        if (line.trim()) boundary = false;
+        output.push(line);
+    }
+    const source = output.join("\n").trim();
+    const headers = [];
+    let offset = 0;
+    fence = null;
+    for (const line of source.split("\n")) {
+        const marker = line.trim().match(/^(`{3,}|~{3,})(.*)$/);
+        if (fence) {
+            if (marker && marker[1][0] === fence[0] && marker[1].length >= fence.length && !marker[2].trim()) fence = null;
+        } else if (marker) {
+            fence = marker[1];
+        } else {
+            const match = headerLine.exec(line);
+            if (match) { match.index = offset; headers.push(match); }
+        }
+        offset += line.length + 1;
+    }
+    return { source, headers, unclosedWrapper: Boolean(wrapper) };
 }
 
 export function normalizeStageLessonTitle(value) {
@@ -80,14 +133,17 @@ export function parseStageLessonImport(
     maxBlocks = MAX_LESSON_BLOCKS,
     variant = "PROGRAMMING"
 ) {
-    const cleanSource = cleanChatGptText(source).replace(END_MARKER, "").trim();
+    const prepared = prepareStageSource(source);
+    const cleanSource = prepared.source;
     if (cleanSource.startsWith("Przygotuj kompletny pakiet") && cleanSource.includes("KROK [NUMER]")) {
         return { lessons: [], lessonCount: 0, blockCount: 0, warnings: [], errors: ["To jest wzór promptu, nie gotowy pakiet lekcji. Wklej prompt do ChatGPT, a tutaj wklej jego odpowiedź z nagłówkami LEKCJA 1 i KROK 1."] };
     }
-    const headers = [...cleanSource.matchAll(LESSON_HEADER)];
+    const headers = prepared.headers;
     const errors = [];
     const warnings = [];
     const lessons = [];
+
+    if (prepared.unclosedWrapper) errors.push("Nie zamknięto zewnętrznego bloku tekstowego lekcji. Sprawdź, czy odpowiedź ChatGPT nie została ucięta.");
 
     if (cleanSource && headers.length === 0) {
         errors.push("Nie znaleziono lekcji. Każdą rozpocznij od nagłówka „LEKCJA 1 — tytuł”.");
