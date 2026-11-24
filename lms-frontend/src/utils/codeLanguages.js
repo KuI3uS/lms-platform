@@ -10,6 +10,7 @@ export const CODE_LANGUAGE_OPTIONS = [
     { value: "powershell", label: "PowerShell" },
     { value: "json", label: "JSON" },
     { value: "yaml", label: "YAML" },
+    { value: "properties", label: "Properties (.properties)" },
     { value: "xml", label: "XML" },
     { value: "dockerfile", label: "Dockerfile" },
     { value: "http", label: "HTTP" },
@@ -34,5 +35,5 @@ export function normalizeCodeLanguage(value, fallback = "") {
 
 export function getMonacoLanguage(value) {
     const language = normalizeCodeLanguage(value, "text");
-    return { bash: "shell", text: "plaintext" }[language] || language;
+    return { bash: "shell", properties: "ini", text: "plaintext" }[language] || language;
 }
