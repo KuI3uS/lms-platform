@@ -1,3 +1,5 @@
+import { apiResponseError } from "../utils/apiResponseError.js";
+
 const CSRF_STORAGE_KEY = "eduhub:csrf";
 
 // Żądania pozostają pod domeną frontendu, a hosting przekazuje /api do backendu.
@@ -60,25 +62,17 @@ export async function apiFetch(url, options = {}) {
     const text = await res.text();
 
     if (!res.ok) {
-        let message = text || "Nie udało się wykonać operacji.";
-        try {
-            const errorBody = JSON.parse(text);
-            message = errorBody.message || errorBody.error || message;
-        } catch {
-            // Odpowiedź błędu nie musi być JSON-em.
-        }
+        const error = apiResponseError(res, text);
 
         if (
             res.status === 401
             && !skipAuthRedirect
             && !url.startsWith("/auth/")
         ) {
-            message = "Sesja wygasła. Zaloguj się ponownie.";
+            error.message = "Sesja wygasła. Zaloguj się ponownie.";
             redirectAfterUnauthorized();
         }
 
-        const error = new Error(message);
-        error.status = res.status;
         throw error;
     }
 
@@ -86,8 +80,12 @@ export async function apiFetch(url, options = {}) {
 
     try {
         return JSON.parse(text);
-    } catch (error) {
-        console.error("JSON PARSE ERROR:", text);
+    } catch {
+        const error = apiResponseError(res, text);
+        if (error.code === "API_ERROR") {
+            error.code = "INVALID_JSON_RESPONSE";
+            error.message = "Serwer zwrócił nieprawidłowe dane. Odśwież stronę i spróbuj ponownie.";
+        }
         throw error;
     }
 }

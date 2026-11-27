@@ -12,6 +12,7 @@ import {
 import { useFeedback } from "../context/FeedbackContext";
 import { cleanChatGptText } from "../utils/chatGptReferences";
 import { getImportRepairPrompt } from "../utils/lessonImportPrompt";
+import { isImportMaterialError } from "../utils/apiResponseError.js";
 import {
     getStageLessonPrompt,
     parseStageLessonImport,
@@ -32,6 +33,7 @@ export default function StageLessonPackageImport({
     const [open, setOpen] = useState(false);
     const [source, setSource] = useState("");
     const [importError, setImportError] = useState("");
+    const [importMaterialError, setImportMaterialError] = useState(false);
     const [publishLessons, setPublishLessons] = useState(true);
     const [promptStart, setPromptStart] = useState(1);
     const [promptEnd, setPromptEnd] = useState(null);
@@ -123,6 +125,7 @@ export default function StageLessonPackageImport({
             setSource("");
             setOpen(false);
         } catch (error) {
+            setImportMaterialError(isImportMaterialError(error));
             const message = `${error?.message || "Nie udało się potwierdzić importu."} Odśwież listę przed ponowną próbą. Ponowny import nie nadpisze zapisanych bloków.`;
             setImportError(message);
             showToast(message, "error");
@@ -235,7 +238,7 @@ export default function StageLessonPackageImport({
                         {parsed.warnings.slice(0, 8).map(warning => (
                             <p key={warning} className="mt-2 text-sm leading-6 text-amber-200">{warning}</p>
                         ))}
-                        {(errors.length > 0 || importError) && <button type="button" onClick={copyRepair} disabled={lessonsState.packageImporting} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-100 hover:bg-red-500/20 disabled:opacity-40">
+                        {(errors.length > 0 || (importError && importMaterialError)) && <button type="button" onClick={copyRepair} disabled={lessonsState.packageImporting} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-100 hover:bg-red-500/20 disabled:opacity-40">
                             <BsClipboard aria-hidden="true" />{t(" Skopiuj polecenie naprawy do ChatGPT")}</button>}
                     </div>
 

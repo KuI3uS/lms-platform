@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../../../api/api";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { cleanChatGptBlock } from "../../../utils/chatGptReferences";
+import { encodeLessonImport } from "../../../utils/encodedLessonImport.js";
 import { matchStageLessons } from "../../../utils/stageLessonImport";
 
 const emptyLesson = {
@@ -134,16 +135,16 @@ export default function useLessons(moduleId) {
             const matched = matchStageLessons(packageLessons, freshLessons);
             if (matched.errors.length) throw new Error(matched.errors.join("\n"));
             setPackageImportProgress({ total: packageLessons.length });
-            const result = await apiFetch(`/lesson-blocks/module/${moduleId}/import`, {
+            const result = await apiFetch(`/lesson-blocks/module/${moduleId}/import-encoded`, {
                 method: "POST",
-                body: JSON.stringify({
+                body: JSON.stringify(encodeLessonImport({
                     publishLessons,
                     lessons: matched.matches.map(({ source, target }) => ({
                         lessonId: target.id,
                         title: target.title,
                         blocks: source.blocks.map(toLessonBlockRequest)
                     }))
-                })
+                }))
             });
             try { await loadLessons(); }
             catch { showToast("Bloki zostały zapisane. Odśwież stronę, aby zobaczyć aktualne lekcje.", "warning"); }
