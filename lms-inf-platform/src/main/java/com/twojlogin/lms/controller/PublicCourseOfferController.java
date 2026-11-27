@@ -24,4 +24,11 @@ public class PublicCourseOfferController {
                 .cacheControl(CacheControl.maxAge(60, TimeUnit.SECONDS).cachePublic())
                 .body(service.javaBackendOffer(lang));
     }
+
+    @GetMapping("/api/public/courses/python-ai-automatyzacje-dla-biznesu")
+    public ResponseEntity<PublicCourseOfferDto> pythonAutomationOffer(@RequestParam(defaultValue = "pl") String lang) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(60, TimeUnit.SECONDS).cachePublic())
+                .body(service.pythonAutomationOffer(lang));
+    }
 }

@@ -88,6 +88,57 @@ class PublicCourseOfferServiceTest {
         return courses.saveAndFlush(course);
     }
 
+    @Test
+    void pythonOfferUsesLivePriceAndCompleteOutlineWithoutExposingLessonContent() throws Exception {
+        course("Python + AI - automatyzacje dla biznesu", false);
+        course("Python + AI - automatyzacje dla biznesu PRO", true);
+        Course python = course("Python + AI — automatyzacje dla biznesu", true);
+        python.setBillingMode(CourseBillingMode.ONE_TIME);
+        python.setPrice(new BigDecimal("499.00"));
+        courses.saveAndFlush(python);
+        for (int stage = 1; stage <= 16; stage++) {
+            CourseModule module = new CourseModule();
+            module.setCourse(python);
+            module.setName("Temat " + stage);
+            module = modules.saveAndFlush(module);
+            for (int index = 0; index < 6; index++) {
+                Lesson lesson = lesson(module, true, "TAJNA_TRESC_LEKCJI");
+                block(lesson, true, BlockType.TASK);
+            }
+        }
+        var offer = service.pythonAutomationOffer("pl");
+        assertEquals(python.getId(), offer.id());
+        assertEquals(new BigDecimal("499.00"), offer.price());
+        assertEquals("ONE_TIME", offer.billingMode());
+        assertEquals(16, offer.stageCount());
+        assertEquals(96, offer.plannedLessonCount());
+        assertEquals(16, offer.outline().size());
+        assertEquals("Temat 16", offer.outline().get(15).title());
+        String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(offer);
+        assertFalse(json.contains("TAJNA_TRESC_LEKCJI"));
+        assertFalse(json.contains("TAJNE_ROZWIĄZANIE"));
+        assertFalse(json.contains("hiddenTests"));
+        python.setPrice(new BigDecimal("549.00"));
+        courses.saveAndFlush(python);
+        assertEquals(new BigDecimal("549.00"), service.pythonAutomationOffer("pl").price());
+    }
+
+    @Test
+    void pythonOfferNeverSubstitutesPolishMaterialsForOtherLanguagesOrUnrelatedCourses() {
+        course("Python + AI - automatyzacje dla biznesu", false);
+        course("Python + AI", true);
+        assertEquals(HttpStatus.NOT_FOUND, assertThrows(ResponseStatusException.class,
+                () -> service.pythonAutomationOffer("pl")).getStatusCode());
+        Course polish = course("Python + AI – automatyzacje dla biznesu", true);
+        assertEquals(polish.getId(), service.pythonAutomationOffer("pl").id());
+        for (String language : java.util.List.of("en", "es")) {
+            assertEquals(HttpStatus.NOT_FOUND, assertThrows(ResponseStatusException.class,
+                    () -> service.pythonAutomationOffer(language)).getStatusCode());
+        }
+        assertEquals(HttpStatus.BAD_REQUEST, assertThrows(ResponseStatusException.class,
+                () -> service.pythonAutomationOffer("fr")).getStatusCode());
+    }
+
     private Lesson lesson(CourseModule module, boolean published, String content) {
         Lesson lesson = new Lesson();
         lesson.setModule(module);

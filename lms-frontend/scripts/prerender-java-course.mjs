@@ -7,11 +7,14 @@ import {
   serializeStructuredData,
 } from "../src/utils/javaCourseSeo.js";
 import { getHomeStructuredData } from "../src/utils/homeSeo.js";
+import { getPythonCourseStructuredData, getInf03StructuredData } from "../src/utils/publicLearningSeo.js";
 
 // Render the same public React pages as the browser. No API requests, session data,
 // cached prices or copied marketing HTML are needed during deployment.
 const root = fileURLToPath(new URL("../", import.meta.url));
 const pages = [
+  { file: "python-ai-automatyzacje-dla-biznesu.html", entry: "/src/prerender-public-learning.jsx", render: "renderPythonCourse", schema: "python-course-schema", structuredData: getPythonCourseStructuredData },
+  { file: "testy-inf-03.html", entry: "/src/prerender-public-learning.jsx", render: "renderInf03", schema: "inf03-schema", structuredData: getInf03StructuredData },
   {
     file: "java-backend-developer.html",
     entry: "/src/prerender-java-course.jsx",

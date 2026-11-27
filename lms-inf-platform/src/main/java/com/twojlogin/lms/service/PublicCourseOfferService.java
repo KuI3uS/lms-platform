@@ -38,8 +38,23 @@ public class PublicCourseOfferService {
                 .filter(candidate -> contentLanguage.equals(candidate.getContentLanguage()))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Oferta kursu nie jest obecnie dostępna."));
+        return describe(course, 12);
+    }
+
+    @Transactional(readOnly = true)
+    public PublicCourseOfferDto pythonAutomationOffer(String language) {
+        String contentLanguage = CourseContentLanguage.requireSupported(language);
+        Course course = courses.findPublishedPythonAutomationCourses().stream()
+                .filter(Course::isPublished)
+                .filter(candidate -> contentLanguage.equals(candidate.getContentLanguage()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Oferta kursu nie jest obecnie dostępna."));
+        return describe(course, Integer.MAX_VALUE);
+    }
+
+    private PublicCourseOfferDto describe(Course course, int outlineLimit) {
         var stages = modules.findByCourseIdOrderByIdAsc(course.getId());
-        var outline = IntStream.range(0, Math.min(stages.size(), 12))
+        var outline = IntStream.range(0, Math.min(stages.size(), outlineLimit))
                 .mapToObj(index -> new PublicCourseOfferDto.OutlineItem(index + 1, stages.get(index).getName()))
                 .toList();
         return new PublicCourseOfferDto(

@@ -46,7 +46,7 @@ test("each language selects its own real audio asset and Mañana is mapped to En
 });
 
 test("music belongs ONLY to the public homepage, not login, offers, courses or any app page", () => {
-    for (const path of ["/lesson/2", "/test/12", "/exams/2", "/language-reviews", "/courses", "/exams", "/admin/lessons/2", "/login", "/register", "/dashboard", "/kurs/java-backend-developer", "/support"]) {
+    for (const path of ["/lesson/2", "/test/12", "/exams/2", "/language-reviews", "/courses", "/exams", "/admin/lessons/2", "/login", "/register", "/dashboard", "/kurs/java-backend-developer", "/kurs/python-ai-automatyzacje-dla-biznesu", "/egzaminy/inf-03", "/support"]) {
         assert.equal(shouldPauseSiteMusic(path), true, path);
     }
     assert.equal(shouldPauseSiteMusic("/"), false);

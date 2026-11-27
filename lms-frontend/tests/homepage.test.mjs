@@ -109,9 +109,9 @@ test("public demos are explicitly authored for PL EN ES without changing course 
 });
 
 test("homepage keeps Polish exam paths out of English and Spanish course offers", () => {
-  assert.equal(getHomeLearningPaths("pl").length, 4);
+  assert.equal(getHomeLearningPaths("pl").length, 5);
   assert.equal(getHomeLearningPaths("pl", null, "exams").length, 3);
-  assert.equal(getHomeLearningPaths("pl", null, "programming").length, 1);
+  assert.equal(getHomeLearningPaths("pl", null, "programming").length, 2);
   for (const language of ["en", "es"]) {
     assert.deepEqual(getHomeLearningPaths(language), []);
     assert.deepEqual(getHomeLearningPaths(language, { contentLanguage: "pl" }), []);

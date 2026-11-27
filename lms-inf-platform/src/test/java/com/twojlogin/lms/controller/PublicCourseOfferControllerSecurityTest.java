@@ -55,6 +55,28 @@ class PublicCourseOfferControllerSecurityTest {
     }
 
     @Test
+    void pythonOfferIsAnonymousReadOnlyPublishedAndLanguageScoped() throws Exception {
+        String path = "/api/public/courses/python-ai-automatyzacje-dla-biznesu";
+        Course python = new Course();
+        python.setName("Python + AI - automatyzacje dla biznesu");
+        python.setPublished(false);
+        courses.saveAndFlush(python);
+        mvc.perform(get(path)).andExpect(status().isNotFound());
+        python.setPublished(true);
+        courses.saveAndFlush(python);
+        mvc.perform(get(path)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(python.getId()))
+                .andExpect(jsonPath("$.contentLanguage").value("pl"))
+                .andExpect(jsonPath("$.hiddenTests").doesNotExist())
+                .andExpect(jsonPath("$.paymentUrl").doesNotExist());
+        mvc.perform(get(path).param("lang", "en")).andExpect(status().isNotFound());
+        mvc.perform(get(path).param("lang", "es")).andExpect(status().isNotFound());
+        mvc.perform(get(path).param("lang", "fr")).andExpect(status().isBadRequest());
+        mvc.perform(post(path)).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/public/courses/1")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void languageIsPartOfThePublicOfferRequestNotTheTaughtLanguage() throws Exception {
         Course course = new Course();
         course.setName("Java Backend Developer");

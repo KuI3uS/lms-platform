@@ -4,6 +4,8 @@ import { BsCheckCircleFill, BsList, BsX } from "react-icons/bs";
 import { useLocale } from "../context/LocaleContext";
 import LocaleControls from "./LocaleControls";
 import usePublicJavaOffer from "../hooks/usePublicJavaOffer";
+import usePublicCourseOffer from "../hooks/usePublicCourseOffer";
+import { PYTHON_COURSE_PATH, PYTHON_COURSE_SLUG } from "../utils/pythonCourseOffer";
 import { formatOfferPrice, getPublicOfferPlans, JAVA_COURSE_PATH } from "../utils/javaCourseOffer";
 import { HOME_FAQ, PRACTICE_EXAMPLES, checkPracticeAnswer, getPracticeExample, getHomeLearningPaths } from "../utils/homeContent";
 import "../styles/landing.css";
@@ -68,11 +70,11 @@ function PracticeStudio() {
     </section>;
 }
 
-function CoursePrice({ offerState }) {
+function CoursePrice({ offerState, coursePath = JAVA_COURSE_PATH, courseLabel = "Aktualny dostęp do kursu Java" }) {
     const { t, language, dateLocale } = useLocale();
     const { offer, loading, error } = offerState;
     const plans = getPublicOfferPlans(offer);
-    return <aside className="eh-course-price" aria-label={t("Aktualny dostęp do kursu Java")}>
+    return <aside className="eh-course-price" aria-label={t(courseLabel)}>
         <p className="eh-kicker">{t("Cena i dostęp")}</p>
         <div className="eh-price-list" aria-live="polite">
             {loading ? <p className="eh-muted" role="status">{t("Pobieranie aktualnej oferty…")}</p>
@@ -82,7 +84,7 @@ function CoursePrice({ offerState }) {
                         <p>{t(plan.renewal)}</p>
                     </div>)}
         </div>
-        <Link reloadDocument to={`${JAVA_COURSE_PATH}?lang=${language}`} className="eh-button eh-button-primary">{t("Zobacz program kursu")}</Link>
+        <Link reloadDocument to={`${coursePath}?lang=${language}`} className="eh-button eh-button-primary">{t("Zobacz program kursu")}</Link>
         <p className="eh-price-note">{t("Materiały są udostępniane etapami. Założenie konta nie uruchamia płatności.")}</p>
     </aside>;
 }
@@ -90,11 +92,13 @@ function CoursePrice({ offerState }) {
 export default function LandingPage() {
     const { t, language } = useLocale();
     const offerState = usePublicJavaOffer();
+    const pythonOfferState = usePublicCourseOffer(PYTHON_COURSE_SLUG);
     const [menuOpen, setMenuOpen] = useState(false);
     const [pathFilter, setPathFilter] = useState("all");
     const paths = getHomeLearningPaths(language, offerState.offer, language === "pl" ? pathFilter : "all");
     const allPaths = getHomeLearningPaths(language, offerState.offer);
     const javaPath = paths.find(path => path.id === "java");
+    const pythonPath = paths.find(path => path.id === "python-ai");
     const examPaths = paths.filter(path => path.category === "exams");
     const closeMenu = () => setMenuOpen(false);
     return <div className="eh-home" id="start">
@@ -105,6 +109,7 @@ export default function LandingPage() {
             <div className="eh-container eh-nav-inner"><Brand />
                 <nav id="eh-navigation" className={`eh-navigation${menuOpen ? " is-open" : ""}`} aria-label={t("Główna nawigacja")}>
                     <a href="#sciezki" onClick={closeMenu}>{t("Kursy")}</a><a href="#metoda" onClick={closeMenu}>{t("Jak uczymy")}</a>
+                    {language === "pl" && <Link reloadDocument to="/egzaminy/inf-03?lang=pl" onClick={closeMenu}>Testy INF.03</Link>}
                     <a href="#korepetycje" onClick={closeMenu}>{t("Korepetycje")}</a><a href="#faq" onClick={closeMenu}>{t("Pytania i odpowiedzi")}</a>
                     <Link reloadDocument to="/login" className="eh-mobile-account" onClick={closeMenu}>{t("Zaloguj się")}</Link>
                     <Link reloadDocument to="/register" className="eh-mobile-account" onClick={closeMenu}>{t("Załóż konto")}</Link>
@@ -122,6 +127,7 @@ export default function LandingPage() {
                     <h1 id="eh-hero-title">{t("Zrozum kod.")}<br /><em>{t("Napisz własny.")}</em></h1>
                     <p className="eh-hero-lead">{t("Java, SQL i zadania, przy których trzeba pomyśleć. Krótkie wyjaśnienie, własne rozwiązanie i wskazówki do poprawy. Uczysz się, robiąc — we własnym tempie.")}</p>
                     <div className="eh-hero-actions"><a href="#sciezki" className="eh-button eh-button-primary">{t("Zobacz kursy")}</a><a className="eh-text-link" href="#wyprobuj">{t("Spróbuj bez konta")}</a></div>
+                    {language === "pl" && <Link reloadDocument to={`${PYTHON_COURSE_PATH}?lang=pl`} className="eh-hero-course-link">Python + AI: ucz się automatyzacji dla biznesu</Link>}
                     <div className="eh-author-byline"><span className="eh-byline-mark" aria-hidden="true">JM</span><p>{t("Autorska platforma Jakuba Marcinkowskiego.")}<br /><a href="#autor">{t("Poznaj twórcę")}</a></p></div>
                 </div>
                 <PracticeStudio key={language} />
@@ -142,6 +148,12 @@ export default function LandingPage() {
                     {[["all", "Wszystkie ścieżki"], ["programming", "Programowanie"], ["exams", "Egzaminy zawodowe"]].map(([id, label]) => <button key={id} type="button" aria-pressed={pathFilter === id} onClick={() => setPathFilter(id)}>{t(label)}</button>)}
                 </div>}
                 <div aria-live="polite" className="eh-course-list">
+                    {pythonPath && <article className="eh-java-course eh-python-course" id="kurs-python-ai">
+                        <div className="eh-course-copy"><p className="eh-kicker">Python + AI · automatyzacje dla biznesu</p><h3 aria-label={pythonPath.title}>Mniej rutyny.<br />Więcej możliwości.</h3>
+                            <p>{pythonPath.description}</p><p className="eh-python-context">Dla osób, które chcą poznawać kod przez jego zastosowania w pracy i biznesie. Zacznij od podstaw — bez presji, że wszystko musisz już umieć.</p>
+                            <ul className="eh-course-topics"><li>Od podstaw</li><li>Materiały po polsku</li><li>Własne tempo</li><li>Postęp na koncie</li></ul>
+                        </div><CoursePrice offerState={pythonOfferState} coursePath={PYTHON_COURSE_PATH} courseLabel="Aktualny dostęp do kursu Python + AI" />
+                    </article>}
                     {javaPath && <article className="eh-java-course" id="kurs-java">
                         <div className="eh-course-copy"><p className="eh-kicker">{t("Programowanie")}</p><h3 aria-label="Java Backend Developer">Java Backend<br />Developer</h3>
                             <p>{t("Od przygotowania środowiska i pierwszego programu po kolejne zagadnienia Javy. Uporządkowany plan dla tych, którzy chcą rozumieć swój kod, a nie tylko go przepisywać.")}</p>
@@ -151,7 +163,7 @@ export default function LandingPage() {
                     {examPaths.map(path => <article className="eh-exam-row" key={path.id}>
                         <div><p className="eh-kicker">{t("Egzamin zawodowy")}</p><h3>{path.title}</h3></div>
                         <div><p>{t(path.description)}</p><ul>{path.tags.map(tag => <li key={tag}>{t(tag)}</li>)}</ul></div>
-                        <Link reloadDocument to={path.href} className="eh-text-link">{t("Zobacz na platformie")}</Link>
+                        <Link reloadDocument to={path.href} className="eh-text-link">{t(path.cta)}</Link>
                     </article>)}
                     {!allPaths.length && <div className="eh-catalog-empty"><h3>{t(offerState.loading ? "Pobieranie aktualnej oferty…" : offerState.unavailable ? "Kursy w Twoim języku" : "Aktualna oferta jest chwilowo niedostępna.")}</h3>
                         {!offerState.loading && <p>{t(offerState.unavailable ? "Dostępne kursy w wybranym języku sprawdzisz w katalogu na platformie. Każda wersja językowa ma osobno przygotowane materiały." : offerState.error)}</p>}

@@ -10,6 +10,8 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL("./app.html", import.meta.url)),
         home: fileURLToPath(new URL("./index.html", import.meta.url)),
+        python: fileURLToPath(new URL("./python-ai-automatyzacje-dla-biznesu.html", import.meta.url)),
+        inf03: fileURLToPath(new URL("./testy-inf-03.html", import.meta.url)),
         java: fileURLToPath(
           new URL("./java-backend-developer.html", import.meta.url),
         ),

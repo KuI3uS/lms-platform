@@ -33,6 +33,8 @@
     }
   ],
   "redirects": [
+    { "source": "/python-ai-automatyzacje-dla-biznesu.html", "destination": "/kurs/python-ai-automatyzacje-dla-biznesu", "permanent": true },
+    { "source": "/testy-inf-03.html", "destination": "/egzaminy/inf-03", "permanent": true },
     {
       "source": "/vite.svg",
       "destination": "/favicon.png",
@@ -55,6 +57,8 @@
     }
   ],
   "rewrites": [
+    { "source": "/kurs/python-ai-automatyzacje-dla-biznesu", "destination": "/python-ai-automatyzacje-dla-biznesu.html" },
+    { "source": "/egzaminy/inf-03", "destination": "/testy-inf-03.html" },
     {
       "source": "/kurs/java-backend-developer",
       "destination": "/java-backend-developer.html"

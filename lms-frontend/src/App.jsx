@@ -9,6 +9,8 @@ import { useLocale } from "./context/LocaleContext.jsx";
 
 const LandingPage = lazy(() => import("./components/LandingPage"));
 const JavaCourseOfferPage = lazy(() => import("./pages/JavaCourseOfferPage"));
+const PythonCourseOfferPage = lazy(() => import("./pages/PythonCourseOfferPage"));
+const Inf03PublicPage = lazy(() => import("./pages/Inf03PublicPage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const Login = lazy(() => import("./Login"));
 const Register = lazy(() => import("./Register"));
@@ -69,6 +71,8 @@ export default function App() {
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/kurs/java-backend-developer" element={<JavaCourseOfferPage />} />
+                <Route path="/kurs/python-ai-automatyzacje-dla-biznesu" element={<PythonCourseOfferPage />} />
+                <Route path="/egzaminy/inf-03" element={<Inf03PublicPage />} />
                 <Route path="/pomoc" element={<SupportPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />

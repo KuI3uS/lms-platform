@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Allow: /api/public/courses/java-backend-developer
+Allow: /api/public/courses/python-ai-automatyzacje-dla-biznesu
 Disallow: /api/
 Disallow: /admin/
 Disallow: /checkout/

@@ -1,3 +1,5 @@
+import { isPythonAutomationCourse, PYTHON_COURSE_DESCRIPTION } from "./pythonCourseOffer.js";
+
 export const JAVA_COURSE_PATH = "/kurs/java-backend-developer";
 export const JAVA_COURSE_DESCRIPTION = "Ucz się Javy krok po kroku: poznawaj pojęcia, pisz własny kod i poprawiaj rozwiązania na podstawie wskazówek. Java Backend Developer w EduHub łączy uporządkowany plan nauki z ćwiczeniami w edytorze i zapisem Twojego postępu.";
 
@@ -10,7 +12,8 @@ export function getCourseDescription(course) {
     const description = course?.description?.trim();
     return description && !/^Opis kursu zostanie uzupełniony wkrótce\.?$/i.test(description)
         ? description
-        : isJavaBackendCourse(course) ? JAVA_COURSE_DESCRIPTION : "Opis kursu zostanie uzupełniony wkrótce.";
+        : isJavaBackendCourse(course) ? JAVA_COURSE_DESCRIPTION
+            : isPythonAutomationCourse(course) ? PYTHON_COURSE_DESCRIPTION : "Opis kursu zostanie uzupełniony wkrótce.";
 }
 
 export function getPublicOfferPlans(offer) {

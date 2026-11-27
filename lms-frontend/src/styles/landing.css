@@ -48,6 +48,7 @@
 .eh-home .eh-hero h1 em { font-weight: 400; color: #4d6754; }
 .eh-home .eh-hero-lead { max-width: 500px; margin-top: 28px; font-size: 18px; line-height: 1.75; color: var(--eh-muted); }
 .eh-home .eh-hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; margin-top: 28px; }
+.eh-home .eh-hero-course-link { display: inline-block; margin-top: 22px; color: #7d3524; font-size: 16px; font-weight: 550; text-decoration: underline; text-underline-offset: 5px; }
 .eh-home .eh-author-byline { display: flex; align-items: center; gap: 12px; margin-top: 40px; color: var(--eh-muted); }
 .eh-home .eh-author-byline p { font-size: 14px; line-height: 1.6; }
 .eh-home .eh-author-byline a { color: var(--eh-ink); text-decoration: underline; text-underline-offset: 3px; }
@@ -93,6 +94,9 @@
 .eh-home .eh-path-filters button[aria-pressed="true"] { border-bottom-color: var(--eh-ink); color: var(--eh-ink); font-weight: 650; }
 .eh-home .eh-course-list { margin-top: 34px; }
 .eh-home .eh-java-course { display: grid; grid-template-columns: 1.35fr 1fr; gap: 85px; padding: 45px 48px; background: var(--eh-paper); border: 1px solid #c9d3c3; border-radius: 5px; }
+.eh-home .eh-python-course { border-top: 3px solid #96402c; margin-bottom: 26px; }
+.eh-home #kurs-python-ai { scroll-margin-top: 108px; }
+.eh-home .eh-python-context { font-size: 16px; }
 .eh-home .eh-course-copy .eh-kicker { color: var(--eh-accent); }
 .eh-home .eh-course-copy h3 { margin-top: 15px; font-size: clamp(33px, 3.5vw, 46px); line-height: 1.12; font-weight: 650; letter-spacing: -1.9px; }
 .eh-home .eh-course-copy > p:not(.eh-kicker) { margin-top: 22px; max-width: 530px; color: var(--eh-muted); }

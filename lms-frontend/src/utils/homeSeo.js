@@ -1,9 +1,9 @@
 import { SITE_URL } from "./javaCourseSeo.js";
 
 export const HOME_TITLE =
-  "EduHub — kurs Java online od podstaw i nauka programowania";
+  "EduHub — kursy programowania, Python + AI i testy INF.03";
 export const HOME_DESCRIPTION =
-  "Poznaj kurs Java Backend Developer. Ucz się Javy krok po kroku, rozwiązuj zadania i śledź postęp. Wypróbuj ćwiczenie bez konta. Egzaminy INF i korepetycje.";
+  "Kursy Java oraz Python + AI — automatyzacje dla biznesu. Darmowy test INF.03 z wyjaśnieniami. Sprawdź programy kursów, ucz się we własnym tempie i ćwicz w EduHub.";
 
 export function getHomeStructuredData() {
   return {
@@ -31,7 +31,11 @@ export function getHomeStructuredData() {
         url: SITE_URL + "/",
         inLanguage: "pl",
         isPartOf: { "@id": SITE_URL + "/#website" },
-        about: { "@id": SITE_URL + "/kurs/java-backend-developer#course" },
+        about: [
+          { "@id": SITE_URL + "/kurs/java-backend-developer#course" },
+          { "@id": SITE_URL + "/kurs/python-ai-automatyzacje-dla-biznesu#resource" },
+          { "@id": SITE_URL + "/egzaminy/inf-03#resource" },
+        ],
       },
     ],
   };

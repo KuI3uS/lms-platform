@@ -1,5 +1,7 @@
 import { JAVA_COURSE_PATH } from "./javaCourseOffer.js";
 import { courseMatchesLanguage } from "./courseContentLanguage.js";
+import { PYTHON_COURSE_PATH } from "./pythonCourseOffer.js";
+import { INF03_PATH } from "./inf03Practice.js";
 
 export const PRACTICE_EXAMPLES = [
   {
@@ -86,6 +88,12 @@ export function checkPracticeAnswer(id, answer, language = "pl") {
 
 export const LEARNING_PATHS = [
   {
+    id: "python-ai", category: "programming", symbol: "Python + AI", visualLabel: "automatyzacje.py",
+    type: "KURS ONLINE · OD PODSTAW", title: "Python + AI — automatyzacje dla biznesu",
+    description: "Poznaj Pythona i AI w kontekście automatyzacji. Sprawdź program, ucz się we własnym tempie i pracuj nad własnymi rozwiązaniami.",
+    tags: ["Python", "AI", "Automatyzacje"], href: PYTHON_COURSE_PATH, cta: "Poznaj kurs Python + AI",
+  },
+  {
     id: "java",
     category: "programming",
     symbol: "Java",
@@ -121,8 +129,8 @@ export const LEARNING_PATHS = [
     description:
       "Tworzenie i administrowanie stronami i aplikacjami internetowymi oraz bazami danych.",
     tags: ["HTML i CSS", "JavaScript", "Bazy danych"],
-    href: "/courses",
-    cta: "Zobacz na platformie",
+    href: INF03_PATH,
+    cta: "Rozwiąż test INF.03",
   },
   {
     id: "inf04",

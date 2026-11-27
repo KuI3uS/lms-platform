@@ -28,4 +28,20 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             ) order by course.id
             """)
     List<Course> findPublishedJavaBackendCourses();
+
+    @Query("""
+            select course from Course course
+            where course.published = true and (
+                lower(trim(course.name)) in (
+                    'python + ai - automatyzacje dla biznesu',
+                    'python + ai — automatyzacje dla biznesu',
+                    'python + ai – automatyzacje dla biznesu'
+                ) or lower(trim(course.title)) in (
+                    'python + ai - automatyzacje dla biznesu',
+                    'python + ai — automatyzacje dla biznesu',
+                    'python + ai – automatyzacje dla biznesu'
+                )
+            ) order by course.id
+            """)
+    List<Course> findPublishedPythonAutomationCourses();
 }

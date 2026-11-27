@@ -2,6 +2,7 @@ import { useLocale } from "../context/LocaleContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getCourseDescription, isJavaBackendCourse, JAVA_COURSE_PATH } from "../utils/javaCourseOffer";
+import { isPythonAutomationCourse, PYTHON_COURSE_PATH } from "../utils/pythonCourseOffer";
 import { BsArrowClockwise, BsCheckCircle, BsCollection, BsExclamationTriangle, BsHourglassSplit, BsLockFill, BsPencil, BsPlusCircle, BsSearch, BsTrash, BsX } from "react-icons/bs";
 import { apiFetch } from "../api/api";
 import { getCourseCover, getGeneratedCourseCover } from "../utils/courseCover";
@@ -59,6 +60,7 @@ function CourseCard({ course, isAdmin, deleting, onDelete, onEdit, onOpen }) {
                 <h3>{course.title || course.name}</h3>
                 <p className="product-card-description">{displayDescription}</p>
                 {isJavaBackendCourse(course) && <Link reloadDocument to={`${JAVA_COURSE_PATH}?lang=${contentLanguageOf(course)}`} className="mt-3 text-sm font-medium text-teal-800 underline underline-offset-4">{t("Szczegółowy program")}</Link>}
+                {isPythonAutomationCourse(course) && <Link reloadDocument to={`${PYTHON_COURSE_PATH}?lang=${contentLanguageOf(course)}`} className="mt-3 text-sm font-medium text-teal-800 underline underline-offset-4">{t("Poznaj kurs Python + AI")}</Link>}
                 <div className="product-card-info"><span>{course.lessonCount ?? 0} {t("lekcji")}</span><span>{course.moduleCount ?? 0} {t("etapów")}</span><span>{category === "LANGUAGE" ? `${t(getCourseLanguageLabel(course.courseLanguage))} · ` : ""}{t(getCourseLevelLabel(course))}</span></div>
                 {!locked && <div className="product-card-progress"><div><span>{t("Ukończono")} {course.completedLessonCount ?? 0} {t("z")} {course.lessonCount ?? 0} {t("lekcji")}</span><span>{progress}%</span></div><div className="product-progress-track" role="progressbar" aria-label={t("Postęp kursu")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><span style={{ width: `${progress}%` }} /></div></div>}
                 <div className="product-card-bottom">

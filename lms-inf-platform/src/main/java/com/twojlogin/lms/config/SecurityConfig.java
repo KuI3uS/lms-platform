@@ -56,6 +56,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/courses/java-backend-developer").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/public/courses/python-ai-automatyzacje-dla-biznesu").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/certificates/verify/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/payments/stripe/webhook").permitAll()
 
