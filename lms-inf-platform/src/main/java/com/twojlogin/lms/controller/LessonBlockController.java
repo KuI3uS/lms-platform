@@ -11,7 +11,9 @@ import com.twojlogin.lms.dto.LessonBlockRequest;
 import com.twojlogin.lms.dto.TaskCheckResponse;
 import com.twojlogin.lms.dto.StageLessonBlockImportRequest;
 import com.twojlogin.lms.dto.StageLessonBlockImportResult;
+import com.twojlogin.lms.dto.EncodedLessonImportRequest;
 import com.twojlogin.lms.util.LessonImportTitles;
+import com.twojlogin.lms.util.LessonImportPayload;
 import com.twojlogin.lms.entity.BlockType;
 import com.twojlogin.lms.entity.Lesson;
 import com.twojlogin.lms.entity.LessonBlock;
@@ -220,6 +222,16 @@ public class LessonBlockController {
         return savedBlocks.stream()
                 .map(block -> LessonBlockDto.from(block, true))
                 .toList();
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/module/{moduleId}/import-encoded")
+    public StageLessonBlockImportResult importEncodedStage(
+            @PathVariable Long moduleId, @RequestBody EncodedLessonImportRequest request
+    ) {
+        // Preserve the existing atomic validation, permissions and retry semantics.
+        return importStage(moduleId, LessonImportPayload.decode(request));
     }
 
     @Transactional
